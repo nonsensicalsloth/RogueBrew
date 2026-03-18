@@ -2424,7 +2424,7 @@ function openPokedexModal(initialTab = 'normal') {
           <div class="dex-num">#${String(id).padStart(3,'0')}</div>
           <img src="${BASE + id + '.png'}" alt="${e.name}" class="dex-sprite"
                onerror="this.src='';this.style.display='none'">
-          <div class="dex-name">${e.name}</div>
+          <div class="dex-name">${e.brewName || e.name}</div>
           <div class="dex-types">${types}</div>
         </div>`;
       }
@@ -2451,7 +2451,7 @@ function openPokedexModal(initialTab = 'normal') {
           <div class="dex-num">#${String(id).padStart(3,'0')}</div>
           <img src="${e.shinySpriteUrl || BASE_SHINY + id + '.png'}" alt="${e.name}" class="dex-sprite"
                onerror="this.src='';this.style.display='none'">
-          <div class="dex-name">${e.name}</div>
+          <div class="dex-name">${e.brewName || e.name}</div>
           <div class="dex-types">${types}</div>
           <div class="shiny-star">★</div>
         </div>`;
