@@ -121,7 +121,7 @@ function runBattle(playerTeam, enemyTeam, bagItems, enemyItems, onLog) {
   const firstP = pTeam[0];
   const firstE = eTeam[0];
   if (firstP.currentHp > 0) playerParticipants.add(0);
-  detailedLog.push({ type: 'send_out', side: 'player', idx: 0, name: firstP.nickname || firstP.name });
+  detailedLog.push({ type: 'send_out', side: 'player', idx: 0, name: firstP.nickname || firstP.brewName || firstP.name });
   detailedLog.push({ type: 'send_out', side: 'enemy',  idx: 0, name: firstE.name });
 
   let rounds = 0;
@@ -144,7 +144,7 @@ function runBattle(playerTeam, enemyTeam, bagItems, enemyItems, onLog) {
       pActive.types     = [...(eActive.types || ['Blonde'])];
       pActive.baseStats = { ...eActive.baseStats };
       pActive.spriteUrl = eActive.spriteUrl || '';
-      const dName = pActive.nickname || pActive.name;
+      const dName = pActive.nickname || pActive.brewName || pActive.name;
       addLog(`${dName} transformed into ${eActive.name}!`, 'log-player');
       detailedLog.push({ type: 'transform', side: 'player', idx: pIdx,
         name: dName, intoName: eActive.name, spriteUrl: pActive.spriteUrl,
@@ -264,7 +264,7 @@ function runBattle(playerTeam, enemyTeam, bagItems, enemyItems, onLog) {
         const next = nextTeam.map((p, i) => ({ p, idx: i })).find(x => x.p.currentHp > 0);
         if (next) {
           if (tSide === 'player') playerParticipants.add(next.idx);
-          const nName = next.p.nickname || next.p.name;
+          const nName = next.p.nickname || next.p.brewName || next.p.name;
           addLog(`${nName} was sent out!`, tSide === 'player' ? 'log-player' : 'log-enemy');
           detailedLog.push({ type: 'send_out', side: tSide, idx: next.idx, name: nName });
         }
@@ -277,7 +277,7 @@ function runBattle(playerTeam, enemyTeam, bagItems, enemyItems, onLog) {
         const next = nextTeam.map((p, i) => ({ p, idx: i })).find(x => x.p.currentHp > 0);
         if (next) {
           if (side === 'player') playerParticipants.add(next.idx);
-          const nName = next.p.nickname || next.p.name;
+          const nName = next.p.nickname || next.p.brewName || next.p.name;
           addLog(`${nName} was sent out!`, side === 'player' ? 'log-player' : 'log-enemy');
           detailedLog.push({ type: 'send_out', side, idx: next.idx, name: nName });
         }
@@ -292,7 +292,7 @@ function runBattle(playerTeam, enemyTeam, bagItems, enemyItems, onLog) {
         const actual = Math.min(heal, active.p.maxHp - active.p.currentHp);
         if (actual > 0) {
           active.p.currentHp += actual;
-          const n = active.p.nickname || active.p.name;
+          const n = active.p.nickname || active.p.brewName || active.p.name;
           addLog(`Yeast Nutrient restored ${actual} HP to ${n}!`, 'log-item');
           detailedLog.push({ type: 'effect', side: 'player', idx: active.i, name: n,
             hpChange: actual, hpAfter: active.p.currentHp, reason: `Yeast Nutrient restored ${actual} HP to ${n}!` });
