@@ -142,6 +142,13 @@ function hideTeamHoverCard() {
   if (popup) popup.style.display = 'none';
 }
 
+// Dismiss hover card on tap outside (mobile)
+document.addEventListener('touchstart', (e) => {
+  const popup = document.getElementById('team-hover-card');
+  if (!popup || popup.style.display !== 'block') return;
+  if (!popup.contains(e.target)) hideTeamHoverCard();
+}, { passive: true });
+
 function getMoveForPokemon(pokemon) {
   return getBestMove(pokemon.types || ['Blonde'], pokemon.baseStats, pokemon.speciesId);
 }
@@ -169,6 +176,15 @@ function renderTeamBar(team, el) {
       ).join('')}</div>`;
     slot.addEventListener('mouseenter', () => showTeamHoverCard(p, slot));
     slot.addEventListener('mouseleave', () => hideTeamHoverCard());
+    slot.addEventListener('touchstart', (e) => {
+      const popup = document.getElementById('team-hover-card');
+      if (popup && popup.style.display === 'block') {
+        hideTeamHoverCard();
+      } else {
+        showTeamHoverCard(p, slot);
+      }
+      e.stopPropagation();
+    }, { passive: true });
     if (isMain && (p.heldItems||[]).length > 0) {
       slot.querySelectorAll('.team-slot-item').forEach(itemEl => {
         const slotIdx = parseInt(itemEl.dataset.itemSlot);
@@ -199,6 +215,7 @@ function renderTeamBar(team, el) {
     el.appendChild(slot);
   });
 }
+
 
 function renderItemBadges(items) {
   const el = document.getElementById('item-bar');
