@@ -165,24 +165,24 @@ h1, h2, .pixel-font {
 }
 .poke-card.selected { box-shadow: 0 0 0 2px gold, 0 4px 16px rgba(255,215,0,0.3); }
 
-.tc-blonde { --stripe:#8a7a4a; --tint:#faf4e0; --ink:#4a3808; }
-.tc-red { --stripe:#b83020; --tint:#faeae8; --ink:#6a1008; }
-.tc-lager { --stripe:#1a8898; --tint:#e4f4f6; --ink:#0a4850; }
-.tc-sour { --stripe:#b89010; --tint:#fffde7; --ink:#5a4408; }
-.tc-ipa { --stripe:#4a8030; --tint:#eef5e8; --ink:#1e4010; }
-.tc-cryo { --stripe:#2068a8; --tint:#e4eef8; --ink:#0a3060; }
-.tc-barleywine { --stripe:#6a30a0; --tint:#f2eafa; --ink:#3a1060; }
-.tc-brett { --stripe:#7a6020; --tint:#faf4e0; --ink:#4a3808; }
-.tc-brown { --stripe:#6d4c2a; --tint:#f5ede0; --ink:#3a2008; }
-.tc-wheat { --stripe:#7b6fb0; --tint:#ede7f6; --ink:#2a1a5a; }
-.tc-belgian { --stripe:#b83070; --tint:#fce4ec; --ink:#6a0830; }
-.tc-saison { --stripe:#5a7a20; --tint:#f1f8e9; --ink:#283a08; }
-.tc-barrelaged { --stripe:#7a5c20; --tint:#fdf3e3; --ink:#3a2808; }
-.tc-seltzer { --stripe:#5b6abf; --tint:#eef0fa; --ink:#2a3080; }
-.tc-stout { --stripe:#1a1a1a; --tint:#ebebeb; --ink:#111111; }
-.tc-export { --stripe:#5a6875; --tint:#eceff1; --ink:#2a3840; }
-.tc-cascadian { --stripe:#3a5a3a; --tint:#e8f5e9; --ink:#1a3018; }
-.tc-pastry { --stripe:#b5485a; --tint:#fce4ec; --ink:#601828; }
+.tc-blonde { --stripe:#a8a878; --tint:#f5f5e8; --ink:#4a4a28; }
+.tc-red { --stripe:#f08030; --tint:#fef0e0; --ink:#7a3808; }
+.tc-lager { --stripe:#6890f0; --tint:#eef2fe; --ink:#1a2880; }
+.tc-sour { --stripe:#c8a008; --tint:#fefbe0; --ink:#5a3808; }
+.tc-ipa { --stripe:#78c850; --tint:#eefae0; --ink:#285010; }
+.tc-cryo { --stripe:#60b8b8; --tint:#e4f8f8; --ink:#1a5858; }
+.tc-barleywine { --stripe:#c03028; --tint:#fdecea; --ink:#6a0808; }
+.tc-brett { --stripe:#a040a0; --tint:#f5e5f5; --ink:#4a1060; }
+.tc-brown { --stripe:#8b5e3c; --tint:#f5ece4; --ink:#3a1808; }
+.tc-wheat { --stripe:#a890f0; --tint:#f0ecfe; --ink:#38186a; }
+.tc-belgian { --stripe:#f85888; --tint:#feebf0; --ink:#780828; }
+.tc-saison { --stripe:#a8b820; --tint:#f5f8d0; --ink:#484808; }
+.tc-barrelaged { --stripe:#b8a038; --tint:#faf6e0; --ink:#584808; }
+.tc-seltzer { --stripe:#705898; --tint:#ede5f5; --ink:#281848; }
+.tc-stout { --stripe:#7038f8; --tint:#ede0fe; --ink:#200868; }
+.tc-export { --stripe:#8080a0; --tint:#eeeef5; --ink:#282838; }
+.tc-cascadian { --stripe:#705848; --tint:#f0ebe5; --ink:#302010; }
+.tc-pastry { --stripe:#ee99ac; --tint:#fdeef2; --ink:#7a2840; }
 
 .label-stripe {
   width: 7px;
