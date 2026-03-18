@@ -281,7 +281,7 @@ function renderBattleField(pTeam, eTeam) {
       const active  = i === eActiveIdx;
       return `<div class="battle-pokemon ${fainted?'fainted':''} ${active?'active-pokemon':''}" data-idx="${i}">
         <img src="${p.spriteUrl||''}" alt="${p.name}" class="battle-sprite" onerror="this.src=''">
-        <div class="battle-poke-name">${p.name} Lv${p.level}</div>
+        <div class="battle-poke-name">${p.nickname || p.brewName || p.name} Lv${p.level}</div>
         <div class="poke-hp">${renderHpBar(p.currentHp, p.maxHp)}</div>
       </div>`;
     }).join('');
@@ -2105,7 +2105,7 @@ async function animateBattleVisually(detailedLog, pTeamInit, eTeamInit) {
         const imgEl = el.querySelector('.battle-sprite');
         if (imgEl) imgEl.src = event.spriteUrl;
         const nameEl = el.querySelector('.battle-poke-name');
-        if (nameEl) nameEl.textContent = `${event.name} Lv${pTeamInit[event.idx].level}`;
+        if (nameEl) { const bp = pTeamInit[event.idx]; nameEl.textContent = `${bp.nickname || bp.brewName || bp.name} Lv${bp.level}`; }
         el.classList.remove('hit-normal');
       }
       addLogEntry(`${event.name} transformed into ${event.intoName}!`, 'log-player');
