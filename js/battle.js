@@ -186,7 +186,7 @@ function runBattle(playerTeam, enemyTeam, bagItems, enemyItems, onLog) {
       const defenderItems = side === 'player' ? eActiveItems : pActiveItems;
 
       if (move.noDamage) {
-        const aName = attacker.nickname || attacker.name;
+        const aName = attacker.nickname || attacker.brewName || attacker.name;
         addLog(`${side === 'player' ? '' : '(enemy) '}${aName} used ${move.name}! But nothing happened!`,
                side === 'player' ? 'log-player' : 'log-enemy');
         detailedLog.push({
@@ -208,7 +208,7 @@ function runBattle(playerTeam, enemyTeam, bagItems, enemyItems, onLog) {
         target.currentHp = 1;
       }
 
-      const aName = attacker.nickname || attacker.name;
+      const aName = attacker.nickname || attacker.brewName || attacker.name;
       const tName = target.nickname || target.name;
 
       let effText = '';
