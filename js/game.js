@@ -15,6 +15,8 @@ let state = {
   breweryName: 'Nonsense Sloth Co.',
   perfectQC: true,
   stuckStandingPending: false,
+  modifiers: new Set(),
+  nuzlockePerfect: true,
 };
 
 // ---- Initialization ----
@@ -73,10 +75,34 @@ async function initGame() {
     hardHint.textContent = 'Complete the Brewlog to unlock';
   }
   hardBtn.addEventListener('click', () => startNewRun(true));
+
+  // Run Modifiers button — locked until first Championship win
+  const modBtn  = document.getElementById('btn-modifiers');
+  const modHint = document.getElementById('modifiers-hint');
+  if (modBtn) {
+    const hasWon = getEliteWins() >= 1;
+    if (hasWon) {
+      modBtn.disabled = false;
+      modBtn.textContent = '🧪 Run Modifiers';
+      if (modHint) modHint.textContent = '';
+      // Show active modifier count if any are on
+      const active = getActiveModifiers();
+      if (active.size > 0 && modHint) {
+        modHint.textContent = `${active.size} modifier${active.size > 1 ? 's' : ''} active`;
+        modHint.style.color = 'var(--accent, #fa0)';
+      }
+    } else {
+      modBtn.disabled = true;
+      modBtn.textContent = '🔒 Run Modifiers';
+      if (modHint) modHint.textContent = 'Beat the Championship to unlock';
+    }
+    modBtn.addEventListener('click', () => { openModifiersModal(); });
+  }
 }
 
 async function startNewRun(hardMode = false) {
-  state = { currentMap: 0, currentNode: null, team: [], items: [], badges: 0, map: null, eliteIndex: 0, trainer: 'boy', starterSpeciesId: null, maxTeamSize: 1, hardMode, breweryName: 'Nonsense Sloth Co.', perfectQC: true, stuckStandingPending: false };
+  const mods = getActiveModifiers();
+  state = { currentMap: 0, currentNode: null, team: [], items: [], badges: 0, map: null, eliteIndex: 0, trainer: 'boy', starterSpeciesId: null, maxTeamSize: 1, hardMode, breweryName: 'Nonsense Sloth Co.', perfectQC: true, stuckStandingPending: false, modifiers: mods, nuzlockePerfect: true };
   await showTrainerSelect();
 }
 
@@ -118,6 +144,17 @@ async function showBreweryNameScreen() {
 }
 
 async function showStarterSelect() {
+  // Experimental Batch: pick a random starter, skip the screen entirely
+  if (state.modifiers && state.modifiers.has('experimental_batch')) {
+    const starters = STARTER_IDS.map(id => getSpeciesById(id)).filter(Boolean);
+    const species  = starters[Math.floor(Math.random() * starters.length)];
+    const isShiny  = Math.random() < 0.01;
+    const inst     = createInstance(species, 5, isShiny);
+    inst.nickname  = null;
+    selectStarter(inst);
+    return;
+  }
+
   showScreen('starter-screen');
   const container = document.getElementById('starter-choices');
   container.innerHTML = '<div class="loading">Loading starters...</div>';
@@ -174,7 +211,8 @@ function selectStarter(pokemon) {
   if (pokemon.isShiny) { markShinyDexCaught(pokemon.speciesId, pokemon.name, pokemon.types, pokemon.spriteUrl, pokemon.brewName); const a = unlockAchievement('rare_find'); if (a) showAchievementToast(a); }
   state.team = [pokemon];
   state.starterSpeciesId = pokemon.speciesId;
-  state.maxTeamSize = 1;
+  // Small Tap List: hard cap of 3
+  state.maxTeamSize = state.modifiers && state.modifiers.has('small_tap_list') ? 3 : 1;
   const cards = document.querySelectorAll('#starter-choices .poke-card');
   const defaultName = pokemon.brewName || pokemon.name;
   cards.forEach(card => { card.style.opacity = '0.3'; card.style.pointerEvents = 'none'; });
@@ -882,6 +920,11 @@ async function doCatchNode(node) {
   const level = getLevelForNode(node);
   let choices = await getCatchChoices(state.currentMap);
 
+  // Limited Release: only show 1 catch option instead of 3
+  if (state.modifiers && state.modifiers.has('limited_release')) {
+    choices = [choices[0]].filter(Boolean);
+  }
+
   // Map 1, layer 1: guarantee at least one ipa or Lager Pokemon
   if (state.currentMap === 0 && node.layer === 1) {
     const hasIPAOrLager = choices.some(p => p.types?.some(t => t === 'IPA' || t === 'Lager'));
@@ -938,7 +981,8 @@ function catchPokemon(pokemon, node) {
   const defaultName = pokemon.brewName || pokemon.name;
   showNicknamePrompt(chosenCard, defaultName, (nick) => {
     pokemon.nickname = nick;
-    if (state.team.length < 6) {
+    const teamCap = (state.modifiers && state.modifiers.has('small_tap_list')) ? 3 : 6;
+    if (state.team.length < teamCap) {
       state.team.push(pokemon);
       if (state.team.length > state.maxTeamSize) state.maxTeamSize = state.team.length;
       advanceFromNode(state.map, node.id);
@@ -979,6 +1023,14 @@ function showSwapScreen(newPoke, node) {
 }
 
 function doItemNode(node) {
+  // No Adjuncts: skip item nodes entirely
+  if (state.modifiers && state.modifiers.has('no_adjuncts')) {
+    showMapNotification('🚫 No Adjuncts — item skipped.');
+    advanceFromNode(state.map, node.id);
+    showMapScreen();
+    return;
+  }
+
   showScreen('item-screen');
   renderTeamBar(state.team, document.getElementById('item-team-bar'));
 
@@ -1041,6 +1093,11 @@ function doItemNode(node) {
 const MAX_HELD_ITEMS = 3;
 
 function openItemEquipModal(item, { fromBagIdx = -1, fromPokemonIdx = -1, fromPokemonItemIdx = -1, onComplete = null } = {}) {
+  // No Adjuncts: silently block all item equipping
+  if (state.modifiers && state.modifiers.has('no_adjuncts')) {
+    if (onComplete) onComplete();
+    return;
+  }
   document.getElementById('item-equip-modal')?.remove();
 
   const done = onComplete || (() => {
@@ -1336,7 +1393,8 @@ async function doShinyNode(node) {
     <button id="btn-take-shiny" class="btn-primary">Take ${shiny.name}!</button>
   `;
   document.getElementById('btn-take-shiny').onclick = () => {
-    if (state.team.length < 6) {
+    const teamCap = (state.modifiers && state.modifiers.has('small_tap_list')) ? 3 : 6;
+    if (state.team.length < teamCap) {
       const normalUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${shiny.speciesId}.png`;
       markPokedexCaught(shiny.speciesId, shiny.name, shiny.types, normalUrl);
       markShinyDexCaught(shiny.speciesId, shiny.name, shiny.types, shiny.spriteUrl);
@@ -1386,8 +1444,8 @@ function runBattleScreen(enemyTeam, isBoss, onWin, onLose, enemyName = null, ene
     document.getElementById('btn-continue-battle').style.display = 'none';
     document.getElementById('btn-continue-battle').textContent = 'Continue';
 
-    // Auto-start visual animation
-    skipBattleAnimation = false;
+    // Speed Run: immediately skip all animation
+    skipBattleAnimation = !!(state.modifiers && state.modifiers.has('speed_run'));
     await animateBattleVisually(detailedLog, pTeamCopy, eTeamInit);
 
     // Show final HP state after animation
@@ -1412,6 +1470,18 @@ function runBattleScreen(enemyTeam, isBoss, onWin, onLose, enemyName = null, ene
       for (let i = 0; i < state.team.length; i++) {
         if (resultP[i]) state.team[i].currentHp = resultP[i].currentHp;
       }
+
+      // Nuzlocke: permanently release any brews that fainted this battle
+      if (state.modifiers && state.modifiers.has('nuzlocke')) {
+        const fainted = state.team.filter(p => p.currentHp <= 0);
+        if (fainted.length > 0) {
+          state.nuzlockePerfect = false;
+          state.team = state.team.filter(p => p.currentHp > 0);
+          const names = fainted.map(p => p.nickname || p.brewName || p.name).join(', ');
+          showMapNotification(`💀 Nuzlocke: ${names} permanently released.`);
+        }
+      }
+
       const maxEnemyLevel = Math.max(...resultE.map(p => p.level));
       const levelUps = applyLevelGain(state.team, state.hardMode ? [] : state.items, playerParticipants, maxEnemyLevel, state.hardMode);
       // Keep Skip active for level-up animation too
@@ -1481,10 +1551,8 @@ function showWinScreen() {
   }
 
   // Elite four milestones
-  if (wins === 1)   queueAch('first_pour', 400);
+  if (wins === 1)   queueAch('elite_four', 200);
   if (wins === 10)  queueAch('elite_10', 400);
-  if (wins === 100) queueAch('elite_100', 400);
-  queueAch('elite_four', 200);
 
   // Starter achievements
   const sid = state.starterSpeciesId;
@@ -1525,6 +1593,25 @@ function showWinScreen() {
 
   // Hard mode win
   if (state.hardMode) queueAch('hard_mode_win', 2000);
+
+  // ---- Modifier achievements ----
+  const mods = state.modifiers || new Set();
+  let modDelay = 2200;
+  const nextModDelay = () => { const d = modDelay; modDelay += 200; return d; };
+
+  if (mods.has('experimental_batch'))  queueAch('exp_batch_win',       nextModDelay());
+  if (mods.has('no_adjuncts'))         queueAch('no_adjuncts_win',     nextModDelay());
+  if (mods.has('small_tap_list'))      queueAch('small_tap_win',       nextModDelay());
+  if (mods.has('speed_run'))           queueAch('speed_run_win',       nextModDelay());
+  if (mods.has('limited_release'))     queueAch('limited_release_win', nextModDelay());
+
+  if (mods.has('nuzlocke')) {
+    queueAch('nuzlocke_win', nextModDelay());
+    if (state.nuzlockePerfect) queueAch('nuzlocke_flawless', nextModDelay());
+  }
+
+  // Stacking achievements
+  if (mods.size >= 3)                  queueAch('modifier_stacker',    nextModDelay());
 
   // Fire all toasts
   toasts.forEach(({ ach, delay }) => setTimeout(() => showAchievementToast(ach), delay));
