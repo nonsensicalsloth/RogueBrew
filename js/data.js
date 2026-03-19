@@ -699,13 +699,11 @@ const ACHIEVEMENTS = [
   { id: 'gym_5',            name: 'Brew Like a Monk',      desc: 'Defeat the Belgian master for the first time',                   icon: '🔮' },
   { id: 'gym_6',            name: 'Seeing Red',            desc: 'Defeat the Red Ale master for the first time',                   icon: '🍂' },
   { id: 'gym_7',            name: 'Nutty by Nature',       desc: 'Defeat the Brown Ale master for the first time',                 icon: '🍞' },
-  { id: 'elite_four',       name: 'Head Brewer',           desc: 'Defeat the Championship and claim the title',                    icon: '👑' },
+  { id: 'elite_four',       name: 'Head Brewer',           desc: 'Win your first Championship run',                                icon: '👑' },
   { id: 'elite_10',         name: 'Master Brewer',         desc: 'Claim the Championship title 10 times',                          icon: '🏆' },
-  { id: 'elite_100',        name: 'Brewmaster General',    desc: 'Claim the Championship title 100 times',                         icon: '💎' },
   { id: 'starter_1',        name: 'IPA Run',               desc: 'Win a run starting with an IPA brew',                            icon: '🌱' },
   { id: 'starter_4',        name: 'Red Ale Run',           desc: 'Win a run starting with a Red Ale brew',                         icon: '🔥' },
   { id: 'starter_7',        name: 'Lager Run',             desc: 'Win a run starting with a Lager brew',                           icon: '🌊' },
-  { id: 'first_pour',       name: 'First Pour',            desc: 'Win your first run',                                             icon: '🥂' },
   { id: 'seasonal',         name: 'Seasonal Release',      desc: 'Win a run starting with each of the 3 starter styles',           icon: '📅' },
   { id: 'vertical',         name: 'Vertical Tasting',      desc: 'Win a run with a full team of the same primary type',            icon: '🎯' },
   { id: 'mixed_ferm',       name: 'Mixed Fermentation',    desc: 'Win a run with a team where no two brews share a primary type',  icon: '🧪' },
@@ -719,7 +717,16 @@ const ACHIEVEMENTS = [
   { id: 'rare_find',        name: 'Rare Find',             desc: 'Catch a shiny brew',                                             icon: '✨' },
   { id: 'the_brewlog',      name: 'The Brewlog',           desc: 'Add 150 unique brews to your Brewlog — unlocks Hard Mode',       icon: '📖' },
   { id: 'shinydex_complete',name: 'Shiny Cellar',          desc: 'Complete the Shiny Brewlog',                                     icon: '🌟' },
-  { id: 'hard_mode_win',    name: 'True Brewmaster',       desc: 'Win a run on Hard Mode',                                         icon: '💀' },
+  { id: 'hard_mode_win',       name: 'True Brewmaster',        desc: 'Win a run on Hard Mode',                                                    icon: '💀' },
+  // ---- Modifier achievements ----
+  { id: 'exp_batch_win',       name: 'Happy Accident',         desc: 'Win a run with Experimental Batch active',                                  icon: '🎲' },
+  { id: 'no_adjuncts_win',     name: 'Purist',                 desc: 'Win a run with No Adjuncts active — no items at all',                        icon: '🚫' },
+  { id: 'nuzlocke_win',        name: 'Permadeath Pour',        desc: 'Win a run with Nuzlocke active',                                             icon: '💀' },
+  { id: 'nuzlocke_flawless',   name: 'Immortal Batch',         desc: 'Win a Nuzlocke run without losing a single brew',                            icon: '🛡️' },
+  { id: 'small_tap_win',       name: 'Tight Tap List',         desc: 'Win a run with Small Tap List active (max 3 brews)',                         icon: '🍺' },
+  { id: 'speed_run_win',       name: 'Rapid Fermentation',     desc: 'Win a run with Speed Run active',                                            icon: '⚡' },
+  { id: 'limited_release_win', name: 'No Choice, No Problem',  desc: 'Win a run with Limited Release active',                                      icon: '🔒' },
+  { id: 'modifier_stacker',    name: 'Complex Recipe',         desc: 'Win a run with 3 or more modifiers active at once',                          icon: '🧪' },
 ];
 
 function getUnlockedAchievements() {
@@ -832,4 +839,81 @@ function saveHallOfFameEntry(team, runNumber, hardMode) {
     })),
   });
   localStorage.setItem('poke_hall_of_fame', JSON.stringify(entries));
+}
+
+// ---- Run Modifiers ----
+
+const RUN_MODIFIERS = [
+  {
+    id: 'experimental_batch',
+    name: 'Experimental Batch',
+    icon: '🎲',
+    desc: 'Your starter is chosen at random — no selection screen.',
+    hint: 'For the adventurous brewer.',
+    conflicts: [],
+  },
+  {
+    id: 'no_adjuncts',
+    name: 'No Adjuncts',
+    icon: '🚫',
+    desc: 'No items can be found or equipped during the entire run.',
+    hint: 'Pure brewing. No shortcuts.',
+    conflicts: [],
+  },
+  {
+    id: 'nuzlocke',
+    name: 'Nuzlocke',
+    icon: '💀',
+    desc: 'Any brew that faints is permanently released from your team.',
+    hint: 'Every loss is final.',
+    conflicts: [],
+  },
+  {
+    id: 'small_tap_list',
+    name: 'Small Tap List',
+    icon: '🍺',
+    desc: 'Maximum team size is 3 instead of 6.',
+    hint: 'Quality over quantity.',
+    conflicts: [],
+  },
+  {
+    id: 'speed_run',
+    name: 'Speed Run',
+    icon: '⚡',
+    desc: 'All battles auto-skip instantly with no animation.',
+    hint: 'Blink and you\'ll miss it.',
+    conflicts: [],
+  },
+  {
+    id: 'limited_release',
+    name: 'Limited Release',
+    icon: '🔒',
+    desc: 'Brew New Batch screens only show 1 option instead of 3.',
+    hint: 'Take it or leave it.',
+    conflicts: [],
+  },
+];
+
+// conflicts map — which modifier IDs block each other
+// (populated here so it's easy to extend)
+RUN_MODIFIERS.find(m => m.id === 'no_adjuncts').conflicts   = [];   // stacks with everything
+RUN_MODIFIERS.find(m => m.id === 'small_tap_list').conflicts = ['nuzlocke']; // nuzlocke + 3-cap is brutal — warn but allow
+// Note: we handle conflicts as soft warnings, not hard blocks,
+// so players can still combine them if they want the challenge.
+
+function getActiveModifiers() {
+  try { return new Set(JSON.parse(localStorage.getItem('run_modifiers') || '[]')); }
+  catch { return new Set(); }
+}
+
+function saveActiveModifiers(set) {
+  localStorage.setItem('run_modifiers', JSON.stringify([...set]));
+}
+
+function hasModifier(modId) {
+  // Check state first (mid-run), fall back to localStorage
+  if (typeof state !== 'undefined' && state.modifiers) {
+    return state.modifiers.has(modId);
+  }
+  return getActiveModifiers().has(modId);
 }
