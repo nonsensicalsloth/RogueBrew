@@ -71,17 +71,17 @@ const SPECIES_DATA = [
 
   { id: 34, name:'Nidoking'        , types:['Brett', 'Brown'], baseStats:{hp: 81,atk:102,def: 77,speed: 85,special: 85,spdef: 75}, bst:505 , brewName:'Nido King Imperial Brett' },
 
-  { id: 35, name:'Clefairy'        , types:['Blonde'], baseStats:{hp: 70,atk: 45,def: 48,speed: 35,special: 60,spdef: 65}, bst:323 , brewName:'Clef Airy Pastry' },
+  { id: 35, name:'Clefairy'        , types:['Pastry'], baseStats:{hp: 70,atk: 45,def: 48,speed: 35,special: 60,spdef: 65}, bst:323 , brewName:'Clef Airy Pastry' },
 
-  { id: 36, name:'Clefable'        , types:['Blonde'], baseStats:{hp: 95,atk: 70,def: 73,speed: 60,special: 95,spdef: 90}, bst:483 , brewName:'Clef Able Imperial Pastry' },
+  { id: 36, name:'Clefable'        , types:['Pastry'], baseStats:{hp: 95,atk: 70,def: 73,speed: 60,special: 95,spdef: 90}, bst:483 , brewName:'Clef Able Imperial Pastry' },
 
   { id: 37, name:'Vulpix'          , types:['Red'], baseStats:{hp: 38,atk: 41,def: 40,speed: 65,special: 50,spdef: 65}, bst:299 , brewName:'Vul Pix Red' },
 
   { id: 38, name:'Ninetales'       , types:['Red'], baseStats:{hp: 73,atk: 76,def: 75,speed:100,special: 81,spdef:100}, bst:505 , brewName:'Nine Tails Imperial Red' },
 
-  { id: 39, name:'Jigglypuff'      , types:['Blonde'], baseStats:{hp:115,atk: 45,def: 20,speed: 20,special: 45,spdef: 25}, bst:270 , brewName:'Jiggle Puff Blonde' },
+  { id: 39, name:'Jigglypuff'      , types:['Blonde', 'Pastry'], baseStats:{hp:115,atk: 45,def: 20,speed: 20,special: 45,spdef: 25}, bst:270 , brewName:'Jiggle Puff Blonde' },
 
-  { id: 40, name:'Wigglytuff'      , types:['Blonde'], baseStats:{hp:140,atk: 70,def: 45,speed: 45,special: 85,spdef: 50}, bst:435 , brewName:'Wiggly Tuff Imperial Pastry Blonde' },
+  { id: 40, name:'Wigglytuff'      , types:['Blonde', 'Pastry'], baseStats:{hp:140,atk: 70,def: 45,speed: 45,special: 85,spdef: 50}, bst:435 , brewName:'Wiggly Tuff Imperial Pastry Blonde' },
 
   { id: 41, name:'Zubat'           , types:['Brett', 'Wheat'], baseStats:{hp: 40,atk: 45,def: 35,speed: 55,special: 30,spdef: 40}, bst:245 , brewName:'Zu Bat Session Brett Wheat' },
 
@@ -245,7 +245,7 @@ const SPECIES_DATA = [
 
   { id:121, name:'Starmie'         , types:['Lager', 'Belgian'], baseStats:{hp: 60,atk: 75,def: 85,speed:115,special:100,spdef: 85}, bst:520 , brewName:'Star Me Lager Belgian' },
 
-  { id:122, name:'Mr. Mime'        , types:['Belgian'], baseStats:{hp: 40,atk: 45,def: 65,speed: 90,special:100,spdef:120}, bst:460 , brewName:'Mist Er Mime Belgian' },
+  { id:122, name:'Mr. Mime'        , types:['Belgian', 'Pastry'], baseStats:{hp: 40,atk: 45,def: 65,speed: 90,special:100,spdef:120}, bst:460 , brewName:'Mist Er Mime Belgian' },
 
   { id:123, name:'Scyther'         , types:['Saison', 'Wheat'], baseStats:{hp: 70,atk:110,def: 80,speed:105,special: 55,spdef: 80}, bst:500 , brewName:'Sigh Ther Saison Wheat' },
 
@@ -347,13 +347,13 @@ const SPECIES_DATA = [
 
   { id:172, name:'Pichu'           , types:['Sour'], baseStats:{hp: 20,atk: 40,def: 15,speed: 60,special: 35,spdef: 35}, bst:205 , brewName:'Pie Choo Session Sour' },
 
-  { id:173, name:'Cleffa'          , types:['Blonde'], baseStats:{hp: 50,atk: 25,def: 28,speed: 15,special: 45,spdef: 55}, bst:218 , brewName:'Clef Ah Session Pastry' },
+  { id:173, name:'Cleffa'          , types:['Pastry'], baseStats:{hp: 50,atk: 25,def: 28,speed: 15,special: 45,spdef: 55}, bst:218 , brewName:'Clef Ah Session Pastry' },
 
   { id:174, name:'Igglybuff'       , types:['Blonde'], baseStats:{hp: 90,atk: 30,def: 15,speed: 15,special: 40,spdef: 20}, bst:210 , brewName:'Igg Lee Buff Pastry Blonde' },
 
-  { id:175, name:'Togepi'          , types:['Blonde'], baseStats:{hp: 35,atk: 20,def: 65,speed: 20,special: 40,spdef: 65}, bst:245 , brewName:'Toe Guh Pee Session Blonde' },
+  { id:175, name:'Togepi'          , types:['Pastry'], baseStats:{hp: 35,atk: 20,def: 65,speed: 20,special: 40,spdef: 65}, bst:245 , brewName:'Toe Guh Pee Session Blonde' },
 
-  { id:176, name:'Togetic'         , types:['Blonde', 'Wheat'], baseStats:{hp: 55,atk: 40,def: 85,speed: 40,special: 80,spdef:105}, bst:405 , brewName:'Toe Get Ik Blonde Wheat' },
+  { id:176, name:'Togetic'         , types:['Wheat', 'Pastry'], baseStats:{hp: 55,atk: 40,def: 85,speed: 40,special: 80,spdef:105}, bst:405 , brewName:'Toe Get Ik Blonde Wheat' },
 
   { id:177, name:'Natu'            , types:['Belgian', 'Wheat'], baseStats:{hp: 40,atk: 50,def: 45,speed: 70,special: 70,spdef: 45}, bst:320 , brewName:'Nah Too Session Belgian' },
 
@@ -367,9 +367,9 @@ const SPECIES_DATA = [
 
   { id:182, name:'Bellossom'       , types:['Ipa'], baseStats:{hp: 75,atk: 80,def: 95,speed: 50,special: 90,spdef:100}, bst:490 , brewName:'Bell O Blossom IPA' },
 
-  { id:183, name:'Marill'          , types:['Lager'], baseStats:{hp: 70,atk: 20,def: 50,speed: 40,special: 20,spdef: 50}, bst:250 , brewName:'Mar Ill Session Lager' },
+  { id:183, name:'Marill'          , types:['Lager', 'Pastry'], baseStats:{hp: 70,atk: 20,def: 50,speed: 40,special: 20,spdef: 50}, bst:250 , brewName:'Mar Ill Session Lager' },
 
-  { id:184, name:'Azumarill'       , types:['Lager'], baseStats:{hp:100,atk: 50,def: 80,speed: 50,special: 60,spdef: 80}, bst:420 , brewName:'Az U Mar Ill Lager' },
+  { id:184, name:'Azumarill'       , types:['Lager', 'Pastry'], baseStats:{hp:100,atk: 50,def: 80,speed: 50,special: 60,spdef: 80}, bst:420 , brewName:'Az U Mar Ill Lager' },
 
   { id:185, name:'Sudowoodo'       , types:['Barrel-aged'], baseStats:{hp: 70,atk:100,def:115,speed: 30,special: 30,spdef: 65}, bst:410 , brewName:'Soo Doe Wood Barrel-aged' },
 
@@ -419,9 +419,9 @@ const SPECIES_DATA = [
 
   { id:208, name:'Steelix'         , types:['Export', 'Brown'], baseStats:{hp: 75,atk: 85,def:200,speed: 30,special: 55,spdef: 65}, bst:510 , brewName:'Steel Ix Imperial Export Brown' },
 
-  { id:209, name:'Snubbull'        , types:['Blonde'], baseStats:{hp: 60,atk: 80,def: 50,speed: 30,special: 40,spdef: 40}, bst:300 , brewName:'Snub Bull Session Blonde' },
+  { id:209, name:'Snubbull'        , types:['Pastry'], baseStats:{hp: 60,atk: 80,def: 50,speed: 30,special: 40,spdef: 40}, bst:300 , brewName:'Snub Bull Session Blonde' },
 
-  { id:210, name:'Granbull'        , types:['Blonde'], baseStats:{hp: 90,atk:120,def: 75,speed: 45,special: 60,spdef: 60}, bst:450 , brewName:'Gran Bull Blonde' },
+  { id:210, name:'Granbull'        , types:['Pastry'], baseStats:{hp: 90,atk:120,def: 75,speed: 45,special: 60,spdef: 60}, bst:450 , brewName:'Gran Bull Blonde' },
 
   { id:211, name:'Qwilfish'        , types:['Lager', 'Brett'], baseStats:{hp: 65,atk: 95,def: 85,speed: 85,special: 55,spdef: 55}, bst:440 , brewName:'Quill Fish Lager Brett' },
 
@@ -561,11 +561,11 @@ const SPECIES_DATA = [
 
   { id:279, name:'Pelipper'        , types:['Lager', 'Wheat'], baseStats:{hp: 60,atk: 50,def:100,speed: 65,special: 95,spdef: 70}, bst:440 , brewName:'Pell I Per Imperial Lager Wheat' },
 
-  { id:280, name:'Ralts'           , types:['Belgian'], baseStats:{hp: 28,atk: 25,def: 25,speed: 40,special: 45,spdef: 35}, bst:198 , brewName:'Ralts Session Belgian' },
+  { id:280, name:'Ralts'           , types:['Belgian', 'Pastry'], baseStats:{hp: 28,atk: 25,def: 25,speed: 40,special: 45,spdef: 35}, bst:198 , brewName:'Ralts Session Belgian' },
 
-  { id:281, name:'Kirlia'          , types:['Belgian'], baseStats:{hp: 38,atk: 35,def: 35,speed: 50,special: 65,spdef: 55}, bst:278 , brewName:'Keer Lee Ah Belgian' },
+  { id:281, name:'Kirlia'          , types:['Belgian', 'Pastry'], baseStats:{hp: 38,atk: 35,def: 35,speed: 50,special: 65,spdef: 55}, bst:278 , brewName:'Keer Lee Ah Belgian' },
 
-  { id:282, name:'Gardevoir'       , types:['Belgian'], baseStats:{hp: 68,atk: 65,def: 65,speed: 80,special:125,spdef:115}, bst:518 , brewName:'Gar Dee Vwar Imperial Belgian' },
+  { id:282, name:'Gardevoir'       , types:['Belgian', 'Pastry'], baseStats:{hp: 68,atk: 65,def: 65,speed: 80,special:125,spdef:115}, bst:518 , brewName:'Gar Dee Vwar Imperial Belgian' },
 
   { id:283, name:'Surskit'         , types:['Saison', 'Lager'], baseStats:{hp: 40,atk: 30,def: 32,speed: 65,special: 50,spdef: 52}, bst:269 , brewName:'Sir Skit Session Saison Lager' },
 
@@ -597,7 +597,7 @@ const SPECIES_DATA = [
 
   { id:297, name:'Hariyama'        , types:['Barleywine'], baseStats:{hp:144,atk:120,def: 60,speed: 50,special: 40,spdef: 60}, bst:474 , brewName:'Har E Yama Imperial Barleywine' },
 
-  { id:298, name:'Azurill'         , types:['Blonde'], baseStats:{hp: 50,atk: 20,def: 40,speed: 20,special: 20,spdef: 40}, bst:190 , brewName:'Az U Rill Session Lager' },
+  { id:298, name:'Azurill'         , types:['Blonde', 'Pastry'], baseStats:{hp: 50,atk: 20,def: 40,speed: 20,special: 20,spdef: 40}, bst:190 , brewName:'Az U Rill Session Lager' },
 
   { id:299, name:'Nosepass'        , types:['Barrel-aged'], baseStats:{hp: 30,atk: 45,def:135,speed: 30,special: 45,spdef: 90}, bst:375 , brewName:'Nose Pass Session Barrel-aged' },
 
@@ -607,7 +607,7 @@ const SPECIES_DATA = [
 
   { id:302, name:'Sableye'         , types:['Cascadian', 'Seltzer'], baseStats:{hp: 50,atk: 75,def: 75,speed: 50,special: 65,spdef: 65}, bst:380 , brewName:'Say Bull Eye Cascadian Seltzer' },
 
-  { id:303, name:'Mawile'          , types:['Export'], baseStats:{hp: 50,atk: 85,def: 85,speed: 50,special: 55,spdef: 55}, bst:380 , brewName:'Maw Wile Session Export' },
+  { id:303, name:'Mawile'          , types:['Export', 'Pastry'], baseStats:{hp: 50,atk: 85,def: 85,speed: 50,special: 55,spdef: 55}, bst:380 , brewName:'Maw Wile Session Export' },
 
   { id:304, name:'Aron'            , types:['Export', 'Barrel-aged'], baseStats:{hp: 50,atk: 70,def:100,speed: 30,special: 40,spdef: 40}, bst:330 , brewName:'Air On Session Export Barrel-aged' },
 
