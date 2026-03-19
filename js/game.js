@@ -874,8 +874,13 @@ async function doCatchNode(node) {
   const choicesEl = document.getElementById('catch-choices');
   choicesEl.innerHTML = '<div class="loading">Finding Pokemon...</div>';
 
-  let choices = await getCatchChoices(state.currentMap);
+ // 1% chance to redirect to a shiny encounter instead
+  if (Math.random() < 0.01) {
+    await doShinyNode(node);
+    return;
+  }
   const level = getLevelForNode(node);
+  let choices = await getCatchChoices(state.currentMap);
 
   // Map 1, layer 1: guarantee at least one ipa or Lager Pokemon
   if (state.currentMap === 0 && node.layer === 1) {
