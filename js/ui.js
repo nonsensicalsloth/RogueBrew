@@ -2713,7 +2713,7 @@ const adjectives = [
   "Saturated", "Over-Boiled", "Clogged", "Colossal",
   "Inebriated", "Imperial", "Dungeon-Dry", "Resinous",
   "Fermented", "Cold-Crashed", "Hazardous", "Skunked",
- "Mythic", "Eldritch", "Dread", "Gilded", "Spectral", 
+  "Mythic", "Eldritch", "Dread", "Gilded", "Spectral", 
   "Abyssal", "Cursed", "Vorpal", "Arcane", "Stone-Forged", 
   "Shadowy", "Draconic", "Eternal", "Fell", "Beholder's", 
   "Celestial", "Orcish", "Holy", "Paladin's", "Rogue's", 
@@ -2725,7 +2725,7 @@ const adjectives = [
   "Bottomless", "Stiff", "Cold-Blooded", "Yeasty", "Ferocious",
   "Rough-Cut", "Raw", "Savage", "Hazy", "Canned", 
   "Suds-Soaked", "Gushing", "Wort-Washed","Moist",
- "Isen Forged","Balrog Boiled","Bag End"
+  "Isen Forged","Balrog Boiled"
 ];
 
 const nouns = [
@@ -2734,17 +2734,17 @@ const nouns = [
   "Troll", "Bung-Hole", "Grist-Mill", "Wort-Witch", "Hogshead", 
   "Knockout", "Heat-Exchanger", "Tank-Farm", "Ale Dragon", 
   "Trub-Bucket", "Hydrometer", "Brew-Barn", "Yeast-Beast",
- "Keep", "Citadel", "Cavern", "Outpost", "Sanctuary", 
+  "Keep", "Citadel", "Cavern", "Outpost", "Sanctuary", 
   "Meadery", "Dungeon", "Forge", "Fellowship", "Stronghold", 
   "Laboratory", "Lair", "Canteen", "Foundry", "Garrison",
   "Bastion", "Hollow", "Temple", "Crypt", "Spire", 
   "Labyrinth", "Glade", "Refuge", "Summit", "Plateau",
   "Ruin", "Catacombs", "Domain", "Expanse", "Ward",
- "Spigot", "Manway", "Grist", "Trub", "Bung", 
+  "Spigot", "Manway", "Grist", "Trub", "Bung", 
   "Sack", "Valve", "Nozzle", "Shaft", "Knob", 
   "Jug", "Hole", "Gully", "Drain", "Piston", 
   "Bladder", "Stalk", "Hose", "Spur", "Flange", 
-  "Chamber", "Gland", "Cock", "Screw", "Stub", 
+  "Chamber", "Gland", "Screw", "Stub", "Bag End",
   "Member", "Pit", "Handle", "Socket", "Plug"
 ];
 
