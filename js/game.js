@@ -142,50 +142,31 @@ async function showBreweryNameScreen() {
     input.onkeydown = e => { if (e.key === 'Enter') finish(); };
   });
 }
-
 async function showStarterSelect() {
+  // 1. Setup the Screen
+  showScreen('starter-screen');
+  const container = document.getElementById('starter-choices');
+  if (!container) return;
+
+  container.innerHTML = '';
+  const startLevel = 5;
+
+  // 2. Determine the Selection List
+  let displayList = [];
+
   if (state.modifiers && state.modifiers.has('experimental_batch')) {
+    // EXPERIMENTAL MODE: Pick exactly ONE random species from the whole game
+    const randomSpecies = SPECIES_DATA[Math.floor(Math.random() * SPECIES_DATA.length)];
+    displayList = [randomSpecies];
     
-    // 1. Capture Brewery Name
-    const nameInput = document.getElementById('brewery-name-input');
-    state.breweryName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : "Nonsense Sloth Co.";
-
-    // 2. Pick Truly Random Species
-    const species = SPECIES_DATA[Math.floor(Math.random() * SPECIES_DATA.length)];
-    const inst = createInstance(species, 5, Math.random() < 0.01);
-    inst.nickname = null;
-
-    // 3. Set Engine State
-    state.team = [inst];
-    state.starterSpeciesId = species.id;
-    state.currentMap = 0;
-    state.currentNode = null; // Reset node position
-
-    // 4. UI Transition: Force Map Screen Active
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    const mapScreen = document.getElementById('map-screen');
-    if (mapScreen) mapScreen.classList.add('active');
-
-    // 5. THE BOOT SEQUENCE
-    // We need to generate the map data FIRST, then select starter, then draw.
-    setTimeout(() => {
-      if (typeof initMap === 'function') {
-        initMap(); // Generates the node layout
-      }
-      
-      selectStarter(inst); // Saves the game and moves to start node
-      
-      if (typeof renderMap === 'function') {
-        renderMap(); // Draws the SVG icons
-      }
-      
-      console.log("Experimental Start Successful: " + species.brewName);
-    }, 100); 
-
-    return;
-  }
-
-  // --- Normal Flow (Keep your existing card-creation logic below) ---
+    // Optional: Add a header so the player knows why there is only one
+    const header = document.createElement('h2');
+    header.innerText = "Experimental Batch: Your Random Brew";
+    header.style.textAlign = 'center';
+    header.style.width = '100%';
+    container.appendChild(header);
+  } else {
+    // NORMAL MODE: Use the standard 3 starters
   showScreen('starter-screen');
   const container = document.getElementById('starter-choices');
   if (!container) return;
