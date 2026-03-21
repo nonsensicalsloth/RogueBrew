@@ -144,85 +144,65 @@ async function showBreweryNameScreen() {
 }
 
 async function showStarterSelect() {
-  // --- 1. EXPERIMENTAL BATCH LOGIC (The "True Random" Path) ---
   if (state.modifiers && state.modifiers.has('experimental_batch')) {
     
-    // CAPTURE NAME: Ensure the brewery name is set
+    // 1. Capture Brewery Name
     const nameInput = document.getElementById('brewery-name-input');
     state.breweryName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : "Nonsense Sloth Co.";
 
-    // --- MODIFIED STEP 2: RANDOM BREW FROM ENTIRE SPECIES LIST ---
-    // Instead of filtering by STARTER_IDS, we use the global SPECIES_DATA array
-    const allSpecies = SPECIES_DATA; 
-    const species = allSpecies[Math.floor(Math.random() * allSpecies.length)];
-    
-    // Standard 1% shiny roll (no special hunt logic)
-    const isShiny = Math.random() < 0.01;
-    
-    // Start at level 5
-    const inst = createInstance(species, 5, isShiny);
+    // 2. Pick Truly Random Species
+    const species = SPECIES_DATA[Math.floor(Math.random() * SPECIES_DATA.length)];
+    const inst = createInstance(species, 5, Math.random() < 0.01);
     inst.nickname = null;
 
-    // PREPARE ENGINE STATE
+    // 3. Set Engine State
     state.team = [inst];
     state.starterSpeciesId = species.id;
     state.currentMap = 0;
+    state.currentNode = null; // Reset node position
 
-    // UI CLEANUP: Hide Title/Naming, Show Map Screen
+    // 4. UI Transition: Force Map Screen Active
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const mapScreen = document.getElementById('map-screen');
     if (mapScreen) mapScreen.classList.add('active');
 
-    // THE BOOT: Generate Map and Start Run
+    // 5. THE BOOT SEQUENCE
+    // We need to generate the map data FIRST, then select starter, then draw.
     setTimeout(() => {
-      // Ensure the map data exists
-      if (typeof initMap === 'function') initMap();
+      if (typeof initMap === 'function') {
+        initMap(); // Generates the node layout
+      }
       
-      // selectStarter handles the initial save and transition
-      selectStarter(inst); 
+      selectStarter(inst); // Saves the game and moves to start node
       
-      // Force a map render so it's not a black screen
-      if (typeof renderMap === 'function') renderMap();
+      if (typeof renderMap === 'function') {
+        renderMap(); // Draws the SVG icons
+      }
       
-      console.log("Experimental Start: Received random brew:", species.brewName);
-    }, 200);
+      console.log("Experimental Start Successful: " + species.brewName);
+    }, 100); 
 
-    return; // Exit here; don't run the Normal Flow
+    return;
   }
 
-  // --- 2. NORMAL FLOW (The "Standard" Path) ---
+  // --- Normal Flow (Keep your existing card-creation logic below) ---
   showScreen('starter-screen');
   const container = document.getElementById('starter-choices');
   if (!container) return;
-
-  container.innerHTML = '<div class="loading">Loading starters...</div>';
-
-  const starters = STARTER_IDS.map(id => getSpeciesById(id));
-  const startLevel = 5;
-
   container.innerHTML = '';
+  // ... rest of your for-loop for starters ...
+  const starters = STARTER_IDS.map(id => getSpeciesById(id));
   for (const species of starters) {
     if (!species) continue;
-
-    const isShiny = Math.random() < 0.01;
-    const inst = createInstance(species, startLevel, isShiny);
-    
+    const inst = createInstance(species, 5, Math.random() < 0.01);
     const wrapper = document.createElement('div');
     wrapper.innerHTML = renderPokemonCard(inst, true, false);
     const card = wrapper.querySelector('.poke-card');
-    
     if (card) {
       card.style.cursor = 'pointer';
       card.setAttribute('role', 'button');
       card.setAttribute('tabindex', '0');
-
       card.addEventListener('click', () => selectStarter(inst));
-      card.addEventListener('keydown', e => { 
-        if (e.key === 'Enter' || e.key === ' ') {
-          selectStarter(inst);
-        }
-      });
-
       container.appendChild(card);
     }
   }
