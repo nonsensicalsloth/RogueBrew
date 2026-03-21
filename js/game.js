@@ -149,32 +149,19 @@ async function showStarterSelect() {
   const container = document.getElementById('starter-choices');
   if (!container) return;
 
-  container.innerHTML = '';
+  // Show loading state while we process
+  container.innerHTML = '<div class="loading">Loading starters...</div>';
+
+  const starters = STARTER_IDS.map(id => getSpeciesById(id));
   const startLevel = 5;
 
-  // 2. Determine the Selection List
-  let displayList = [];
+  // Clear loading and render cards
+  container.innerHTML = '';
+  for (const species of starters) {
+    if (!species) continue;
 
-  if (state.modifiers && state.modifiers.has('experimental_batch')) {
-    // EXPERIMENTAL MODE: Pick exactly ONE random species from the whole game
-    const randomSpecies = SPECIES_DATA[Math.floor(Math.random() * SPECIES_DATA.length)];
-    displayList = [randomSpecies];
-
-    const header = document.createElement('h2');
-    header.innerText = "Experimental Batch: Your Random Brew";
-    header.style.textAlign = 'center';
-    header.style.width = '100%';
-    header.style.color = 'var(--accent-color)'; // Give it some flair
-    container.appendChild(header);
-  } else {
-    // NORMAL MODE: Use the standard 3 starters
-    displayList = STARTER_IDS.map(id => getSpeciesById(id)).filter(Boolean);
-  }
-
-  // 3. Render the Card(s)
-  for (const species of displayList) {
-    // Standard 1% shiny roll for both modes
-    const isShiny = Math.random() < 0.01;
+    // Standard 1/100 shiny chance for starters
+    const isShiny = Math.random() < 0.01; 
     const inst = createInstance(species, startLevel, isShiny);
     
     const wrapper = document.createElement('div');
@@ -186,19 +173,12 @@ async function showStarterSelect() {
       card.setAttribute('role', 'button');
       card.setAttribute('tabindex', '0');
 
-      // Click to start the run
-      card.addEventListener('click', () => {
-        // Grab name from title input before moving to map
-        const nameInput = document.getElementById('brewery-name-input');
-        if (nameInput) state.breweryName = nameInput.value.trim() || "Nonsense Sloth Co.";
-        selectStarter(inst);
-      });
+      // Click Selection
+      card.addEventListener('click', () => selectStarter(inst));
 
-      // Keyboard support for PC
+      // Keyboard Selection (Enter or Space)
       card.addEventListener('keydown', e => { 
         if (e.key === 'Enter' || e.key === ' ') {
-          const nameInput = document.getElementById('brewery-name-input');
-          if (nameInput) state.breweryName = nameInput.value.trim() || "Nonsense Sloth Co.";
           selectStarter(inst);
         }
       });
