@@ -143,27 +143,58 @@ async function showBreweryNameScreen() {
   });
 }
 
-async function showStarterSelect() {
-  // 1. Setup the Screen
+ async function showStarterSelect() {
+  // 1. Setup the basic Screen & Container
   showScreen('starter-screen');
   const container = document.getElementById('starter-choices');
   if (!container) return;
-
-  // Show loading state while we process
-  container.innerHTML = '<div class="loading">Loading starters...</div>';
-
-  const starters = STARTER_IDS.map(id => getSpeciesById(id));
-  const startLevel = 5;
-
-  // Clear loading and render cards
   container.innerHTML = '';
+
+  // --- START OF EXPERIMENTAL BATCH PATH ---
+  if (state.modifiers && state.modifiers.has('experimental_batch')) {
+    // Pick ONE truly random species from the entire game
+    const randomSpecies = SPECIES_DATA[Math.floor(Math.random() * SPECIES_DATA.length)];
+    
+    // Create the instance (1% natural shiny chance)
+    const inst = createInstance(randomSpecies, 5, Math.random() < 0.01);
+    
+    // Add a special header so the player knows what's happening
+    const header = document.createElement('h2');
+    header.innerText = "Experimental Batch: Your Random Brew";
+    header.style.textAlign = 'center';
+    header.style.width = '100%';
+    header.style.marginBottom = '20px';
+    container.appendChild(header);
+
+    // Reuse the card rendering logic
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = renderPokemonCard(inst, true, false);
+    const card = wrapper.querySelector('.poke-card');
+    
+    if (card) {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', () => {
+        // Capture brewery name from input before moving to map
+        const nameInput = document.getElementById('brewery-name-input');
+        if (nameInput) state.breweryName = nameInput.value.trim() || "Nonsense Sloth Co.";
+        selectStarter(inst);
+      });
+      container.appendChild(card);
+    }
+    
+    return; // Exit the function here so the Normal Flow doesn't run
+  }
+  // --- END OF EXPERIMENTAL BATCH PATH ---
+
+
+  // --- START OF NORMAL FLOW (Your Original Code) ---
+  container.innerHTML = '<div class="loading">Loading starters...</div>';
+  const starters = STARTER_IDS.map(id => getSpeciesById(id));
+  container.innerHTML = '';
+
   for (const species of starters) {
     if (!species) continue;
-
-    // Standard 1/100 shiny chance for starters
-    const isShiny = Math.random() < 0.01; 
-    const inst = createInstance(species, startLevel, isShiny);
-    
+    const inst = createInstance(species, 5, Math.random() < 0.01);
     const wrapper = document.createElement('div');
     wrapper.innerHTML = renderPokemonCard(inst, true, false);
     const card = wrapper.querySelector('.poke-card');
@@ -172,22 +203,15 @@ async function showStarterSelect() {
       card.style.cursor = 'pointer';
       card.setAttribute('role', 'button');
       card.setAttribute('tabindex', '0');
-
-      // Click Selection
       card.addEventListener('click', () => selectStarter(inst));
-
-      // Keyboard Selection (Enter or Space)
       card.addEventListener('keydown', e => { 
-        if (e.key === 'Enter' || e.key === ' ') {
-          selectStarter(inst);
-        }
+        if (e.key === 'Enter' || e.key === ' ') selectStarter(inst); 
       });
-
       container.appendChild(card);
     }
   }
 }
-  
+
 // ---- Nickname Prompt ----
 function showNicknamePrompt(anchorEl, defaultValue, onConfirm) {
   document.querySelectorAll('.nickname-prompt').forEach(el => el.remove());
