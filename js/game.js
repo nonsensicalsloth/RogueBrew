@@ -158,9 +158,6 @@ async function showStarterSelect() {
     const starters = STARTER_IDS.map(id => getSpeciesById(id)).filter(Boolean);
     const species = starters[Math.floor(Math.random() * starters.length)];
     
-    // Shiny Hunt logic check
-    const isShiny = state.modifiers.has('shiny_hunt') ? true : (Math.random() < 0.01);
-    
     const inst = createInstance(species, 5, isShiny);
     inst.nickname = null;
 
