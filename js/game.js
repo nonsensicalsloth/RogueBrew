@@ -142,6 +142,7 @@ async function showBreweryNameScreen() {
     input.onkeydown = e => { if (e.key === 'Enter') finish(); };
   });
 }
+
 async function showStarterSelect() {
   // 1. Setup the Screen
   showScreen('starter-screen');
@@ -158,37 +159,55 @@ async function showStarterSelect() {
     // EXPERIMENTAL MODE: Pick exactly ONE random species from the whole game
     const randomSpecies = SPECIES_DATA[Math.floor(Math.random() * SPECIES_DATA.length)];
     displayList = [randomSpecies];
-    
-    // Optional: Add a header so the player knows why there is only one
+
     const header = document.createElement('h2');
     header.innerText = "Experimental Batch: Your Random Brew";
     header.style.textAlign = 'center';
     header.style.width = '100%';
+    header.style.color = 'var(--accent-color)'; // Give it some flair
     container.appendChild(header);
   } else {
     // NORMAL MODE: Use the standard 3 starters
-  showScreen('starter-screen');
-  const container = document.getElementById('starter-choices');
-  if (!container) return;
-  container.innerHTML = '';
-  // ... rest of your for-loop for starters ...
-  const starters = STARTER_IDS.map(id => getSpeciesById(id));
-  for (const species of starters) {
-    if (!species) continue;
-    const inst = createInstance(species, 5, Math.random() < 0.01);
+    displayList = STARTER_IDS.map(id => getSpeciesById(id)).filter(Boolean);
+  }
+
+  // 3. Render the Card(s)
+  for (const species of displayList) {
+    // Standard 1% shiny roll for both modes
+    const isShiny = Math.random() < 0.01;
+    const inst = createInstance(species, startLevel, isShiny);
+    
     const wrapper = document.createElement('div');
     wrapper.innerHTML = renderPokemonCard(inst, true, false);
     const card = wrapper.querySelector('.poke-card');
+    
     if (card) {
       card.style.cursor = 'pointer';
       card.setAttribute('role', 'button');
       card.setAttribute('tabindex', '0');
-      card.addEventListener('click', () => selectStarter(inst));
+
+      // Click to start the run
+      card.addEventListener('click', () => {
+        // Grab name from title input before moving to map
+        const nameInput = document.getElementById('brewery-name-input');
+        if (nameInput) state.breweryName = nameInput.value.trim() || "Nonsense Sloth Co.";
+        selectStarter(inst);
+      });
+
+      // Keyboard support for PC
+      card.addEventListener('keydown', e => { 
+        if (e.key === 'Enter' || e.key === ' ') {
+          const nameInput = document.getElementById('brewery-name-input');
+          if (nameInput) state.breweryName = nameInput.value.trim() || "Nonsense Sloth Co.";
+          selectStarter(inst);
+        }
+      });
+
       container.appendChild(card);
     }
   }
 }
-
+  
 // ---- Nickname Prompt ----
 function showNicknamePrompt(anchorEl, defaultValue, onConfirm) {
   document.querySelectorAll('.nickname-prompt').forEach(el => el.remove());
