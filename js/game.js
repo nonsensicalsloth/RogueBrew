@@ -144,38 +144,76 @@ async function showBreweryNameScreen() {
 }
 
 async function showStarterSelect() {
-  // Experimental Batch: pick a random starter, skip the screen entirely
-  if (state.modifiers && state.modifiers.has('experimental_batch')) {
-    const starters = STARTER_IDS.map(id => getSpeciesById(id)).filter(Boolean);
-    const species  = starters[Math.floor(Math.random() * starters.length)];
-    const isShiny  = Math.random() < 0.01;
-    const inst     = createInstance(species, 5, isShiny);
-    inst.nickname  = null;
-    selectStarter(inst);
-    return;
-   }
+  // 1. Experimental Batch: pick a random starter, skip the screen entirely
+  if (state.modifiers && state.modifiers.has('experimental_batch')) {
+    
+    // --- STEP 1: CAPTURE BREWERY NAME ---
+    // We grab the name from the input right now so the save file is valid
+    const nameInput = document.getElementById('brewery-name-input');
+    if (nameInput && nameInput.value.trim() !== "") {
+      state.breweryName = nameInput.value.trim();
+    } else {
+      state.breweryName = "Nonsense Sloth Co."; // Fallback to prevent crash
+    }
 
+    // --- STEP 2: GENERATE RANDOM STARTER ---
+    const starters = STARTER_IDS.map(id => getSpeciesById(id)).filter(Boolean);
+    const species = starters[Math.floor(Math.random() * starters.length)];
+    
+    // Standard 1% shiny roll (no special hunt logic, just natural luck)
+    const isShiny = Math.random() < 0.01;
+    const inst = createInstance(species, 5, isShiny);
+    inst.nickname = null;
+
+    // --- STEP 3: PREPARE ENGINE STATE ---
+    state.team = [inst];
+    state.starterSpeciesId = species.id;
+
+    // --- STEP 4: CLEAN UI AND BOOT ---
+    // Manually remove 'active' from all screens so the naming screen disappears
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    
+    // We use a 200ms delay to let the mobile keyboard retract and 
+    // allow the DOM to settle before the SVG map generates.
+    setTimeout(() => {
+      console.log("Experimental Batch starting for:", state.breweryName);
+      selectStarter(inst); 
+    }, 200);
+
+    return; // Stop the rest of the function
+  }
+
+  // --- Normal Flow: Show the manual starter selection screen ---
   showScreen('starter-screen');
   const container = document.getElementById('starter-choices');
-  container.innerHTML = '<div class="loading">Loading starters...</div>';
+  if (!container) return;
 
+  container.innerHTML = '';
   const starters = STARTER_IDS.map(id => getSpeciesById(id));
   const startLevel = 5;
 
-  container.innerHTML = '';
   for (const species of starters) {
     if (!species) continue;
-    const isShiny = Math.random() < 0.01; // 1/100 shiny chance for starters
+    
+    // Standard 1% roll for manual choices
+    const isShiny = Math.random() < 0.01;
     const inst = createInstance(species, startLevel, isShiny);
+    
     const wrapper = document.createElement('div');
+    // Using your existing render function from ui.js
     wrapper.innerHTML = renderPokemonCard(inst, true, false);
     const card = wrapper.querySelector('.poke-card');
-    card.style.cursor = 'pointer';
-    card.setAttribute('role', 'button');
-    card.setAttribute('tabindex', '0');
-    card.addEventListener('click', () => selectStarter(inst));
-    card.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') selectStarter(inst); });
-    container.appendChild(card);
+    
+    if (card) {
+      card.style.cursor = 'pointer';
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.addEventListener('click', () => selectStarter(inst));
+      card.addEventListener('keydown', e => { 
+        if(e.key === 'Enter' || e.key === ' ') selectStarter(inst); 
+      });
+      container.appendChild(card);
+    }
   }
 }
 
