@@ -144,31 +144,16 @@ async function showBreweryNameScreen() {
 }
 
 async function showStarterSelect() {
-  // 1. Check if Experimental Batch is active
-  if (state.modifiers && state.modifiers.has('experimental_batch')) {
-    
-    // --- CRITICAL FIX START ---
-    // Ensure the brewery name is grabbed from the input before skipping
-    const nameInput = document.getElementById('brewery-name-input');
-    if (nameInput && nameInput.value) {
-      state.breweryName = nameInput.value;
-    }
-    // --- CRITICAL FIX END ---
-
-    const starters = STARTER_IDS.map(id => getSpeciesById(id)).filter(Boolean);
-    const species = starters[Math.floor(Math.random() * starters.length)];
-    
-    const inst = createInstance(species, 5, isShiny);
-    inst.nickname = null;
-
-    // Use a tiny timeout to let the "Naming" state finish 
-    // before jumping into the map generation.
-    setTimeout(() => {
-      selectStarter(inst);
-    }, 100);
-    
-    return;
-  }
+  // Experimental Batch: pick a random starter, skip the screen entirely
+  if (state.modifiers && state.modifiers.has('experimental_batch')) {
+    const starters = STARTER_IDS.map(id => getSpeciesById(id)).filter(Boolean);
+    const species  = starters[Math.floor(Math.random() * starters.length)];
+    const isShiny  = Math.random() < 0.01;
+    const inst     = createInstance(species, 5, isShiny);
+    inst.nickname  = null;
+    selectStarter(inst);
+    return;
+   }
 
   showScreen('starter-screen');
   const container = document.getElementById('starter-choices');
