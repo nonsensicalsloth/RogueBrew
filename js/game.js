@@ -144,6 +144,7 @@ async function showBreweryNameScreen() {
 }
 
  async function showStarterSelect() {
+  state.modifiers = getActiveModifiers();
   // 1. Setup the basic Screen & Container
   showScreen('starter-screen');
   const container = document.getElementById('starter-choices');
