@@ -10,7 +10,8 @@
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', 'G-H3NCNGHN55');
+  // This line makes the tracking anonymous
+  gtag('config', 'G-H3NCNGHN55',{ 'anonymize_ip': true });
   </script>
   <link rel="stylesheet" href="css/style.css">
 </head>
