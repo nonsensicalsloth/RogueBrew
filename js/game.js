@@ -62,10 +62,27 @@ function migrateBrewNames() {
 
 async function initGame() {
   migrateBrewNames();
+
+  // ── Auto-resume any in-progress run ──────────────────────────────────────
+  if (hasSavedRun()) {
+    const resumed = await resumeSavedRun();
+    if (resumed) {
+      // Wire up the "new run" button in case the player wants to abandon
+      document.getElementById('btn-new-run').addEventListener('click', () => startNewRun(false));
+      // Unlock hard/modifiers buttons in the background (they may return to title)
+      _setupTitleButtons();
+      return;
+    }
+  }
+
   showScreen('title-screen');
   document.getElementById('btn-new-run').addEventListener('click', () => startNewRun(false));
 
-  const hardBtn = document.getElementById('btn-hard-run');
+  _setupTitleButtons();
+}
+
+function _setupTitleButtons() {
+  const hardBtn  = document.getElementById('btn-hard-run');
   const hardHint = document.getElementById('hard-mode-hint');
   if (isBrewlogAt150()) {
     hardBtn.disabled = false;
@@ -101,6 +118,7 @@ async function initGame() {
 }
 
 async function startNewRun(hardMode = false) {
+  clearRun(); // wipe any previous save before starting fresh
   const mods = getActiveModifiers();
   state = { currentMap: 0, currentNode: null, team: [], items: [], badges: 0, map: null, eliteIndex: 0, trainer: 'boy', starterSpeciesId: null, maxTeamSize: 1, hardMode, breweryName: 'Nonsense Sloth Co.', perfectQC: true, stuckStandingPending: false, modifiers: mods, nuzlockePerfect: true };
   await showTrainerSelect();
@@ -255,6 +273,7 @@ function selectStarter(pokemon) {
   showNicknamePrompt(chosenCard, defaultName, (nick) => {
     pokemon.nickname = nick;
     startMap(0);
+    saveRun(); // 🔒 lock in the starter choice immediately
   });
 }
 
@@ -274,6 +293,7 @@ function startMap(mapIndex) {
   const startNode = state.map.nodes['n0_0'];
   state.currentNode = startNode;
 
+  saveRun(); // save whenever a new map is entered
   showMapScreen();
 }
 
@@ -306,11 +326,13 @@ function showMapScreen() {
   renderItemBadges(state.items);
 
   const mapContainer = document.getElementById('map-container');
+  saveRun(); // lock map layout — prevents refreshing to reroll node positions
   renderMap(state.map, mapContainer, onNodeClick);
 }
 
 async function onNodeClick(node) {
   state.currentNode = node;
+  saveRun(); // lock node choice before RNG runs for catches, items, events
   let resolvedType = node.type;
 
   if (node.type === NODE_TYPES.QUESTION) {
@@ -364,6 +386,7 @@ function showEventResult(node, { icon, title, lines, okLabel = 'OK', badgeClass 
     <button class="btn-primary event-ok-btn">${okLabel}</button>`;
   card.querySelector('.event-ok-btn').addEventListener('click', () => {
     advanceFromNode(state.map, node.id);
+    saveRun();
     showMapScreen();
   });
   choicesEl.appendChild(card);
@@ -429,7 +452,7 @@ const BREWERY_EVENTS = [
       const okBtn = document.createElement('button');
       okBtn.className = 'btn-primary';
       okBtn.textContent = 'Cheers! 🥂';
-      okBtn.addEventListener('click', () => { advanceFromNode(state.map, node.id); showMapScreen(); });
+      okBtn.addEventListener('click', () => { advanceFromNode(state.map, node.id); saveRun(); showMapScreen(); });
       okWrap.appendChild(okBtn);
       choicesEl.appendChild(okWrap);
     },
@@ -726,12 +749,17 @@ async function doTapTakeoverEvent(node, ev) {
   document.getElementById('event-title').textContent = 'Tap Takeover Night!';
   document.getElementById('event-flavor').textContent =
     'A visiting brewery wants a spot on your line. Agree to swap out a brew — or send them packing.';
-  document.getElementById('event-choices').innerHTML =
-    '<div style="color:var(--text-dim);font-size:11px;">Scouting visiting taps…</div>';
   renderTeamBar(state.team, document.getElementById('event-team-bar'));
 
-  const species = await getCatchChoices(state.currentMap);
+  // ── Lock species on first load — prevents refreshing to reroll the visiting taps ──
+  if (!node.lockedTakeoverSpecies) {
+    document.getElementById('event-choices').innerHTML =
+      '<div style="color:var(--text-dim);font-size:11px;">Scouting visiting taps…</div>';
+    node.lockedTakeoverSpecies = await getCatchChoices(state.currentMap);
+    saveRun(); // 🔒 freeze the visiting taps now
+  }
 
+  const species = node.lockedTakeoverSpecies;
   const choicesEl = document.getElementById('event-choices');
   choicesEl.innerHTML = '';
 
@@ -744,6 +772,7 @@ async function doTapTakeoverEvent(node, ev) {
     <div class="event-card-desc">Turn down the offer. Keep your lineup as-is.</div>`;
   fleeCard.addEventListener('click', () => {
     advanceFromNode(state.map, node.id);
+    saveRun();
     showMapScreen();
   });
   choicesEl.appendChild(fleeCard);
@@ -758,6 +787,7 @@ async function doTapTakeoverEvent(node, ev) {
   acceptCard.addEventListener('click', () => {
     if (!species || species.length === 0) {
       advanceFromNode(state.map, node.id);
+      saveRun();
       showMapScreen();
       return;
     }
@@ -818,6 +848,7 @@ function doTapTakeoverReplace(node, species, outIdx) {
       state.team.splice(outIdx, 1, offer);
       skipBtn.style.display = '';
       advanceFromNode(state.map, node.id);
+      saveRun();
       showMapScreen();
       showMapNotification(`🔄 Swapped in ${offer.name}!`);
     });
@@ -840,38 +871,45 @@ function getLevelForNode(node) {
 }
 
 async function doBattleNode(node) {
-  const level = getLevelForNode(node);
-  let choices = await getCatchChoices(state.currentMap);
+  // ── Lock enemy on first load — prevents refreshing to reroll for an easier fight ──
+  if (!node.lockedEnemy) {
+    const level = getLevelForNode(node);
+    let choices = await getCatchChoices(state.currentMap);
 
-  // On the first layer of the first map, exclude enemies super effective against the starter
-  if (state.currentMap === 0 && node.layer === 1 && state.team.length > 0) {
-    const starterTypes = state.team[0].types || [];
-    const isSafe = sp => !(sp.types || []).some(et =>
-      starterTypes.some(st => (TYPE_CHART[et]?.[st] || 1) >= 2)
-    );
-    const safe = choices.filter(isSafe);
-    if (safe.length > 0) {
-      choices = safe;
-    } else {
-      // Fallback: Eevee (Blonde type, never super effective)
-      const eevee = getSpeciesById(133);
-      if (eevee) choices = [eevee];
+    // On the first layer of the first map, exclude enemies super effective against the starter
+    if (state.currentMap === 0 && node.layer === 1 && state.team.length > 0) {
+      const starterTypes = state.team[0].types || [];
+      const isSafe = sp => !(sp.types || []).some(et =>
+        starterTypes.some(st => (TYPE_CHART[et]?.[st] || 1) >= 2)
+      );
+      const safe = choices.filter(isSafe);
+      if (safe.length > 0) {
+        choices = safe;
+      } else {
+        const eevee = getSpeciesById(133);
+        if (eevee) choices = [eevee];
+      }
     }
+
+    const enemySpecies = choices[Math.floor(Math.random() * choices.length)];
+    if (!enemySpecies) {
+      advanceFromNode(state.map, node.id);
+      saveRun();
+      showMapScreen();
+      return;
+    }
+    node.lockedEnemy = createInstance(enemySpecies, level);
+    saveRun(); // 🔒 enemy is now frozen — refreshing loads the same opponent
   }
 
-  const enemySpecies = choices[Math.floor(Math.random() * choices.length)];
-  if (!enemySpecies) {
-    advanceFromNode(state.map, node.id);
-    showMapScreen();
-    return;
-  }
-  const enemy = createInstance(enemySpecies, level);
+  const enemy = node.lockedEnemy;
   const titleEl = document.getElementById('battle-title');
   const subEl = document.getElementById('battle-subtitle');
   if (titleEl) titleEl.textContent = `Wild ${enemy.name} appeared!`;
   if (subEl) subEl.textContent = `Level ${enemy.level}`;
   await runBattleScreen([enemy], false, () => {
     advanceFromNode(state.map, node.id);
+    saveRun();
     showMapScreen();
   }, () => {
     showGameOver();
@@ -892,6 +930,7 @@ async function doBossNode(node) {
   await runBattleScreen(enemyTeam, true, () => {
     state.badges++;
     advanceFromNode(state.map, node.id);
+    saveRun();
     showBadgeScreen(leader);
     const ach = unlockAchievement(`gym_${state.currentMap}`);
     if (ach) showAchievementToast(ach);
@@ -946,32 +985,45 @@ async function doCatchNode(node) {
   const choicesEl = document.getElementById('catch-choices');
   choicesEl.innerHTML = '<div class="loading">Finding Pokemon...</div>';
 
- // 1% chance to redirect to a shiny encounter instead
-  if (Math.random() < 0.01) {
+  // ── Locked choices: generate once, store on node, reuse on refresh ──
+  if (!node.lockedCatchInstances) {
+    // 1% chance to redirect to a shiny encounter instead (only roll once)
+    if (Math.random() < 0.01) {
+      node.lockedShiny = true;
+      saveRun();
+      await doShinyNode(node);
+      return;
+    }
+
+    const level = getLevelForNode(node);
+    let choices = await getCatchChoices(state.currentMap);
+
+    // Limited Release: only show 1 catch option instead of 3
+    if (state.modifiers && state.modifiers.has('limited_release')) {
+      choices = [choices[0]].filter(Boolean);
+    }
+
+    // Map 1, layer 1: guarantee at least one IPA or Lager Pokemon
+    if (state.currentMap === 0 && node.layer === 1) {
+      const hasIPAOrLager = choices.some(p => p.types?.some(t => t === 'IPA' || t === 'Lager'));
+      if (!hasIPAOrLager) {
+        const ipaLagerIds = [54, 60, 69, 72, 79, 86, 98, 116, 118, 120, 129];
+        const id = ipaLagerIds[Math.floor(Math.random() * ipaLagerIds.length)];
+        const replacement = getSpeciesById(id);
+        if (replacement) choices = [replacement, ...choices.slice(1)];
+      }
+    }
+
+    // Build instances and lock them onto the node
+    node.lockedCatchInstances = choices.map(sp => createInstance(sp, level));
+    saveRun(); // 🔒 choices are now frozen — refreshing reloads the same ones
+  } else if (node.lockedShiny) {
+    // Was a shiny redirect — honour it on restore
     await doShinyNode(node);
     return;
   }
-  const level = getLevelForNode(node);
-  let choices = await getCatchChoices(state.currentMap);
 
-  // Limited Release: only show 1 catch option instead of 3
-  if (state.modifiers && state.modifiers.has('limited_release')) {
-    choices = [choices[0]].filter(Boolean);
-  }
-
-  // Map 1, layer 1: guarantee at least one ipa or Lager Pokemon
-  if (state.currentMap === 0 && node.layer === 1) {
-    const hasIPAOrLager = choices.some(p => p.types?.some(t => t === 'IPA' || t === 'Lager'));
-    if (!hasIPAOrLager) {
-      const ipaLagerIds = [54, 60, 69, 72, 79, 86, 98, 116, 118, 120, 129];
-      const id = ipaLagerIds[Math.floor(Math.random() * ipaLagerIds.length)];
-      const replacement = getSpeciesById(id);
-      if (replacement) choices = [replacement, ...choices.slice(1)];
-    }
-  }
-
-  const instances = choices.map(sp => createInstance(sp, level));
-
+  const instances = node.lockedCatchInstances;
   choicesEl.innerHTML = '';
   const dex = getPokedex();
   for (const inst of instances) {
@@ -989,6 +1041,7 @@ async function doCatchNode(node) {
 
   document.getElementById('btn-skip-catch').onclick = () => {
     advanceFromNode(state.map, node.id);
+    saveRun();
     showMapScreen();
   };
 }
@@ -1020,6 +1073,7 @@ function catchPokemon(pokemon, node) {
       state.team.push(pokemon);
       if (state.team.length > state.maxTeamSize) state.maxTeamSize = state.team.length;
       advanceFromNode(state.map, node.id);
+      saveRun();
       showMapScreen();
     } else {
       showSwapScreen(pokemon, node);
@@ -1046,12 +1100,14 @@ function showSwapScreen(newPoke, node) {
       for (const it of (released.heldItems || [])) state.items.push(it);
       state.team.splice(idx, 1, newPoke);
       advanceFromNode(state.map, node.id);
+      saveRun();
       showMapScreen();
     });
     el.appendChild(card);
   }
   document.getElementById('btn-cancel-swap').onclick = () => {
     advanceFromNode(state.map, node.id);
+    saveRun();
     showMapScreen();
   };
 }
@@ -1061,6 +1117,7 @@ function doItemNode(node) {
   if (state.modifiers && state.modifiers.has('no_adjuncts')) {
     showMapNotification('🚫 No Adjuncts — item skipped.');
     advanceFromNode(state.map, node.id);
+    saveRun();
     showMapScreen();
     return;
   }
@@ -1068,32 +1125,37 @@ function doItemNode(node) {
   showScreen('item-screen');
   renderTeamBar(state.team, document.getElementById('item-team-bar'));
 
-  // Exclude held-type items already in bag or on a Pokemon (usable items can stack)
-  const usedIds = new Set([
-    ...state.items.filter(it => !it.usable).map(it => it.id),
-    ...state.team.flatMap(p => (p.heldItems || []).map(it => it.id)),
-  ]);
-  const heldAvailable = ITEM_POOL.filter(it =>
-    !usedIds.has(it.id) && (it.minMap === undefined || state.currentMap >= it.minMap)
-  );
+  // ── Locked choices: generate once, store on node, reuse on refresh ──
+  if (!node.lockedItemPicks) {
+    // Exclude held-type items already in bag or on a Pokemon (usable items can stack)
+    const usedIds = new Set([
+      ...state.items.filter(it => !it.usable).map(it => it.id),
+      ...state.team.flatMap(p => (p.heldItems || []).map(it => it.id)),
+    ]);
+    const heldAvailable = ITEM_POOL.filter(it =>
+      !usedIds.has(it.id) && (it.minMap === undefined || state.currentMap >= it.minMap)
+    );
 
-  // Usable items: filter out ones that can't be applied to current team
-  const canUseMaxRevive = state.team.some(p => p.currentHp <= 0);
-  const canUseEvoStone  = state.team.some(p => {
-    if (p.speciesId === 133) return true;
-    const evo = EVOLUTIONS[p.speciesId];
-    return evo && evo.into !== p.speciesId;
-  });
-  const usableAvailable = USABLE_ITEM_POOL.filter(it => {
-    if (it.id === 'max_revive') return canUseMaxRevive;
-    if (it.id === 'evo_stone')  return canUseEvoStone;
-    return true;
-  });
+    // Usable items: filter out ones that can't be applied to current team
+    const canUseMaxRevive = state.team.some(p => p.currentHp <= 0);
+    const canUseEvoStone  = state.team.some(p => {
+      if (p.speciesId === 133) return true;
+      const evo = EVOLUTIONS[p.speciesId];
+      return evo && evo.into !== p.speciesId;
+    });
+    const usableAvailable = USABLE_ITEM_POOL.filter(it => {
+      if (it.id === 'max_revive') return canUseMaxRevive;
+      if (it.id === 'evo_stone')  return canUseEvoStone;
+      return true;
+    });
 
-  const available = [...heldAvailable, ...usableAvailable];
-  const shuffled = [...available].sort(() => Math.random() - 0.5);
-  const picks = shuffled.slice(0, 2);
+    const available = [...heldAvailable, ...usableAvailable];
+    const shuffled = [...available].sort(() => Math.random() - 0.5);
+    node.lockedItemPicks = shuffled.slice(0, 2);
+    saveRun(); // 🔒 items are now frozen — refreshing reloads the same two
+  }
 
+  const picks = node.lockedItemPicks;
   const el = document.getElementById('item-choices');
   el.innerHTML = '';
   for (const item of picks) {
@@ -1108,10 +1170,11 @@ function doItemNode(node) {
       if (item.usable) {
         state.items.push({ ...item });
         advanceFromNode(state.map, node.id);
+        saveRun();
         showMapScreen();
       } else {
         openItemEquipModal(item, {
-          onComplete: () => { advanceFromNode(state.map, node.id); showMapScreen(); },
+          onComplete: () => { advanceFromNode(state.map, node.id); saveRun(); showMapScreen(); },
         });
       }
     });
@@ -1120,6 +1183,7 @@ function doItemNode(node) {
 
   document.getElementById('btn-skip-item').onclick = () => {
     advanceFromNode(state.map, node.id);
+    saveRun();
     showMapScreen();
   };
 }
@@ -1203,6 +1267,7 @@ function openItemEquipModal(item, { fromBagIdx = -1, fromPokemonIdx = -1, fromPo
       const removed = pokemon.heldItems.splice(slotIdx, 1)[0];
       if (removed) state.items.push(removed);
       modal.remove();
+      saveRun();
       done();
     });
   });
@@ -1224,6 +1289,7 @@ function openItemEquipModal(item, { fromBagIdx = -1, fromPokemonIdx = -1, fromPo
       pokemon.heldItems.push(item);
       if (pokemon.heldItems.length >= 3) { const a = unlockAchievement('the_cellar'); if (a) showAchievementToast(a); }
       modal.remove();
+      saveRun();
       done();
     });
   });
@@ -1238,6 +1304,7 @@ function openItemEquipModal(item, { fromBagIdx = -1, fromPokemonIdx = -1, fromPo
     }
     // fromBagIdx >= 0 means it's already in bag — do nothing
     modal.remove();
+    saveRun();
     done();
   });
 
@@ -1303,6 +1370,7 @@ function openUsableItemModal(item, bagIdx) {
         showMapNotification(`${pokemon.nickname || pokemon.name} was revived!`);
         renderItemBadges(state.items);
         renderTeamBar(state.team);
+        saveRun();
 
       } else if (item.id === 'rare_candy') {
         pokemon.level = Math.min(100, pokemon.level + 3);
@@ -1317,9 +1385,11 @@ function openUsableItemModal(item, bagIdx) {
           ? pokemon.level >= 36
           : (EVOLUTIONS[pokemon.speciesId]?.level <= pokemon.level);
         if (canEvo) await applyEvolution(pokemon);
+        saveRun();
 
       } else if (item.id === 'evo_stone') {
         await applyEvolution(pokemon);
+        saveRun();
       }
     });
   });
@@ -1359,6 +1429,7 @@ async function applyEvolution(pokemon) {
   checkDexAchievements();
   renderItemBadges(state.items);
   renderTeamBar(state.team);
+  saveRun();
 }
 
 function doQCLabNode(node) {
@@ -1389,6 +1460,7 @@ function doQCLabNode(node) {
       showNicknamePrompt(card, defaultName, (nick) => {
         p.nickname = nick || null;
         advanceFromNode(state.map, node.id);
+        saveRun();
         showMapScreen();
         showMapNotification('🧪 Team restored. Brew names updated!');
       });
@@ -1404,6 +1476,7 @@ function doQCLabNode(node) {
   skipBtn.textContent = 'Skip renaming';
   skipBtn.addEventListener('click', () => {
     advanceFromNode(state.map, node.id);
+    saveRun();
     showMapScreen();
     showMapNotification('🧪 Your team was fully restored at the QC Lab!');
   });
@@ -1412,13 +1485,17 @@ function doQCLabNode(node) {
 }
 
 async function doShinyNode(node) {
-  const choices = await getCatchChoices(state.currentMap);
-  const level = getLevelForNode(node);
-  const species = choices[0];
-  if (!species) { advanceFromNode(state.map, node.id); showMapScreen(); return; }
+  // ── Lock the shiny instance on first generation — prevents rerolling species on refresh ──
+  if (!node.lockedShinyInstance) {
+    const choices = await getCatchChoices(state.currentMap);
+    const level = getLevelForNode(node);
+    const species = choices[0];
+    if (!species) { advanceFromNode(state.map, node.id); saveRun(); showMapScreen(); return; }
+    node.lockedShinyInstance = createInstance(species, level, true);
+    saveRun(); // 🔒 freeze the shiny species and level
+  }
 
-  const shiny = createInstance(species, level, true);
-
+  const shiny = node.lockedShinyInstance;
   const shinyCaught = !!(getShinyDex()[shiny.speciesId]);
   showScreen('shiny-screen');
   document.getElementById('shiny-content').innerHTML = `
@@ -1436,6 +1513,7 @@ async function doShinyNode(node) {
       state.team.push(shiny);
       if (state.team.length > state.maxTeamSize) state.maxTeamSize = state.team.length;
       advanceFromNode(state.map, node.id);
+      saveRun();
       showMapScreen();
     } else {
       showSwapScreen(shiny, node);
@@ -1562,10 +1640,12 @@ function showBadgeScreen(leader) {
 }
 
 function showGameOver() {
+  clearRun();
   initGame();
 }
 
 function showWinScreen() {
+  clearRun(); // run complete — wipe save so title screen is clean
   showScreen('win-screen');
   document.getElementById('win-team').innerHTML = state.team.map(p =>
     renderPokemonCard(p, false, false)).join('');
