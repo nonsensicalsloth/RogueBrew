@@ -169,6 +169,33 @@ async function showBreweryNameScreen() {
   if (!container) return;
   container.innerHTML = '';
 
+  // --- SHINY HUNT PATH ---
+  if (state.modifiers && state.modifiers.has('shiny_hunt')) {
+    const header = document.createElement('h2');
+    header.innerText = '✨ Shiny Hunt: Choose Your Shiny Starter!';
+    header.style.cssText = 'text-align:center;width:100%;margin-bottom:20px;';
+    container.appendChild(header);
+
+    const starters = STARTER_IDS.map(id => getSpeciesById(id));
+    for (const species of starters) {
+      if (!species) continue;
+      const inst = createInstance(species, 5, true); // 100% shiny
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = renderPokemonCard(inst, true, false);
+      const card = wrapper.querySelector('.poke-card');
+      if (card) {
+        card.style.cursor = 'pointer';
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        card.addEventListener('click', () => selectStarter(inst));
+        card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') selectStarter(inst); });
+        container.appendChild(card);
+      }
+    }
+    return;
+  }
+  // --- END SHINY HUNT PATH ---
+
   // --- START OF EXPERIMENTAL BATCH PATH ---
   if (state.modifiers && state.modifiers.has('experimental_batch')) {
     // Pick ONE truly random species from the entire game
@@ -272,6 +299,7 @@ function selectStarter(pokemon) {
   if (chosenCard) chosenCard.style.opacity = '1';
   showNicknamePrompt(chosenCard, defaultName, (nick) => {
     pokemon.nickname = nick;
+    pokemon.caughtOnMap = 0; // starter is always map 0
     startMap(0);
     saveRun(); // 🔒 lock in the starter choice immediately
   });
@@ -672,20 +700,166 @@ const BREWERY_EVENTS = [
       });
     },
   },
+
+  // ── FESTIVAL SEASON EVENTS (weight 0 normally — only active with wild_events modifier) ──
+  {
+    id: 'beer_festival',
+    weight: 0,
+    icon: '🎪',
+    title: 'Beer Festival!',
+    flavor: 'The annual fest is in town. Six breweries have taps pouring — your pick.',
+    type: 'beer_festival',
+  },
+  {
+    id: 'collab_brew',
+    weight: 0,
+    icon: '🤝',
+    title: 'Collaboration Brew!',
+    flavor: 'A respected local brewery wants to collaborate. They bring one of their best — free of charge.',
+    type: 'collab_brew',
+  },
+  {
+    id: 'ingredient_windfall',
+    weight: 0,
+    icon: '🌿',
+    title: 'Ingredient Windfall!',
+    flavor: 'A hop supplier massively overshipped your order. Pick any held item already in your bag — you just got a free duplicate.',
+    type: 'ingredient_windfall',
+  },
+  {
+    id: 'high_gravity',
+    weight: 0,
+    icon: '⚗️',
+    title: 'High Gravity Experiment!',
+    flavor: 'You push a brew to imperial strength. Pure gamble — greatness or catastrophe, no in-between.',
+    type: 'pick_pokemon_custom',
+    apply(node, pokemon) {
+      if (Math.random() < 0.5) {
+        // Success: +3 levels and goes shiny
+        pokemon.level = Math.min(pokemon.level + 3, 100);
+        const newMax = calcHp(pokemon.baseStats.hp, pokemon.level);
+        pokemon.currentHp = Math.min(pokemon.currentHp + (newMax - pokemon.maxHp), newMax);
+        pokemon.maxHp = newMax;
+        if (!pokemon.isShiny) {
+          pokemon.isShiny = true;
+          pokemon.spriteUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.speciesId}.png`;
+          markShinyDexCaught(pokemon.speciesId, pokemon.name, pokemon.types, pokemon.spriteUrl, pokemon.brewName);
+          checkDexAchievements();
+        }
+        showEventResult(node, {
+          icon: '✨',
+          title: 'Imperial Success!',
+          lines: [
+            `${pokemon.nickname || pokemon.name} nailed the high-gravity process.`,
+            `Gained 3 levels and went shiny!`,
+          ],
+          okLabel: `Let's go!`,
+        });
+      } else {
+        // Failure: faints immediately
+        pokemon.currentHp = 0;
+        // Nuzlocke: permanently remove if modifier active
+        if (state.modifiers && state.modifiers.has('nuzlocke')) {
+          state.nuzlockePerfect = false;
+          state.team = state.team.filter(p => p !== pokemon);
+          showEventResult(node, {
+            icon: '💥', title: 'Blowout — Gone for Good!',
+            lines: [
+              `${pokemon.nickname || pokemon.name} couldn't handle the pressure.`,
+              `Nuzlocke: permanently released.`,
+            ],
+            badgeClass: 'event-bad',
+          });
+        } else {
+          showEventResult(node, {
+            icon: '💥', title: 'Catastrophic Blowout!',
+            lines: [
+              `${pokemon.nickname || pokemon.name} couldn't handle the pressure.`,
+              `Fainted. Revive it before the next battle.`,
+            ],
+            badgeClass: 'event-bad',
+          });
+        }
+      }
+    },
+  },
+  {
+    id: 'ghost_tap',
+    weight: 0,
+    icon: '👻',
+    title: 'Ghost Tap!',
+    flavor: 'A mysterious handle nobody can explain appeared on your bar overnight. Something poured itself.',
+    type: 'ghost_tap',
+  },
+  {
+    id: 'anniversary_batch',
+    weight: 0,
+    icon: '🎂',
+    title: 'Anniversary Batch!',
+    flavor: "It's your brewery's anniversary. The OG recipes get love — brews you've had since the beginning gain 2 levels.",
+    type: 'announce',
+    apply(node) {
+      // "Since map 1" = on team at the start of map 1, i.e. caught on map 0 (starter + map-0 catches).
+      // We track this via pokemon.caughtOnMap. Starter is always map 0.
+      let boosted = 0;
+      for (const p of state.team) {
+        if ((p.caughtOnMap ?? 0) === 0) {
+          p.level = Math.min(p.level + 2, 100);
+          const newMax = calcHp(p.baseStats.hp, p.level);
+          p.currentHp = Math.min(p.currentHp + (newMax - p.maxHp), newMax);
+          p.maxHp = newMax;
+          boosted++;
+        }
+      }
+      this._boosted = boosted;
+    },
+    result(node) {
+      showEventResult(node, {
+        icon: '🎂',
+        title: 'Anniversary Batch!',
+        lines: this._boosted > 0
+          ? [`${this._boosted} original brew${this._boosted > 1 ? 's' : ''} gained 2 levels!`, `Here's to the classics.`]
+          : [`None of your current brews have been around since day one.`, `Maybe next run.`],
+        okLabel: 'Cheers! 🥂',
+      });
+    },
+  },
 ];
 
+// Festival Season event IDs and their weights when the modifier is active
+const FESTIVAL_EVENT_WEIGHTS = {
+  beer_festival:       8,
+  collab_brew:         4,
+  ingredient_windfall: 6,
+  high_gravity:        5,
+  ghost_tap:           4,
+  anniversary_batch:   5,
+};
+
 function pickBreweryEvent() {
-  const total = BREWERY_EVENTS.reduce((s, e) => s + e.weight, 0);
+  const festivalActive = typeof hasModifier === 'function' && hasModifier('wild_events');
+  const pool = BREWERY_EVENTS.map(ev => {
+    const festWeight = FESTIVAL_EVENT_WEIGHTS[ev.id];
+    if (festWeight !== undefined) return { ...ev, weight: festivalActive ? festWeight : 0 };
+    return ev;
+  }).filter(ev => ev.weight > 0);
+
+  const total = pool.reduce((s, e) => s + e.weight, 0);
   let r = Math.random() * total;
-  for (const ev of BREWERY_EVENTS) {
+  for (const ev of pool) {
     r -= ev.weight;
     if (r <= 0) return ev;
   }
-  return BREWERY_EVENTS[0];
+  return pool[0];
 }
 
 async function doBreweryEventNode(node) {
-  const ev = pickBreweryEvent();
+  // Lock the event choice on first visit so refresh can't reroll it
+  if (!node.lockedEventId) {
+    node.lockedEventId = pickBreweryEvent().id;
+    saveRun();
+  }
+  const ev = BREWERY_EVENTS.find(e => e.id === node.lockedEventId) || BREWERY_EVENTS[0];
 
   if (ev.type === 'item_choice') {
     doItemNode(node);
@@ -694,6 +868,26 @@ async function doBreweryEventNode(node) {
 
   if (ev.type === 'tap_takeover') {
     await doTapTakeoverEvent(node, ev);
+    return;
+  }
+
+  if (ev.type === 'beer_festival') {
+    await doBeerFestivalEvent(node);
+    return;
+  }
+
+  if (ev.type === 'collab_brew') {
+    await doCollabBrewEvent(node);
+    return;
+  }
+
+  if (ev.type === 'ingredient_windfall') {
+    doIngredientWindfallEvent(node);
+    return;
+  }
+
+  if (ev.type === 'ghost_tap') {
+    await doGhostTapEvent(node);
     return;
   }
 
@@ -736,6 +930,21 @@ async function doBreweryEventNode(node) {
       const card = wrapper.querySelector('.poke-card');
       if (ev.risky) card.style.borderColor = '#b8860b';
       card.addEventListener('click', () => ev.apply(node, p));
+      card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') card.click(); });
+      choicesEl.appendChild(card);
+    }
+  }
+
+  // 'pick_pokemon_custom' — same as pick_pokemon but with gold border (high-stakes)
+  if (ev.type === 'pick_pokemon_custom') {
+    for (const p of state.team) {
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = renderPokemonCard(p, true, false);
+      const card = wrapper.querySelector('.poke-card');
+      card.style.borderColor = '#b8860b';
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.addEventListener('click', () => { ev.apply(node, p); saveRun(); });
       card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') card.click(); });
       choicesEl.appendChild(card);
     }
@@ -859,6 +1068,246 @@ function doTapTakeoverReplace(node, species, outIdx) {
   renderTeamBar(state.team, document.getElementById('catch-team-bar'));
 }
 
+// ---- Festival Season Event Handlers ----
+
+async function doBeerFestivalEvent(node) {
+  showScreen('catch-screen');
+  document.querySelector('#catch-screen h2').textContent = '🎪 Beer Festival!';
+  document.querySelector('#catch-screen p').textContent = 'Six taps are pouring — pick your favourite.';
+  document.getElementById('btn-skip-catch').style.display = '';
+  renderTeamBar(state.team, document.getElementById('catch-team-bar'));
+  const choicesEl = document.getElementById('catch-choices');
+  choicesEl.innerHTML = '<div class="loading">Pouring samples…</div>';
+
+  // Lock 6 choices on first visit
+  if (!node.lockedFestivalInstances) {
+    const level = getLevelForNode(node);
+    const pool = await getCatchChoices(state.currentMap);
+    // Pull 6 unique species — repeat pool if needed
+    const extended = [...pool, ...pool].slice(0, 6);
+    node.lockedFestivalInstances = extended.map(sp => createInstance(sp, level));
+    saveRun();
+  }
+
+  choicesEl.innerHTML = '';
+  const dex = getPokedex();
+  for (const inst of node.lockedFestivalInstances) {
+    const caught = !!(dex[inst.speciesId]?.caught);
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = renderPokemonCard(inst, true, false, caught);
+    const card = wrapper.querySelector('.poke-card');
+    card.style.cursor = 'pointer';
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.addEventListener('click', () => catchPokemon(inst, node));
+    card.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') catchPokemon(inst, node); });
+    choicesEl.appendChild(card);
+  }
+
+  document.getElementById('btn-skip-catch').onclick = () => {
+    advanceFromNode(state.map, node.id);
+    saveRun();
+    showMapScreen();
+  };
+}
+
+async function doCollabBrewEvent(node) {
+  // Lock the collab pokemon on first visit
+  if (!node.lockedCollabInstance) {
+    // Pick a random species with BST >= 500, scaled to current map level
+    const highBst = SPECIES_DATA.filter(s => (s.bst || 0) >= 500);
+    const species = highBst[Math.floor(Math.random() * highBst.length)];
+    const [minL, maxL] = MAP_LEVEL_RANGES[state.currentMap];
+    // Give it a level in the upper third of the current map range
+    const level = Math.round(minL + (maxL - minL) * (0.67 + Math.random() * 0.33));
+    node.lockedCollabInstance = createInstance(species, Math.min(level, maxL));
+    saveRun();
+  }
+
+  const pokemon = node.lockedCollabInstance;
+
+  showScreen('event-screen');
+  document.getElementById('event-icon').textContent = '🤝';
+  document.getElementById('event-title').textContent = 'Collaboration Brew!';
+  document.getElementById('event-flavor').textContent =
+    'A respected local brewery wants to collaborate. They bring one of their best — free of charge.';
+  renderTeamBar(state.team, document.getElementById('event-team-bar'));
+
+  const choicesEl = document.getElementById('event-choices');
+  choicesEl.innerHTML = '';
+
+  const dex = getPokedex();
+  const caught = !!(dex[pokemon.speciesId]?.caught);
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = renderPokemonCard(pokemon, false, false, caught);
+  choicesEl.appendChild(wrapper.querySelector('.poke-card'));
+
+  const btnWrap = document.createElement('div');
+  btnWrap.style.cssText = 'width:100%;text-align:center;margin-top:12px;display:flex;gap:10px;justify-content:center;';
+
+  const acceptBtn = document.createElement('button');
+  acceptBtn.className = 'btn-primary';
+  acceptBtn.textContent = `Add ${pokemon.name} to Team!`;
+  acceptBtn.addEventListener('click', () => {
+    const normalUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.speciesId}.png`;
+    markPokedexCaught(pokemon.speciesId, pokemon.name, pokemon.types, normalUrl, pokemon.brewName);
+    checkDexAchievements();
+    const teamCap = (state.modifiers && state.modifiers.has('small_tap_list')) ? 3 : 6;
+    if (state.team.length < teamCap) {
+      state.team.push(pokemon);
+      if (state.team.length > state.maxTeamSize) state.maxTeamSize = state.team.length;
+      advanceFromNode(state.map, node.id);
+      saveRun();
+      showMapScreen();
+      showMapNotification(`🤝 ${pokemon.name} joined the team!`);
+    } else {
+      showSwapScreen(pokemon, node);
+    }
+  });
+
+  const declineBtn = document.createElement('button');
+  declineBtn.className = 'btn-secondary';
+  declineBtn.textContent = 'Decline';
+  declineBtn.addEventListener('click', () => {
+    advanceFromNode(state.map, node.id);
+    saveRun();
+    showMapScreen();
+  });
+
+  btnWrap.appendChild(acceptBtn);
+  btnWrap.appendChild(declineBtn);
+  choicesEl.appendChild(btnWrap);
+}
+
+function doIngredientWindfallEvent(node) {
+  // Get all unique held items currently in the bag (non-usable only — usables can't be duped meaningfully)
+  const bagHeld = state.items.filter(it => !it.usable);
+
+  showScreen('event-screen');
+  document.getElementById('event-icon').textContent = '🌿';
+  document.getElementById('event-title').textContent = 'Ingredient Windfall!';
+  renderTeamBar(state.team, document.getElementById('event-team-bar'));
+  const choicesEl = document.getElementById('event-choices');
+  choicesEl.innerHTML = '';
+
+  if (bagHeld.length === 0) {
+    // No held items in bag — convert to a small item node instead
+    document.getElementById('event-flavor').textContent =
+      'A hop supplier overshipped — but your bag is empty! They left a mystery crate instead.';
+    showEventResult(node, {
+      icon: '🌿',
+      title: 'Nothing to Duplicate!',
+      lines: ['Your bag has no held items to copy.', 'The supplier left a mystery crate — check the next item node.'],
+      okLabel: 'Fair enough.',
+    });
+    return;
+  }
+
+  document.getElementById('event-flavor').textContent =
+    'A hop supplier massively overshipped. Pick any held item from your bag — you just got a free duplicate.';
+
+  for (const item of bagHeld) {
+    const div = document.createElement('div');
+    div.className = 'item-card';
+    div.style.cursor = 'pointer';
+    div.innerHTML = `
+      <div class="item-icon">${itemIconHtml(item, 36)}</div>
+      <div class="item-name">${item.name}</div>
+      <div class="item-desc">${item.desc}</div>
+      <div style="font-size:9px;color:#4fa;margin-top:4px;">Duplicate this item ✓</div>`;
+    div.addEventListener('click', () => {
+      state.items.push({ ...item });
+      saveRun();
+      showEventResult(node, {
+        icon: '🌿',
+        title: 'Windfall!',
+        lines: [`You got a free duplicate of ${item.name}.`, 'The supplier apologised for the mix-up.'],
+        okLabel: 'No complaints here.',
+      });
+    });
+    choicesEl.appendChild(div);
+  }
+}
+
+async function doGhostTapEvent(node) {
+  const teamCap = (state.modifiers && state.modifiers.has('small_tap_list')) ? 3 : 6;
+  const hasSlot = state.team.length < teamCap;
+
+  showScreen('event-screen');
+  document.getElementById('event-icon').textContent = '👻';
+  document.getElementById('event-title').textContent = 'Ghost Tap!';
+  document.getElementById('event-flavor').textContent =
+    'A mysterious handle nobody can explain appeared on your bar overnight. Something poured itself.';
+  renderTeamBar(state.team, document.getElementById('event-team-bar'));
+  const choicesEl = document.getElementById('event-choices');
+  choicesEl.innerHTML = '';
+
+  if (!hasSlot) {
+    showEventResult(node, {
+      icon: '👻',
+      title: 'No Room at the Bar!',
+      lines: ['The ghost tried to join, but your tap list is full.', 'It vanished without a trace.'],
+      okLabel: 'Spooky.',
+    });
+    return;
+  }
+
+  // Lock the ghost pokemon on first visit
+  if (!node.lockedGhostInstance) {
+    // Pick a random Ghost-type species
+    const ghosts = SPECIES_DATA.filter(s => s.types && s.types.some(t =>
+      t.toLowerCase() === 'ghost' || t.toLowerCase() === 'stout' || t.toLowerCase() === 'porter'
+    ));
+    // Fallback to any dark/spooky feeling type if no Ghost types defined
+    const pool = ghosts.length > 0 ? ghosts : SPECIES_DATA.filter(s =>
+      s.types && s.types.some(t => ['Dark', 'Psychic', 'Brett'].includes(t))
+    );
+    const species = pool[Math.floor(Math.random() * pool.length)];
+    const level = getLevelForNode(node);
+    node.lockedGhostInstance = createInstance(species, level, Math.random() < 0.05); // 5% shiny ghost
+    saveRun();
+  }
+
+  const ghost = node.lockedGhostInstance;
+  const dex = getPokedex();
+  const caught = !!(dex[ghost.speciesId]?.caught);
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = renderPokemonCard(ghost, false, false, caught);
+  choicesEl.appendChild(wrapper.querySelector('.poke-card'));
+
+  const btnWrap = document.createElement('div');
+  btnWrap.style.cssText = 'width:100%;text-align:center;margin-top:12px;display:flex;gap:10px;justify-content:center;';
+
+  const takeBtn = document.createElement('button');
+  takeBtn.className = 'btn-primary';
+  takeBtn.textContent = `Let it pour.`;
+  takeBtn.addEventListener('click', () => {
+    const normalUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${ghost.speciesId}.png`;
+    markPokedexCaught(ghost.speciesId, ghost.name, ghost.types, normalUrl, ghost.brewName);
+    if (ghost.isShiny) markShinyDexCaught(ghost.speciesId, ghost.name, ghost.types, ghost.spriteUrl, ghost.brewName);
+    checkDexAchievements();
+    state.team.push(ghost);
+    if (state.team.length > state.maxTeamSize) state.maxTeamSize = state.team.length;
+    advanceFromNode(state.map, node.id);
+    saveRun();
+    showMapScreen();
+    showMapNotification(`👻 ${ghost.name} joined from the ghost tap!`);
+  });
+
+  const passBtn = document.createElement('button');
+  passBtn.className = 'btn-secondary';
+  passBtn.textContent = 'Unplug the tap';
+  passBtn.addEventListener('click', () => {
+    advanceFromNode(state.map, node.id);
+    saveRun();
+    showMapScreen();
+  });
+
+  btnWrap.appendChild(takeBtn);
+  btnWrap.appendChild(passBtn);
+  choicesEl.appendChild(btnWrap);
+}
+
 // ---- Node Handlers ----
 
 // Returns a level scaled to the node's layer (layer 1 = map min, layer 6 = map max).
@@ -976,19 +1425,23 @@ function showEliteTransition(defeatedName, nextIndex) {
 }
 
 async function doCatchNode(node) {
+  const isShinyHunt = !!(state.modifiers && state.modifiers.has('shiny_hunt'));
+
   showScreen('catch-screen');
-  // Always reset heading/skip in case tap takeover ran before us
-  document.querySelector('#catch-screen h2').textContent = '⬟ Brew New Batch!';
-  document.querySelector('#catch-screen p').textContent = 'Choose one Pokemon to add to your team';
+  document.querySelector('#catch-screen h2').textContent = isShinyHunt ? '✨ Shiny Hunt — Brew New Batch!' : '⬟ Brew New Batch!';
+  document.querySelector('#catch-screen p').textContent = isShinyHunt
+    ? 'Only shiny pokemon can be caught this run!'
+    : 'Choose one Pokemon to add to your team';
   document.getElementById('btn-skip-catch').style.display = '';
   renderTeamBar(state.team, document.getElementById('catch-team-bar'));
   const choicesEl = document.getElementById('catch-choices');
   choicesEl.innerHTML = '<div class="loading">Finding Pokemon...</div>';
 
   // ── Locked choices: generate once, store on node, reuse on refresh ──
-  if (!node.lockedCatchInstances) {
-    // 1% chance to redirect to a shiny encounter instead (only roll once)
-    if (Math.random() < 0.01) {
+  if (!node.lockedCatchInstances && !node.lockedShiny) {
+    // Shiny Hunt: 10% redirect to dedicated shiny node; normal: 1%
+    const shinyRedirectChance = isShinyHunt ? 0.10 : 0.01;
+    if (Math.random() < shinyRedirectChance) {
       node.lockedShiny = true;
       saveRun();
       await doShinyNode(node);
@@ -1014,9 +1467,11 @@ async function doCatchNode(node) {
       }
     }
 
-    // Build instances and lock them onto the node
-    node.lockedCatchInstances = choices.map(sp => createInstance(sp, level));
-    saveRun(); // 🔒 choices are now frozen — refreshing reloads the same ones
+    // In shiny_hunt mode each card gets its own 10% shiny roll, locked now
+    node.lockedCatchInstances = choices.map(sp =>
+      createInstance(sp, level, isShinyHunt ? (Math.random() < 0.10) : false)
+    );
+    saveRun(); // 🔒 freeze choices — refreshing reloads the same cards
   } else if (node.lockedShiny) {
     // Was a shiny redirect — honour it on restore
     await doShinyNode(node);
@@ -1028,15 +1483,34 @@ async function doCatchNode(node) {
   const dex = getPokedex();
   for (const inst of instances) {
     const caught = !!(dex[inst.speciesId]?.caught);
+    const canCatch = !isShinyHunt || inst.isShiny;
     const wrapper = document.createElement('div');
     wrapper.innerHTML = renderPokemonCard(inst, true, false, caught);
     const card = wrapper.querySelector('.poke-card');
-    card.style.cursor = 'pointer';
-    card.setAttribute('role', 'button');
-    card.setAttribute('tabindex', '0');
-    card.addEventListener('click', () => catchPokemon(inst, node));
-    card.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') catchPokemon(inst, node); });
+
+    if (canCatch) {
+      card.style.cursor = 'pointer';
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.addEventListener('click', () => catchPokemon(inst, node));
+      card.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') catchPokemon(inst, node); });
+    } else {
+      card.style.opacity = '0.4';
+      card.style.cursor = 'not-allowed';
+      const label = document.createElement('div');
+      label.style.cssText = 'text-align:center;font-size:9px;color:#f88;margin-top:4px;font-family:"Press Start 2P",monospace;';
+      label.textContent = 'Not shiny — cannot catch';
+      card.appendChild(label);
+    }
     choicesEl.appendChild(card);
+  }
+
+  // If shiny hunt and ALL cards are non-shiny, show a helpful message
+  if (isShinyHunt && instances.every(i => !i.isShiny)) {
+    const msg = document.createElement('div');
+    msg.style.cssText = 'text-align:center;color:var(--text-dim);font-size:10px;margin-top:8px;font-family:"Press Start 2P",monospace;line-height:1.8;';
+    msg.textContent = '✨ No shinies this batch. Skip and try the next node.';
+    choicesEl.appendChild(msg);
   }
 
   document.getElementById('btn-skip-catch').onclick = () => {
@@ -1068,6 +1542,7 @@ function catchPokemon(pokemon, node) {
   const defaultName = pokemon.brewName || pokemon.name;
   showNicknamePrompt(chosenCard, defaultName, (nick) => {
     pokemon.nickname = nick;
+    pokemon.caughtOnMap = state.currentMap; // for Anniversary Batch tracking
     const teamCap = (state.modifiers && state.modifiers.has('small_tap_list')) ? 3 : 6;
     if (state.team.length < teamCap) {
       state.team.push(pokemon);
@@ -1718,6 +2193,8 @@ function showWinScreen() {
   if (mods.has('small_tap_list'))      queueAch('small_tap_win',       nextModDelay());
   if (mods.has('speed_run'))           queueAch('speed_run_win',       nextModDelay());
   if (mods.has('limited_release'))     queueAch('limited_release_win', nextModDelay());
+  if (mods.has('shiny_hunt'))          queueAch('shiny_hunt_win',      nextModDelay());
+  if (mods.has('wild_events'))         queueAch('wild_events_win',     nextModDelay());
 
   if (mods.has('nuzlocke')) {
     queueAch('nuzlocke_win', nextModDelay());

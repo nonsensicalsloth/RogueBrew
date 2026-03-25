@@ -2803,16 +2803,17 @@ function openModifiersModal() {
           ${RUN_MODIFIERS.map(m => {
             const on      = activeNow.has(m.id);
             const warned  = warnSet.has(m.id);
+            const locked  = m.requiresBrewlog && !isBrewlogAt150();
             return `
-              <div class="mod-card ${on ? 'mod-on' : ''} ${warned ? 'mod-warn' : ''}"
+              <div class="mod-card ${on ? 'mod-on' : ''} ${warned ? 'mod-warn' : ''} ${locked ? 'mod-locked' : ''}"
                    data-id="${m.id}" role="button" tabindex="0"
-                   title="${m.hint}">
+                   title="${locked ? 'Fill the Brewlog to unlock' : m.hint}">
                 <div class="mod-card-top">
-                  <span class="mod-icon">${m.icon}</span>
-                  <span class="mod-toggle">${on ? 'ON' : 'OFF'}</span>
+                  <span class="mod-icon">${locked ? '🔒' : m.icon}</span>
+                  <span class="mod-toggle">${locked ? 'LOCKED' : (on ? 'ON' : 'OFF')}</span>
                 </div>
                 <div class="mod-name">${m.name}</div>
-                <div class="mod-desc">${m.desc}</div>
+                <div class="mod-desc">${locked ? 'Fill the Brewlog (151 entries) to unlock.' : m.desc}</div>
                 ${warned ? '<div class="mod-conflict-warn">⚠️ Conflicts with another active modifier</div>' : ''}
               </div>`;
           }).join('')}
@@ -2832,7 +2833,9 @@ function openModifiersModal() {
     // Attach toggle listeners
     modal.querySelectorAll('.mod-card').forEach(card => {
       const id = card.dataset.id;
+      const modDef = RUN_MODIFIERS.find(m => m.id === id);
       const toggle = () => {
+        if (modDef && modDef.requiresBrewlog && !isBrewlogAt150()) return; // locked
         const cur = getActiveModifiers();
         if (cur.has(id)) cur.delete(id); else cur.add(id);
         saveActiveModifiers(cur);
