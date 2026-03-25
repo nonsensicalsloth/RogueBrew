@@ -726,6 +726,8 @@ const ACHIEVEMENTS = [
   { id: 'small_tap_win',       name: 'Tight Tap List',         desc: 'Win a run with Small Tap List active (max 3 brews)',                         icon: '🍺' },
   { id: 'speed_run_win',       name: 'Rapid Fermentation',     desc: 'Win a run with Speed Run active',                                            icon: '⚡' },
   { id: 'limited_release_win', name: 'No Choice, No Problem',  desc: 'Win a run with Limited Release active',                                      icon: '🔒' },
+  { id: 'shiny_hunt_win',      name: 'Glitter in the Glass',   desc: 'Win a run with Shiny Hunt active',                                           icon: '✨' },
+  { id: 'wild_events_win',     name: 'Festival Champion',      desc: 'Win a run with Festival Season active',                                      icon: '🎪' },
   { id: 'modifier_stacker',    name: 'Complex Recipe',         desc: 'Win a run with 3 or more modifiers active at once',                          icon: '🧪' },
 ];
 
@@ -892,12 +894,31 @@ const RUN_MODIFIERS = [
     hint: 'Take it or leave it.',
     conflicts: [],
   },
+  {
+    id: 'shiny_hunt',
+    name: 'Shiny Hunt',
+    icon: '✨',
+    desc: 'Shiny rate boosted to 10%. Your starter is guaranteed shiny. Only shiny pokemon can be caught — non-shinies cannot be selected.',
+    hint: 'Unlocks when Hard Mode unlocks (151 brewlog entries).',
+    conflicts: ['experimental_batch'],
+    requiresBrewlog: true,
+  },
+  {
+    id: 'wild_events',
+    name: 'Festival Season',
+    icon: '🎪',
+    desc: 'Unlocks extra random events: Beer Festival (pick from 6 pokemon) and Collaboration Brew (free high-BST pokemon).',
+    hint: 'Unlocks when Hard Mode unlocks (151 brewlog entries).',
+    conflicts: [],
+    requiresBrewlog: true,
+  },
 ];
 
 // conflicts map — which modifier IDs block each other
 // (populated here so it's easy to extend)
-RUN_MODIFIERS.find(m => m.id === 'no_adjuncts').conflicts   = [];   // stacks with everything
-RUN_MODIFIERS.find(m => m.id === 'small_tap_list').conflicts = ['nuzlocke']; // nuzlocke + 3-cap is brutal — warn but allow
+RUN_MODIFIERS.find(m => m.id === 'no_adjuncts').conflicts   = [];
+RUN_MODIFIERS.find(m => m.id === 'small_tap_list').conflicts = ['nuzlocke'];
+RUN_MODIFIERS.find(m => m.id === 'shiny_hunt').conflicts     = ['experimental_batch', 'limited_release'];
 // Note: we handle conflicts as soft warnings, not hard blocks,
 // so players can still combine them if they want the challenge.
 
