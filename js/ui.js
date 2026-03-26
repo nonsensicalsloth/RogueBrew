@@ -2299,6 +2299,106 @@ function showGloomChoice(pokemon) {
   });
 }
 
+// Show Poliwhirl evolution choice — Poliwrath or Politoed
+function showPoliwhirlChoice(pokemon) {
+  return new Promise(resolve => {
+    const overlay   = document.getElementById('eevee-choice-overlay');
+    const choicesEl = document.getElementById('eevee-choices');
+    choicesEl.innerHTML = '';
+
+    const titleEl = document.createElement('div');
+    titleEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:9px;color:#fff;text-align:center;margin-bottom:8px;width:100%;";
+    titleEl.textContent = 'Poliwhirl is evolving! Choose:';
+    choicesEl.appendChild(titleEl);
+
+    const options = [
+      { into: 62,  name: 'Poliwrath', types: ['Lager', 'Barleywine'] },
+      { into: 186, name: 'Politoed',  types: ['Lager'] },
+    ];
+
+    for (const evoData of options) {
+      const spriteUrl = pokemon.isShiny
+        ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${evoData.into}.png`
+        : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${evoData.into}.png`;
+
+      const card = document.createElement('div');
+      card.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;' +
+        'border:2px solid #555;border-radius:8px;padding:12px 16px;background:#1a1a1a;' +
+        'transition:border-color 0.15s,background 0.15s;';
+      card.onmouseenter = () => { card.style.borderColor = '#fff'; card.style.background = '#2a2a2a'; };
+      card.onmouseleave = () => { card.style.borderColor = '#555'; card.style.background = '#1a1a1a'; };
+
+      const img = document.createElement('img');
+      img.src = spriteUrl;
+      img.style.cssText = 'width:72px;height:72px;image-rendering:pixelated;';
+
+      const nameEl = document.createElement('div');
+      nameEl.textContent = evoData.name;
+      nameEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:8px;color:#fff;";
+
+      const typeEl = document.createElement('div');
+      typeEl.textContent = evoData.types.join('/');
+      typeEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:7px;color:#aaa;";
+
+      card.append(img, nameEl, typeEl);
+      card.onclick = () => { overlay.style.display = 'none'; resolve(evoData); };
+      choicesEl.appendChild(card);
+    }
+
+    overlay.style.display = 'flex';
+  });
+}
+
+// Show Slowpoke evolution choice — Slowbro or Slowking
+function showSlowpokeChoice(pokemon) {
+  return new Promise(resolve => {
+    const overlay   = document.getElementById('eevee-choice-overlay');
+    const choicesEl = document.getElementById('eevee-choices');
+    choicesEl.innerHTML = '';
+
+    const titleEl = document.createElement('div');
+    titleEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:9px;color:#fff;text-align:center;margin-bottom:8px;width:100%;";
+    titleEl.textContent = 'Slowpoke is evolving! Choose:';
+    choicesEl.appendChild(titleEl);
+
+    const options = [
+      { into: 80,  name: 'Slowbro',  types: ['Lager', 'Belgian'] },
+      { into: 199, name: 'Slowking', types: ['Lager', 'Belgian'] },
+    ];
+
+    for (const evoData of options) {
+      const spriteUrl = pokemon.isShiny
+        ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${evoData.into}.png`
+        : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${evoData.into}.png`;
+
+      const card = document.createElement('div');
+      card.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;' +
+        'border:2px solid #555;border-radius:8px;padding:12px 16px;background:#1a1a1a;' +
+        'transition:border-color 0.15s,background 0.15s;';
+      card.onmouseenter = () => { card.style.borderColor = '#fff'; card.style.background = '#2a2a2a'; };
+      card.onmouseleave = () => { card.style.borderColor = '#555'; card.style.background = '#1a1a1a'; };
+
+      const img = document.createElement('img');
+      img.src = spriteUrl;
+      img.style.cssText = 'width:72px;height:72px;image-rendering:pixelated;';
+
+      const nameEl = document.createElement('div');
+      nameEl.textContent = evoData.name;
+      nameEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:8px;color:#fff;";
+
+      const typeEl = document.createElement('div');
+      typeEl.textContent = evoData.types.join('/');
+      typeEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:7px;color:#aaa;";
+
+      card.append(img, nameEl, typeEl);
+      card.onclick = () => { overlay.style.display = 'none'; resolve(evoData); };
+      choicesEl.appendChild(card);
+    }
+
+    overlay.style.display = 'flex';
+  });
+}
+
 // Check team for pending evolutions after a won battle and play animations
 async function checkAndEvolveTeam() {
   for (const pokemon of state.team) {
@@ -2306,13 +2406,17 @@ async function checkAndEvolveTeam() {
 
     let evo;
     if (pokemon.speciesId === 133) {
-      // Eevee — show choice at level 36
       if (pokemon.level < 36) continue;
       evo = await showEeveeChoice(pokemon);
     } else if (pokemon.speciesId === 44) {
-      // Gloom — choose Vileplume or Bellossom at level 36
       if (pokemon.level < 36) continue;
       evo = await showGloomChoice(pokemon);
+    } else if (pokemon.speciesId === 61) {
+      if (pokemon.level < 40) continue;
+      evo = await showPoliwhirlChoice(pokemon);
+    } else if (pokemon.speciesId === 79) {
+      if (pokemon.level < 37) continue;
+      evo = await showSlowpokeChoice(pokemon);
     } else {
       evo = EVOLUTIONS[pokemon.speciesId];
       if (!evo || pokemon.level < evo.level) continue;

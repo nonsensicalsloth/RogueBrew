@@ -488,7 +488,7 @@ const EVOLUTIONS = {
   58: { into: 59,  level: 34, name: 'Arcanine' },   // Red stone → lv 34
   // Poliwag
   60: { into: 61,  level: 25, name: 'Poliwhirl' },
-  61: { into: 62,  level: 40, name: 'Poliwrath' },  // lager stone → lv 40
+  61: { into: 62,  level: 40, name: 'Poliwrath' },  // player chooses Poliwrath (62) or Politoed (186) — see applyEvolution
   // Abra / Machop / Bellsprout
   63: { into: 64,  level: 16, name: 'Kadabra' },
   64: { into: 65,  level: 36, name: 'Alakazam' },   // trade → lv 36
@@ -502,7 +502,7 @@ const EVOLUTIONS = {
   75: { into: 76,  level: 40, name: 'Golem' },      // trade → lv 40
   77: { into: 78,  level: 40, name: 'Rapidash' },
   // Slowpoke / Magnemite / Doduo / Seel / Grimer
-  79: { into: 80,  level: 37, name: 'Slowbro' },    // lager stone in some versions → lv 37
+  79: { into: 80,  level: 37, name: 'Slowbro' },    // player chooses Slowbro (80) or Slowking (199) — see applyEvolution
   81: { into: 82,  level: 30, name: 'Magneton' },
   84: { into: 85,  level: 31, name: 'Dodrio' },
   86: { into: 87,  level: 34, name: 'Dewgong' },
@@ -565,15 +565,14 @@ const EVOLUTIONS = {
   // Marill
   183:{ into: 184, level: 18, name: 'Azumarill' },
   // Politoed (alternate Poliwhirl evo — trade+item, lv 40)
-  61: { into: 186, level: 40, name: 'Politoed' },
+  // Politoed (alternate Poliwhirl evo — choice offered alongside Poliwrath in applyEvolution)
   // Hoppip
   187:{ into: 188, level: 18, name: 'Skiploom' },
   188:{ into: 189, level: 27, name: 'Jumpluff' },
   // Wooper / Yanma / Espeon / Umbreon
   194:{ into: 195, level: 20, name: 'Quagsire' },
   // Eevee → Espeon / Umbreon handled in EEVEE_EVOLUTIONS below
-  // Slowking (alternate Slowpoke evo — trade+item, lv 37)
-  79: { into: 199, level: 37, name: 'Slowking' },
+  // Slowking (alternate Slowpoke evo — choice offered alongside Slowbro in applyEvolution)
   // Pineco / Dunsparce chain
   204:{ into: 205, level: 31, name: 'Forretress' },
   // Snubbull

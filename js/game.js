@@ -1886,8 +1886,11 @@ async function applyEvolution(pokemon) {
   if (pokemon.speciesId === 133) {
     evo = await showEeveeChoice(pokemon);
   } else if (pokemon.speciesId === 44) {
-    // Gloom can evolve into Vileplume (45) or Bellossom (182) — let the player choose
     evo = await showGloomChoice(pokemon);
+  } else if (pokemon.speciesId === 61) {
+    evo = await showPoliwhirlChoice(pokemon);
+  } else if (pokemon.speciesId === 79) {
+    evo = await showSlowpokeChoice(pokemon);
   } else {
     evo = EVOLUTIONS[pokemon.speciesId];
     if (!evo) return;
