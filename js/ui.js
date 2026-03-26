@@ -2245,6 +2245,60 @@ function showEeveeChoice(pokemon) {
   });
 }
 
+// Show Gloom evolution choice — Vileplume or Bellossom
+function showGloomChoice(pokemon) {
+  return new Promise(resolve => {
+    const overlay  = document.getElementById('eevee-choice-overlay');
+    const choicesEl = document.getElementById('eevee-choices');
+    choicesEl.innerHTML = '';
+
+    // Inject a title above the choices
+    const titleEl = document.createElement('div');
+    titleEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:9px;color:#fff;text-align:center;margin-bottom:8px;width:100%;";
+    titleEl.textContent = 'Gloom is evolving! Choose:';
+    choicesEl.appendChild(titleEl);
+
+    const options = [
+      { into: 45,  name: 'Vileplume', types: ['Ipa', 'Brett'] },
+      { into: 182, name: 'Bellossom', types: ['Ipa'] },
+    ];
+
+    for (const evoData of options) {
+      const spriteUrl = pokemon.isShiny
+        ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${evoData.into}.png`
+        : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${evoData.into}.png`;
+
+      const card = document.createElement('div');
+      card.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;' +
+        'border:2px solid #555;border-radius:8px;padding:12px 16px;background:#1a1a1a;' +
+        'transition:border-color 0.15s,background 0.15s;';
+      card.onmouseenter = () => { card.style.borderColor = '#fff'; card.style.background = '#2a2a2a'; };
+      card.onmouseleave = () => { card.style.borderColor = '#555'; card.style.background = '#1a1a1a'; };
+
+      const img = document.createElement('img');
+      img.src = spriteUrl;
+      img.style.cssText = 'width:72px;height:72px;image-rendering:pixelated;';
+
+      const nameEl = document.createElement('div');
+      nameEl.textContent = evoData.name;
+      nameEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:8px;color:#fff;";
+
+      const typeEl = document.createElement('div');
+      typeEl.textContent = evoData.types.join('/');
+      typeEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:7px;color:#aaa;";
+
+      card.append(img, nameEl, typeEl);
+      card.onclick = () => {
+        overlay.style.display = 'none';
+        resolve(evoData);
+      };
+      choicesEl.appendChild(card);
+    }
+
+    overlay.style.display = 'flex';
+  });
+}
+
 // Check team for pending evolutions after a won battle and play animations
 async function checkAndEvolveTeam() {
   for (const pokemon of state.team) {
@@ -2255,6 +2309,10 @@ async function checkAndEvolveTeam() {
       // Eevee — show choice at level 36
       if (pokemon.level < 36) continue;
       evo = await showEeveeChoice(pokemon);
+    } else if (pokemon.speciesId === 44) {
+      // Gloom — choose Vileplume or Bellossom at level 36
+      if (pokemon.level < 36) continue;
+      evo = await showGloomChoice(pokemon);
     } else {
       evo = EVOLUTIONS[pokemon.speciesId];
       if (!evo || pokemon.level < evo.level) continue;
@@ -2796,7 +2854,7 @@ function openModifiersModal() {
       <div class="mod-modal-box">
         <div class="mod-modal-header">
           <span>🧪 Run Modifiers</span>
-          <button class="mod-modal-close" onclick="document.getElementById('modifiers-modal').remove()">✕</button>
+          <button class="mod-modal-close" onclick="document.getElementById('modifiers-modal').remove(); if(typeof updateModifierHint==='function') updateModifierHint();">✕</button>
         </div>
         <p class="mod-modal-sub">Select modifiers to stack on your next run. Active selections persist until you change them.</p>
         <div class="mod-grid">
@@ -2847,7 +2905,12 @@ function openModifiersModal() {
   }
 
   render();
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  modal.addEventListener('click', e => {
+    if (e.target === modal) {
+      modal.remove();
+      if (typeof updateModifierHint === 'function') updateModifierHint();
+    }
+  });
   document.body.appendChild(modal);
 }
 
@@ -2855,4 +2918,5 @@ function clearModifiers() {
   saveActiveModifiers(new Set());
   const modal = document.getElementById('modifiers-modal');
   if (modal) { modal.remove(); openModifiersModal(); }
+  if (typeof updateModifierHint === 'function') updateModifierHint();
 }

@@ -475,7 +475,7 @@ const EVOLUTIONS = {
   41: { into: 42,  level: 22, name: 'Golbat' },
   // Ipa
   43: { into: 44,  level: 21, name: 'Gloom' },
-  44: { into: 45,  level: 36, name: 'Vileplume' },  // leaf stone → lv 36
+  44: { into: 45,  level: 36, name: 'Vileplume' },  // player gets to choose between Vileplume (45) and Bellossom (182) — see applyEvolution
   // Parasect / Venomoth
   46: { into: 47,  level: 24, name: 'Parasect' },
   48: { into: 49,  level: 31, name: 'Venomoth' },
@@ -561,8 +561,7 @@ const EVOLUTIONS = {
   177:{ into: 178, level: 25, name: 'Xatu' },
   179:{ into: 180, level: 15, name: 'Flaaffy' },
   180:{ into: 181, level: 30, name: 'Ampharos' },
-  // Bellossom (alternate Gloom evo — stone, treated as lv 36)
-  44: { into: 182, level: 36, name: 'Bellossom' },
+  // Bellossom (alternate Gloom evo — choice offered alongside Vileplume in applyEvolution)
   // Marill
   183:{ into: 184, level: 18, name: 'Azumarill' },
   // Politoed (alternate Poliwhirl evo — trade+item, lv 40)

@@ -51,7 +51,7 @@ function calcDamage(attacker, defender, move, items, defItems = []) {
   }
 
   if (hasItem(items, 'expert_belt') && typeEff >= 1.5) damage = Math.floor(damage * 1.2);
-  if (hasItem(items, 'air_balloon') && moveType.toLowerCase() === 'brown') damage = 0;
+  if (hasItem(defItems, 'air_balloon') && moveType.toLowerCase() === 'brown') damage = 0;
 
   // Crit chance: 6.25% base, +20% with scope_lens or razor_claw
   let critChance = 0.0625;

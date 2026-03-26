@@ -81,6 +81,19 @@ async function initGame() {
   _setupTitleButtons();
 }
 
+function updateModifierHint() {
+  const modHint = document.getElementById('modifiers-hint');
+  if (!modHint) return;
+  const active = getActiveModifiers();
+  if (active.size > 0) {
+    modHint.textContent = `${active.size} modifier${active.size > 1 ? 's' : ''} active`;
+    modHint.style.color = 'var(--accent, #fa0)';
+  } else {
+    modHint.textContent = '';
+    modHint.style.color = '';
+  }
+}
+
 function _setupTitleButtons() {
   const hardBtn  = document.getElementById('btn-hard-run');
   const hardHint = document.getElementById('hard-mode-hint');
@@ -91,9 +104,9 @@ function _setupTitleButtons() {
   } else {
     hardHint.textContent = 'Complete the Brewlog to unlock';
   }
-  hardBtn.addEventListener('click', () => startNewRun(true));
+  // Use onclick to avoid stacking listeners on repeated initGame calls
+  hardBtn.onclick = () => startNewRun(true);
 
-  // Run Modifiers button — locked until first Championship win
   const modBtn  = document.getElementById('btn-modifiers');
   const modHint = document.getElementById('modifiers-hint');
   if (modBtn) {
@@ -101,19 +114,14 @@ function _setupTitleButtons() {
     if (hasWon) {
       modBtn.disabled = false;
       modBtn.textContent = '🧪 Run Modifiers';
-      if (modHint) modHint.textContent = '';
-      // Show active modifier count if any are on
-      const active = getActiveModifiers();
-      if (active.size > 0 && modHint) {
-        modHint.textContent = `${active.size} modifier${active.size > 1 ? 's' : ''} active`;
-        modHint.style.color = 'var(--accent, #fa0)';
-      }
+      updateModifierHint();
     } else {
       modBtn.disabled = true;
       modBtn.textContent = '🔒 Run Modifiers';
       if (modHint) modHint.textContent = 'Beat the Championship to unlock';
     }
-    modBtn.addEventListener('click', () => { openModifiersModal(); });
+    // Use onclick to avoid stacking listeners on repeated initGame calls
+    modBtn.onclick = () => openModifiersModal();
   }
 }
 
@@ -1079,13 +1087,19 @@ async function doBeerFestivalEvent(node) {
   const choicesEl = document.getElementById('catch-choices');
   choicesEl.innerHTML = '<div class="loading">Pouring samples…</div>';
 
-  // Lock 6 choices on first visit
+  // Lock 6 choices on first visit — call twice and deduplicate for genuine variety
   if (!node.lockedFestivalInstances) {
     const level = getLevelForNode(node);
-    const pool = await getCatchChoices(state.currentMap);
-    // Pull 6 unique species — repeat pool if needed
-    const extended = [...pool, ...pool].slice(0, 6);
-    node.lockedFestivalInstances = extended.map(sp => createInstance(sp, level));
+    const pool1 = await getCatchChoices(state.currentMap);
+    const pool2 = await getCatchChoices(state.currentMap);
+    const seen = new Set();
+    const unique = [...pool1, ...pool2].filter(sp => {
+      const id = sp.id ?? sp.speciesId;
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    }).slice(0, 6);
+    node.lockedFestivalInstances = unique.map(sp => createInstance(sp, level));
     saveRun();
   }
 
@@ -1147,7 +1161,7 @@ async function doCollabBrewEvent(node) {
 
   const acceptBtn = document.createElement('button');
   acceptBtn.className = 'btn-primary';
-  acceptBtn.textContent = `Add ${pokemon.name} to Team!`;
+  acceptBtn.textContent = `Add ${pokemon.brewName || pokemon.name} to Team!`;
   acceptBtn.addEventListener('click', () => {
     const normalUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.speciesId}.png`;
     markPokedexCaught(pokemon.speciesId, pokemon.name, pokemon.types, normalUrl, pokemon.brewName);
@@ -1254,17 +1268,13 @@ async function doGhostTapEvent(node) {
 
   // Lock the ghost pokemon on first visit
   if (!node.lockedGhostInstance) {
-    // Pick a random Ghost-type species
-    const ghosts = SPECIES_DATA.filter(s => s.types && s.types.some(t =>
-      t.toLowerCase() === 'ghost' || t.toLowerCase() === 'stout' || t.toLowerCase() === 'porter'
-    ));
-    // Fallback to any dark/spooky feeling type if no Ghost types defined
-    const pool = ghosts.length > 0 ? ghosts : SPECIES_DATA.filter(s =>
-      s.types && s.types.some(t => ['Dark', 'Psychic', 'Brett'].includes(t))
+    // Seltzer = Ghost type, Cascadian = Dark type in this game's type system
+    const pool = SPECIES_DATA.filter(s =>
+      s.types && s.types.some(t => t === 'Seltzer' || t === 'Cascadian')
     );
     const species = pool[Math.floor(Math.random() * pool.length)];
     const level = getLevelForNode(node);
-    node.lockedGhostInstance = createInstance(species, level, Math.random() < 0.05); // 5% shiny ghost
+    node.lockedGhostInstance = createInstance(species, level, Math.random() < 0.05);
     saveRun();
   }
 
@@ -1467,9 +1477,10 @@ async function doCatchNode(node) {
       }
     }
 
-    // In shiny_hunt mode each card gets its own 10% shiny roll, locked now
+    // In shiny_hunt mode each card gets its own 10% shiny roll, locked now.
+    // In normal mode each card gets the standard 1% shiny chance.
     node.lockedCatchInstances = choices.map(sp =>
-      createInstance(sp, level, isShinyHunt ? (Math.random() < 0.10) : false)
+      createInstance(sp, level, isShinyHunt ? (Math.random() < 0.10) : (Math.random() < 0.01))
     );
     saveRun(); // 🔒 freeze choices — refreshing reloads the same cards
   } else if (node.lockedShiny) {
@@ -1874,6 +1885,9 @@ async function applyEvolution(pokemon) {
   let evo;
   if (pokemon.speciesId === 133) {
     evo = await showEeveeChoice(pokemon);
+  } else if (pokemon.speciesId === 44) {
+    // Gloom can evolve into Vileplume (45) or Bellossom (182) — let the player choose
+    evo = await showGloomChoice(pokemon);
   } else {
     evo = EVOLUTIONS[pokemon.speciesId];
     if (!evo) return;
