@@ -701,7 +701,7 @@ const BREWERY_EVENTS = [
     },
   },
 
-  // ── FESTIVAL SEASON EVENTS (weight 0 normally — only active with wild_events modifier) ──
+  // ── WILD EVENTS (weight 0 normally — only active with wild_events modifier) ──
   {
     id: 'beer_festival',
     weight: 0,
@@ -826,7 +826,7 @@ const BREWERY_EVENTS = [
   },
 ];
 
-// Festival Season event IDs and their weights when the modifier is active
+// Wild Events modifier — event IDs and their weights when active
 const FESTIVAL_EVENT_WEIGHTS = {
   beer_festival:       8,
   collab_brew:         4,
@@ -1068,7 +1068,7 @@ function doTapTakeoverReplace(node, species, outIdx) {
   renderTeamBar(state.team, document.getElementById('catch-team-bar'));
 }
 
-// ---- Festival Season Event Handlers ----
+// ---- Wild Events Handlers ----
 
 async function doBeerFestivalEvent(node) {
   showScreen('catch-screen');

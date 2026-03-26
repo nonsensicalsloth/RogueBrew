@@ -727,7 +727,7 @@ const ACHIEVEMENTS = [
   { id: 'speed_run_win',       name: 'Rapid Fermentation',     desc: 'Win a run with Speed Run active',                                            icon: '⚡' },
   { id: 'limited_release_win', name: 'No Choice, No Problem',  desc: 'Win a run with Limited Release active',                                      icon: '🔒' },
   { id: 'shiny_hunt_win',      name: 'Glitter in the Glass',   desc: 'Win a run with Shiny Hunt active',                                           icon: '✨' },
-  { id: 'wild_events_win',     name: 'Festival Champion',      desc: 'Win a run with Festival Season active',                                      icon: '🎪' },
+  { id: 'wild_events_win',     name: 'Wild Brewer',            desc: 'Win a run with Wild Events active',                                          icon: '🎪' },
   { id: 'modifier_stacker',    name: 'Complex Recipe',         desc: 'Win a run with 3 or more modifiers active at once',                          icon: '🧪' },
 ];
 
@@ -905,12 +905,11 @@ const RUN_MODIFIERS = [
   },
   {
     id: 'wild_events',
-    name: 'Festival Season',
+    name: 'Wild Events',
     icon: '🎪',
-    desc: 'Unlocks extra random events: Beer Festival (pick from 6 pokemon) and Collaboration Brew (free high-BST pokemon).',
-    hint: 'Unlocks when Hard Mode unlocks (151 brewlog entries).',
+    desc: 'Adds extra events to the random nodes — Beer Festival, Collaboration Brew, Ghost Tap, and more.',
+    hint: 'Unlocks after your first Championship win.',
     conflicts: [],
-    requiresBrewlog: true,
   },
 ];
 
