@@ -92,20 +92,17 @@ const TANK_LAYOUT = [
     // Cellar far section
     { x: -3, z: 28, r:2.5,  h:5.5,  type:'fv',  label:'FV12' },
     { x: -3, z: 36, r:2.5,  h:5.5,  type:'fv',  label:'FV13' },
-    { x: -3, z: 44, r:2.5,  h:5.5,  type:'fv',  label:'FV14' },
-    { x: -3, z: 52, r:3.25, h:10.0, type:'fv',  label:'FV15' },
-    { x: -3, z: 60, r:3.25, h:10.0, type:'fv',  label:'FV16' },
+    { x: -3, z: 44, r:3.25, h:10.0, type:'fv',  label:'FV15' },
+    { x: -3, z: 52, r:3.25, h:10.0, type:'fv',  label:'FV16' },
 
-    // Brite tanks
-    { x: 15, z: 52, r:3.25, h:4.5, type:'bbt', label:'BBT4' },
-    { x: 15, z: 44, r:3.25, h:4.5, type:'bbt', label:'BBT5' },
-    { x: 15, z: 36, r:3.5,  h:2.5, type:'bbt', label:'BBT6' },
+    // Brite tanks BBT4/BBT5/Centrifuge built separately below with proper geometry
+    // BBT6 removed — replaced by centrifuge
 
     // Large tanks left section
-    { x:-10, z: 28, r:3.25, h:10.0, type:'fv',  label:'FV17' },
-    { x:-10, z: 36, r:3.25, h:10.0, type:'fv',  label:'FV18' },
+    { x:-10, z: 28, r:3.25, h:10.0, type:'bbt', label:'FV17' },
+    { x:-10, z: 36, r:3.25, h:10.0, type:'bbt', label:'FV18' },
     { x:-10, z: 44, r:2.5,  h: 5.5, type:'fv',  label:'FV19' },
-    { x:-10, z: 52, r:3.25, h: 4.5, type:'bbt', label:'BBT1' },
+    // BBT1 built separately below with proper buildBBT geometry
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -160,8 +157,46 @@ function makeDirt(x, y, z, r) {
     const mat  = dirtyMat.clone();
     const mesh = new THREE.Mesh(geo, mat);
     mesh.rotation.x = -Math.PI / 2;
-    mesh.position.set(x, y + 0.005, z);
+    // Always place floor dirt at y=0 (floor surface) to prevent floating
+    mesh.position.set(x, 0.005, z);
     scene.add(mesh);   // dirt is on the scene (not in octree)
+    dirtPatches.push({ mesh, cleaned: false });
+}
+
+// Dirt on the sloped surface of a conical fermenter bottom.
+// Cone: tip at y=0 (world), base radius=tankR at y=coneH.
+// Normal points outward radially AND downward (cone narrows toward tip).
+// cx,cz = tank center, tankR = base radius, coneH = cone height,
+// t = fraction up cone (0=tip,1=base), angle = azimuth radians, dr = patch radius
+function makeDirtCone(cx, cz, tankR, coneH, t, angle, dr) {
+    const geo  = new THREE.CircleGeometry(dr, 8);
+    const mat  = dirtyMat.clone();
+    const mesh = new THREE.Mesh(geo, mat);
+
+    // Surface point at fraction t up the cone, at azimuth angle
+    const surfR = tankR * t;
+    const surfY = coneH * t;
+    const hx = Math.cos(angle);
+    const hz = Math.sin(angle);
+
+    // Outward surface normal: radially outward + downward along slope
+    // slopeLen = length of the slant edge
+    const slopeLen = Math.sqrt(tankR * tankR + coneH * coneH);
+    const nr = coneH / slopeLen;    // outward radial component
+    const ny = -tankR / slopeLen;   // downward component (toward tip)
+
+    const OFFSET = 0.04;
+    mesh.position.set(
+        cx + hx * surfR + hx * nr * OFFSET,
+        surfY + ny * OFFSET,
+        cz + hz * surfR + hz * nr * OFFSET
+    );
+
+    // lookAt in the direction of the outward normal
+    const target = mesh.position.clone().add(new THREE.Vector3(hx * nr, ny, hz * nr));
+    mesh.lookAt(target);
+
+    scene.add(mesh);
     dirtPatches.push({ mesh, cleaned: false });
 }
 
@@ -171,10 +206,12 @@ function makeDirtSide(x, y, z, nx, nz, r) {
     const geo  = new THREE.CircleGeometry(r, 8);
     const mat  = dirtyMat.clone();
     const mesh = new THREE.Mesh(geo, mat);
-    // Orient circle to face outward from the tank surface
-    mesh.lookAt(mesh.position.clone().add(new THREE.Vector3(nx, 0, nz)));
-    // Offset slightly off the surface so it doesn't z-fight
-    mesh.position.set(x + nx * 0.05, y, z + nz * 0.05);
+    // Set position FIRST so lookAt has the correct origin to work from
+    const px = x + nx * 0.05;
+    const pz = z + nz * 0.05;
+    mesh.position.set(px, y, pz);
+    // Now orient circle to face outward from the tank surface
+    mesh.lookAt(px + nx, y, pz + nz);
     scene.add(mesh);
     dirtPatches.push({ mesh, cleaned: false });
 }
@@ -201,10 +238,11 @@ function buildTank(cfg, worldGroup) {
     const g = new THREE.Group();
 
     const CONE_H  = type === 'fv' ? h * 0.40 : 0;
+    const LEG_H   = type === 'fv' ? CONE_H : 1.5;  // BBTs get real legs, FVs use cone height
     const BODY_H  = h;
-    const BODY_BOT = CONE_H;   // cylinder starts right at cone base (y=CONE_H)
+    const BODY_BOT = LEG_H;   // cylinder starts at top of legs/cone
 
-    // ── 4 legs at 90° intervals, spanning y=0 → y=CONE_H ──
+    // ── 4 legs at 90° intervals, spanning y=0 → y=LEG_H ──
     // Legs are positioned at 45° offset so they sit at corners, not sides
     const LEG_SPREAD = r * 0.68;
     for (let i = 0; i < 4; i++) {
@@ -213,11 +251,12 @@ function buildTank(cfg, worldGroup) {
         const lz = Math.sin(angle) * LEG_SPREAD;
 
         // Main leg tube
+        const legVisH = type === 'fv' ? CONE_H : LEG_H;
         const leg = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.09, 0.09, CONE_H, 8),
+            new THREE.CylinderGeometry(0.09, 0.09, legVisH, 8),
             ssDkMat
         );
-        leg.position.set(lx, CONE_H / 2, lz);
+        leg.position.set(lx, legVisH / 2, lz);
         g.add(leg);
 
         // Foot pad at y=0
@@ -228,20 +267,22 @@ function buildTank(cfg, worldGroup) {
         foot.position.set(lx, 0.035, lz);
         g.add(foot);
 
-        // Gusset brace near top of leg
-        const gusset = new THREE.Mesh(
-            new THREE.BoxGeometry(0.07, CONE_H * 0.35, 0.07),
-            ssDkMat
-        );
-        gusset.position.set(lx * 0.6, CONE_H * 0.75, lz * 0.6);
-        g.add(gusset);
+        // Gusset brace — FV only (BBTs have clean legs)
+        if (type === 'fv') {
+            const gusset = new THREE.Mesh(
+                new THREE.BoxGeometry(0.07, CONE_H * 0.35, 0.07),
+                ssDkMat
+            );
+            gusset.position.set(lx * 0.6, CONE_H * 0.75, lz * 0.6);
+            g.add(gusset);
+        }
     }
 
     // Cross-brace — 4 round pipes connecting each adjacent leg pair near the floor
-    if (CONE_H > 0) {
+    // Cross-brace only for FV (cone-bottom) tanks — BBTs have clean open legs
+    if (type === 'fv' && CONE_H > 0) {
         const BRACE_Y = CONE_H * 0.12;
         const PIPE_R  = 0.03;
-        // Legs sit at 45°, 135°, 225°, 315° — connect adjacent pairs
         for (let i = 0; i < 4; i++) {
             const a1 = (i / 4) * Math.PI * 2 + Math.PI / 4;
             const a2 = ((i + 1) / 4) * Math.PI * 2 + Math.PI / 4;
@@ -249,18 +290,16 @@ function buildTank(cfg, worldGroup) {
             const z1 = Math.sin(a1) * LEG_SPREAD;
             const x2 = Math.cos(a2) * LEG_SPREAD;
             const z2 = Math.sin(a2) * LEG_SPREAD;
-            // Midpoint and length
             const mx  = (x1 + x2) / 2;
             const mz  = (z1 + z2) / 2;
             const len = Math.sqrt((x2-x1)**2 + (z2-z1)**2);
-            // Angle in XZ plane
             const ang = Math.atan2(z2 - z1, x2 - x1);
             const pipe = new THREE.Mesh(
                 new THREE.CylinderGeometry(PIPE_R, PIPE_R, len, 8),
                 ssDkMat
             );
-            pipe.rotation.z = Math.PI / 2;  // lay cylinder on its side
-            pipe.rotation.y = -ang;          // rotate in XZ plane to face next leg
+            pipe.rotation.z = Math.PI / 2;
+            pipe.rotation.y = -ang;
             pipe.position.set(mx, BRACE_Y, mz);
             g.add(pipe);
         }
@@ -273,15 +312,17 @@ function buildTank(cfg, worldGroup) {
             coneMat
         );
         cone.position.y = CONE_H / 2;   // center between tip (0) and base (CONE_H)
+        cone.userData.sprayable = true;
         g.add(cone);
     } else {
         // BBT: inverted dome at base
         const bot = new THREE.Mesh(
-            new THREE.SphereGeometry(r, 20, 10, 0, Math.PI*2, Math.PI/2, Math.PI/2),
+            new THREE.SphereGeometry(r, 20, 10, 0, Math.PI*2, Math.PI/2, Math.PI/6),
             ssMat
         );
         bot.rotation.x = Math.PI;
         bot.position.y = BODY_BOT;
+        bot.userData.sprayable = true;
         g.add(bot);
     }
 
@@ -291,6 +332,7 @@ function buildTank(cfg, worldGroup) {
         ssMat
     );
     body.position.y = BODY_BOT + BODY_H / 2;
+    body.userData.sprayable = true;
     g.add(body);
 
     // ── Domed top — shallow tapered cap flush with cylinder rim ──
@@ -300,6 +342,7 @@ function buildTank(cfg, worldGroup) {
         ssMat
     );
     dome.position.y = BODY_BOT + BODY_H + DOME_H / 2;
+    dome.userData.sprayable = true;
     g.add(dome);
 
     // ── Details ──
@@ -310,14 +353,265 @@ function buildTank(cfg, worldGroup) {
     g.position.set(x, 0, z);
     scene.add(g);
 
-    // Collision proxy box for octree
-    const totalH = BODY_BOT + BODY_H + r * 0.5;
+    // Collision proxy cylinder for octree — matches actual tank footprint much better than a box
+    // Height covers cone tip (y=0) through top of dome
+    const totalH = BODY_BOT + BODY_H + DOME_H;
     const proxy  = new THREE.Mesh(
-        new THREE.BoxGeometry(r * 2, totalH, r * 2),
+        new THREE.CylinderGeometry(r, r, totalH, 12),
         new THREE.MeshStandardMaterial()
     );
     proxy.visible = false;
     proxy.position.set(x, totalH / 2, z);
+    worldGroup.add(proxy);
+
+    return g;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  BRITE TANK BUILDER
+//  Real BBT shape: tall cylindrical legs, full-sphere domed top & bottom,
+//  cylindrical body, large circular manway on the front face.
+//  legH = height of legs from floor to tank bottom dome base
+// ─────────────────────────────────────────────────────────────
+function buildBBT(x, z, r, bodyH, legH, worldGroup) {
+    const g = new THREE.Group();
+    const LEG_SPREAD = r * 0.72;
+    const LEG_R      = 0.07;
+    const PIPE_R     = 0.03;
+
+    // ── 4 tall legs with ONE cross-brace near the bottom ──
+    for (let i = 0; i < 4; i++) {
+        const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
+        const lx = Math.cos(angle) * LEG_SPREAD;
+        const lz = Math.sin(angle) * LEG_SPREAD;
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(LEG_R, LEG_R, legH, 8), ssDkMat);
+        leg.position.set(lx, legH / 2, lz);
+        g.add(leg);
+        const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.06, 8), ssDkMat);
+        foot.position.set(lx, 0.03, lz);
+        g.add(foot);
+    }
+
+    // Single cross-brace ring low on the legs
+    const BRACE_Y = legH * 0.55;  // mid-leg
+    for (let i = 0; i < 4; i++) {
+        const a1 = (i / 4) * Math.PI * 2 + Math.PI / 4;
+        const a2 = ((i + 1) / 4) * Math.PI * 2 + Math.PI / 4;
+        const x1 = Math.cos(a1) * LEG_SPREAD, z1 = Math.sin(a1) * LEG_SPREAD;
+        const x2 = Math.cos(a2) * LEG_SPREAD, z2 = Math.sin(a2) * LEG_SPREAD;
+        const len = Math.sqrt((x2-x1)**2 + (z2-z1)**2);
+        const ang = Math.atan2(z2-z1, x2-x1);
+        const pipe = new THREE.Mesh(new THREE.CylinderGeometry(PIPE_R, PIPE_R, len, 8), ssDkMat);
+        pipe.rotation.z = Math.PI / 2;
+        pipe.rotation.y = -ang;
+        pipe.position.set((x1+x2)/2, BRACE_Y, (z1+z2)/2);
+        g.add(pipe);
+    }
+
+    // ── Bottom dome: SphereGeometry arc from equator (PI/2) down 90° (PI/2 sweep)
+    //    This creates a downward-facing half-bowl. Its flat rim is at the equator (y=0 of sphere),
+    //    its lowest point is r below. We position it so the flat rim = legH, dome hangs down.
+    //    Then the cylinder starts at legH (same as dome rim) and goes UP — no gap. ──
+    const BOT_PHI   = Math.PI / 2;   // how deep the bottom dome is (90° = hemisphere)
+    const BOT_DOME_DROP = r * Math.cos(0) - r * Math.cos(BOT_PHI); // = r (full hemisphere drop)
+    // Use a shallower bowl: phiLength = PI/3 so dome drops r*sin(PI/3)*0.5 ≈ r*0.5
+    const BOT_SWEEP = Math.PI / 3;
+    const botDome = new THREE.Mesh(
+        new THREE.SphereGeometry(r, 24, 12, 0, Math.PI * 2, Math.PI / 2, BOT_SWEEP),
+        ssMat
+    );
+    botDome.rotation.x = Math.PI;              // flip: open face up, dome hangs down
+    botDome.position.y = legH;                 // flat rim sits exactly at top of legs
+    botDome.userData.sprayable = true;
+    g.add(botDome);
+
+    // ── Cylinder: starts at legH (flush with dome rim), goes up ──
+    const BODY_BOT = legH;
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(r, r, bodyH, 24), ssMat);
+    body.position.y = BODY_BOT + bodyH / 2;
+    body.userData.sprayable = true;
+    g.add(body);
+
+    // ── Top dome: use a hemisphere (phiLength=PI/2) but scaled vertically to be shallow.
+    // A full hemisphere has its equator at the sphere center with radius=r — perfect rim fit.
+    // We squash it vertically using scale.y to control how tall it looks.
+    // phiStart=0 (north pole) phiLength=PI/2 (down to equator) — rim radius = r * sin(PI/2) = r. ✓
+    const TOP_SWEEP = Math.PI / 2;
+    const DOME_SQUASH = 0.45;   // 0.45 = dome height is 45% of r, looks like photo
+    const topDome = new THREE.Mesh(
+        new THREE.SphereGeometry(r, 24, 12, 0, Math.PI * 2, 0, TOP_SWEEP),
+        ssMat
+    );
+    topDome.scale.y = DOME_SQUASH;
+    topDome.position.y = BODY_BOT + bodyH;    // equator of sphere = top of cylinder: perfect fit
+    topDome.userData.sprayable = true;
+    g.add(topDome);
+
+    // ── Manway — flush circular cover on cylinder wall (no protruding torus) ──
+    const MW_Y    = BODY_BOT + bodyH * 0.42;
+    const MW_R    = r * 0.12;
+    // Flat disc flush with the surface
+    const manDisc = new THREE.Mesh(
+        new THREE.CircleGeometry(MW_R, 16),
+        new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 0.9, roughness: 0.15 })
+    );
+    manDisc.rotation.y = -Math.PI / 2;
+    manDisc.position.set(r + 0.005, MW_Y, 0);
+    g.add(manDisc);
+
+    // ── Vent on top ──
+    const topCapH = r * DOME_SQUASH;   // actual rendered height of the squashed dome
+    const vent = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.3, 8), ssDkMat);
+    vent.position.y = BODY_BOT + bodyH + topCapH + 0.15;
+    g.add(vent);
+
+    g.position.set(x, 0, z);
+    scene.add(g);
+
+    // Collision proxy
+    const totalH = legH + bodyH + topCapH + 0.15;
+    const proxy = new THREE.Mesh(
+        new THREE.CylinderGeometry(r, r, totalH, 12),
+        new THREE.MeshStandardMaterial()
+    );
+    proxy.visible = false;
+    proxy.position.set(x, totalH / 2, z);
+    worldGroup.add(proxy);
+
+    return g;
+}
+
+function buildCentrifuge(x, z, worldGroup) {
+    const g = new THREE.Group();
+
+    // Skid: long axis in Z (N-S), 3.2 wide (X) x 5.5 deep (Z)
+    const SKID_W = 3.2, SKID_D = 5.5, SKID_T = 0.15;
+    const SKID_LEG = 0.25;
+
+    // Outer rails (Z direction)
+    for (const fx of [-SKID_W/2 + 0.07, SKID_W/2 - 0.07]) {
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.10, SKID_T, SKID_D), ssDkMat);
+        rail.position.set(fx, SKID_LEG + SKID_T/2, 0);
+        g.add(rail);
+    }
+    // Cross members (X direction)
+    for (const fz of [-SKID_D/2+0.07, -SKID_D/4, 0, SKID_D/4, SKID_D/2-0.07]) {
+        const xr = new THREE.Mesh(new THREE.BoxGeometry(SKID_W, SKID_T, 0.10), ssDkMat);
+        xr.position.set(0, SKID_LEG + SKID_T/2, fz);
+        g.add(xr);
+    }
+    // 8 adjustable feet
+    for (const [fx, fz] of [
+        [-SKID_W/2+0.18, -SKID_D/2+0.18],[SKID_W/2-0.18, -SKID_D/2+0.18],
+        [-SKID_W/2+0.18,  SKID_D/4     ],[SKID_W/2-0.18,  SKID_D/4     ],
+        [-SKID_W/2+0.18,  SKID_D/2-0.18],[SKID_W/2-0.18,  SKID_D/2-0.18],
+        [-SKID_W/2+0.18, -SKID_D/4     ],[SKID_W/2-0.18, -SKID_D/4     ],
+    ]) {
+        const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.13, SKID_LEG, 10), ssDkMat);
+        foot.position.set(fx, SKID_LEG/2, fz);
+        g.add(foot);
+    }
+
+    const BASE_Y = SKID_LEG + SKID_T;
+
+    // ── Separator bowl — south half of skid, MUCH larger ──
+    // Wide flat disc housing — dominant visual element
+    const BOWL_R = 1.80, BOWL_H = 0.70;
+    const BOWL_Z = -SKID_D/2 + 1.6;
+    const BOWL_Y = BASE_Y + 0.55;    // raised up on a short pedestal
+
+    // Pedestal under bowl
+    const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.55, 0.55, 16), ssDkMat);
+    ped.position.set(0, BASE_Y + 0.275, BOWL_Z);
+    g.add(ped);
+
+    // Bowl disc housing
+    const bowl = new THREE.Mesh(new THREE.CylinderGeometry(BOWL_R, BOWL_R*1.04, BOWL_H, 28), ssMat);
+    bowl.userData.sprayable = true;
+    bowl.position.set(0, BOWL_Y + BOWL_H/2, BOWL_Z);
+    g.add(bowl);
+
+    // Cone spinner on top — wide and substantial
+    const CONE_BASE = BOWL_R * 0.80, CONE_H = 1.10;
+    const sepCone = new THREE.Mesh(new THREE.CylinderGeometry(0.06, CONE_BASE, CONE_H, 24), ssMat);
+    sepCone.position.set(0, BOWL_Y + BOWL_H + CONE_H/2, BOWL_Z);
+    g.add(sepCone);
+
+    // Cylindrical collar at base of cone
+    const collar = new THREE.Mesh(new THREE.CylinderGeometry(CONE_BASE, CONE_BASE*1.05, 0.14, 24), ssMat);
+    collar.position.set(0, BOWL_Y + BOWL_H + 0.07, BOWL_Z);
+    g.add(collar);
+
+    // Motor block behind bowl
+    const motor = new THREE.Mesh(new THREE.BoxGeometry(0.80, 0.75, 0.70),
+        new THREE.MeshStandardMaterial({ color: 0x1a2a3a, roughness: 0.7 }));
+    motor.position.set(0.9, BASE_Y + 0.38, BOWL_Z);
+    g.add(motor);
+
+    // ── Piping cluster — middle of skid ──
+    const pipeZ = 0.2;
+    const pipeY = BASE_Y + 0.75;
+    const manifold = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, SKID_D*0.45, 8), ssDkMat);
+    manifold.rotation.x = Math.PI/2;
+    manifold.position.set(-0.4, pipeY, pipeZ);
+    g.add(manifold);
+    const riser = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.5, 8), ssDkMat);
+    riser.position.set(-0.4, pipeY + 0.75, pipeZ + 0.3);
+    g.add(riser);
+    for (const [mz, my] of [[pipeZ-0.4, pipeY-0.1],[pipeZ+0.4, pipeY-0.05]]) {
+        const meter = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.42, 0.28),
+            new THREE.MeshStandardMaterial({ color: 0x224488, roughness: 0.5 }));
+        meter.position.set(0.3, my, mz);
+        g.add(meter);
+    }
+
+    // ── Control cabinet — north end of skid, facing -X (west, away from BBTs) ──
+    const CAB_W = 0.55, CAB_D = 1.20, CAB_H = 2.40;
+    const CAB_Z = SKID_D/2 - CAB_D/2 - 0.06;
+    const cab = new THREE.Mesh(new THREE.BoxGeometry(CAB_W, CAB_H, CAB_D), ssMat);
+    cab.userData.sprayable = true;
+    cab.position.set(0, BASE_Y + CAB_H/2, CAB_Z);
+    g.add(cab);
+
+    // Front face = -X side (facing west)
+    const cabFrontX = -CAB_W/2;
+
+    // Touchscreen on -X face
+    const screen = new THREE.Mesh(new THREE.BoxGeometry(0.02, CAB_H*0.15, CAB_D*0.38),
+        new THREE.MeshStandardMaterial({ color: 0x44aacc, emissive: 0x112233, roughness: 0.2 }));
+    screen.position.set(cabFrontX - 0.01, BASE_Y + CAB_H*0.73, CAB_Z);
+    g.add(screen);
+
+    // Yellow e-stop
+    const estop = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.06, 12),
+        new THREE.MeshStandardMaterial({ color: 0xffaa00, roughness: 0.3 }));
+    estop.rotation.z = Math.PI/2;
+    estop.position.set(cabFrontX - 0.04, BASE_Y + CAB_H*0.58, CAB_Z + CAB_D*0.28);
+    g.add(estop);
+
+    // Vent louvre strip
+    const louvre = new THREE.Mesh(new THREE.BoxGeometry(0.03, CAB_H*0.13, CAB_D*0.65),
+        new THREE.MeshStandardMaterial({ color: 0x777777, roughness: 0.8 }));
+    louvre.position.set(cabFrontX - 0.015, BASE_Y + CAB_H*0.27, CAB_Z);
+    g.add(louvre);
+
+    // Vertical seam
+    const seam = new THREE.Mesh(new THREE.BoxGeometry(0.02, CAB_H*0.75, 0.02),
+        new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.9 }));
+    seam.position.set(cabFrontX - 0.01, BASE_Y + CAB_H*0.42, CAB_Z);
+    g.add(seam);
+
+    g.position.set(x, 0, z);
+    scene.add(g);
+
+    // Collision proxy
+    const totalH = BASE_Y + CAB_H;
+    const proxy = new THREE.Mesh(
+        new THREE.BoxGeometry(SKID_W + 0.1, totalH, SKID_D + 0.1),
+        new THREE.MeshStandardMaterial()
+    );
+    proxy.visible = false;
+    proxy.position.set(x, totalH/2, z);
     worldGroup.add(proxy);
 
     return g;
@@ -330,10 +624,10 @@ const worldGroup = new THREE.Group();
 
 // Floor
 const floor = new THREE.Mesh(
-    new THREE.BoxGeometry(120, 1, 200),
+    new THREE.BoxGeometry(92, 1, 145),
     floorMat
 );
-floor.position.set(-7.5, -0.5, 0);
+floor.position.set(-25, -0.5, 29);   // x: -70 to +22, z: -43 to +101
 floor.receiveShadow = true;
 worldGroup.add(floor);
 
@@ -343,13 +637,22 @@ TANK_LAYOUT.forEach(cfg => {
     tankGroups.push(buildTank(cfg, worldGroup));
 });
 
+// ── West wall BBTs + centrifuge (built with dedicated functions) ──
+// Looking at real photo: centrifuge left (south), BBT4 middle, BBT5 right (north)
+// All along x=15 (west wall), centrifuge at z=36, BBT4 at z=44, BBT5 at z=52
+// legH=1.4 matches the tall skinny legs visible in the photo
+tankGroups.push(buildBBT(-10, 52, 2.4, 3.2, 1.4, worldGroup));  // BBT1 — smaller brite tank
+tankGroups.push(buildBBT(15, 44, 2.4, 3.8, 1.4, worldGroup));   // BBT4
+tankGroups.push(buildBBT(15, 52, 2.4, 3.8, 1.4, worldGroup));   // BBT5
+buildCentrifuge(14, 36, worldGroup);                              // centrifuge skid
+
 // Dirt patches scattered around tanks
 [
     [-8,3],[-8,-3],[0,0],[-15,5],[-15,-5],
     [5,15],[-5,15],[0,25],[-8,30],[3,40],
-    [15,38],[20,32],[-12,-2],[-20,-5],[8,8],
+    [-12,-2],[-20,-5],[8,8],
     [-3,-12],[10,-8],[-28,-15],[-26,-8],
-    [-5,52],[10,50],[-12,40],
+    [-12,40],
 ].forEach(([dx,dz]) => makeDirt(dx, 0, dz, 0.4 + Math.random() * 0.7));
 
 // Side dirt on fermenter bodies
@@ -372,19 +675,35 @@ const SIDE_DIRT = [
     { x: -3, z:  7, r:2.5,  nx:1,  nz:0,  y:4.4, dr:0.4 },
     { x: -3, z: 28, r:2.5,  nx:1,  nz:0,  y:4.7, dr:0.4 },
     { x: -3, z: 36, r:2.5,  nx:-1, nz:0,  y:4.3, dr:0.35 },
-    { x: -3, z: 44, r:2.5,  nx:1,  nz:0,  y:5.0, dr:0.5 },
-    { x: -3, z: 52, r:3.25, nx:1,  nz:0,  y:5.3, dr:0.55 },
-    { x: -3, z: 60, r:3.25, nx:-1, nz:0,  y:4.5, dr:0.45 },
-    { x: 15, z: 52, r:3.25, nx:-1, nz:0,  y:4.3, dr:0.5 },
-    { x: 15, z: 44, r:3.25, nx:-1, nz:0,  y:4.7, dr:0.4 },
-    { x: 15, z: 36, r:3.5,  nx:-1, nz:0,  y:4.0, dr:0.45 },
+    { x: -3, z: 44, r:3.25, nx:1,  nz:0,  y:5.3, dr:0.55 },
+    { x: -3, z: 52, r:3.25, nx:-1, nz:0,  y:4.5, dr:0.45 },
+    // BBT4/BBT5 side dirt removed — tanks rebuilt with dedicated builder
+    // x:15 z:36 side dirt removed — BBT6 replaced by centrifuge skid
     { x:-10, z: 28, r:3.25, nx:1,  nz:0,  y:5.0, dr:0.5 },
     { x:-10, z: 36, r:3.25, nx:0,  nz:-1, y:4.5, dr:0.4 },
     { x:-10, z: 44, r:2.5,  nx:1,  nz:0,  y:4.3, dr:0.35 },
-    { x:-10, z: 52, r:3.25, nx:0,  nz:1,  y:4.7, dr:0.45 },
 ];
 SIDE_DIRT.forEach(({ x, z, r, nx, nz, y, dr }) => {
     makeDirtSide(x + nx * r, y, z + nz * r, nx, nz, dr);
+});
+
+// Dirt on cone surfaces — properly follows the sloped cone geometry
+// [cx, cz, tankR, coneH, t (0=tip,1=base), angle_rad, patchRadius]
+const CONE_DIRT = [
+    { cx:-25, cz: -8, r:3.25, coneH:4.0, t:0.55, angle: 0.3,  dr:0.35 },
+    { cx:-25, cz: -8, r:3.25, coneH:4.0, t:0.70, angle: 2.0,  dr:0.3  },
+    { cx:-25, cz:  0, r:3.25, coneH:4.0, t:0.60, angle: 1.1,  dr:0.4  },
+    { cx:-25, cz:  8, r:3.25, coneH:4.0, t:0.65, angle: 4.5,  dr:0.35 },
+    { cx:-10, cz: -7, r:2.5,  coneH:2.2, t:0.60, angle: 0.8,  dr:0.3  },
+    { cx:-10, cz:  0, r:2.5,  coneH:2.2, t:0.70, angle: 3.3,  dr:0.35 },
+    { cx:-10, cz:  7, r:2.5,  coneH:2.2, t:0.55, angle: 1.6,  dr:0.3  },
+    { cx: -3, cz: -7, r:2.5,  coneH:2.2, t:0.65, angle: 5.1,  dr:0.3  },
+    { cx: -3, cz:  0, r:2.5,  coneH:2.2, t:0.60, angle: 2.4,  dr:0.35 },
+    { cx: -3, cz: 44, r:3.25, coneH:4.0, t:0.58, angle: 0.6,  dr:0.4  },
+    { cx: -3, cz: 52, r:3.25, coneH:4.0, t:0.68, angle: 3.8,  dr:0.35 },
+];
+CONE_DIRT.forEach(({ cx, cz, r, coneH, t, angle, dr }) => {
+    makeDirtCone(cx, cz, r, coneH, t, angle, dr);
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -759,34 +1078,128 @@ BREW_TANKS.forEach(cfg => {
 const CEIL_Y   = 22;
 const CEIL_MAT = new THREE.MeshStandardMaterial({ color: 0xd0d0d0, roughness: 0.9 });
 const BEAM_MAT = new THREE.MeshStandardMaterial({ color: 0x8b2020, roughness: 0.7 });  // dark red steel
-const CEIL_W   = 120, CEIL_D = 200;
+const CEIL_W   = 92,  CEIL_D = 145;
 
 // Main ceiling slab
 const ceiling = new THREE.Mesh(new THREE.BoxGeometry(CEIL_W, 0.4, CEIL_D), CEIL_MAT);
-ceiling.position.set(-7.5, CEIL_Y + 0.2, 50);
+ceiling.position.set(-25, CEIL_Y + 0.2, 29);
 scene.add(ceiling);
 
 // Puffy insulation bays between beams (white/light grey panels)
-const insulMat = new THREE.MeshStandardMaterial({ color: 0xe8e8e8, roughness: 1.0 });
-for (let bz = -80; bz < 160; bz += 10) {
-    for (let bx = -55; bx < 50; bx += 10) {
-        const panel = new THREE.Mesh(new THREE.BoxGeometry(9.4, 0.5, 9.4), insulMat);
-        panel.position.set(bx + 5, CEIL_Y - 0.35, bz + 5);
+const insulMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.6, roughness: 1.0 });
+// Insulation panels fill every bay between beams across full ceiling width and length
+for (let bz = -40; bz < 100; bz += 10) {
+    for (let bx = -70; bx < 20; bx += 20) {
+        const panel = new THREE.Mesh(new THREE.BoxGeometry(19.4, 0.5, 9.4), insulMat);
+        panel.position.set(bx + 10, CEIL_Y - 0.26, bz + 5);
         scene.add(panel);
     }
 }
 
 // Structural beams along X axis (run east-west across the building)
-for (let bz = -80; bz < 160; bz += 10) {
+for (let bz = -40; bz < 100; bz += 10) {
     const beam = new THREE.Mesh(new THREE.BoxGeometry(CEIL_W, 0.6, 0.4), BEAM_MAT);
-    beam.position.set(-7.5, CEIL_Y - 0.9, bz);
+    beam.position.set(-25, CEIL_Y - 0.9, bz);
     scene.add(beam);
 }
-// Structural beams along Z axis (run north-south along the building)
-for (let bx = -50; bx <= 40; bx += 10) {
+// Structural beams along Z axis (run north-south) — every 20 units, x=-70 to +20
+for (let bx = -70; bx <= 20; bx += 20) {
     const beam = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.6, CEIL_D), BEAM_MAT);
-    beam.position.set(bx, CEIL_Y - 0.9, 50);
+    beam.position.set(bx, CEIL_Y - 0.9, 29);
     scene.add(beam);
+}
+
+// ── SKYLIGHTS — explicit 4 columns x 4 rows = 16 total ──
+// Each panel is long in X (east-west across building), narrow in Z, flush with ceiling.
+{
+    const skylightMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        emissive: 0xfff8ee,
+        emissiveIntensity: 8.0,
+        roughness: 1.0
+    });
+    // N-S beams at x: -60,-40,-20,0,+20,+40,+60  → bay midpoints: -50,-30,-10,+10,+30,+50
+    // E-W beams at z every 10                      → bay midpoints: z+5 (5,15,25,35...)
+    // Pick 3 X midpoints inside building (x=-67.5 to +52.5), 3 Z midpoints along floor
+    const SL_X = [-60, -20, 0];    // midpoints between N-S beams (at -70,-50,-30,-10,+10)
+    const SL_Z = [15, 45, 75];     // midpoints between E-W beams (every 10 in Z)
+    const SL_W =  2.5;             // narrow in X (fits inside 20-unit N-S bay)
+    const SL_D =  7.5;             // fits between E-W beams spaced 10 apart
+
+    for (const sx of SL_X) {
+        for (const sz of SL_Z) {
+            const panel = new THREE.Mesh(
+                new THREE.BoxGeometry(SL_W, 0.3, SL_D),
+                skylightMat
+            );
+            panel.position.set(sx, CEIL_Y - 0.8, sz);
+            scene.add(panel);
+
+            const sky = new THREE.PointLight(0xfff8ee, 1.4, 55);
+            sky.position.set(sx, CEIL_Y - 1.5, sz);
+            scene.add(sky);
+        }
+    }
+}
+
+// ── WALL WINDOWS ──
+// Small square windows high up on the north wall (z=100) and west wall (x=20).
+// Match the photo: ~1m square, evenly spaced, about 3m below the ceiling (y~19).
+{
+    const glassMat = new THREE.MeshStandardMaterial({
+        color: 0xaaccee,
+        emissive: 0x88bbdd,
+        emissiveIntensity: 1.2,
+        transparent: true,
+        opacity: 0.85,
+        roughness: 0.1
+    });
+    const frameMat2 = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.6 });
+    const WIN_SIZE  = 2.2;   // square window size
+    const WIN_Y     = CEIL_Y - 3.2;   // high up near ceiling
+    const FRAME_T   = 0.08;
+
+    function addWindow(wx, wy, wz, facingZ) {
+        // Glass pane
+        const glass = new THREE.Mesh(
+            facingZ ? new THREE.BoxGeometry(WIN_SIZE, WIN_SIZE, 0.06)
+                    : new THREE.BoxGeometry(0.06, WIN_SIZE, WIN_SIZE),
+            glassMat
+        );
+        glass.position.set(wx, wy, wz);
+        scene.add(glass);
+        // Frame — 4 thin bars around the glass
+        const frameGeo = facingZ
+            ? [[WIN_SIZE + FRAME_T*2, FRAME_T, FRAME_T*2, 0,  WIN_SIZE/2+FRAME_T/2, 0],
+               [WIN_SIZE + FRAME_T*2, FRAME_T, FRAME_T*2, 0, -WIN_SIZE/2-FRAME_T/2, 0],
+               [FRAME_T, WIN_SIZE, FRAME_T*2, -WIN_SIZE/2-FRAME_T/2, 0, 0],
+               [FRAME_T, WIN_SIZE, FRAME_T*2,  WIN_SIZE/2+FRAME_T/2, 0, 0]]
+            : [[FRAME_T*2, FRAME_T, WIN_SIZE + FRAME_T*2, 0,  WIN_SIZE/2+FRAME_T/2, 0],
+               [FRAME_T*2, FRAME_T, WIN_SIZE + FRAME_T*2, 0, -WIN_SIZE/2-FRAME_T/2, 0],
+               [FRAME_T*2, WIN_SIZE, FRAME_T,  0, 0, -WIN_SIZE/2-FRAME_T/2],
+               [FRAME_T*2, WIN_SIZE, FRAME_T,  0, 0,  WIN_SIZE/2+FRAME_T/2]];
+        for (const [fw, fh, fd, fdx, fdy, fdz] of frameGeo) {
+            const bar = new THREE.Mesh(new THREE.BoxGeometry(fw, fh, fd), frameMat2);
+            bar.position.set(wx + fdx, wy + fdy, wz + fdz);
+            scene.add(bar);
+        }
+        // Soft light from the window
+        const wLight = new THREE.PointLight(0xddeeff, 0.3, 12);
+        wLight.position.set(wx, wy, wz);
+        scene.add(wLight);
+    }
+
+    // North wall windows (z=100, facing south — BoxGeometry thin in Z)
+    // Space them every ~8 units in X across the building width (-60 to +18)
+    for (let wx = -56; wx <= 16; wx += 20) {
+        addWindow(wx, WIN_Y, 99.6, true);
+    }
+
+    // West wall windows (x=20, facing east — BoxGeometry thin in X)
+    // Space them every ~8 units in Z from z=-30 to z=95
+    for (let wz = -28; wz <= 92; wz += 20) {
+        addWindow(19.8, WIN_Y, wz, false);
+    }
 }
 
 scene.add(worldGroup);
@@ -1597,7 +2010,7 @@ worldOctree.fromGraphNode(worldGroup);
 // ─────────────────────────────────────────────────────────────
 //  LIGHTING
 // ─────────────────────────────────────────────────────────────
-scene.add(new THREE.HemisphereLight(0xdde8ff, 0x443322, 0.9));
+scene.add(new THREE.HemisphereLight(0xdde8ff, 0x443322, 1.8));
 const sun = new THREE.DirectionalLight(0xfff4e8, 0.8);
 sun.position.set(10, 20, -10);
 sun.castShadow = true;
@@ -1707,9 +2120,14 @@ function checkDirtHit(point) {
 // Per-frame particle update — gravity, bounce detection, fade
 const _gravDelta = new THREE.Vector3(0, -12, 0);  // gravity in world-units/s²
 const _bounceRay = new THREE.Raycaster();
-// Collect solid meshes for splat detection (floor + tank proxies)
+// Collect solid meshes for splat detection — worldGroup proxies + visual tank surfaces
 const bounceSurfaces = [];
 worldGroup.traverse(o => { if (o.isMesh) bounceSurfaces.push(o); });
+// Also add the actual visual cone/body/dome meshes from each tank group so
+// water correctly hits the cone surface (the proxy cylinder doesn't cover the cone slope)
+tankGroups.forEach(g => {
+    g.traverse(o => { if (o.isMesh && o.userData.sprayable) bounceSurfaces.push(o); });
+});
 
 function updateParticles(delta) {
     for (let i = particles.length - 1; i >= 0; i--) {
