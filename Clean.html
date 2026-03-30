@@ -32,6 +32,68 @@
             display: none; pointer-events: none; z-index: 60;
             text-shadow: 0 0 20px #ffe87a88;
         }
+        /* ── TRASH PICKUP PROMPT ── */
+        #pickup-prompt {
+            position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+            display: none; pointer-events: none; font-family: monospace;
+            color: #ffe87a; font-size: 13px; letter-spacing: 0.12em;
+            text-shadow: 0 0 8px #ffe87a88;
+            background: rgba(0,0,0,0.45); padding: 5px 14px; border-radius: 4px;
+        }
+        #held-item {
+            position: absolute; bottom: 55px; left: 50%; transform: translateX(-50%);
+            display: none; pointer-events: none; font-family: monospace;
+            color: #aee; font-size: 11px; letter-spacing: 0.1em;
+        }
+        /* ── TRASH COUNTER ── */
+        #trash-counter {
+            position: absolute; top: 14px; left: 20px; margin-top: 52px;
+            display: none; pointer-events: none; font-family: monospace;
+            color: #ca8; font-size: 11px; letter-spacing: 0.08em;
+        }
+
+        /* ── NOZZLE MODE INDICATOR ── */
+        #nozzle-mode {
+            position: absolute; bottom: 28px; right: 28px;
+            display: none; pointer-events: none; font-family: monospace;
+            color: #aee; font-size: 12px; text-align: right; letter-spacing: 0.1em;
+        }
+        #nozzle-mode .mode-label { font-size: 10px; color: #688; margin-bottom: 2px; }
+        #nozzle-mode .mode-name { color: #2ef; font-size: 14px; }
+
+        /* ── ZONE PROGRESS ── */
+        #zone-list {
+            position: absolute; top: 14px; right: 20px;
+            display: none; pointer-events: none; font-family: monospace;
+            font-size: 11px; color: #aaa; text-align: right;
+        }
+        .zone-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; justify-content: flex-end; }
+        .zone-name { color: #7cc; }
+        .zone-mini-bg { width: 60px; height: 5px; background: #333; border-radius: 3px; overflow: hidden; }
+        .zone-mini-bar { height: 100%; background: #4fc874; border-radius: 3px; width: 0%; transition: width 0.4s; }
+        .zone-done .zone-name { color: #4fc874; }
+
+        /* ── CROSSHAIR upgrade ── */
+        #crosshair {
+            position: absolute; top: 50%; left: 50%; width: 16px; height: 16px;
+            transform: translate(-50%, -50%); pointer-events: none; display: none;
+        }
+        #crosshair::before, #crosshair::after {
+            content: ''; position: absolute; background: rgba(255,255,255,0.85);
+            border-radius: 2px;
+        }
+        #crosshair::before { width: 2px; height: 16px; left: 7px; top: 0; }
+        #crosshair::after  { width: 16px; height: 2px; left: 0; top: 7px; }
+        #crosshair.wide::before { transform: scaleY(0.5); opacity: 0.6; }
+        #crosshair.wide::after  { transform: scaleX(1.6); }
+
+        /* ── HIT FLASH (screen-space wet feedback) ── */
+        #hit-flash {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background: radial-gradient(ellipse at center, rgba(0,200,255,0.07) 0%, transparent 70%);
+            pointer-events: none; opacity: 0; transition: opacity 0.08s;
+            z-index: 5;
+        }
     </style>
 </head>
 <body>
@@ -39,15 +101,35 @@
 <div id="ui-layer">
     <h1>New Glory Production Floor</h1>
     <p>Click anywhere to Start</p>
-    <small>WASD to Walk &nbsp;|&nbsp; Space to Jump &nbsp;|&nbsp; Hold Click to Spray</small>
+    <small>WASD · Walk &nbsp;|&nbsp; Space · Jump &nbsp;|&nbsp; Hold Click · Spray &nbsp;|&nbsp; R · Nozzle &nbsp;|&nbsp; E · Pick Up &nbsp;|&nbsp; F · Throw</small>
 </div>
 
 <div id="crosshair"></div>
 <div id="hud">
-    <div>Cleanliness</div>
+    <div style="color:#7fc;font-size:11px;letter-spacing:0.1em">TOTAL CLEANLINESS</div>
     <div id="clean-bar-bg"><div id="clean-bar"></div></div>
-    <div id="clean-pct">0%</div>
+    <div id="clean-pct" style="font-size:18px;margin-top:2px">0%</div>
 </div>
+
+<!-- Zone progress sidebar -->
+<div id="zone-list"></div>
+
+<!-- Pickup prompt -->
+<div id="pickup-prompt">[E] Pick Up</div>
+<div id="held-item">Holding: <span id="held-name">—</span> &nbsp;·&nbsp; [E] Drop &nbsp;·&nbsp; [F] Throw</div>
+
+<!-- Trash counter -->
+<div id="trash-counter">🗑 Trash: <span id="trash-done">0</span> / <span id="trash-total">0</span></div>
+
+<!-- Nozzle mode -->
+<div id="nozzle-mode">
+    <div class="mode-label">NOZZLE</div>
+    <div id="nozzle-name" class="mode-name">◈ STREAM</div>
+</div>
+
+<!-- Screen hit flash -->
+<div id="hit-flash"></div>
+
 <div id="win-msg">✦ PRODUCTION FLOOR CLEAN ✦<br><span style="font-size:0.55em;color:#7fc">Head Brewer Approved</span></div>
 
 <script type="importmap">
@@ -76,7 +158,10 @@ const TANK_LAYOUT = [
     { x:-25, z: -8, r:3.25, h:10.0, type:'fv', label:'FV1' },
     { x:-25, z:  0, r:3.25, h:10.0, type:'fv', label:'FV2' },
     { x:-25, z:  8, r:3.25, h:10.0, type:'fv', label:'FV3' },
-    { x:-23, z: 16, r:1.5,  h: 4.0, type:'fv', label:'FV4' },
+    { x:-22, z: 12, r:1.5,  h: 4.0, type:'fv', label:'FV4' },
+    { x:-24, z: 14.5, r:1,  h: 1.75, type:'fv', label:'FV3.5' },
+    { x:-26.25, z: 14.5, r:1,  h: 1.75, type:'fv', label:'FV3.5B' },
+    { x:-48, z: -30, r:1.5,  h: 6.0, type:'fv', label:'grist' },
 
     // Cellar 40bbl row 1
     { x:-10, z: -7, r:2.5, h:5.5, type:'fv', label:'FV5'  },
@@ -103,6 +188,13 @@ const TANK_LAYOUT = [
     { x:-10, z: 36, r:3.25, h:10.0, type:'bbt', label:'FV18' },
     { x:-10, z: 44, r:2.5,  h: 5.5, type:'fv',  label:'FV19' },
     // BBT1 built separately below with proper buildBBT geometry
+
+    // Chemical and brite tanks
+    { x:-65, z: 10, r:1.25, h:3, type:'bbt', label:'acid' },
+    { x:-65, z: 7, r:1.25, h:3.0, type:'bbt', label:'caustic' },
+    { x:-65, z: 30, r:3.25,  h: 5.5, type:'bbt',  label:'water' },
+
+
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -130,8 +222,8 @@ window.addEventListener('resize', () => {
 // Physics — using the real Three.js Octree/Capsule addons (same as OG)
 const worldOctree = new Octree();
 const playerCapsule = new Capsule(
-    new THREE.Vector3(0, 0.35, 15),
-    new THREE.Vector3(0, 1.65, 15),
+    new THREE.Vector3(0, 0.35, 0),
+    new THREE.Vector3(0, 1.65, 0),
     0.35
 );
 const playerVelocity = new THREE.Vector3();
@@ -143,24 +235,90 @@ let playerOnFloor = false;
 const ssMat    = new THREE.MeshStandardMaterial({ color:0xd8d8dc, metalness:0.85, roughness:0.2 });
 const ssDkMat  = new THREE.MeshStandardMaterial({ color:0xa8a8b4, metalness:0.75, roughness:0.35 });
 const coneMat  = new THREE.MeshStandardMaterial({ color:0xc0c0c8, metalness:0.8,  roughness:0.25 });
-const dirtyMat = new THREE.MeshStandardMaterial({ color:0x5a4a32, roughness:0.9,  metalness:0.0  });
 const floorMat = new THREE.MeshStandardMaterial({ color:0x282828, roughness:0.85 });
 
+// Wet surface material — applied when water hits a surface
+const wetShineMat = new THREE.MeshStandardMaterial({ color:0xb8d8e8, metalness:0.5, roughness:0.05, transparent:true, opacity:0.18 });
+
 // ─────────────────────────────────────────────────────────────
-//  DIRT / CLEAN TRACKING
+//  DIRT TYPES — brewery-realistic filth varieties
 // ─────────────────────────────────────────────────────────────
-const dirtPatches = [];   // { mesh, cleaned }
+const DIRT_TYPES = [
+    { name:'beer_spill',  color:0x7a5c20, rough:0.92, hits:3, label:'Beer' },    // brown spill rings
+    { name:'hop_debris',  color:0x4a5a28, rough:0.95, hits:2, label:'Hops' },    // green organic bits
+    { name:'foam_crust',  color:0xc8b87a, rough:0.88, hits:4, label:'Foam' },    // dried foam, needs more work
+    { name:'yeast',       color:0x8a7040, rough:0.90, hits:2, label:'Yeast' },   // tan yeast residue
+    { name:'water_scale', color:0xa0a898, rough:0.80, hits:3, label:'Scale' },   // mineral deposits
+    { name:'grime',       color:0x3a3028, rough:0.95, hits:5, label:'Grime' },   // general floor grime, hardest
+];
+
+// ─────────────────────────────────────────────────────────────
+//  ZONES — for zone-progress tracking (defined here, before makeDirt)
+// ─────────────────────────────────────────────────────────────
+const ZONES = [
+    { id:'cellar',    label:'Cellar',    xMin:-20, xMax: 10, zMin:-15, zMax: 20 },
+    { id:'bigfv',     label:'Big FVs',   xMin:-32, xMax:-18, zMin:-15, zMax: 20 },
+    { id:'north',     label:'North Bay', xMin:-20, xMax: 10, zMin: 20, zMax: 60 },
+    { id:'brewhouse', label:'Brewhouse', xMin:-60, xMax:-30, zMin:-20, zMax: 20 },
+    { id:'other',     label:'Other',     xMin:-999,xMax: 999, zMin:-999,zMax:999 },
+];
+function assignZone(x, z) {
+    for (const zone of ZONES) {
+        if (zone.id === 'other') return zone.id;
+        if (x >= zone.xMin && x <= zone.xMax && z >= zone.zMin && z <= zone.zMax) return zone.id;
+    }
+    return 'other';
+}
+
+// ─────────────────────────────────────────────────────────────
+//  DIRT / CLEAN TRACKING  — multi-hit system
+// ─────────────────────────────────────────────────────────────
+const dirtPatches = [];   // { mesh, cleaned, hits, maxHits, type, wetDecals[] }
 let cleanedCount = 0;
 
-function makeDirt(x, y, z, r) {
-    const geo  = new THREE.CircleGeometry(r, 8);
-    const mat  = dirtyMat.clone();
+// Wet decal pool — shiny circles left by water impacts
+const wetDecals = [];
+const WET_GEO = new THREE.CircleGeometry(0.3, 8);
+const WET_MAT = new THREE.MeshBasicMaterial({ color:0x88ddff, transparent:true, opacity:0.18, depthWrite:false });
+
+function spawnWetDecal(x, y, z) {
+    if (wetDecals.length > 120) {
+        // Recycle oldest
+        const old = wetDecals.shift();
+        old.userData.life = 0;
+        old.visible = false;
+    }
+    const d = new THREE.Mesh(WET_GEO, WET_MAT.clone());
+    d.rotation.x = -Math.PI / 2;
+    d.position.set(x, y + 0.006, z);
+    d.userData.life = 8.0 + Math.random() * 4.0;  // decals linger 8-12s
+    d.userData.maxLife = d.userData.life;
+    scene.add(d);
+    wetDecals.push(d);
+}
+
+function updateWetDecals(delta) {
+    for (let i = wetDecals.length - 1; i >= 0; i--) {
+        const d = wetDecals[i];
+        d.userData.life -= delta;
+        if (d.userData.life <= 0) {
+            scene.remove(d);
+            wetDecals.splice(i, 1);
+        } else if (d.userData.life < 2.0) {
+            d.material.opacity = (d.userData.life / 2.0) * 0.18;
+        }
+    }
+}
+
+function makeDirt(x, y, z, r, typeIdx) {
+    const type = DIRT_TYPES[typeIdx !== undefined ? typeIdx : Math.floor(Math.random() * DIRT_TYPES.length)];
+    const geo  = new THREE.CircleGeometry(r, 10);
+    const mat  = new THREE.MeshStandardMaterial({ color: type.color, roughness: type.rough, metalness: 0.0 });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.rotation.x = -Math.PI / 2;
-    // Always place floor dirt at y=0 (floor surface) to prevent floating
     mesh.position.set(x, 0.005, z);
-    scene.add(mesh);   // dirt is on the scene (not in octree)
-    dirtPatches.push({ mesh, cleaned: false });
+    scene.add(mesh);
+    dirtPatches.push({ mesh, cleaned: false, hits: type.hits, maxHits: type.hits, type, zone: assignZone(x, z) });
 }
 
 // Dirt on the sloped surface of a conical fermenter bottom.
@@ -168,9 +326,10 @@ function makeDirt(x, y, z, r) {
 // Normal points outward radially AND downward (cone narrows toward tip).
 // cx,cz = tank center, tankR = base radius, coneH = cone height,
 // t = fraction up cone (0=tip,1=base), angle = azimuth radians, dr = patch radius
-function makeDirtCone(cx, cz, tankR, coneH, t, angle, dr) {
+function makeDirtCone(cx, cz, tankR, coneH, t, angle, dr, typeIdx) {
+    const type = DIRT_TYPES[typeIdx !== undefined ? typeIdx : Math.floor(Math.random() * DIRT_TYPES.length)];
     const geo  = new THREE.CircleGeometry(dr, 8);
-    const mat  = dirtyMat.clone();
+    const mat  = new THREE.MeshStandardMaterial({ color: type.color, roughness: type.rough, metalness: 0.0 });
     const mesh = new THREE.Mesh(geo, mat);
 
     // Surface point at fraction t up the cone, at azimuth angle
@@ -197,14 +356,15 @@ function makeDirtCone(cx, cz, tankR, coneH, t, angle, dr) {
     mesh.lookAt(target);
 
     scene.add(mesh);
-    dirtPatches.push({ mesh, cleaned: false });
+    dirtPatches.push({ mesh, cleaned: false, hits: type.hits, maxHits: type.hits, type, zone: 'tanks' });
 }
 
 // Vertical dirt splat on the side of a tank cylinder
 // nx,nz = outward normal direction (which side of the tank)
-function makeDirtSide(x, y, z, nx, nz, r) {
+function makeDirtSide(x, y, z, nx, nz, r, typeIdx) {
+    const type = DIRT_TYPES[typeIdx !== undefined ? typeIdx : Math.floor(Math.random() * DIRT_TYPES.length)];
     const geo  = new THREE.CircleGeometry(r, 8);
-    const mat  = dirtyMat.clone();
+    const mat  = new THREE.MeshStandardMaterial({ color: type.color, roughness: type.rough, metalness: 0.0 });
     const mesh = new THREE.Mesh(geo, mat);
     // Set position FIRST so lookAt has the correct origin to work from
     const px = x + nx * 0.05;
@@ -213,15 +373,7 @@ function makeDirtSide(x, y, z, nx, nz, r) {
     // Now orient circle to face outward from the tank surface
     mesh.lookAt(px + nx, y, pz + nz);
     scene.add(mesh);
-    dirtPatches.push({ mesh, cleaned: false });
-}
-
-function updateHUD() {
-    const pct = dirtPatches.length ? Math.round(cleanedCount / dirtPatches.length * 100) : 0;
-    document.getElementById('clean-bar').style.width = pct + '%';
-    document.getElementById('clean-pct').textContent  = pct + '%';
-    if (pct === 100 && dirtPatches.length > 0)
-        document.getElementById('win-msg').style.display = 'block';
+    dirtPatches.push({ mesh, cleaned: false, hits: type.hits, maxHits: type.hits, type, zone: assignZone(x, z) });
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -279,7 +431,7 @@ function buildTank(cfg, worldGroup) {
     }
 
     // Cross-brace — 4 round pipes connecting each adjacent leg pair near the floor
-    // Cross-brace only for FV (cone-bottom) tanks — BBTs have clean open legs
+    // Cross-brace only for FV (cone-bottom) tanks — BBTs handled separately below
     if (type === 'fv' && CONE_H > 0) {
         const BRACE_Y = CONE_H * 0.12;
         const PIPE_R  = 0.03;
@@ -305,6 +457,25 @@ function buildTank(cfg, worldGroup) {
         }
     }
 
+    // Horizontal cross-brace ring for BBT tall legs — single ring at mid-leg
+    if (type === 'bbt' && LEG_H > 0) {
+        const PIPE_R = 0.03;
+        const bY = LEG_H * 0.5;
+        for (let i = 0; i < 4; i++) {
+            const a1 = (i / 4) * Math.PI * 2 + Math.PI / 4;
+            const a2 = ((i + 1) / 4) * Math.PI * 2 + Math.PI / 4;
+            const x1 = Math.cos(a1) * LEG_SPREAD, z1 = Math.sin(a1) * LEG_SPREAD;
+            const x2 = Math.cos(a2) * LEG_SPREAD, z2 = Math.sin(a2) * LEG_SPREAD;
+            const len = Math.sqrt((x2-x1)**2 + (z2-z1)**2);
+            const ang = Math.atan2(z2 - z1, x2 - x1);
+            const pipe = new THREE.Mesh(new THREE.CylinderGeometry(PIPE_R, PIPE_R, len, 8), ssDkMat);
+            pipe.rotation.z = Math.PI / 2;
+            pipe.rotation.y = -ang;
+            pipe.position.set((x1+x2)/2, bY, (z1+z2)/2);
+            g.add(pipe);
+        }
+    }
+
     // ── Conical bottom (FV only) — tip at y=0, base at y=CONE_H ──
     if (type === 'fv') {
         const cone = new THREE.Mesh(
@@ -315,15 +486,15 @@ function buildTank(cfg, worldGroup) {
         cone.userData.sprayable = true;
         g.add(cone);
     } else {
-        // BBT: inverted dome at base
-        const bot = new THREE.Mesh(
-            new THREE.SphereGeometry(r, 20, 10, 0, Math.PI*2, Math.PI/2, Math.PI/6),
-            ssMat
+        // BBT: very shallow cone bottom — wide rim (r) at BODY_BOT, tip points DOWN
+        const BBT_CONE_DROP = r * 0.18;
+        const botCone = new THREE.Mesh(
+            new THREE.CylinderGeometry(r, 0.12, BBT_CONE_DROP, 24),
+            coneMat
         );
-        bot.rotation.x = Math.PI;
-        bot.position.y = BODY_BOT;
-        bot.userData.sprayable = true;
-        g.add(bot);
+        botCone.position.y = BODY_BOT - BBT_CONE_DROP / 2;
+        botCone.userData.sprayable = true;
+        g.add(botCone);
     }
 
     // ── Cylindrical body — from BODY_BOT to BODY_BOT+BODY_H ──
@@ -353,16 +524,37 @@ function buildTank(cfg, worldGroup) {
     g.position.set(x, 0, z);
     scene.add(g);
 
-    // Collision proxy cylinder for octree — matches actual tank footprint much better than a box
-    // Height covers cone tip (y=0) through top of dome
-    const totalH = BODY_BOT + BODY_H + DOME_H;
-    const proxy  = new THREE.Mesh(
-        new THREE.CylinderGeometry(r, r, totalH, 12),
-        new THREE.MeshStandardMaterial()
-    );
-    proxy.visible = false;
-    proxy.position.set(x, totalH / 2, z);
-    worldGroup.add(proxy);
+    if (type === 'fv') {
+        // ── FV: two proxies that match actual geometry — no phantom cylinder through cone space ──
+        // 1. Cone proxy — same dimensions as the visible cone
+        const coneProxy = new THREE.Mesh(
+            new THREE.CylinderGeometry(r, 0.07, CONE_H, 16),
+            new THREE.MeshStandardMaterial()
+        );
+        coneProxy.visible = false;
+        coneProxy.position.set(x, CONE_H / 2, z);
+        worldGroup.add(coneProxy);
+
+        // 2. Cylinder proxy — body + dome only, sitting on top of cone
+        const bodyProxyH = BODY_H + (r * 0.28);  // body + dome height
+        const bodyProxy = new THREE.Mesh(
+            new THREE.CylinderGeometry(r, r, bodyProxyH, 16),
+            new THREE.MeshStandardMaterial()
+        );
+        bodyProxy.visible = false;
+        bodyProxy.position.set(x, BODY_BOT + bodyProxyH / 2, z);
+        worldGroup.add(bodyProxy);
+    } else {
+        // BBT: single cylinder proxy is fine (no pointy cone bottom)
+        const totalH = BODY_BOT + BODY_H + (r * 0.28);
+        const proxy  = new THREE.Mesh(
+            new THREE.CylinderGeometry(r, r, totalH, 12),
+            new THREE.MeshStandardMaterial()
+        );
+        proxy.visible = false;
+        proxy.position.set(x, totalH / 2, z);
+        worldGroup.add(proxy);
+    }
 
     return g;
 }
@@ -379,7 +571,7 @@ function buildBBT(x, z, r, bodyH, legH, worldGroup) {
     const LEG_R      = 0.07;
     const PIPE_R     = 0.03;
 
-    // ── 4 tall legs with ONE cross-brace near the bottom ──
+    // ── 4 tall legs ──
     for (let i = 0; i < 4; i++) {
         const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
         const lx = Math.cos(angle) * LEG_SPREAD;
@@ -392,40 +584,36 @@ function buildBBT(x, z, r, bodyH, legH, worldGroup) {
         g.add(foot);
     }
 
-    // Single cross-brace ring low on the legs
-    const BRACE_Y = legH * 0.55;  // mid-leg
+    // ── Single horizontal cross-brace ring at mid-leg ──
+    const BRACE_Y = legH * 0.5;
     for (let i = 0; i < 4; i++) {
         const a1 = (i / 4) * Math.PI * 2 + Math.PI / 4;
         const a2 = ((i + 1) / 4) * Math.PI * 2 + Math.PI / 4;
         const x1 = Math.cos(a1) * LEG_SPREAD, z1 = Math.sin(a1) * LEG_SPREAD;
         const x2 = Math.cos(a2) * LEG_SPREAD, z2 = Math.sin(a2) * LEG_SPREAD;
+        const mx  = (x1 + x2) / 2, mz = (z1 + z2) / 2;
         const len = Math.sqrt((x2-x1)**2 + (z2-z1)**2);
-        const ang = Math.atan2(z2-z1, x2-x1);
+        const ang = Math.atan2(z2 - z1, x2 - x1);
         const pipe = new THREE.Mesh(new THREE.CylinderGeometry(PIPE_R, PIPE_R, len, 8), ssDkMat);
         pipe.rotation.z = Math.PI / 2;
         pipe.rotation.y = -ang;
-        pipe.position.set((x1+x2)/2, BRACE_Y, (z1+z2)/2);
+        pipe.position.set(mx, BRACE_Y, mz);
         g.add(pipe);
     }
 
-    // ── Bottom dome: SphereGeometry arc from equator (PI/2) down 90° (PI/2 sweep)
-    //    This creates a downward-facing half-bowl. Its flat rim is at the equator (y=0 of sphere),
-    //    its lowest point is r below. We position it so the flat rim = legH, dome hangs down.
-    //    Then the cylinder starts at legH (same as dome rim) and goes UP — no gap. ──
-    const BOT_PHI   = Math.PI / 2;   // how deep the bottom dome is (90° = hemisphere)
-    const BOT_DOME_DROP = r * Math.cos(0) - r * Math.cos(BOT_PHI); // = r (full hemisphere drop)
-    // Use a shallower bowl: phiLength = PI/3 so dome drops r*sin(PI/3)*0.5 ≈ r*0.5
-    const BOT_SWEEP = Math.PI / 3;
-    const botDome = new THREE.Mesh(
-        new THREE.SphereGeometry(r, 24, 12, 0, Math.PI * 2, Math.PI / 2, BOT_SWEEP),
-        ssMat
+    // ── Very shallow cone bottom — wide rim (r) flush with cylinder base at legH, tip points DOWN.
+    //    CylinderGeometry(topRadius, bottomRadius, height): top=r (wide, at legH), bottom=tip (hangs below).
+    const BBT_CONE_DROP = r * 0.18;
+    const botCone = new THREE.Mesh(
+        new THREE.CylinderGeometry(r, 0.12, BBT_CONE_DROP, 24),
+        coneMat
     );
-    botDome.rotation.x = Math.PI;              // flip: open face up, dome hangs down
-    botDome.position.y = legH;                 // flat rim sits exactly at top of legs
-    botDome.userData.sprayable = true;
-    g.add(botDome);
+    // Center the geometry so its top rim (wide end) sits exactly at legH
+    botCone.position.y = legH - BBT_CONE_DROP / 2;
+    botCone.userData.sprayable = true;
+    g.add(botCone);
 
-    // ── Cylinder: starts at legH (flush with dome rim), goes up ──
+    // ── Cylinder: starts at legH (flush with cone base rim), goes up ──
     const BODY_BOT = legH;
     const body = new THREE.Mesh(new THREE.CylinderGeometry(r, r, bodyH, 24), ssMat);
     body.position.y = BODY_BOT + bodyH / 2;
@@ -624,10 +812,10 @@ const worldGroup = new THREE.Group();
 
 // Floor
 const floor = new THREE.Mesh(
-    new THREE.BoxGeometry(92, 1, 145),
+    new THREE.BoxGeometry(92, 1, 103),
     floorMat
 );
-floor.position.set(-25, -0.5, 29);   // x: -70 to +22, z: -43 to +101
+floor.position.set(-25, -0.5, 8.5);   // x: -70 to +22, z: -43 to +60
 floor.receiveShadow = true;
 worldGroup.add(floor);
 
@@ -646,14 +834,25 @@ tankGroups.push(buildBBT(15, 44, 2.4, 3.8, 1.4, worldGroup));   // BBT4
 tankGroups.push(buildBBT(15, 52, 2.4, 3.8, 1.4, worldGroup));   // BBT5
 buildCentrifuge(14, 36, worldGroup);                              // centrifuge skid
 
-// Dirt patches scattered around tanks
+// Dirt patches scattered around tanks — with explicit type variety
+// Types: 0=beer_spill, 1=hop_debris, 2=foam_crust, 3=yeast, 4=water_scale, 5=grime
 [
-    [-8,3],[-8,-3],[0,0],[-15,5],[-15,-5],
-    [5,15],[-5,15],[0,25],[-8,30],[3,40],
-    [-12,-2],[-20,-5],[8,8],
-    [-3,-12],[10,-8],[-28,-15],[-26,-8],
-    [-12,40],
-].forEach(([dx,dz]) => makeDirt(dx, 0, dz, 0.4 + Math.random() * 0.7));
+    // Cellar zone
+    { x:-8,  z:3,   t:0 }, { x:-8,  z:-3,  t:3 }, { x:0,   z:0,   t:5 },
+    { x:-15, z:5,   t:1 }, { x:-15, z:-5,  t:0 }, { x:-12, z:-2,  t:5 },
+    { x:-7,  z:1,   t:2 }, { x:-4,  z:-4,  t:3 }, { x:2,   z:3,   t:4 },
+    { x:-9,  z:-9,  t:0 }, { x:-1,  z:10,  t:1 }, { x:-14, z:10,  t:2 },
+    // Big FV zone
+    { x:-20, z:-5,  t:5 }, { x:-26, z:-8,  t:0 }, { x:-28, z:-15, t:5 },
+    { x:-22, z:3,   t:3 }, { x:-27, z:8,   t:1 },
+    // North bay
+    { x:5,   z:15,  t:0 }, { x:-5,  z:15,  t:2 }, { x:0,   z:25,  t:4 },
+    { x:-8,  z:30,  t:3 }, { x:3,   z:40,  t:0 }, { x:-12, z:40,  t:5 },
+    { x:7,   z:35,  t:1 }, { x:-4,  z:48,  t:2 }, { x:10,  z:50,  t:4 },
+    // Walkways / between tanks
+    { x:8,   z:8,   t:4 }, { x:-3,  z:-12, t:5 }, { x:10,  z:-8,  t:0 },
+    { x:-18, z:18,  t:1 }, { x:12,  z:25,  t:3 },
+].forEach(({ x, z, t }) => makeDirt(x, 0, z, 0.35 + Math.random() * 0.75, t));
 
 // Side dirt on fermenter bodies
 const SIDE_DIRT = [
@@ -705,6 +904,296 @@ const CONE_DIRT = [
 CONE_DIRT.forEach(({ cx, cz, r, coneH, t, angle, dr }) => {
     makeDirtCone(cx, cz, r, coneH, t, angle, dr);
 });
+
+// ─────────────────────────────────────────────────────────────
+//  TRASH SYSTEM  — Viscera Cleanup Detail style
+// ─────────────────────────────────────────────────────────────
+const trashItems   = [];   // { mesh, vel, onFloor, pickedUp, type, name }
+const trashBins    = [];   // { mesh, position, radius }
+let   heldItem     = null; // currently held trash item
+let   trashDumped  = 0;
+
+// Trash type definitions — brewery debris
+const TRASH_TYPES = [
+    { name:'Keg Cap',       geo: () => new THREE.CylinderGeometry(0.12, 0.12, 0.04, 12),   color: 0x888899, scale: 1.0  },
+    { name:'PakTech',       geo: () => new THREE.BoxGeometry(0.22, 0.12, 0.18),              color: 0x6a7a3a, scale: 1.0  },
+    { name:'Grain Goop',   geo: () => new THREE.CylinderGeometry(0.06, 0.10, 0.28, 8),     color: 0xbbaa88, scale: 1.0  },
+    { name:'Label Scrap',   geo: () => new THREE.BoxGeometry(0.18, 0.01, 0.12),              color: 0xddcc99, scale: 1.0  },
+    { name:'Zip Tie',       geo: () => new THREE.TorusGeometry(0.06, 0.012, 6, 12),          color: 0x333333, scale: 1.0  },
+    { name:'Broken Airlock',       geo: () => new THREE.CylinderGeometry(0.04, 0.06, 0.14, 8),     color: 0x99bbcc, scale: 1.0  },
+    { name:'Broken Tri Clamp',    geo: () => new THREE.TorusGeometry(0.08, 0.015, 6, 14),          color: 0xaaaaaa, scale: 1.0  },
+    { name:'Glove',         geo: () => new THREE.SphereGeometry(0.09, 6, 5),                 color: 0x3366aa, scale: 1.0  },
+];
+
+// Spawn positions scattered around the floor
+const TRASH_SPAWNS = [
+    { x: -6,  z:  2,  t: 0 }, { x: -9,  z: -4,  t: 1 }, { x: -2,  z:  5,  t: 2 },
+    { x:-14,  z:  3,  t: 3 }, { x: -4,  z: -8,  t: 4 }, { x:  2,  z: 12,  t: 5 },
+    { x:-18,  z: -3,  t: 6 }, { x: -7,  z:  9,  t: 7 }, { x: -1,  z: 22,  t: 0 },
+    { x: -5,  z: 33,  t: 1 }, { x:  6,  z: 42,  t: 2 }, { x:-11,  z: 47,  t: 3 },
+    { x:-22,  z:  6,  t: 4 }, { x:-27,  z: -6,  t: 5 }, { x:  8,  z: -5,  t: 6 },
+    { x: -3,  z: 17,  t: 7 }, { x:-16,  z: 14,  t: 0 }, { x:  4,  z: 28,  t: 1 },
+];
+
+function spawnTrash(x, z, typeIdx) {
+    const td  = TRASH_TYPES[typeIdx % TRASH_TYPES.length];
+    const mat = new THREE.MeshStandardMaterial({ color: td.color, roughness: 0.7, metalness: 0.2 });
+    const mesh = new THREE.Mesh(td.geo(), mat);
+    mesh.position.set(x, 0.15, z);
+    // Random yaw so things don't all face the same way
+    mesh.rotation.y = Math.random() * Math.PI * 2;
+    mesh.rotation.z = (Math.random() - 0.5) * 0.4;
+    mesh.castShadow = true;
+    mesh.userData.isTrash = true;
+    scene.add(mesh);
+    trashItems.push({ mesh, vel: new THREE.Vector3(), onFloor: true, pickedUp: false, name: td.name });
+    return mesh;
+}
+
+TRASH_SPAWNS.forEach(({ x, z, t }) => spawnTrash(x, z, t));
+
+// ── TRASH BINS ──
+const BIN_POSITIONS = [
+    { x:  -25,  z: -32  }, //grain room
+    { x: -7,  z: 25  }, //middle area
+    { x: 3,  z: 59  }, //by entry
+    { x: -30,  z: 30  }, //canning
+];
+
+const binBodyMat   = new THREE.MeshStandardMaterial({ color: 0x2d5a27, roughness: 0.7, metalness: 0.2 });
+const binRimMat    = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.5, metalness: 0.3 });
+const binInteriorMat = new THREE.MeshStandardMaterial({ color: 0x080808, roughness: 1.0, side: THREE.BackSide });
+
+BIN_POSITIONS.forEach(({ x, z }) => {
+    const g = new THREE.Group();
+
+    // Body — slightly tapered green cylinder
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.25, 0.82, 16), binBodyMat);
+    body.position.y = 0.41;
+    g.add(body);
+
+    // Black rim ring around the top opening
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.05, 16), binRimMat);
+    rim.position.y = 0.845;
+    g.add(rim);
+
+    // Dark interior — open top disc so you can see black inside
+    const interior = new THREE.Mesh(new THREE.CylinderGeometry(0.29, 0.29, 0.78, 16), binInteriorMat);
+    interior.position.y = 0.41;
+    g.add(interior);
+
+    g.position.set(x, 0, z);
+    scene.add(g);
+
+    // Invisible collision proxy
+    const proxy = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.32, 0.32, 0.90, 10),
+        new THREE.MeshStandardMaterial()
+    );
+    proxy.visible = false;
+    proxy.position.set(x, 0.45, z);
+    worldGroup.add(proxy);
+
+    trashBins.push({ position: new THREE.Vector3(x, 0.5, z), radius: 0.6 });
+});
+
+// ── TRASH PHYSICS UPDATE ──
+const TRASH_GRAVITY    = -14;
+const TRASH_BOUNCE     = 0.22;
+const TRASH_FLOOR_FRIC = 0.78;
+const _trashRay        = new THREE.Raycaster();
+
+function updateTrash(delta) {
+    for (const item of trashItems) {
+        if (item.pickedUp || item.dumped) continue;
+
+        // Gravity
+        if (!item.onFloor) {
+            item.vel.y += TRASH_GRAVITY * delta;
+        }
+
+        const speed = item.vel.length();
+
+        // ── Wall / surface collision via raycast ──
+        if (speed > 0.1) {
+            const dir = item.vel.clone().normalize();
+            _trashRay.set(item.mesh.position, dir);
+            _trashRay.far = speed * delta * 2.5 + 0.25;  // look a bit ahead
+            const hits = _trashRay.intersectObjects(bounceSurfaces, false);
+            if (hits.length) {
+                const hit = hits[0];
+                if (hit.face) {
+                    const wn = hit.face.normal.clone().transformDirection(hit.object.matrixWorld).normalize();
+                    // Reflect velocity off the surface normal with damping
+                    const dot = item.vel.dot(wn);
+                    if (dot < 0) {
+                        item.vel.addScaledVector(wn, -dot * 1.35);  // reflect
+                        item.vel.multiplyScalar(0.40);               // lose energy on bounce
+                        // Push position to just outside the surface
+                        item.mesh.position.copy(hit.point).addScaledVector(wn, 0.15);
+                    }
+                }
+            }
+        }
+
+        item.mesh.position.addScaledVector(item.vel, delta);
+
+        // Floor collision
+        if (item.mesh.position.y <= 0.08) {
+            item.mesh.position.y = 0.08;
+            if (Math.abs(item.vel.y) > 0.5) {
+                item.vel.y *= -TRASH_BOUNCE;
+            } else {
+                item.vel.y = 0;
+                item.onFloor = true;
+            }
+            item.vel.x *= TRASH_FLOOR_FRIC;
+            item.vel.z *= TRASH_FLOOR_FRIC;
+        }
+
+        // Check if near a bin
+        for (const bin of trashBins) {
+            if (item.mesh.position.distanceTo(bin.position) < bin.radius) {
+                dumpTrashItem(item);
+                break;
+            }
+        }
+    }
+}
+
+function dumpTrashItem(item) {
+    if (item.dumped) return;
+    item.dumped = true;
+    item.pickedUp = false;
+    if (heldItem === item) heldItem = null;
+    scene.remove(item.mesh);
+    trashDumped++;
+    updateTrashHUD();
+
+    // Brief sparkle / pop at last position
+    spawnSplat(item.mesh.position.clone(), 6);
+}
+
+function updateTrashHUD() {
+    document.getElementById('trash-done').textContent  = trashDumped;
+    document.getElementById('trash-total').textContent = trashItems.length;
+}
+
+// ── WATER PUSHES TRASH ──
+// Called from checkDirtHit path when a droplet hits near a trash item
+function checkTrashHit(point, dropletVel) {
+    const PUSH_RADIUS  = 0.55;
+    const PUSH_FORCE   = 5.5;
+    for (const item of trashItems) {
+        if (item.pickedUp || item.dumped) continue;
+        const d = item.mesh.position.distanceTo(point);
+        if (d < PUSH_RADIUS) {
+            const push = dropletVel.clone().normalize().multiplyScalar(PUSH_FORCE * (1 - d / PUSH_RADIUS));
+            push.y = Math.max(push.y, 0.8);  // always a little upward bounce
+            item.vel.add(push);
+            item.onFloor = false;
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  PICKUP / THROW SYSTEM
+// ─────────────────────────────────────────────────────────────
+const pickupRay    = new THREE.Raycaster();
+const PICKUP_RANGE = 3.5;
+const HOLD_DIST    = 1.8;   // how far in front of camera held item floats
+const THROW_FORCE  = 18;
+
+let nearbyTrash    = null;  // item within range for prompt
+
+function getTrashMeshes() {
+    return trashItems.filter(i => !i.pickedUp && !i.dumped).map(i => i.mesh);
+}
+
+function updatePickupPrompt() {
+    const promptEl = document.getElementById('pickup-prompt');
+    const heldEl   = document.getElementById('held-item');
+    const heldName = document.getElementById('held-name');
+
+    if (heldItem) {
+        promptEl.style.display = 'none';
+        heldEl.style.display   = 'block';
+        heldName.textContent   = heldItem.name;
+    } else if (nearbyTrash) {
+        promptEl.textContent   = `[E] Pick Up  ${nearbyTrash.name}`;
+        promptEl.style.display = 'block';
+        heldEl.style.display   = 'none';
+    } else {
+        promptEl.style.display = 'none';
+        heldEl.style.display   = 'none';
+    }
+}
+
+function tryPickup() {
+    if (heldItem) {
+        // Drop it
+        heldItem.pickedUp = false;
+        heldItem.vel.set(0, 0, 0);
+        heldItem.onFloor  = false;
+        heldItem = null;
+        updatePickupPrompt();
+        return;
+    }
+    if (nearbyTrash) {
+        heldItem = nearbyTrash;
+        heldItem.pickedUp = true;
+        nearbyTrash = null;
+        updatePickupPrompt();
+    }
+}
+
+function tryThrow() {
+    if (!heldItem) return;
+    const fwd = new THREE.Vector3();
+    camera.getWorldDirection(fwd);
+    heldItem.vel.copy(fwd.multiplyScalar(THROW_FORCE));
+    heldItem.vel.y += 3;
+    heldItem.pickedUp = false;
+    heldItem.onFloor  = false;
+    heldItem = null;
+    updatePickupPrompt();
+}
+
+function updateHeldItem() {
+    if (!heldItem) return;
+    const fwd = new THREE.Vector3();
+    camera.getWorldDirection(fwd);
+    const target = camera.position.clone().addScaledVector(fwd, HOLD_DIST);
+    target.y -= 0.15;
+    // Smooth float toward target
+    heldItem.mesh.position.lerp(target, 0.25);
+    heldItem.mesh.rotation.y += 0.04;  // slow spin looks nice
+}
+
+function updateNearbyTrash() {
+    if (heldItem) { nearbyTrash = null; return; }
+    const fwd = new THREE.Vector3();
+    camera.getWorldDirection(fwd);
+    pickupRay.set(camera.position, fwd);
+
+    const meshes = getTrashMeshes();
+    if (!meshes.length) { nearbyTrash = null; return; }
+
+    const hits = pickupRay.intersectObjects(meshes, false);
+    if (hits.length && hits[0].distance < PICKUP_RANGE) {
+        // Find which item this mesh belongs to
+        nearbyTrash = trashItems.find(i => i.mesh === hits[0].object) || null;
+    } else {
+        // Also check proximity even without direct raycast (item might be to the side)
+        let closest = null, closestD = PICKUP_RANGE * 0.7;
+        for (const item of trashItems) {
+            if (item.pickedUp || item.dumped) continue;
+            const d = item.mesh.position.distanceTo(camera.position);
+            if (d < closestD) { closestD = d; closest = item; }
+        }
+        nearbyTrash = closest;
+    }
+}
 
 // ─────────────────────────────────────────────────────────────
 //  BREWHOUSE PLATFORM
@@ -971,9 +1460,9 @@ for (const sz of [-1, 1]) {
 // Looking up the stairs: left=south, across=north, far-right=west end, near-right=east-north
 const BREW_Y = PLAT_Y;   // tanks sit on ground level, rise up beside platform
 const BREW_TANKS = [
-    { x: PLAT_X_MID - 0,      z: PLAT_Z_MID - PLAT_W/2 - 3.5, r: 3.2, h: 6.5, legH: 4, label: 'Mash Tun', steamStack: true  },
-    { x: PLAT_X_MID - 0,      z: PLAT_Z_MID + PLAT_W/2 + 4,   r: 3.2, h: 6.5, legH: 4, label: 'CLT',      steamStack: false },
-    { x: PLAT_X_MID - 7,      z: PLAT_Z_MID + PLAT_W/2 - 19.5,r: 3.2, h: 6.5, legH: 4, label: 'HLT',      steamStack: false },
+    { x: PLAT_X_MID - 0,      z: PLAT_Z_MID - PLAT_W/2 - 3.5, r: 3.2, h: 8.5, legH: 2, label: 'Mash Tun', steamStack: true  },
+    { x: PLAT_X_MID - 0,      z: PLAT_Z_MID + PLAT_W/2 + 4,   r: 3.2, h: 9.5, legH: 1, label: 'CLT',      steamStack: false },
+    { x: PLAT_X_MID - 7,      z: PLAT_Z_MID + PLAT_W/2 - 19.5,r: 3.2, h: 9.5, legH: 1, label: 'HLT',      steamStack: false },
     { x: PLAT_X_MID - PLAT_D/2 - 3,   z: PLAT_Z_MID + 4,      r: 3.0, h: 6.5, legH: 4, label: 'Kettle',   steamStack: true  },
     { x: PLAT_X_MID - PLAT_D/2 - 3.5, z: PLAT_Z_MID - 4,      r: 3.5, h: 6.5, legH: 4, label: 'lauter',   steamStack: true  },
     { x: PLAT_X_MID + PLAT_D/2 + 4,   z: PLAT_Z_MID + 4.75,   r: 4,   h: 6.5, legH: 4, label: 'Whirlpool',steamStack: true  },
@@ -1078,17 +1567,17 @@ BREW_TANKS.forEach(cfg => {
 const CEIL_Y   = 22;
 const CEIL_MAT = new THREE.MeshStandardMaterial({ color: 0xd0d0d0, roughness: 0.9 });
 const BEAM_MAT = new THREE.MeshStandardMaterial({ color: 0x8b2020, roughness: 0.7 });  // dark red steel
-const CEIL_W   = 92,  CEIL_D = 145;
+const CEIL_W   = 92,  CEIL_D = 103;
 
 // Main ceiling slab
 const ceiling = new THREE.Mesh(new THREE.BoxGeometry(CEIL_W, 0.4, CEIL_D), CEIL_MAT);
-ceiling.position.set(-25, CEIL_Y + 0.2, 29);
+ceiling.position.set(-25, CEIL_Y + 0.2, 8.5);
 scene.add(ceiling);
 
 // Puffy insulation bays between beams (white/light grey panels)
 const insulMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.6, roughness: 1.0 });
 // Insulation panels fill every bay between beams across full ceiling width and length
-for (let bz = -40; bz < 100; bz += 10) {
+for (let bz = -40; bz < 60; bz += 10) {
     for (let bx = -70; bx < 20; bx += 20) {
         const panel = new THREE.Mesh(new THREE.BoxGeometry(19.4, 0.5, 9.4), insulMat);
         panel.position.set(bx + 10, CEIL_Y - 0.26, bz + 5);
@@ -1097,7 +1586,7 @@ for (let bz = -40; bz < 100; bz += 10) {
 }
 
 // Structural beams along X axis (run east-west across the building)
-for (let bz = -40; bz < 100; bz += 10) {
+for (let bz = -40; bz < 60; bz += 10) {
     const beam = new THREE.Mesh(new THREE.BoxGeometry(CEIL_W, 0.6, 0.4), BEAM_MAT);
     beam.position.set(-25, CEIL_Y - 0.9, bz);
     scene.add(beam);
@@ -1105,12 +1594,11 @@ for (let bz = -40; bz < 100; bz += 10) {
 // Structural beams along Z axis (run north-south) — every 20 units, x=-70 to +20
 for (let bx = -70; bx <= 20; bx += 20) {
     const beam = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.6, CEIL_D), BEAM_MAT);
-    beam.position.set(bx, CEIL_Y - 0.9, 29);
+    beam.position.set(bx, CEIL_Y - 0.9, 8.5);
     scene.add(beam);
 }
 
-// ── SKYLIGHTS — explicit 4 columns x 4 rows = 16 total ──
-// Each panel is long in X (east-west across building), narrow in Z, flush with ceiling.
+// ── SKYLIGHTS — rows inside the building ──
 {
     const skylightMat = new THREE.MeshStandardMaterial({
         color: 0xffffff,
@@ -1118,13 +1606,10 @@ for (let bx = -70; bx <= 20; bx += 20) {
         emissiveIntensity: 8.0,
         roughness: 1.0
     });
-    // N-S beams at x: -60,-40,-20,0,+20,+40,+60  → bay midpoints: -50,-30,-10,+10,+30,+50
-    // E-W beams at z every 10                      → bay midpoints: z+5 (5,15,25,35...)
-    // Pick 3 X midpoints inside building (x=-67.5 to +52.5), 3 Z midpoints along floor
-    const SL_X = [-60, -20, 0];    // midpoints between N-S beams (at -70,-50,-30,-10,+10)
-    const SL_Z = [15, 45, 75];     // midpoints between E-W beams (every 10 in Z)
-    const SL_W =  2.5;             // narrow in X (fits inside 20-unit N-S bay)
-    const SL_D =  7.5;             // fits between E-W beams spaced 10 apart
+    const SL_X = [-60, -20, 0];
+    const SL_Z = [15, 35, 55];     // three rows within z=-43 to z=60
+    const SL_W =  2.5;
+    const SL_D =  7.5;
 
     for (const sx of SL_X) {
         for (const sz of SL_Z) {
@@ -1189,15 +1674,13 @@ for (let bx = -70; bx <= 20; bx += 20) {
         scene.add(wLight);
     }
 
-    // North wall windows (z=100, facing south — BoxGeometry thin in Z)
-    // Space them every ~8 units in X across the building width (-60 to +18)
+    // North wall windows (z=60, facing south)
     for (let wx = -56; wx <= 16; wx += 20) {
-        addWindow(wx, WIN_Y, 99.6, true);
+        addWindow(wx, WIN_Y, 59.6, true);
     }
 
-    // West wall windows (x=20, facing east — BoxGeometry thin in X)
-    // Space them every ~8 units in Z from z=-30 to z=95
-    for (let wz = -28; wz <= 92; wz += 20) {
+    // West wall windows (x=20, facing east)
+    for (let wz = -28; wz <= 55; wz += 20) {
         addWindow(19.8, WIN_Y, wz, false);
     }
 }
@@ -1334,7 +1817,7 @@ function buildRoom(rx0, rx1, doorCenterX, doorW) {
     const zmid = (MEZ_Z0 + MEZ_Z1) / 2;
 
     // South wall
-    const sw = new THREE.Mesh(new THREE.BoxGeometry(rw, ROOM_H, 0.2), roomMat);
+    const sw = new THREE.Mesh(new THREE.BoxGeometry(rw, ROOM_H, 1.0), roomMat);
     sw.position.set((rx0+rx1)/2, ROOM_H/2, MEZ_Z0);
     worldGroup.add(sw);
     // West divider wall
@@ -1415,7 +1898,7 @@ buildRoom(R_OFFI_X0, R_OFFI_X1, 17, 1.6);
     }
     // Transom above door
     const transH = ROOM_H - DOOR_H;
-    const trans = new THREE.Mesh(new THREE.BoxGeometry(0.2, transH, cDOOR_W), roomMat);
+    const trans = new THREE.Mesh(new THREE.BoxGeometry(1.0, transH, cDOOR_W), roomMat);
     trans.position.set(CLOS_X1, DOOR_H + transH/2, cDOOR_Z);
     worldGroup.add(trans);
     // Door frame
@@ -1976,9 +2459,9 @@ worldOctree.fromGraphNode(worldGroup);
 //  East wall: x=-70 (Meeting Room east face)
 // ─────────────────────────────────────────────────────────────
 const WALL_MAT   = new THREE.MeshStandardMaterial({ color: 0xc8c0b4, roughness: 0.9 });
-const BLDG_Z_N   = 100;    // north extent of building
-const WALL_RUN   = BLDG_Z_N - MEZ_Z1;      // from z=-33 to z=100 = 133 units
-const WALL_CEN_Z = (MEZ_Z1 + BLDG_Z_N) / 2;  // 33.5
+const BLDG_Z_N   = 60;     // north wall — just past the brite tanks
+const WALL_RUN   = BLDG_Z_N - MEZ_Z1;
+const WALL_CEN_Z = (MEZ_Z1 + BLDG_Z_N) / 2;
 
 // West wall (x = MEZ_X1 = 20)
 const westWall = new THREE.Mesh(
@@ -1996,13 +2479,33 @@ const eastWall = new THREE.Mesh(
 eastWall.position.set(MEZ_X0, CEIL_Y / 2, WALL_CEN_Z);
 worldGroup.add(eastWall);
 
-// North wall connecting east and west (z = BLDG_Z_N = 100)
+// North wall connecting east and west (z = BLDG_Z_N)
 const northWall = new THREE.Mesh(
     new THREE.BoxGeometry(MEZ_X1 - MEZ_X0, CEIL_Y, 0.3),
     WALL_MAT
 );
 northWall.position.set((MEZ_X1 + MEZ_X0) / 2, CEIL_Y / 2, BLDG_Z_N);
 worldGroup.add(northWall);
+
+// ── INVISIBLE COLLISION WALLS ──
+// Thick invisible boxes ensure octree stops the player regardless of visual wall thickness.
+{
+    const invMat = new THREE.MeshStandardMaterial();
+    function invisWall(cx, cy, cz, w, h, d) {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), invMat);
+        m.visible = false;
+        m.position.set(cx, cy, cz);
+        worldGroup.add(m);
+    }
+    const CW = 2.0;  // collision thickness — well above 0.35 capsule radius
+    const H  = CEIL_Y;
+
+    // Main perimeter
+    invisWall(MEZ_X1,                      H/2, WALL_CEN_Z,            CW, H, WALL_RUN);  // west
+    invisWall(MEZ_X0,                      H/2, WALL_CEN_Z,            CW, H, WALL_RUN);  // east
+    invisWall((MEZ_X1+MEZ_X0)/2,           H/2, BLDG_Z_N,  MEZ_X1-MEZ_X0, H, CW);        // north
+    invisWall((MEZ_X1+MEZ_X0)/2,           H/2, MEZ_Z0,    MEZ_X1-MEZ_X0, H, CW);        // south
+}
 
 worldOctree.fromGraphNode(worldGroup);
 
@@ -2023,64 +2526,99 @@ scene.add(sun);
 });
 
 // ─────────────────────────────────────────────────────────────
-//  SPRAY / WATER PARTICLES
+//  SPRAY / WATER PARTICLES  — PowerWash Sim style
 // ─────────────────────────────────────────────────────────────
 const particles  = [];
 const sprayRay   = new THREE.Raycaster();
 let   isSpraying = false;
 let   sprayTimer = 0;
 
-// Shared geometry/material — one droplet size, one splat size
-const dropGeo   = new THREE.SphereGeometry(0.045, 5, 4);
-const splatGeo  = new THREE.SphereGeometry(0.055, 5, 4);
-const dropMat   = new THREE.MeshBasicMaterial({ color:0x55ddff, transparent:true, opacity:0.80 });
-const splatMat  = new THREE.MeshBasicMaterial({ color:0xaaeeff, transparent:true, opacity:0.55 });
+// ── NOZZLE MODES ──
+// stream: balanced. fan: wide short-range cone. jet: tight long-range beam.
+const NOZZLE_MODES = [
+    { id:'stream', label:'◈ STREAM', spread:0.032, rate:0.04,  power:1.0, color:0x55ddff, speed:20, life:3.0  },
+    { id:'fan',    label:'▷ FAN',    spread:0.06,  rate:0.018, power:0.6, color:0x88eeff, speed:10, life:2.2  },
+    { id:'jet',    label:'▲ JET',    spread:0.006, rate:0.06,  power:2.0, color:0x22bbff, speed:35, life:5.0  },
+];
+let nozzleIdx = 0;
+function currentNozzle() { return NOZZLE_MODES[nozzleIdx]; }
 
-// Dirt meshes for cleaning raycast
-const dirtMeshes = dirtPatches.map(d => d.mesh);
+// Shared geometry/material
+const dropGeo  = new THREE.SphereGeometry(0.045, 5, 4);
+const splatGeo = new THREE.SphereGeometry(0.055, 5, 4);
+const dropMat  = new THREE.MeshBasicMaterial({ color:0x55ddff, transparent:true, opacity:0.80 });
+const splatMat = new THREE.MeshBasicMaterial({ color:0xaaeeff, transparent:true, opacity:0.55 });
 
 // Nozzle offset — hose held at hip-right, not floating from eye center
 const NOZZLE_RIGHT = 0.28;
 const NOZZLE_DOWN  = 0.22;
 const NOZZLE_FWD   = 0.4;
 
+// Hit flash DOM element
+const hitFlashEl = document.getElementById('hit-flash');
+let hitFlashTimer = 0;
+
+function flashHit() {
+    hitFlashEl.style.opacity = '1';
+    hitFlashTimer = 0.12;
+}
+
 function spawnDroplet() {
-    // Compute nozzle world position (right side, slightly below camera)
+    const nozzle = currentNozzle();
+
     const right = new THREE.Vector3();
     const fwd   = new THREE.Vector3();
     camera.getWorldDirection(fwd);
     right.crossVectors(fwd, camera.up).normalize();
 
-    const nozzle = camera.position.clone()
+    const nozzlePos = camera.position.clone()
         .addScaledVector(right, NOZZLE_RIGHT)
         .addScaledVector(camera.up, -NOZZLE_DOWN)
         .addScaledVector(fwd, NOZZLE_FWD);
 
-    // Aim: toward crosshair (camera forward) with a tiny random cone spread
-    const spread = 0.032;
-    const vel = fwd.clone().multiplyScalar(18).add(
-        new THREE.Vector3(
-            (Math.random() - 0.5) * spread,
-            (Math.random() - 0.5) * spread,
-            (Math.random() - 0.5) * spread
-        )
-    );
+    // Fan fires 3 discrete angled streams; stream/jet fire one.
+    // Each fan stream gets a random aim within its own arc slice so
+    // repeated clicks scatter uniquely rather than hitting the same line.
+    const FAN_OFFSETS   = [-0.28, 0, 0.28];   // center angles for L/C/R streams
+    const FAN_ARC_HALF  = 0.13;               // each stream wanders ±this within its slice
+    const streamOffsets = nozzle.id === 'fan'
+        ? FAN_OFFSETS.map(o => o + (Math.random() * 2 - 1) * FAN_ARC_HALF)
+        : [0];
 
-    const p = new THREE.Mesh(dropGeo, dropMat);
-    p.position.copy(nozzle);
-    p.userData.vel      = vel;
-    p.userData.life     = 1.4;
-    p.userData.maxLife  = 1.4;
-    p.userData.isSplat  = false;
-    p.userData.fading   = false;
-    scene.add(p);
-    particles.push(p);
+    const mat = dropMat.clone();
+    mat.color.setHex(nozzle.color);
+
+    for (const offset of streamOffsets) {
+        // Base direction: forward + horizontal angle for this stream
+        const streamDir = fwd.clone().addScaledVector(right, offset).normalize();
+
+        // Each stream gets the same per-droplet variance as stream mode
+        const spread = nozzle.spread;
+        const vel = streamDir.clone().multiplyScalar(nozzle.speed).add(
+            new THREE.Vector3(
+                (Math.random() - 0.5) * spread,
+                (Math.random() - 0.5) * spread,
+                (Math.random() - 0.5) * spread
+            )
+        );
+
+        const p = new THREE.Mesh(dropGeo, mat.clone());
+        p.position.copy(nozzlePos);
+        p.userData.vel     = vel;
+        p.userData.life    = nozzle.life;
+        p.userData.maxLife = nozzle.life;
+        p.userData.isSplat = false;
+        p.userData.fading  = false;
+        p.userData.power   = nozzle.power;
+        scene.add(p);
+        particles.push(p);
+    }
 }
 
 function spawnSplat(pos, count) {
     for (let i = 0; i < count; i++) {
-        if (particles.length > 220) break;
-        const s = new THREE.Mesh(splatGeo, splatMat);
+        if (particles.length > 300) break;
+        const s = new THREE.Mesh(splatGeo, splatMat.clone());
         s.position.copy(pos).add(new THREE.Vector3(
             (Math.random() - 0.5) * 0.15,
              Math.random() * 0.08,
@@ -2100,25 +2638,61 @@ function spawnSplat(pos, count) {
     }
 }
 
-// Clean any dirt patch whose center is within CLEAN_RADIUS of a droplet impact point
+// ─────────────────────────────────────────────────────────────
+//  MULTI-HIT DIRT CLEANING
+//  Each hit reduces the dirt's remaining hits.
+//  Color brightens toward cleaned as hits are removed.
+//  When hits reach 0, patch fades out.
+// ─────────────────────────────────────────────────────────────
 const CLEAN_RADIUS = 1.2;
-function checkDirtHit(point) {
+function checkDirtHit(point, power) {
+    const effectivePower = power || 1.0;
     for (const patch of dirtPatches) {
         if (patch.cleaned) continue;
         const d = patch.mesh.position.distanceTo(point);
         if (d < CLEAN_RADIUS) {
-            patch.cleaned = true;
-            cleanedCount++;
-            patch.mesh.material = patch.mesh.material.clone();
-            patch.mesh.material.transparent = true;
-            patch.mesh.material.opacity = 0;
-            updateHUD();
+            // Reduce hits by power (jet cleans faster)
+            patch.hits -= effectivePower;
+
+            if (patch.hits <= 0) {
+                // Fully cleaned
+                patch.cleaned = true;
+                cleanedCount++;
+                patch.mesh.material = patch.mesh.material.clone();
+                patch.mesh.material.transparent = true;
+                patch.mesh.material.opacity = 0;
+                updateHUD();
+                flashHit();
+            } else {
+                // Partially cleaned — brighten color toward clean
+                const t = 1 - (patch.hits / patch.maxHits);
+                const base = new THREE.Color(patch.type.color);
+                const clean = new THREE.Color(0x888888);
+                patch.mesh.material.color.lerpColors(base, clean, t * 0.6);
+                patch.mesh.material.roughness = patch.type.rough - t * 0.3;
+                // Shrink slightly as it gets cleaned
+                const scale = 1.0 - t * 0.25;
+                patch.mesh.scale.set(scale, scale, scale);
+                flashHit();
+            }
+
+            // Spawn wet decal on the floor near the impact
+            if (point.y < 0.5) spawnWetDecal(point.x, 0, point.z);
         }
     }
 }
 
+// ─────────────────────────────────────────────────────────────
+//  NOZZLE HUD UPDATE
+// ─────────────────────────────────────────────────────────────
+function updateNozzleHUD() {
+    document.getElementById('nozzle-name').textContent = currentNozzle().label;
+    const xhair = document.getElementById('crosshair');
+    xhair.className = nozzleIdx === 1 ? 'wide' : '';
+}
+
 // Per-frame particle update — gravity, bounce detection, fade
-const _gravDelta = new THREE.Vector3(0, -12, 0);  // gravity in world-units/s²
+const _gravDelta = new THREE.Vector3(0, -10, 0);  // gravity in world-units/s²
 const _bounceRay = new THREE.Raycaster();
 // Collect solid meshes for splat detection — worldGroup proxies + visual tank surfaces
 const bounceSurfaces = [];
@@ -2128,6 +2702,15 @@ worldGroup.traverse(o => { if (o.isMesh) bounceSurfaces.push(o); });
 tankGroups.forEach(g => {
     g.traverse(o => { if (o.isMesh && o.userData.sprayable) bounceSurfaces.push(o); });
 });
+// Add all dirt patch meshes so droplets register hits directly on them
+// Tag each with isDirt so we can identify them on impact
+dirtPatches.forEach(p => { p.mesh.userData.isDirt = true; bounceSurfaces.push(p.mesh); });
+
+// Trash meshes included dynamically each frame
+function getBounceSurfacesWithTrash() {
+    const extra = trashItems.filter(i => !i.pickedUp && !i.dumped).map(i => i.mesh);
+    return bounceSurfaces.concat(extra);
+}
 
 function updateParticles(delta) {
     for (let i = particles.length - 1; i >= 0; i--) {
@@ -2136,11 +2719,12 @@ function updateParticles(delta) {
 
         // Bounce / splat on surfaces
         if (!p.userData.isSplat && bounceSurfaces.length) {
+            const allSurfaces = getBounceSurfacesWithTrash();
             const speed = vel.length();
             if (speed > 0.01) {
                 _bounceRay.set(p.position, vel.clone().normalize());
                 _bounceRay.far = speed * delta * 3.0;
-                const hits = _bounceRay.intersectObjects(bounceSurfaces, false);
+                const hits = _bounceRay.intersectObjects(allSurfaces, false);
                 if (hits.length) {
                     const hit = hits[0];
                     // Only splat on upward or side faces (not from below)
@@ -2149,7 +2733,15 @@ function updateParticles(delta) {
                             .transformDirection(hit.object.matrixWorld);
                         if (wn.dot(vel.clone().normalize()) < -0.1) {
                             spawnSplat(hit.point, 5);
-                            checkDirtHit(hit.point);
+                            // If we hit a dirt mesh directly, use its world position
+                            // so checkDirtHit gets an exact match regardless of geometry offset
+                            const cleanPoint = hit.object.userData.isDirt
+                                ? hit.object.getWorldPosition(new THREE.Vector3())
+                                : hit.point;
+                            checkDirtHit(cleanPoint, p.userData.power || 1.0);
+                            checkTrashHit(hit.point, vel);
+                            // Wet decal on floor
+                            if (hit.point.y < 0.3) spawnWetDecal(hit.point.x, 0, hit.point.z);
                             // Remove the droplet on impact
                             scene.remove(p);
                             particles.splice(i, 1);
@@ -2185,7 +2777,33 @@ function updateParticles(delta) {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  CONTROLS  (identical to OG)
+//  HUD UPDATE
+// ─────────────────────────────────────────────────────────────
+function updateHUD() {
+    const pct = dirtPatches.length ? Math.round(cleanedCount / dirtPatches.length * 100) : 0;
+    document.getElementById('clean-bar').style.width = pct + '%';
+    document.getElementById('clean-pct').textContent  = pct + '%';
+
+    // Zone progress sidebar
+    const zoneEl = document.getElementById('zone-list');
+    zoneEl.innerHTML = '';
+    ZONES.forEach(zone => {
+        const patches = dirtPatches.filter(p => p.zone === zone.id);
+        if (!patches.length) return;
+        const done = patches.filter(p => p.cleaned).length;
+        const zonePct = Math.round(done / patches.length * 100);
+        const row = document.createElement('div');
+        row.className = 'zone-row' + (zonePct === 100 ? ' zone-done' : '');
+        row.innerHTML = `<span class="zone-name">${zone.label}</span><div class="zone-mini-bg"><div class="zone-mini-bar" style="width:${zonePct}%"></div></div><span style="color:#668;font-size:10px">${zonePct}%</span>`;
+        zoneEl.appendChild(row);
+    });
+
+    if (pct === 100 && dirtPatches.length > 0)
+        document.getElementById('win-msg').style.display = 'block';
+}
+
+// ─────────────────────────────────────────────────────────────
+//  CONTROLS
 // ─────────────────────────────────────────────────────────────
 const ui        = document.getElementById('ui-layer');
 const crosshair = document.getElementById('crosshair');
@@ -2199,12 +2817,30 @@ document.addEventListener('pointerlockchange', () => {
     ui.style.display        = isLocked ? 'none'  : 'flex';
     crosshair.style.display = isLocked ? 'block' : 'none';
     hud.style.display       = isLocked ? 'block' : 'none';
-    if (isLocked) updateHUD();
+    document.getElementById('nozzle-mode').style.display    = isLocked ? 'block' : 'none';
+    document.getElementById('zone-list').style.display      = isLocked ? 'block' : 'none';
+    document.getElementById('trash-counter').style.display  = isLocked ? 'block' : 'none';
+    if (isLocked) { updateHUD(); updateNozzleHUD(); updateTrashHUD(); }
 });
 
 const keys = {};
-window.addEventListener('keydown', e => keys[e.code] = true);
-window.addEventListener('keyup',   e => keys[e.code] = false);
+window.addEventListener('keydown', e => {
+    keys[e.code] = true;
+    if (!isLocked) return;
+    // R — cycle nozzle mode
+    if (e.code === 'KeyR') {
+        nozzleIdx = (nozzleIdx + 1) % NOZZLE_MODES.length;
+        updateNozzleHUD();
+        const nm = document.getElementById('nozzle-name');
+        nm.style.color = '#fff';
+        setTimeout(() => { nm.style.color = ''; }, 200);
+    }
+    // E — pick up / drop trash
+    if (e.code === 'KeyE') tryPickup();
+    // F — throw held trash
+    if (e.code === 'KeyF') tryThrow();
+});
+window.addEventListener('keyup', e => keys[e.code] = false);
 
 document.addEventListener('mousemove', e => {
     if (!isLocked) return;
@@ -2217,7 +2853,7 @@ window.addEventListener('mousedown', e => { if (e.button === 0) isSpraying = tru
 window.addEventListener('mouseup',   e => { if (e.button === 0) isSpraying = false; });
 
 // ─────────────────────────────────────────────────────────────
-//  GAME LOOP  (identical to OG)
+//  GAME LOOP
 // ─────────────────────────────────────────────────────────────
 const clock = new THREE.Clock();
 
@@ -2248,7 +2884,7 @@ function animate() {
 
         playerCapsule.translate(playerVelocity.clone().multiplyScalar(delta));
 
-        // Octree collision (real Three.js addon — stairs just work)
+        // Octree collision
         const result = worldOctree.capsuleIntersect(playerCapsule);
         playerOnFloor = false;
         if (result) {
@@ -2258,27 +2894,43 @@ function animate() {
 
         // Fall reset
         if (playerCapsule.start.y < -5) {
-            playerCapsule.start.set(0, 0.35, 15);
-            playerCapsule.end.set(0, 1.65, 15);
+            playerCapsule.start.set(0, 0.35, 0);
+            playerCapsule.end.set(0, 1.65, 0);
             playerVelocity.set(0, 0, 0);
         }
 
         camera.position.copy(playerCapsule.end);
 
-        // Spray
+        // ── SPRAY ──
+        const nozzle = currentNozzle();
         if (isSpraying) {
             sprayTimer += delta;
-            // ~25 droplets/sec — tight enough for a stream, not a wall of blue
-            if (sprayTimer >= 0.04) {
+            if (sprayTimer >= nozzle.rate) {
                 sprayTimer = 0;
                 spawnDroplet();
             }
         } else {
             sprayTimer = 0;
         }
+
+        // ── HIT FLASH FADE ──
+        if (hitFlashTimer > 0) {
+            hitFlashTimer -= delta;
+            if (hitFlashTimer <= 0) {
+                hitFlashEl.style.opacity = '0';
+                hitFlashTimer = 0;
+            }
+        }
+
+        // ── TRASH ──
+        updateNearbyTrash();
+        updatePickupPrompt();
+        updateHeldItem();
     }
 
     updateParticles(delta);
+    updateWetDecals(delta);
+    updateTrash(delta);
 
     renderer.render(scene, camera);
 }
