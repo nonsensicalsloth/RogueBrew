@@ -262,6 +262,38 @@
 <script src="js/ui.js"></script>
 <script src="js/save.js"></script>
 <script src="js/game.js"></script>
+<script>
+  (function() {
+    // The Konami Code sequence: Up, Up, Down, Down, Left, Right, Left, Right, B, A
+    const konamiCode = [
+      'ArrowUp', 'ArrowUp', 
+      'ArrowDown', 'ArrowDown', 
+      'ArrowLeft', 'ArrowRight', 
+      'ArrowLeft', 'ArrowRight', 
+      'b', 'a'
+    ];
+    let konamiIndex = 0;
+
+    document.addEventListener('keydown', (e) => {
+      // Check if the pressed key matches the next key in the sequence
+      // We use .toLowerCase() to ensure 'B' or 'A' works regardless of Shift/Caps Lock
+      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+
+      if (key === (konamiCode[konamiIndex].length === 1 ? konamiCode[konamiIndex].toLowerCase() : konamiCode[konamiIndex])) {
+        konamiIndex++;
+
+        // If the full sequence is completed
+        if (konamiIndex === konamiCode.length) {
+          window.location.href = 'https://brewslike.com/Clean';
+          konamiIndex = 0; // Reset
+        }
+      } else {
+        // Reset if a wrong key is pressed
+        konamiIndex = 0;
+      }
+    });
+  })();
+</script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"821db6b6f0ad4c589dc214d17531eb5f","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
