@@ -45,13 +45,6 @@
             display: none; pointer-events: none; font-family: monospace;
             color: #aee; font-size: 11px; letter-spacing: 0.1em;
         }
-        /* ── TRASH COUNTER ── */
-        #trash-counter {
-            position: absolute; top: 14px; left: 20px; margin-top: 52px;
-            display: none; pointer-events: none; font-family: monospace;
-            color: #ca8; font-size: 11px; letter-spacing: 0.08em;
-        }
-
         /* ── NOZZLE MODE INDICATOR ── */
         #nozzle-mode {
             position: absolute; bottom: 28px; right: 28px;
@@ -61,17 +54,7 @@
         #nozzle-mode .mode-label { font-size: 10px; color: #688; margin-bottom: 2px; }
         #nozzle-mode .mode-name { color: #2ef; font-size: 14px; }
 
-        /* ── ZONE PROGRESS ── */
-        #zone-list {
-            position: absolute; top: 14px; right: 20px;
-            display: none; pointer-events: none; font-family: monospace;
-            font-size: 11px; color: #aaa; text-align: right;
-        }
-        .zone-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; justify-content: flex-end; }
-        .zone-name { color: #7cc; }
-        .zone-mini-bg { width: 60px; height: 5px; background: #333; border-radius: 3px; overflow: hidden; }
-        .zone-mini-bar { height: 100%; background: #4fc874; border-radius: 3px; width: 0%; transition: width 0.4s; }
-        .zone-done .zone-name { color: #4fc874; }
+        /* zone-list removed */
 
         /* ── CROSSHAIR upgrade ── */
         #crosshair {
@@ -111,15 +94,9 @@
     <div id="clean-pct" style="font-size:18px;margin-top:2px">0%</div>
 </div>
 
-<!-- Zone progress sidebar -->
-<div id="zone-list"></div>
-
 <!-- Pickup prompt -->
 <div id="pickup-prompt">[E] Pick Up</div>
 <div id="held-item">Holding: <span id="held-name">—</span> &nbsp;·&nbsp; [E] Drop &nbsp;·&nbsp; [F] Throw</div>
-
-<!-- Trash counter -->
-<div id="trash-counter">🗑 Trash: <span id="trash-done">0</span> / <span id="trash-total">0</span></div>
 
 <!-- Nozzle mode -->
 <div id="nozzle-mode">
@@ -133,18 +110,21 @@
 <div id="win-msg">✦ PRODUCTION FLOOR CLEAN ✦<br><span style="font-size:0.55em;color:#7fc">Head Brewer Approved</span></div>
 
 <script type="importmap">
-{
-    "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+            "cannon-es": "https://esm.sh/cannon-es@0.20.0"
+        }
     }
-}
 </script>
 
 <script type="module">
 import * as THREE from 'three';
+import * as CANNON from 'cannon-es';
 import { Octree }  from 'three/addons/math/Octree.js';
 import { Capsule } from 'three/addons/math/Capsule.js';
+import { DecalGeometry } from 'three/addons/geometries/DecalGeometry.js';
 
 // ─────────────────────────────────────────────────────────────
 //  TANK LAYOUT  [x, z, radius, bodyHeight, type, label]
@@ -204,6 +184,10 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x1a1a1a);
 scene.fog = new THREE.Fog(0x1a1a1a, 30, 120);
 
+// --- PHYSICS SETUP ---
+const world = new CANNON.World();
+world.gravity.set(0, -9.82, 0); // Standard Earth gravity
+
 const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 500);
 camera.rotation.order = 'YXZ';
 
@@ -229,6 +213,25 @@ const playerCapsule = new Capsule(
 const playerVelocity = new THREE.Vector3();
 let playerOnFloor = false;
 
+// ── CANNON player body — drives mass/gravity feel, synced to Octree capsule ──
+const playerPhysMat = new CANNON.Material('playerMaterial');
+const playerBody = new CANNON.Body({
+    mass: 60,
+    shape: new CANNON.Sphere(0.35),   // matches capsule radius
+    fixedRotation: true,               // no tumbling
+    material: playerPhysMat,
+    linearDamping: 0.99,               // strong damping — movement is key-driven not force-driven
+});
+playerBody.position.set(0, 1.65, 0);
+world.addBody(playerBody);
+
+// Contact material: player vs floor — no bounce, high friction
+const floorPhysMat = new CANNON.Material('floorMaterial');
+world.addContactMaterial(new CANNON.ContactMaterial(playerPhysMat, floorPhysMat, {
+    friction: 0.0,
+    restitution: 0.0,
+}));
+
 // ─────────────────────────────────────────────────────────────
 //  MATERIALS
 // ─────────────────────────────────────────────────────────────
@@ -237,8 +240,17 @@ const ssDkMat  = new THREE.MeshStandardMaterial({ color:0xa8a8b4, metalness:0.75
 const coneMat  = new THREE.MeshStandardMaterial({ color:0xc0c0c8, metalness:0.8,  roughness:0.25 });
 const floorMat = new THREE.MeshStandardMaterial({ color:0x282828, roughness:0.85 });
 
-// Wet surface material — applied when water hits a surface
-const wetShineMat = new THREE.MeshStandardMaterial({ color:0xb8d8e8, metalness:0.5, roughness:0.05, transparent:true, opacity:0.18 });
+// This replaces your old wetShineMat
+const wetMarkMat = new THREE.MeshStandardMaterial({ 
+    color: 0x111111,     // Darker than the floor for that "soaked" look
+    metalness: 0.1, 
+    roughness: 0.05,     // Keeps it shiny
+    transparent: true, 
+    opacity: 0.3,        // Subtle enough to blend
+    depthWrite: false,   // Prevents flickering
+    polygonOffset: true, // Lifts it technically "above" the floor
+    polygonOffsetFactor: -4 
+});
 
 // ─────────────────────────────────────────────────────────────
 //  DIRT TYPES — brewery-realistic filth varieties
@@ -283,15 +295,17 @@ const WET_MAT = new THREE.MeshBasicMaterial({ color:0x88ddff, transparent:true, 
 
 function spawnWetDecal(x, y, z) {
     if (wetDecals.length > 120) {
-        // Recycle oldest
+        // Recycle oldest — fully remove it first
         const old = wetDecals.shift();
-        old.userData.life = 0;
-        old.visible = false;
+        scene.remove(old);
     }
     const d = new THREE.Mesh(WET_GEO, WET_MAT.clone());
     d.rotation.x = -Math.PI / 2;
-    d.position.set(x, y + 0.006, z);
-    d.userData.life = 8.0 + Math.random() * 4.0;  // decals linger 8-12s
+    // y+0.012 keeps it clearly above floor (y=0) and dirt patches (y=0.005)
+    d.position.set(x, Math.max(y, 0) + 0.012, z);
+    d.renderOrder = 2;           // render after floor (0) and dirt (1)
+    d.material.opacity = 0.18;   // ensure fresh opacity each spawn
+    d.userData.life = 8.0 + Math.random() * 4.0;
     d.userData.maxLife = d.userData.life;
     scene.add(d);
     wetDecals.push(d);
@@ -304,8 +318,19 @@ function updateWetDecals(delta) {
         if (d.userData.life <= 0) {
             scene.remove(d);
             wetDecals.splice(i, 1);
-        } else if (d.userData.life < 2.0) {
-            d.material.opacity = (d.userData.life / 2.0) * 0.18;
+        } else {
+            // Fade in fast (first 0.3s), hold, then fade out over last 2s
+            const t = d.userData.life / d.userData.maxLife;
+            const age = d.userData.maxLife - d.userData.life;
+            let opacity;
+            if (age < 0.3) {
+                opacity = (age / 0.3) * 0.18;        // fade in
+            } else if (d.userData.life > 2.0) {
+                opacity = 0.18;                        // hold
+            } else {
+                opacity = (d.userData.life / 2.0) * 0.18; // fade out
+            }
+            d.material.opacity = Math.max(0, opacity);
         }
     }
 }
@@ -317,6 +342,7 @@ function makeDirt(x, y, z, r, typeIdx) {
     const mesh = new THREE.Mesh(geo, mat);
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.set(x, 0.005, z);
+    mesh.renderOrder = 1;
     scene.add(mesh);
     dirtPatches.push({ mesh, cleaned: false, hits: type.hits, maxHits: type.hits, type, zone: assignZone(x, z) });
 }
@@ -810,19 +836,46 @@ function buildCentrifuge(x, z, worldGroup) {
 // ─────────────────────────────────────────────────────────────
 const worldGroup = new THREE.Group();
 
-// Floor
-const floor = new THREE.Mesh(
-    new THREE.BoxGeometry(92, 1, 103),
+// --- PHYSICAL FLOOR ---
+// 1. The Physics Shape (A flat plane)
+const floorShape = new CANNON.Plane();
+const floorBody = new CANNON.Body({ 
+    mass: 0, // Mass 0 means it's an "immovable object"
+    shape: floorShape 
+});
+
+// 2. Rotate the physics floor to be flat (it starts vertical by default)
+floorBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0); 
+world.addBody(floorBody);
+
+// 3. The Visual Floor — must live in worldGroup so every subsequent
+//    worldOctree.fromGraphNode(worldGroup) call includes it, and so
+//    bounceSurfaces (which traverses worldGroup) picks it up for
+//    particle collision. Previously it was added to scene directly and
+//    the octree bake was immediately overwritten by later rebuilds.
+const floorVisual = new THREE.Mesh(
+    new THREE.PlaneGeometry(200, 200),
     floorMat
 );
-floor.position.set(-25, -0.5, 8.5);   // x: -70 to +22, z: -43 to +60
-floor.receiveShadow = true;
-worldGroup.add(floor);
+floorVisual.rotation.x = -Math.PI / 2;
+floorVisual.userData.isFloor = true;
+worldGroup.add(floorVisual);
 
 // Tanks — build visual + add collision proxy to worldGroup
 const tankGroups = [];
 TANK_LAYOUT.forEach(cfg => {
     tankGroups.push(buildTank(cfg, worldGroup));
+});
+
+// ── Cannon static bodies for tanks — used by trash/water physics ──
+// These complement the Octree proxies (which handle player collision).
+TANK_LAYOUT.forEach(cfg => {
+    const { x, z, r, h } = cfg;
+    const totalH = h + (cfg.type === 'fv' ? h * 0.40 : 1.5);  // body + legs/cone
+    const tankShape = new CANNON.Cylinder(r, r, totalH, 16);
+    const tankBody  = new CANNON.Body({ mass: 0, shape: tankShape });
+    tankBody.position.set(x, totalH / 2, z);
+    world.addBody(tankBody);
 });
 
 // ── West wall BBTs + centrifuge (built with dedicated functions) ──
@@ -962,36 +1015,44 @@ const BIN_POSITIONS = [
 
 const binBodyMat   = new THREE.MeshStandardMaterial({ color: 0x2d5a27, roughness: 0.7, metalness: 0.2 });
 const binRimMat    = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.5, metalness: 0.3 });
-const binInteriorMat = new THREE.MeshStandardMaterial({ color: 0x080808, roughness: 1.0, side: THREE.BackSide });
 
 BIN_POSITIONS.forEach(({ x, z }) => {
     const g = new THREE.Group();
 
-    // Body — slightly tapered green cylinder
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.25, 0.82, 16), binBodyMat);
-    body.position.y = 0.41;
+    // Body — tapered cylinder, wider at top like a real trash can
+    const body = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.28, 0.22, 0.78, 20),
+        binBodyMat
+    );
+    body.position.y = 0.39;
     g.add(body);
 
-    // Black rim ring around the top opening
-    const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.05, 16), binRimMat);
-    rim.position.y = 0.845;
-    g.add(rim);
+    // Flat lid — sits flush on top, slightly wider than body top
+    const lid = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.30, 0.30, 0.035, 20),
+        binRimMat
+    );
+    lid.position.y = 0.797;
+    g.add(lid);
 
-    // Dark interior — open top disc so you can see black inside
-    const interior = new THREE.Mesh(new THREE.CylinderGeometry(0.29, 0.29, 0.78, 16), binInteriorMat);
-    interior.position.y = 0.41;
-    g.add(interior);
+    // Thin lip ring where lid meets body
+    const lip = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.285, 0.285, 0.025, 20),
+        binRimMat
+    );
+    lip.position.y = 0.775;
+    g.add(lip);
 
     g.position.set(x, 0, z);
     scene.add(g);
 
     // Invisible collision proxy
     const proxy = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.32, 0.32, 0.90, 10),
+        new THREE.CylinderGeometry(0.30, 0.30, 0.84, 10),
         new THREE.MeshStandardMaterial()
     );
     proxy.visible = false;
-    proxy.position.set(x, 0.45, z);
+    proxy.position.set(x, 0.42, z);
     worldGroup.add(proxy);
 
     trashBins.push({ position: new THREE.Vector3(x, 0.5, z), radius: 0.6 });
@@ -1804,6 +1865,7 @@ worldGroup.add(mezDeck);
 //   Hop Cold door at X=-8 — between mid-landing (X=2) and stair top (X=-13.5) ✓
 const ROOM_H  = MEZ_Y - 0.02;
 const DOOR_H  = 2.8;
+const WALL_VIS_H = 3.5;   // visible wall height — matches interior ceiling, not full mez underside
 const FRAME_R = 0.08;
 
 const R_OFFI_X0  = -5;    const R_OFFI_X1  = MEZ_X1;  // Brewer Office:  -5 → 20  (25 units)
@@ -1812,37 +1874,55 @@ const R_HOPC_X0  = -15;   const R_HOPC_X1  = R_CLOS_X0; // Hop Cold:     -32 →
 const R_MILL_X0  = -40;   const R_MILL_X1  = R_HOPC_X0; // Malt Mill:    -51 → -32 (19 units)
 const R_EQUIP_X0 = MEZ_X0; const R_EQUIP_X1 = R_MILL_X0; // Boiler:   -70 → -51 (19 units)
 
+// lowerWallBox — same pattern as wallBox but for the ground-floor rooms under the mezzanine.
+// Visual goes straight to scene; Cannon body handles player collision.
+// Meshes are also pushed to wallMeshes so the water raycaster can hit them.
+const offWallCannonMat = new CANNON.Material('officeWall');
+world.addContactMaterial(new CANNON.ContactMaterial(playerPhysMat, offWallCannonMat, {
+    friction: 0.0, restitution: 0.0,
+}));
+const wallMeshes = [];  // all scene-direct wall meshes for water hit detection
+
+function lowerWallBox(cx, cy, cz, w, h, d) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), roomMat);
+    m.position.set(cx, cy, cz);
+    scene.add(m);
+    wallMeshes.push(m);
+    const body = new CANNON.Body({ mass: 0, material: offWallCannonMat });
+    body.addShape(new CANNON.Box(new CANNON.Vec3(w / 2, h / 2, d / 2)));
+    body.position.set(cx, cy, cz);
+    world.addBody(body);
+}
+
 function buildRoom(rx0, rx1, doorCenterX, doorW) {
     const rw   = rx1 - rx0;
     const zmid = (MEZ_Z0 + MEZ_Z1) / 2;
 
-    // South wall
-    const sw = new THREE.Mesh(new THREE.BoxGeometry(rw, ROOM_H, 1.0), roomMat);
-    sw.position.set((rx0+rx1)/2, ROOM_H/2, MEZ_Z0);
-    worldGroup.add(sw);
-    // West divider wall
-    const ww = new THREE.Mesh(new THREE.BoxGeometry(0.2, ROOM_H, MEZ_D), roomMat);
-    ww.position.set(rx0, ROOM_H/2, zmid);
-    worldGroup.add(ww);
+    // South wall — full height to mezzanine underside
+    lowerWallBox((rx0+rx1)/2, ROOM_H/2, MEZ_Z0, rw, ROOM_H, 1.0);
+    // West divider wall — full height
+    lowerWallBox(rx0, ROOM_H/2, zmid, 0.2, ROOM_H, MEZ_D);
 
-    // North face split around door
+    // North face split around door — full height
     const leftW  = doorCenterX - doorW/2 - rx0;
     const rightW = rx1 - (doorCenterX + doorW/2);
-    if (leftW > 0.05) {
-        const nw = new THREE.Mesh(new THREE.BoxGeometry(leftW, ROOM_H, 0.2), roomMat);
-        nw.position.set(rx0 + leftW/2, ROOM_H/2, MEZ_Z1);
-        worldGroup.add(nw);
+    if (leftW > 0.05)  lowerWallBox(rx0 + leftW/2,  ROOM_H/2, MEZ_Z1, leftW,  ROOM_H, 0.2);
+    if (rightW > 0.05) lowerWallBox(rx1 - rightW/2, ROOM_H/2, MEZ_Z1, rightW, ROOM_H, 0.2);
+
+    // Above door: full wall from DOOR_H to ROOM_H (closes the gap)
+    const aboveH = ROOM_H - DOOR_H;
+    lowerWallBox(doorCenterX, DOOR_H + aboveH/2, MEZ_Z1, doorW, aboveH, 0.2);
+
+    // Slim visible transom strip just above door up to WALL_VIS_H
+    const transomH = WALL_VIS_H - DOOR_H;
+    if (transomH > 0.02) {
+        const t = new THREE.Mesh(new THREE.BoxGeometry(doorW, transomH, 0.2), roomMat);
+        t.position.set(doorCenterX, DOOR_H + transomH/2, MEZ_Z1);
+        scene.add(t);
+        wallMeshes.push(t);
     }
-    if (rightW > 0.05) {
-        const nw = new THREE.Mesh(new THREE.BoxGeometry(rightW, ROOM_H, 0.2), roomMat);
-        nw.position.set(rx1 - rightW/2, ROOM_H/2, MEZ_Z1);
-        worldGroup.add(nw);
-    }
-    const transomH = ROOM_H - DOOR_H;
-    const nw3 = new THREE.Mesh(new THREE.BoxGeometry(doorW, transomH, 0.2), roomMat);
-    nw3.position.set(doorCenterX, DOOR_H + transomH/2, MEZ_Z1);
-    worldGroup.add(nw3);
-    // Door frame
+
+    // Door frame (visual only)
     for (const fdx of [-doorW/2, doorW/2]) {
         const post = new THREE.Mesh(new THREE.BoxGeometry(FRAME_R, DOOR_H, FRAME_R), darkMat);
         post.position.set(doorCenterX + fdx, DOOR_H/2, MEZ_Z1);
@@ -1859,49 +1939,43 @@ buildRoom(R_EQUIP_X0, R_EQUIP_X1, (R_EQUIP_X0+R_EQUIP_X1)/2, 3.0);
 // Malt Mill: X=-51 to -32
 buildRoom(R_MILL_X0, R_MILL_X1, (R_MILL_X0+R_MILL_X1)/2, 2.4);
 // Hop Cold: extended to X=-5 so door at X=-8 (width 3.0) fits inside bounds
-// door right edge = -8+1.5 = -6.5 < -5 ✓
-buildRoom(R_HOPC_X0, R_OFFI_X0, -8, 3.0); //Hop cooler redesign
+buildRoom(R_HOPC_X0, R_OFFI_X0, -8, 3.0);
 // Brewer Office: X=-5 to 20, door at X=17
 buildRoom(R_OFFI_X0, R_OFFI_X1, 17, 1.6);
-// Closet inside Brewer Office — a small room in the back-west corner of the office.
-// Walls: south wall (shared with MEZ_Z0), west wall at X=-5 (office west boundary),
-// east wall at X=2 (closet east side), back wall flush with MEZ_Z0.
-// Door faces WEST — opening cut into the east wall of the closet at X=2, facing into office.
+
+// Closet inside Brewer Office
 {
-    const CLOS_X0 = R_OFFI_X0;        // X=-5  (west wall, same as office west boundary)
-    const CLOS_X1 = R_OFFI_X0 + 7;    // X=2   (east wall — closet is 7 units wide in X)
-    const CLOS_Z0 = MEZ_Z0;            // south wall
-    const CLOS_Z1 = MEZ_Z0 + MEZ_D;  // north wall of closet (partway into room)
+    const CLOS_X0 = R_OFFI_X0;
+    const CLOS_X1 = R_OFFI_X0 + 7;
+    const CLOS_Z0 = MEZ_Z0;
+    const CLOS_Z1 = MEZ_Z0 + MEZ_D;
     const CLOS_D  = CLOS_Z1 - CLOS_Z0;
     const zmid    = (CLOS_Z0 + CLOS_Z1) / 2;
     const CLOS_W  = CLOS_X1 - CLOS_X0;
 
-    // North wall of closet (E-W slab, faces into office)
-    const nw = new THREE.Mesh(new THREE.BoxGeometry(CLOS_W, ROOM_H, 0.2), roomMat);
-    nw.position.set((CLOS_X0+CLOS_X1)/2, ROOM_H/2, CLOS_Z1);
-    worldGroup.add(nw);
+    // North wall — full height
+    lowerWallBox((CLOS_X0+CLOS_X1)/2, ROOM_H/2, CLOS_Z1, CLOS_W, ROOM_H, 0.2);
 
-    // East wall of closet with door (west-facing door into the office)
+    // East wall with door — full height segments
     const cDOOR_W = 1.0;
-    const cDOOR_Z = zmid + 3;   // door centered in closet depth
+    const cDOOR_Z = zmid + 3;
     const botH = cDOOR_Z - cDOOR_W/2 - CLOS_Z0;
     const topH = CLOS_Z1 - (cDOOR_Z + cDOOR_W/2);
-    if (botH > 0.05) {
-        const seg = new THREE.Mesh(new THREE.BoxGeometry(0.2, ROOM_H, botH), roomMat);
-        seg.position.set(CLOS_X1, ROOM_H/2, CLOS_Z0 + botH/2);
-        worldGroup.add(seg);
+    if (botH > 0.05) lowerWallBox(CLOS_X1, ROOM_H/2, CLOS_Z0 + botH/2, 0.2, ROOM_H, botH);
+    if (topH > 0.05) lowerWallBox(CLOS_X1, ROOM_H/2, CLOS_Z1 - topH/2, 0.2, ROOM_H, topH);
+    // Full-height fill above door opening
+    const cAboveH = ROOM_H - DOOR_H;
+    lowerWallBox(CLOS_X1, DOOR_H + cAboveH/2, cDOOR_Z, 0.2, cAboveH, cDOOR_W);
+    // Slim visible transom
+    const transH = WALL_VIS_H - DOOR_H;
+    if (transH > 0.02) {
+        const t = new THREE.Mesh(new THREE.BoxGeometry(0.2, transH, cDOOR_W), roomMat);
+        t.position.set(CLOS_X1, DOOR_H + transH/2, cDOOR_Z);
+        scene.add(t);
+        wallMeshes.push(t);
     }
-    if (topH > 0.05) {
-        const seg = new THREE.Mesh(new THREE.BoxGeometry(0.2, ROOM_H, topH), roomMat);
-        seg.position.set(CLOS_X1, ROOM_H/2, CLOS_Z1 - topH/2);
-        worldGroup.add(seg);
-    }
-    // Transom above door
-    const transH = ROOM_H - DOOR_H;
-    const trans = new THREE.Mesh(new THREE.BoxGeometry(1.0, transH, cDOOR_W), roomMat);
-    trans.position.set(CLOS_X1, DOOR_H + transH/2, cDOOR_Z);
-    worldGroup.add(trans);
-    // Door frame
+
+    // Door frame posts (visual only)
     for (const fdz of [-cDOOR_W/2, cDOOR_W/2]) {
         const post = new THREE.Mesh(new THREE.BoxGeometry(FRAME_R, DOOR_H, FRAME_R), darkMat);
         post.position.set(CLOS_X1, DOOR_H/2, cDOOR_Z + fdz);
@@ -1909,10 +1983,8 @@ buildRoom(R_OFFI_X0, R_OFFI_X1, 17, 1.6);
     }
 }
 
-// East cap wall
-const eastCap = new THREE.Mesh(new THREE.BoxGeometry(0.2, ROOM_H, MEZ_D), roomMat);
-eastCap.position.set(MEZ_X1, ROOM_H/2, (MEZ_Z0+MEZ_Z1)/2);
-worldGroup.add(eastCap);
+// East cap wall — full height
+lowerWallBox(MEZ_X1, ROOM_H/2, (MEZ_Z0+MEZ_Z1)/2, 0.2, ROOM_H, MEZ_D);
 
 // ── Mezzanine railings (end walls only — north face gap added after stair constants) ──
 addFlatBarRail(MEZ_X0, MEZ_Z0, MEZ_X0, MEZ_Z1, MEZ_Y);          // east end wall
@@ -2211,11 +2283,16 @@ const offFrameMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness:
 function makeOfficeLabel(text, x, y, z) { /* labels removed */ }
 
 // ── Wall helpers ──
-// wallBox: place a solid box in worldGroup. y0 = bottom world-y, h = height.
+// wallBox: place a solid box — visual mesh in scene + Cannon static body.
 function wallBox(cx, y0, cz, w, h, d) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), offWallMat);
     m.position.set(cx, y0 + h / 2, cz);
-    worldGroup.add(m);
+    scene.add(m);
+    wallMeshes.push(m);
+    const body = new CANNON.Body({ mass: 0, material: offWallCannonMat });
+    body.addShape(new CANNON.Box(new CANNON.Vec3(w / 2, h / 2, d / 2)));
+    body.position.set(cx, y0 + h / 2, cz);
+    world.addBody(body);
 }
 
 // ceilBox: thin ceiling slab at interior ceiling height
@@ -2223,7 +2300,7 @@ function ceilBox(cx, cz, w, d) {
     const T = 0.15;
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, T, d), offWallMat);
     m.position.set(cx, OFF_FLOOR_Y + OFF_H + T / 2, cz);
-    worldGroup.add(m);
+    scene.add(m);
 }
 
 // ── Glass panel helper ──
@@ -2252,11 +2329,11 @@ function glassPanel(px0, px1, cz, panelH) {
     pane.position.set(pxM, OFF_FLOOR_Y + FR / 2 + glH / 2, cz);
     scene.add(pane);
 
-    // Invisible collision box — added to worldGroup for physics only, not rendered
-    const col = new THREE.Mesh(new THREE.BoxGeometry(pw, panelH, OFF_WALL_T), new THREE.MeshStandardMaterial());
-    col.visible = false;
-    col.position.set(pxM, OFF_FLOOR_Y + panelH / 2, cz);
-    worldGroup.add(col);
+    // Cannon collision for glass panel — no visible mesh needed
+    const glBody = new CANNON.Body({ mass: 0, material: offWallCannonMat });
+    glBody.addShape(new CANNON.Box(new CANNON.Vec3(pw / 2, panelH / 2, OFF_WALL_T / 2)));
+    glBody.position.set(pxM, OFF_FLOOR_Y + panelH / 2, cz);
+    world.addBody(glBody);
 }
 
 // frontWallWithDoor: solid wall (runs in X) with door + flanking glass panels.
@@ -2487,24 +2564,32 @@ const northWall = new THREE.Mesh(
 northWall.position.set((MEZ_X1 + MEZ_X0) / 2, CEIL_Y / 2, BLDG_Z_N);
 worldGroup.add(northWall);
 
-// ── INVISIBLE COLLISION WALLS ──
-// Thick invisible boxes ensure octree stops the player regardless of visual wall thickness.
+// ── CANNON PERIMETER WALL BODIES ──
+// These replace the thick invisible Octree collision boxes for the outer walls.
+// Cannon's continuous collision detection prevents tunneling at high speed.
+// Visual walls (above) stay in worldGroup for rendering; physics is handled here.
 {
-    const invMat = new THREE.MeshStandardMaterial();
-    function invisWall(cx, cy, cz, w, h, d) {
-        const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), invMat);
-        m.visible = false;
-        m.position.set(cx, cy, cz);
-        worldGroup.add(m);
-    }
-    const CW = 2.0;  // collision thickness — well above 0.35 capsule radius
-    const H  = CEIL_Y;
+    const wallMat = new CANNON.Material('wallMaterial');
+    world.addContactMaterial(new CANNON.ContactMaterial(playerPhysMat, wallMat, {
+        friction: 0.0,
+        restitution: 0.0,
+    }));
 
-    // Main perimeter
-    invisWall(MEZ_X1,                      H/2, WALL_CEN_Z,            CW, H, WALL_RUN);  // west
-    invisWall(MEZ_X0,                      H/2, WALL_CEN_Z,            CW, H, WALL_RUN);  // east
-    invisWall((MEZ_X1+MEZ_X0)/2,           H/2, BLDG_Z_N,  MEZ_X1-MEZ_X0, H, CW);        // north
-    invisWall((MEZ_X1+MEZ_X0)/2,           H/2, MEZ_Z0,    MEZ_X1-MEZ_X0, H, CW);        // south
+    function cannonWall(cx, cy, cz, hw, hh, hd) {
+        const body = new CANNON.Body({ mass: 0, material: wallMat });
+        body.addShape(new CANNON.Box(new CANNON.Vec3(hw, hh, hd)));
+        body.position.set(cx, cy, cz);
+        world.addBody(body);
+    }
+
+    const H  = CEIL_Y;
+    const CW = 1.0;   // half-extent of wall thickness
+
+    // Perimeter
+    cannonWall(MEZ_X1,                    H/2, WALL_CEN_Z,              CW, H/2, WALL_RUN/2);  // west
+    cannonWall(MEZ_X0,                    H/2, WALL_CEN_Z,              CW, H/2, WALL_RUN/2);  // east
+    cannonWall((MEZ_X1+MEZ_X0)/2,         H/2, BLDG_Z_N,   (MEZ_X1-MEZ_X0)/2, H/2, CW);      // north
+    cannonWall((MEZ_X1+MEZ_X0)/2,         H/2, MEZ_Z0,     (MEZ_X1-MEZ_X0)/2, H/2, CW);      // south
 }
 
 worldOctree.fromGraphNode(worldGroup);
@@ -2677,7 +2762,7 @@ function checkDirtHit(point, power) {
             }
 
             // Spawn wet decal on the floor near the impact
-            if (point.y < 0.5) spawnWetDecal(point.x, 0, point.z);
+            if (point.y < 0.5) spawnWetDecal(point.x, point.y, point.z);
         }
     }
 }
@@ -2692,11 +2777,12 @@ function updateNozzleHUD() {
 }
 
 // Per-frame particle update — gravity, bounce detection, fade
-const _gravDelta = new THREE.Vector3(0, -10, 0);  // gravity in world-units/s²
 const _bounceRay = new THREE.Raycaster();
 // Collect solid meshes for splat detection — worldGroup proxies + visual tank surfaces
 const bounceSurfaces = [];
 worldGroup.traverse(o => { if (o.isMesh) bounceSurfaces.push(o); });
+// Also include scene-direct wall meshes (office/mezzanine walls built via wallBox/lowerWallBox)
+wallMeshes.forEach(m => bounceSurfaces.push(m));
 // Also add the actual visual cone/body/dome meshes from each tank group so
 // water correctly hits the cone surface (the proxy cylinder doesn't cover the cone slope)
 tankGroups.forEach(g => {
@@ -2717,32 +2803,59 @@ function updateParticles(delta) {
         const p   = particles[i];
         const vel = p.userData.vel;
 
-        // Bounce / splat on surfaces
+        // ── 1. Apply gravity and move ──
+        vel.y -= 10 * delta;
+        const prevY = p.position.y;
+        p.position.addScaledVector(vel, delta);
+        p.userData.life -= delta;
+
+        // ── 2. Floor splat — simple y≤0 check, never misses ──
+        if (!p.userData.isSplat && p.position.y <= 0.0) {
+            p.position.y = 0.0;
+            spawnSplat(p.position, 4);
+            checkDirtHit(p.position, p.userData.power || 1.0);
+            spawnWetDecal(p.position.x, 0, p.position.z);
+            scene.remove(p);
+            particles.splice(i, 1);
+            continue;
+        }
+
+        // ── 3. Ray check for tanks, walls, dirt patches (non-floor surfaces) ──
         if (!p.userData.isSplat && bounceSurfaces.length) {
-            const allSurfaces = getBounceSurfacesWithTrash();
             const speed = vel.length();
             if (speed > 0.01) {
-                _bounceRay.set(p.position, vel.clone().normalize());
-                _bounceRay.far = speed * delta * 3.0;
+                // Cast from previous position toward current — covers the full step
+                const stepDir = p.position.clone().sub(new THREE.Vector3(
+                    p.position.x - vel.x * delta,
+                    p.position.y - vel.y * delta,
+                    p.position.z - vel.z * delta
+                )).normalize();
+                const stepLen = speed * delta;
+                const rayOrigin = new THREE.Vector3(
+                    p.position.x - vel.x * delta,
+                    p.position.y - vel.y * delta,
+                    p.position.z - vel.z * delta
+                );
+                _bounceRay.set(rayOrigin, stepDir);
+                _bounceRay.far = stepLen + 0.15; // small buffer
+
+                const allSurfaces = getBounceSurfacesWithTrash();
                 const hits = _bounceRay.intersectObjects(allSurfaces, false);
                 if (hits.length) {
                     const hit = hits[0];
-                    // Only splat on upward or side faces (not from below)
+                    // Skip the floor mesh — already handled above
+                    if (hit.object.userData.isFloor) continue;
                     if (hit.face && hit.face.normal) {
                         const wn = hit.face.normal.clone()
                             .transformDirection(hit.object.matrixWorld);
                         if (wn.dot(vel.clone().normalize()) < -0.1) {
                             spawnSplat(hit.point, 5);
-                            // If we hit a dirt mesh directly, use its world position
-                            // so checkDirtHit gets an exact match regardless of geometry offset
                             const cleanPoint = hit.object.userData.isDirt
                                 ? hit.object.getWorldPosition(new THREE.Vector3())
                                 : hit.point;
                             checkDirtHit(cleanPoint, p.userData.power || 1.0);
                             checkTrashHit(hit.point, vel);
-                            // Wet decal on floor
-                            if (hit.point.y < 0.3) spawnWetDecal(hit.point.x, 0, hit.point.z);
-                            // Remove the droplet on impact
+                            if (hit.point.y < 0.5) spawnWetDecal(hit.point.x, hit.point.y, hit.point.z);
                             scene.remove(p);
                             particles.splice(i, 1);
                             continue;
@@ -2752,16 +2865,10 @@ function updateParticles(delta) {
             }
         }
 
-        // Gravity
-        vel.addScaledVector(_gravDelta, delta);
-        p.position.addScaledVector(vel, delta);
-        p.userData.life -= delta;
-
-        // Fade out last 0.3s of life
+        // ── 4. Fade out last 0.3s of life ──
         const FADE = 0.30;
         if (p.userData.life < FADE) {
             if (!p.userData.fading) {
-                // Clone material so we can change opacity independently
                 p.material = p.material.clone();
                 p.userData.fading = true;
             }
@@ -2784,20 +2891,6 @@ function updateHUD() {
     document.getElementById('clean-bar').style.width = pct + '%';
     document.getElementById('clean-pct').textContent  = pct + '%';
 
-    // Zone progress sidebar
-    const zoneEl = document.getElementById('zone-list');
-    zoneEl.innerHTML = '';
-    ZONES.forEach(zone => {
-        const patches = dirtPatches.filter(p => p.zone === zone.id);
-        if (!patches.length) return;
-        const done = patches.filter(p => p.cleaned).length;
-        const zonePct = Math.round(done / patches.length * 100);
-        const row = document.createElement('div');
-        row.className = 'zone-row' + (zonePct === 100 ? ' zone-done' : '');
-        row.innerHTML = `<span class="zone-name">${zone.label}</span><div class="zone-mini-bg"><div class="zone-mini-bar" style="width:${zonePct}%"></div></div><span style="color:#668;font-size:10px">${zonePct}%</span>`;
-        zoneEl.appendChild(row);
-    });
-
     if (pct === 100 && dirtPatches.length > 0)
         document.getElementById('win-msg').style.display = 'block';
 }
@@ -2818,8 +2911,6 @@ document.addEventListener('pointerlockchange', () => {
     crosshair.style.display = isLocked ? 'block' : 'none';
     hud.style.display       = isLocked ? 'block' : 'none';
     document.getElementById('nozzle-mode').style.display    = isLocked ? 'block' : 'none';
-    document.getElementById('zone-list').style.display      = isLocked ? 'block' : 'none';
-    document.getElementById('trash-counter').style.display  = isLocked ? 'block' : 'none';
     if (isLocked) { updateHUD(); updateNozzleHUD(); updateTrashHUD(); }
 });
 
@@ -2862,33 +2953,60 @@ function animate() {
     const delta = Math.min(0.05, clock.getDelta());
 
     if (isLocked) {
-        // Damping
+        // ── Build move direction from keys ──
+        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+        forward.y = 0; forward.normalize();
+        const side = new THREE.Vector3().crossVectors(forward, camera.up);
+
+        const moveSpeed = 6;
+        let vx = 0, vz = 0;
+        if (keys['KeyW']) { vx += forward.x * moveSpeed; vz += forward.z * moveSpeed; }
+        if (keys['KeyS']) { vx -= forward.x * moveSpeed; vz -= forward.z * moveSpeed; }
+        if (keys['KeyA']) { vx -= side.x * moveSpeed; vz -= side.z * moveSpeed; }
+        if (keys['KeyD']) { vx += side.x * moveSpeed; vz += side.z * moveSpeed; }
+
+        // ── Gravity + damping on vertical ──
         let damping = Math.exp(-4 * delta) - 1;
         if (!playerOnFloor) {
             playerVelocity.y -= 30 * delta;
             damping = Math.exp(-1.5 * delta) - 1;
         }
-        playerVelocity.addScaledVector(playerVelocity, damping);
+        playerVelocity.x = vx;
+        playerVelocity.z = vz;
+        // Only damp vertical (horizontal is key-driven, not accumulated)
+        playerVelocity.y += playerVelocity.y * damping;
 
-        // Movement
-        const forward = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
-        forward.y = 0; forward.normalize();
-        const side = new THREE.Vector3().crossVectors(forward, camera.up);
-
-        const speed = 20 * delta;
-        if (keys['KeyW']) playerVelocity.addScaledVector(forward,  speed);
-        if (keys['KeyS']) playerVelocity.addScaledVector(forward, -speed);
-        if (keys['KeyA']) playerVelocity.addScaledVector(side,    -speed);
-        if (keys['KeyD']) playerVelocity.addScaledVector(side,     speed);
+        // Jump
         if (playerOnFloor && keys['Space']) playerVelocity.y = 12;
 
-        playerCapsule.translate(playerVelocity.clone().multiplyScalar(delta));
+        // ── Proposed move ──
+        const move = playerVelocity.clone().multiplyScalar(delta);
 
-        // Octree collision
+        // ── Cannon wall check — cancel velocity into any wall before moving ──
+        // Step Cannon with the proposed velocity so it detects contacts
+        playerBody.velocity.set(playerVelocity.x, playerVelocity.y, playerVelocity.z);
+        world.step(1 / 60, delta, 3);
+
+        // If Cannon moved the body less than we asked, a wall blocked us — clamp
+        const cannonDx = playerBody.velocity.x;
+        const cannonDz = playerBody.velocity.z;
+        // If Cannon zeroed out a component, respect that (wall contact killed it)
+        if (Math.abs(cannonDx) < Math.abs(vx) * 0.5) { move.x = cannonDx * delta; playerVelocity.x = 0; }
+        if (Math.abs(cannonDz) < Math.abs(vz) * 0.5) { move.z = cannonDz * delta; playerVelocity.z = 0; }
+
+        playerCapsule.translate(move);
+
+        // ── Octree collision — floor, tanks, ramps, stairs ──
         const result = worldOctree.capsuleIntersect(playerCapsule);
         playerOnFloor = false;
         if (result) {
             playerOnFloor = result.normal.y > 0;
+            if (!playerOnFloor) {
+                // Side collision from Octree — zero velocity into the surface
+                const wallNormal = result.normal.clone().normalize();
+                const velDotNormal = playerVelocity.dot(wallNormal);
+                if (velDotNormal < 0) playerVelocity.addScaledVector(wallNormal, -velDotNormal);
+            }
             playerCapsule.translate(result.normal.multiplyScalar(result.depth));
         }
 
@@ -2898,6 +3016,10 @@ function animate() {
             playerCapsule.end.set(0, 1.65, 0);
             playerVelocity.set(0, 0, 0);
         }
+
+        // Sync Cannon body to capsule position (one-way — Octree is authoritative)
+        playerBody.position.set(playerCapsule.end.x, playerCapsule.end.y - 0.35, playerCapsule.end.z);
+        playerBody.velocity.set(0, 0, 0); // reset so Cannon doesn't drift
 
         camera.position.copy(playerCapsule.end);
 
