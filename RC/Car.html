@@ -49,11 +49,12 @@
 
 
 <script type="importmap">
-    {
+   {
         "imports": {
             "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
             "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
-            "cannon-es": "https://esm.sh/cannon-es@0.20.0"
+            "cannon-es": "https://esm.sh/cannon-es@0.20.0",
+            "three/addons/loaders/GLTFLoader": "https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js"
         }
     }
 </script>
@@ -61,8 +62,44 @@
 <script type="module">
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+
+// 2. Create the loader instance
+const loader = new GLTFLoader();
 import { Octree }  from 'three/addons/math/Octree.js';
 import { Capsule } from 'three/addons/math/Capsule.js';
+
+// 3. Load the car texture
+const textureLoader = new THREE.TextureLoader();
+const carTexture = textureLoader.load('Textures/colormap.png'); // Make sure the filename matches exactly
+carTexture.flipY = false; // This is important for GLB models to look right
+carTexture.colorSpace = THREE.SRGBColorSpace; // Keeps colors looking bright and correct
+
+function loadVehicle(modelName) {
+    loader.load(modelName + '.glb', function (gltf) {
+        const vehicleModel = gltf.scene;
+
+        vehicleModel.traverse(function (child) {
+            if (child.isMesh) {
+                child.material.map = carTexture;
+            }
+        });
+
+        // Lift it up by 2 units and make it 10 times bigger
+        vehicleModel.position.set(0, 2, 0); 
+        vehicleModel.scale.set(10, 10, 10); 
+
+        scene.add(vehicleModel);
+        console.log("Loaded " + modelName);
+    }, undefined, function (error) {
+        console.error("An error happened loading the model:", error);
+    });
+}
+
+// Now, let's call the function to load one of your files!
+loadVehicle('vehicle-racer');
 
 // ─────────────────────────────────────────────────────────────
 //  TANK LAYOUT  [x, z, radius, bodyHeight, type, label]
@@ -116,11 +153,13 @@ const TANK_LAYOUT = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-//  SCENE SETUP  (identical to OG)
+//  SCENE SETUP
 // ─────────────────────────────────────────────────────────────
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x1a1a1a);
 scene.fog = new THREE.Fog(0x1a1a1a, 30, 120);
+const axesHelper = new THREE.AxesHelper(5);
+scene.add(axesHelper);
 
 // --- PHYSICS SETUP ---
 const world = new CANNON.World();
