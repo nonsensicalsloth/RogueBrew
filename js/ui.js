@@ -2666,7 +2666,7 @@ const PATCH_NOTES = [
   {
     version: '1.3',
     title: 'The Brewery Update',
-    date: '2026-03-16',
+    date: '2026-03-30',
     sections: [
       {
         heading: '🍺 Brewery Events',
@@ -2781,7 +2781,7 @@ const PATCH_NOTES = [
   {
     version: '???',
     title: 'Special Thanks Update',
-    date: '2026-3-30',
+    date: '2026-03-30',
     sections: [
      {
         heading: 'Extra Special Thanks',
