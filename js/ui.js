@@ -2778,6 +2778,21 @@ const PATCH_NOTES = [
       },
     ],
   },
+  {
+    version: '???',
+    title: 'Special Thanks Update',
+    date: '2026-3-30',
+    sections: [
+     {
+        heading: 'Extra Special Thanks',
+        entries: [
+          '🌟You read through these patch notes and you didn\'t have to do that🌟',
+          'There is an extra special secret in this game for those who are looking',
+          'Have you heard of the Konami code? There may be something in the main menu for you if you have...',
+        ],
+      },
+    ],
+  },
 ];
 
 function openPatchNotesModal() {
