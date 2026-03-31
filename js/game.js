@@ -1674,7 +1674,20 @@ function doItemNode(node) {
   };
 }
 
-const MAX_HELD_ITEMS = 3;
+// Returns the max items a single brew can hold.
+// With the Deep Cellar modifier this scales inversely with team size.
+function getMaxHeldItems() {
+  if (state.modifiers && state.modifiers.has('deep_cellar')) {
+    const size = state.team.length || 1;
+    if (size >= 6) return 2;
+    if (size === 5) return 3;
+    if (size === 4) return 4;
+    if (size === 3) return 5;
+    if (size === 2) return 7;
+    return 8; // 1 brew
+  }
+  return 3;
+}
 
 function openItemEquipModal(item, { fromBagIdx = -1, fromPokemonIdx = -1, fromPokemonItemIdx = -1, onComplete = null } = {}) {
   // No Adjuncts: silently block all item equipping
@@ -1696,7 +1709,8 @@ function openItemEquipModal(item, { fromBagIdx = -1, fromPokemonIdx = -1, fromPo
   const rows = state.team.map((p, i) => {
     p.heldItems = p.heldItems || [];
     const isSelf = fromPokemonIdx === i;
-    const full = p.heldItems.length >= MAX_HELD_ITEMS;
+    const maxHeld = getMaxHeldItems();
+    const full = p.heldItems.length >= maxHeld;
     const alreadyHolding = isSelf && fromPokemonItemIdx >= 0;
 
     // Render the item slots for this pokemon
@@ -1708,13 +1722,13 @@ function openItemEquipModal(item, { fromBagIdx = -1, fromPokemonIdx = -1, fromPo
       </span>`;
     }).join('');
 
-    const emptySlots = MAX_HELD_ITEMS - p.heldItems.length;
+    const emptySlots = maxHeld - p.heldItems.length;
     const emptyHtml = Array(emptySlots).fill('<span class="equip-empty-slot">— empty —</span>').join('');
 
     const canEquip = !alreadyHolding && !full;
     const equipBtn = canEquip
       ? `<button class="equip-btn" data-equip="${i}">Equip</button>`
-      : (!alreadyHolding && full ? `<button class="equip-btn" disabled title="Already holding ${MAX_HELD_ITEMS} items">Full</button>` : '');
+      : (!alreadyHolding && full ? `<button class="equip-btn" disabled title="Already holding ${maxHeld} items">Full</button>` : '');
 
     return `<div class="equip-pokemon-row">
       <img src="${p.spriteUrl}" class="equip-poke-sprite" onerror="this.style.display='none'">
@@ -1773,7 +1787,7 @@ function openItemEquipModal(item, { fromBagIdx = -1, fromPokemonIdx = -1, fromPo
 
       pokemon.heldItems = pokemon.heldItems || [];
       pokemon.heldItems.push(item);
-      if (pokemon.heldItems.length >= 3) { const a = unlockAchievement('the_cellar'); if (a) showAchievementToast(a); }
+      if (pokemon.heldItems.length >= getMaxHeldItems()) { const a = unlockAchievement('the_cellar'); if (a) showAchievementToast(a); }
       modal.remove();
       saveRun();
       done();

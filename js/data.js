@@ -909,6 +909,14 @@ const RUN_MODIFIERS = [
     hint: 'Unlocks after your first Championship win.',
     conflicts: [],
   },
+  {
+    id: 'deep_cellar',
+    name: 'Deep Cellar',
+    icon: '📦',
+    desc: 'Brews can hold more items the smaller your team: 6→2, 5→3, 4→4, 3→5, 2→7, 1→8 items per brew.',
+    hint: 'Rewards commitment to a small tap list.',
+    conflicts: [],
+  },
 ];
 
 // conflicts map — which modifier IDs block each other
