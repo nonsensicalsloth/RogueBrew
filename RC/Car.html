@@ -85,11 +85,12 @@ function loadVehicle(modelName) {
     loader.load(modelName + '.glb', function (gltf) {
         carModel = gltf.scene; // 2. Assign the loaded scene to our variable
 
-        carModel.traverse(function (child) {
-            if (child.isMesh) {
-                child.material.map = carTexture;
-            }
-        });
+	carModel.traverse(function (child) {
+   	    if (child.isMesh) {
+    		 console.log("Mesh found:", child.name); // Check your browser console for names!
+      		 child.material.map = carTexture;
+   	 }
+	});
 
         carModel.scale.set(.25, .25, .25); // 3. Set scale to 1 (we'll adjust physics size later)
         scene.add(carModel);
