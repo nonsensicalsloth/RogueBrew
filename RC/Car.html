@@ -2100,15 +2100,14 @@ function animate() {
     requestAnimationFrame(animate);
     const delta = Math.min(0.05, clock.getDelta());
 
-if (isLocked) {
-        const moveSpeed = 15; // Speeding it up for the brewery!
-        const turnSpeed = 3.0; // Snappy steering
+    if (isLocked) {
+        // 1. Steering & Movement
+        const moveSpeed = 12; 
+        const turnSpeed = 3.0; 
 
-        // 1. Update the angle based on input
         if (keys['KeyA']) playerAngle += turnSpeed * delta;
         if (keys['KeyD']) playerAngle -= turnSpeed * delta;
 
-        // 2. Calculate velocity based on that angle
         let vx = 0, vz = 0;
         if (keys['KeyW']) {
             vx = Math.sin(playerAngle) * moveSpeed;
@@ -2119,7 +2118,7 @@ if (isLocked) {
             vz = -Math.cos(playerAngle) * moveSpeed;
         }
 
-        // 3. Gravity + vertical velocity (Keep your existing gravity logic here)
+        // 2. Gravity & Jumping
         let damping = Math.exp(-4 * delta) - 1;
         if (!playerOnFloor) {
             playerVelocity.y -= 30 * delta;
@@ -2128,71 +2127,46 @@ if (isLocked) {
         playerVelocity.x = vx;
         playerVelocity.z = vz;
         playerVelocity.y += playerVelocity.y * damping;
-
         if (playerOnFloor && keys['Space']) playerVelocity.y = 12;
 
-        // 4. Apply rotation to the Physics Body
-        playerBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), playerAngle);
-        
-        // ... (rest of your world.step and collision logic)
-
-        // ── Cannon wall check — cancel velocity into any wall before moving ──
+        // 3. Physics Step
+        const move = playerVelocity.clone().multiplyScalar(delta);
         playerBody.velocity.set(playerVelocity.x, playerVelocity.y, playerVelocity.z);
+        
+        // This moves the physics world forward
         world.step(1 / 60, delta, 3);
-
-        const cannonDx = playerBody.velocity.x;
-        const cannonDz = playerBody.velocity.z;
-        if (Math.abs(cannonDx) < Math.abs(vx) * 0.5) { move.x = cannonDx * delta; playerVelocity.x = 0; }
-        if (Math.abs(cannonDz) < Math.abs(vz) * 0.5) { move.z = cannonDz * delta; playerVelocity.z = 0; }
-
         playerCapsule.translate(move);
 
-        // ── Octree collision — floor, tanks, ramps, stairs ──
+        // 4. Collision Handling
         const result = worldOctree.capsuleIntersect(playerCapsule);
         playerOnFloor = false;
         if (result) {
             playerOnFloor = result.normal.y > 0;
-            if (!playerOnFloor) {
-                const wallNormal = result.normal.clone().normalize();
-                const velDotNormal = playerVelocity.dot(wallNormal);
-                if (velDotNormal < 0) playerVelocity.addScaledVector(wallNormal, -velDotNormal);
-            }
             playerCapsule.translate(result.normal.multiplyScalar(result.depth));
         }
 
-        // Fall reset
-        if (playerCapsule.start.y < -5) {
-            playerCapsule.start.set(0, 0.35, 0);
-            playerCapsule.end.set(0, 1.65, 0);
-            playerVelocity.set(0, 0, 0);
-        }
-
-// 1. Sync Cannon body to capsule position
+        // 5. Sync Cannon Body and Visual Car
         playerBody.position.set(playerCapsule.end.x, playerCapsule.end.y - 0.35, playerCapsule.end.z);
-        playerBody.velocity.set(0, 0, 0);
+        playerBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), playerAngle);
 
-        // 2. Sync the Visual Car to the Physics Body
         if (carModel) {
             carModel.position.copy(playerBody.position);
             carModel.quaternion.copy(playerBody.quaternion);
-            
-            // Since you scaled the car to 0.25, use a smaller Y-offset 
-            // so it doesn't sink into the floor!
-            carModel.position.y -= 0.15; 
+            carModel.position.y -= 0.15; // Keep your tiny car on the floor
 
-            // 3. NOW move the camera relative to the car's new position
-            const idealOffset = new THREE.Vector3(0, 0.4, 1); // 0.4 up, 1 unit back (closer for tiny car)
+            // 6. Camera Follow (Relative to the car's direction)
+            const idealOffset = new THREE.Vector3(0, 0.5, 1.5); 
             idealOffset.applyQuaternion(carModel.quaternion);
-            idealOffset.add(playerBody.position);
+            idealOffset.add(carModel.position);
 
-            const idealLookat = new THREE.Vector3(0, 0, -2); // Look 2 units ahead
+            const idealLookat = new THREE.Vector3(0, 0, -2);
             idealLookat.applyQuaternion(carModel.quaternion);
-            idealLookat.add(playerBody.position);
+            idealLookat.add(carModel.position);
 
-            camera.position.lerp(idealOffset, 0.2); // 0.2 is snappier for small cars
+            camera.position.lerp(idealOffset, 0.1);
             camera.lookAt(idealLookat);
         }
-    } 
+    }
 
     renderer.render(scene, camera);
 }
