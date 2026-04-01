@@ -82,6 +82,7 @@ let carModel; // 1. Create a variable at the top level
 let playerAngle = 0;
 let currentLean = 0;
 let mouseX = 0;
+let currentSteerAngle = 0;
 
 function loadVehicle(modelName) {
     loader.load(modelName + '.glb', function (gltf) {
@@ -2107,24 +2108,27 @@ function animate() {
     requestAnimationFrame(animate);
     const delta = Math.min(0.05, clock.getDelta());
 
-    // If the game isn't locked, just render and stop here
+    // 1. If the game isn't locked, just render and stop here
     if (!isLocked) {
         renderer.render(scene, camera);
         return; 
     }
 
-// 1. Steering & Movement
-    const moveSpeed = 6;     // Boosted slightly since we have friction now
-    const turnSpeed = 3.5;   // Snappy turns for dodging brewery tanks
-    const acceleration = 2;  // Higher = Snappier, Lower = Weightier/Slower to start
+    // 2. STEERING & MOVEMENT CONSTANTS
+    const moveSpeed = 6;     
+    const acceleration = 2.5; 
+    const wheelSteerLimit = 0.5; 
+    const turnSensitivity = 0.9; 
 
-    if (keys['KeyA']) playerAngle += turnSpeed * delta;
-    if (keys['KeyD']) playerAngle -= turnSpeed * delta;
+    // 3. HANDLE STEERING INPUT
+    let targetWheelAngle = 0;
+    if (keys['KeyA']) targetWheelAngle = wheelSteerLimit;
+    if (keys['KeyD']) targetWheelAngle = -wheelSteerLimit;
+    currentSteerAngle = THREE.MathUtils.lerp(currentSteerAngle, targetWheelAngle, 0.1);
 
-    // We calculate where we WANT to go (the target)
+    // 4. HANDLE SPEED INPUT (W/S)
     let targetVx = 0;
     let targetVz = 0;
-
     if (keys['KeyW']) {
         targetVx = -Math.sin(playerAngle) * moveSpeed;
         targetVz = -Math.cos(playerAngle) * moveSpeed;
@@ -2134,26 +2138,29 @@ function animate() {
         targetVz = Math.cos(playerAngle) * moveSpeed;
     }
 
-    // 2. Gravity & Acceleration Logic
-    let damping = Math.exp(-.8 * delta) - 1; // Natural coasting
+    // 5. CALCULATE FORWARD SPEED FOR TURNING
+    const forwardVec = new THREE.Vector3(0, 0, -1).applyQuaternion(
+        carModel ? carModel.quaternion : new THREE.Quaternion()
+    );
+    const currentForwardSpeed = playerVelocity.dot(forwardVec);
+    playerAngle += currentSteerAngle * currentForwardSpeed * turnSensitivity * delta;
+
+    // 6. GRAVITY & ACCELERATION LOGIC
+    let damping = Math.exp(-0.8 * delta) - 1; 
     if (!playerOnFloor) {
         playerVelocity.y -= 30 * delta;
-        damping = Math.exp(-1.5 * delta) - 1; // Air resistance
+        damping = Math.exp(-1.5 * delta) - 1;
     }
-
-    // INSTEAD of playerVelocity.x = vx, we do this:
-    // This "Lerps" our current speed toward our target speed
     playerVelocity.x += (targetVx - playerVelocity.x) * acceleration * delta;
     playerVelocity.z += (targetVz - playerVelocity.z) * acceleration * delta;
 
-    // 3. Physics Step (CRITICAL SECTION)
-    const moveVector = playerVelocity.clone().multiplyScalar(delta); // Renamed to be safe
+    // 7. PHYSICS STEP
+    const moveVector = playerVelocity.clone().multiplyScalar(delta);
     playerBody.velocity.set(playerVelocity.x, playerVelocity.y, playerVelocity.z);
-    
     world.step(1 / 60, delta, 3);
     playerCapsule.translate(moveVector);
 
-    // 4. Collision Handling
+    // 8. COLLISION HANDLING
     const result = worldOctree.capsuleIntersect(playerCapsule);
     playerOnFloor = false;
     if (result) {
@@ -2161,56 +2168,35 @@ function animate() {
         playerCapsule.translate(result.normal.multiplyScalar(result.depth));
     }
 
-    // 5. Sync Cannon Body and Visual Car
-    playerBody.position.set(playerCapsule.end.x, playerCapsule.end.y - 0.35, playerCapsule.end.z);
-    playerBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), playerAngle);
-
-if (carModel) {
-        // 1. POSITIONING
-        carModel.position.lerp(playerCapsule.start, .5);
-        carModel.position.y -= 0.16; // Slightly higher to stop jitter
+    // 9. SYNC VISUAL MODEL (Cleaned & Merged)
+    if (carModel) {
+        // POSITIONING: Uses Lerp for smoothness
+        carModel.position.lerp(playerCapsule.start, 0.5);
+        carModel.position.y -= 0.16; // Maintain your specific height offset
         
-        // 2. DIRECTION (Horizontal)
+        // DIRECTION
         carModel.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), playerAngle);
 
-        // 3. THE "JUICE" (Lean & Steering Targets)
-        const leanMax = 0.04;   // Lowered to prevent extreme tilting
-        const steerMax = 0.4; 
-        
-        let targetLean = 0;
-        let targetSteer = 0;
-
-        if (keys['KeyA']) {
-            targetLean = leanMax;
-            targetSteer = steerMax;
-        }
-        if (keys['KeyD']) {
-            targetLean = -leanMax;
-            targetSteer = -steerMax;
-        }
-
-        // Apply smooth transitions to our external variables
+        // THE "JUICE" (Lean)
+        const leanMax = 0.04;
+        let targetLean = keys['KeyA'] ? leanMax : (keys['KeyD'] ? -leanMax : 0);
         currentLean = THREE.MathUtils.lerp(currentLean, targetLean, 0.1);
-
-        // 4. APPLY THE LEAN
-        // We use rotateZ AFTER the quaternion to avoid the "only one side" bug
         carModel.rotateZ(currentLean);
 
-        // 5. WHEEL STEERING
+        // WHEEL STEERING: Linked to currentSteerAngle
         const wheelFL = carModel.getObjectByName('wheel-fl');
         const wheelFR = carModel.getObjectByName('wheel-fr');
         if (wheelFL && wheelFR) {
-            wheelFL.rotation.y = THREE.MathUtils.lerp(wheelFL.rotation.y, targetSteer, 0.15);
-            wheelFR.rotation.y = THREE.MathUtils.lerp(wheelFR.rotation.y, targetSteer, 0.15);
+            wheelFL.rotation.y = currentSteerAngle;
+            wheelFR.rotation.y = currentSteerAngle;
         }
 
-        // 6. CAMERA FOLLOW (With Mouse Look)
-        // This combines the car's direction with your mouse movement
+        // 10. CAMERA FOLLOW (With Mouse Look)
         const cameraRotation = new THREE.Quaternion();
         cameraRotation.setFromAxisAngle(new THREE.Vector3(0, 1, 0), playerAngle + mouseX);
 
         const idealOffset = new THREE.Vector3(0, 1, 1.5); 
-        idealOffset.applyQuaternion(cameraRotation); // Use cameraRotation, not carModel.quaternion
+        idealOffset.applyQuaternion(cameraRotation); 
         idealOffset.add(carModel.position);
 
         const idealLookat = new THREE.Vector3(0, 0.5, -2);
@@ -2220,11 +2206,12 @@ if (carModel) {
         camera.position.lerp(idealOffset, 0.1);
         camera.lookAt(idealLookat);
     }
-	
+
     renderer.render(scene, camera);
 }
 
 animate();
+
 </script>
 </body>
 </html>
