@@ -2086,12 +2086,16 @@ document.addEventListener('pointerlockchange', () => {
 const keys = {};
 window.addEventListener('keydown', e => { keys[e.code] = true; });
 window.addEventListener('keyup',   e => { keys[e.code] = false; });
-
-document.addEventListener('mousemove', e => {
+document.addEventListener('mousemove', (e) => {
     if (!isLocked) return;
-    camera.rotation.y -= e.movementX * 0.002;
-    camera.rotation.x -= e.movementY * 0.002;
-    camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x));
+
+    // 1. Update the horizontal offset (Yaw)
+    // This lets you circle around the car
+    mouseX -= e.movementX * 0.002;
+
+    // 2. Optional: Update the vertical offset (Pitch)
+    // If you want to look up/down, add 'let mouseY = 0;' at the top
+    // mouseY = Math.max(-0.5, Math.min(1.5, (mouseY || 0) + e.movementY * 0.002));
 });
 
 // ─────────────────────────────────────────────────────────────
