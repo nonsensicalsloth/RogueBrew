@@ -1,3 +1,2101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Brewery RC Car</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #111; font-family: 'Segoe UI', sans-serif; touch-action: none; }
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.7); color: white; z-index: 100; cursor: pointer;
+        }
+        #crosshair {
+            position: absolute; top: 50%; left: 50%; width: 12px; height: 12px;
+            border: 2px solid rgba(255,255,255,0.8); border-radius: 50%;
+            transform: translate(-50%, -50%); pointer-events: none; display: none;
+        }
+        /* HUD */
+        #hud {
+            position: absolute; top: 14px; left: 20px; display: none;
+            color: #7fc; font-size: 13px; font-family: monospace; pointer-events: none;
+        }
+        /* ── CROSSHAIR upgrade ── */
+        #crosshair {
+            position: absolute; top: 50%; left: 50%; width: 16px; height: 16px;
+            transform: translate(-50%, -50%); pointer-events: none; display: none;
+        }
+        #crosshair::before, #crosshair::after {
+            content: ''; position: absolute; background: rgba(255,255,255,0.85);
+            border-radius: 2px;
+        }
+        #crosshair::before { width: 2px; height: 16px; left: 7px; top: 0; }
+        #crosshair::after  { width: 16px; height: 2px; left: 0; top: 7px; }
+        #crosshair.wide::before { transform: scaleY(0.5); opacity: 0.6; }
+        #crosshair.wide::after  { transform: scaleX(1.6); }
+
+
+    </style>
+</head>
+<body>
+
+<div id="ui-layer">
+    <h1>Brewery RC Car</h1>
+    <p>Click anywhere to Start</p>
+    <small>WASD · Drive &nbsp;|&nbsp; Space · Brake &nbsp;|&nbsp; Mouse · Look Around</small>
+</div>
+
+
+
+<script type="importmap">
+   {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+            "cannon-es": "https://esm.sh/cannon-es@0.20.0",
+            "three/addons/loaders/GLTFLoader": "https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js"
+        }
+    }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import * as CANNON from 'cannon-es';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+
+// 2. Create the loader instance
+const loader = new GLTFLoader();
+import { Octree }  from 'three/addons/math/Octree.js';
+import { Capsule } from 'three/addons/math/Capsule.js';
+
+// 3. Load the car texture
+const textureLoader = new THREE.TextureLoader();
+const carTexture = textureLoader.load('Textures/colormap.png'); // Make sure the filename matches exactly
+carTexture.flipY = false; // This is important for GLB models to look right
+carTexture.colorSpace = THREE.SRGBColorSpace; // Keeps colors looking bright and correct
+
+// Now, let's call the function to load one of your files!
+let carModel; // 1. Create a variable at the top level
+let playerAngle = 0;
+
+function loadVehicle(modelName) {
+    loader.load(modelName + '.glb', function (gltf) {
+        carModel = gltf.scene; // 2. Assign the loaded scene to our variable
+
+        carModel.traverse(function (child) {
+            if (child.isMesh) {
+                child.material.map = carTexture;
+            }
+        });
+
+        carModel.scale.set(.25, .25, .25); // 3. Set scale to 1 (we'll adjust physics size later)
+        scene.add(carModel);
+
+	console.log("Loaded " + modelName);
+    }, 	undefined, function (error) {
+        console.error("An error happened loading the model:", error);
+    });
+}
+
+// Call it once
+loadVehicle('vehicle-racer');
+// ─────────────────────────────────────────────────────────────
+//  TANK LAYOUT  [x, z, radius, bodyHeight, type, label]
+//  type: 'fv' = conical fermenter, 'bbt' = brite tank (no cone)
+//  Positions match the OG layout exactly
+// ─────────────────────────────────────────────────────────────
+const TANK_LAYOUT = [
+    // BREWHOUSE vessels are on the raised platform — built separately below
+
+    // Fermenters 1-3 (back wall, large 120bbl)
+    { x:-25, z: -8, r:3.25, h:10.0, type:'fv', label:'FV1' },
+    { x:-25, z:  0, r:3.25, h:10.0, type:'fv', label:'FV2' },
+    { x:-25, z:  8, r:3.25, h:10.0, type:'fv', label:'FV3' },
+    { x:-22, z: 12, r:1.5,  h: 4.0, type:'fv', label:'FV4' },
+    { x:-24, z: 14.5, r:1,  h: 1.75, type:'fv', label:'FV3.5' },
+    { x:-26.25, z: 14.5, r:1,  h: 1.75, type:'fv', label:'FV3.5B' },
+    { x:-48, z: -30, r:1.5,  h: 6.0, type:'fv', label:'grist' },
+
+    // Cellar 40bbl row 1
+    { x:-10, z: -7, r:2.5, h:5.5, type:'fv', label:'FV5'  },
+    { x:-10, z:  0, r:2.5, h:5.5, type:'fv', label:'FV6'  },
+    { x:-10, z:  7, r:2.5, h:5.5, type:'fv', label:'FV7'  },
+    { x:-10, z: 12, r:1.5, h:4.0, type:'fv', label:'FV8'  },
+
+    // Cellar 40bbl row 2
+    { x: -3, z: -7, r:2.5, h:5.5, type:'fv', label:'FV9'  },
+    { x: -3, z:  0, r:2.5, h:5.5, type:'fv', label:'FV10' },
+    { x: -3, z:  7, r:2.5, h:5.5, type:'fv', label:'FV11' },
+
+    // Cellar far section
+    { x: -3, z: 28, r:2.5,  h:5.5,  type:'fv',  label:'FV12' },
+    { x: -3, z: 36, r:2.5,  h:5.5,  type:'fv',  label:'FV13' },
+    { x: -3, z: 44, r:3.25, h:10.0, type:'fv',  label:'FV15' },
+    { x: -3, z: 52, r:3.25, h:10.0, type:'fv',  label:'FV16' },
+
+    // Brite tanks BBT4/BBT5/Centrifuge built separately below with proper geometry
+    // BBT6 removed — replaced by centrifuge
+
+    // Large tanks left section
+    { x:-10, z: 28, r:3.25, h:10.0, type:'bbt', label:'FV17' },
+    { x:-10, z: 36, r:3.25, h:10.0, type:'bbt', label:'FV18' },
+    { x:-10, z: 44, r:2.5,  h: 5.5, type:'fv',  label:'FV19' },
+    // BBT1 built separately below with proper buildBBT geometry
+
+    // Chemical and brite tanks
+    { x:-65, z: 10, r:1.25, h:3, type:'bbt', label:'acid' },
+    { x:-65, z: 7, r:1.25, h:3.0, type:'bbt', label:'caustic' },
+    { x:-65, z: 30, r:3.25,  h: 5.5, type:'bbt',  label:'water' },
+
+
+];
+
+// ─────────────────────────────────────────────────────────────
+//  SCENE SETUP
+// ─────────────────────────────────────────────────────────────
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1a1a);
+scene.fog = new THREE.Fog(0x1a1a1a, 30, 120);
+const axesHelper = new THREE.AxesHelper(5);
+scene.add(axesHelper);
+
+// --- PHYSICS SETUP ---
+const world = new CANNON.World();
+world.gravity.set(0, -9.82, 0); // Standard Earth gravity
+
+const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 500);
+camera.rotation.order = 'YXZ';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(devicePixelRatio);
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+
+window.addEventListener('resize', () => {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+});
+
+// Physics — using the real Three.js Octree/Capsule addons (same as OG)
+const worldOctree = new Octree();
+const playerCapsule = new Capsule(
+    new THREE.Vector3(0, 0.35, 0),
+    new THREE.Vector3(0, 1.65, 0),
+    0.35
+);
+const playerVelocity = new THREE.Vector3();
+let playerOnFloor = false;
+
+// ── CANNON player body — drives mass/gravity feel, synced to Octree capsule ──
+const playerPhysMat = new CANNON.Material('playerMaterial');
+const playerBody = new CANNON.Body({
+    mass: 60,
+    shape: new CANNON.Sphere(0.35),   // matches capsule radius
+    fixedRotation: true,               // no tumbling
+    material: playerPhysMat,
+    linearDamping: 0.3,               // Less
+});
+playerBody.position.set(0, 1.65, 0);
+world.addBody(playerBody);
+
+// Contact material: player vs floor — no bounce, high friction
+const floorPhysMat = new CANNON.Material('floorMaterial');
+world.addContactMaterial(new CANNON.ContactMaterial(playerPhysMat, floorPhysMat, {
+    friction: 0.0,
+    restitution: 0.0,
+}));
+
+// ─────────────────────────────────────────────────────────────
+//  MATERIALS
+// ─────────────────────────────────────────────────────────────
+const ssMat    = new THREE.MeshStandardMaterial({ color:0xd8d8dc, metalness:0.85, roughness:0.2 });
+const ssDkMat  = new THREE.MeshStandardMaterial({ color:0xa8a8b4, metalness:0.75, roughness:0.35 });
+const coneMat  = new THREE.MeshStandardMaterial({ color:0xc0c0c8, metalness:0.8,  roughness:0.25 });
+const floorMat = new THREE.MeshStandardMaterial({ color:0x282828, roughness:0.85 });
+
+// ─────────────────────────────────────────────────────────────
+//  FERMENTER BUILDER
+//  Origin y=0 = floor level.
+//  Geometry from bottom to top:
+//    y=0              → cone tip (bottom of cone)
+//    y=CONE_H         → cone base = bottom of cylinder
+//    y=CONE_H+BODY_H  → top of cylinder
+//  4 legs span from y=0 up to y=CONE_H (they support the cone base)
+// ─────────────────────────────────────────────────────────────
+function buildTank(cfg, worldGroup) {
+    const { x, z, r, h, type } = cfg;
+    const g = new THREE.Group();
+
+    const CONE_H  = type === 'fv' ? h * 0.40 : 0;
+    const LEG_H   = type === 'fv' ? CONE_H : 1.5;  // BBTs get real legs, FVs use cone height
+    const BODY_H  = h;
+    const BODY_BOT = LEG_H;   // cylinder starts at top of legs/cone
+
+    // ── 4 legs at 90° intervals, spanning y=0 → y=LEG_H ──
+    // Legs are positioned at 45° offset so they sit at corners, not sides
+    const LEG_SPREAD = r * 0.68;
+    for (let i = 0; i < 4; i++) {
+        const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
+        const lx = Math.cos(angle) * LEG_SPREAD;
+        const lz = Math.sin(angle) * LEG_SPREAD;
+
+        // Main leg tube
+        const legVisH = type === 'fv' ? CONE_H : LEG_H;
+        const leg = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.09, 0.09, legVisH, 8),
+            ssDkMat
+        );
+        leg.position.set(lx, legVisH / 2, lz);
+        g.add(leg);
+
+        // Foot pad at y=0
+        const foot = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.14, 0.16, 0.07, 8),
+            ssDkMat
+        );
+        foot.position.set(lx, 0.035, lz);
+        g.add(foot);
+
+        // Gusset brace — FV only (BBTs have clean legs)
+        if (type === 'fv') {
+            const gusset = new THREE.Mesh(
+                new THREE.BoxGeometry(0.07, CONE_H * 0.35, 0.07),
+                ssDkMat
+            );
+            gusset.position.set(lx * 0.6, CONE_H * 0.75, lz * 0.6);
+            g.add(gusset);
+        }
+    }
+
+    // Cross-brace — 4 round pipes connecting each adjacent leg pair near the floor
+    // Cross-brace only for FV (cone-bottom) tanks — BBTs handled separately below
+    if (type === 'fv' && CONE_H > 0) {
+        const BRACE_Y = CONE_H * 0.12;
+        const PIPE_R  = 0.03;
+        for (let i = 0; i < 4; i++) {
+            const a1 = (i / 4) * Math.PI * 2 + Math.PI / 4;
+            const a2 = ((i + 1) / 4) * Math.PI * 2 + Math.PI / 4;
+            const x1 = Math.cos(a1) * LEG_SPREAD;
+            const z1 = Math.sin(a1) * LEG_SPREAD;
+            const x2 = Math.cos(a2) * LEG_SPREAD;
+            const z2 = Math.sin(a2) * LEG_SPREAD;
+            const mx  = (x1 + x2) / 2;
+            const mz  = (z1 + z2) / 2;
+            const len = Math.sqrt((x2-x1)**2 + (z2-z1)**2);
+            const ang = Math.atan2(z2 - z1, x2 - x1);
+            const pipe = new THREE.Mesh(
+                new THREE.CylinderGeometry(PIPE_R, PIPE_R, len, 8),
+                ssDkMat
+            );
+            pipe.rotation.z = Math.PI / 2;
+            pipe.rotation.y = -ang;
+            pipe.position.set(mx, BRACE_Y, mz);
+            g.add(pipe);
+        }
+    }
+
+    // Horizontal cross-brace ring for BBT tall legs — single ring at mid-leg
+    if (type === 'bbt' && LEG_H > 0) {
+        const PIPE_R = 0.03;
+        const bY = LEG_H * 0.5;
+        for (let i = 0; i < 4; i++) {
+            const a1 = (i / 4) * Math.PI * 2 + Math.PI / 4;
+            const a2 = ((i + 1) / 4) * Math.PI * 2 + Math.PI / 4;
+            const x1 = Math.cos(a1) * LEG_SPREAD, z1 = Math.sin(a1) * LEG_SPREAD;
+            const x2 = Math.cos(a2) * LEG_SPREAD, z2 = Math.sin(a2) * LEG_SPREAD;
+            const len = Math.sqrt((x2-x1)**2 + (z2-z1)**2);
+            const ang = Math.atan2(z2 - z1, x2 - x1);
+            const pipe = new THREE.Mesh(new THREE.CylinderGeometry(PIPE_R, PIPE_R, len, 8), ssDkMat);
+            pipe.rotation.z = Math.PI / 2;
+            pipe.rotation.y = -ang;
+            pipe.position.set((x1+x2)/2, bY, (z1+z2)/2);
+            g.add(pipe);
+        }
+    }
+
+    // ── Conical bottom (FV only) — tip at y=0, base at y=CONE_H ──
+    if (type === 'fv') {
+        const cone = new THREE.Mesh(
+            new THREE.CylinderGeometry(r, 0.07, CONE_H, 24),
+            coneMat
+        );
+        cone.position.y = CONE_H / 2;   // center between tip (0) and base (CONE_H)
+        cone.userData.sprayable = true;
+        g.add(cone);
+    } else {
+        // BBT: very shallow cone bottom — wide rim (r) at BODY_BOT, tip points DOWN
+        const BBT_CONE_DROP = r * 0.18;
+        const botCone = new THREE.Mesh(
+            new THREE.CylinderGeometry(r, 0.12, BBT_CONE_DROP, 24),
+            coneMat
+        );
+        botCone.position.y = BODY_BOT - BBT_CONE_DROP / 2;
+        botCone.userData.sprayable = true;
+        g.add(botCone);
+    }
+
+    // ── Cylindrical body — from BODY_BOT to BODY_BOT+BODY_H ──
+    const body = new THREE.Mesh(
+        new THREE.CylinderGeometry(r, r, BODY_H, 24),
+        ssMat
+    );
+    body.position.y = BODY_BOT + BODY_H / 2;
+    body.userData.sprayable = true;
+    g.add(body);
+
+    // ── Domed top — shallow tapered cap flush with cylinder rim ──
+    const DOME_H = r * 0.28;
+    const dome = new THREE.Mesh(
+        new THREE.CylinderGeometry(r * 0.15, r, DOME_H, 24),
+        ssMat
+    );
+    dome.position.y = BODY_BOT + BODY_H + DOME_H / 2;
+    dome.userData.sprayable = true;
+    g.add(dome);
+
+    // ── Details ──
+    const vent = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.3, 8), ssDkMat);
+    vent.position.y = BODY_BOT + BODY_H + r * 0.28 + 0.15;
+    g.add(vent);
+
+    g.position.set(x, 0, z);
+    scene.add(g);
+
+    if (type === 'fv') {
+        // ── FV: two proxies that match actual geometry — no phantom cylinder through cone space ──
+        // 1. Cone proxy — same dimensions as the visible cone
+        const coneProxy = new THREE.Mesh(
+            new THREE.CylinderGeometry(r, 0.07, CONE_H, 16),
+            new THREE.MeshStandardMaterial()
+        );
+        coneProxy.visible = false;
+        coneProxy.position.set(x, CONE_H / 2, z);
+        worldGroup.add(coneProxy);
+
+        // 2. Cylinder proxy — body + dome only, sitting on top of cone
+        const bodyProxyH = BODY_H + (r * 0.28);  // body + dome height
+        const bodyProxy = new THREE.Mesh(
+            new THREE.CylinderGeometry(r, r, bodyProxyH, 16),
+            new THREE.MeshStandardMaterial()
+        );
+        bodyProxy.visible = false;
+        bodyProxy.position.set(x, BODY_BOT + bodyProxyH / 2, z);
+        worldGroup.add(bodyProxy);
+    } else {
+        // BBT: single cylinder proxy is fine (no pointy cone bottom)
+        const totalH = BODY_BOT + BODY_H + (r * 0.28);
+        const proxy  = new THREE.Mesh(
+            new THREE.CylinderGeometry(r, r, totalH, 12),
+            new THREE.MeshStandardMaterial()
+        );
+        proxy.visible = false;
+        proxy.position.set(x, totalH / 2, z);
+        worldGroup.add(proxy);
+    }
+
+    return g;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  BRITE TANK BUILDER
+//  Real BBT shape: tall cylindrical legs, full-sphere domed top & bottom,
+//  cylindrical body, large circular manway on the front face.
+//  legH = height of legs from floor to tank bottom dome base
+// ─────────────────────────────────────────────────────────────
+function buildBBT(x, z, r, bodyH, legH, worldGroup) {
+    const g = new THREE.Group();
+    const LEG_SPREAD = r * 0.72;
+    const LEG_R      = 0.07;
+    const PIPE_R     = 0.03;
+
+    // ── 4 tall legs ──
+    for (let i = 0; i < 4; i++) {
+        const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
+        const lx = Math.cos(angle) * LEG_SPREAD;
+        const lz = Math.sin(angle) * LEG_SPREAD;
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(LEG_R, LEG_R, legH, 8), ssDkMat);
+        leg.position.set(lx, legH / 2, lz);
+        g.add(leg);
+        const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.06, 8), ssDkMat);
+        foot.position.set(lx, 0.03, lz);
+        g.add(foot);
+    }
+
+    // ── Single horizontal cross-brace ring at mid-leg ──
+    const BRACE_Y = legH * 0.5;
+    for (let i = 0; i < 4; i++) {
+        const a1 = (i / 4) * Math.PI * 2 + Math.PI / 4;
+        const a2 = ((i + 1) / 4) * Math.PI * 2 + Math.PI / 4;
+        const x1 = Math.cos(a1) * LEG_SPREAD, z1 = Math.sin(a1) * LEG_SPREAD;
+        const x2 = Math.cos(a2) * LEG_SPREAD, z2 = Math.sin(a2) * LEG_SPREAD;
+        const mx  = (x1 + x2) / 2, mz = (z1 + z2) / 2;
+        const len = Math.sqrt((x2-x1)**2 + (z2-z1)**2);
+        const ang = Math.atan2(z2 - z1, x2 - x1);
+        const pipe = new THREE.Mesh(new THREE.CylinderGeometry(PIPE_R, PIPE_R, len, 8), ssDkMat);
+        pipe.rotation.z = Math.PI / 2;
+        pipe.rotation.y = -ang;
+        pipe.position.set(mx, BRACE_Y, mz);
+        g.add(pipe);
+    }
+
+    // ── Very shallow cone bottom — wide rim (r) flush with cylinder base at legH, tip points DOWN.
+    //    CylinderGeometry(topRadius, bottomRadius, height): top=r (wide, at legH), bottom=tip (hangs below).
+    const BBT_CONE_DROP = r * 0.18;
+    const botCone = new THREE.Mesh(
+        new THREE.CylinderGeometry(r, 0.12, BBT_CONE_DROP, 24),
+        coneMat
+    );
+    // Center the geometry so its top rim (wide end) sits exactly at legH
+    botCone.position.y = legH - BBT_CONE_DROP / 2;
+    botCone.userData.sprayable = true;
+    g.add(botCone);
+
+    // ── Cylinder: starts at legH (flush with cone base rim), goes up ──
+    const BODY_BOT = legH;
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(r, r, bodyH, 24), ssMat);
+    body.position.y = BODY_BOT + bodyH / 2;
+    body.userData.sprayable = true;
+    g.add(body);
+
+    // ── Top dome: use a hemisphere (phiLength=PI/2) but scaled vertically to be shallow.
+    // A full hemisphere has its equator at the sphere center with radius=r — perfect rim fit.
+    // We squash it vertically using scale.y to control how tall it looks.
+    // phiStart=0 (north pole) phiLength=PI/2 (down to equator) — rim radius = r * sin(PI/2) = r. ✓
+    const TOP_SWEEP = Math.PI / 2;
+    const DOME_SQUASH = 0.45;   // 0.45 = dome height is 45% of r, looks like photo
+    const topDome = new THREE.Mesh(
+        new THREE.SphereGeometry(r, 24, 12, 0, Math.PI * 2, 0, TOP_SWEEP),
+        ssMat
+    );
+    topDome.scale.y = DOME_SQUASH;
+    topDome.position.y = BODY_BOT + bodyH;    // equator of sphere = top of cylinder: perfect fit
+    topDome.userData.sprayable = true;
+    g.add(topDome);
+
+    // ── Manway — flush circular cover on cylinder wall (no protruding torus) ──
+    const MW_Y    = BODY_BOT + bodyH * 0.42;
+    const MW_R    = r * 0.12;
+    // Flat disc flush with the surface
+    const manDisc = new THREE.Mesh(
+        new THREE.CircleGeometry(MW_R, 16),
+        new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 0.9, roughness: 0.15 })
+    );
+    manDisc.rotation.y = -Math.PI / 2;
+    manDisc.position.set(r + 0.005, MW_Y, 0);
+    g.add(manDisc);
+
+    // ── Vent on top ──
+    const topCapH = r * DOME_SQUASH;   // actual rendered height of the squashed dome
+    const vent = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.3, 8), ssDkMat);
+    vent.position.y = BODY_BOT + bodyH + topCapH + 0.15;
+    g.add(vent);
+
+    g.position.set(x, 0, z);
+    scene.add(g);
+
+    // Collision proxy
+    const totalH = legH + bodyH + topCapH + 0.15;
+    const proxy = new THREE.Mesh(
+        new THREE.CylinderGeometry(r, r, totalH, 12),
+        new THREE.MeshStandardMaterial()
+    );
+    proxy.visible = false;
+    proxy.position.set(x, totalH / 2, z);
+    worldGroup.add(proxy);
+
+    return g;
+}
+
+function buildCentrifuge(x, z, worldGroup) {
+    const g = new THREE.Group();
+
+    // Skid: long axis in Z (N-S), 3.2 wide (X) x 5.5 deep (Z)
+    const SKID_W = 3.2, SKID_D = 5.5, SKID_T = 0.15;
+    const SKID_LEG = 0.25;
+
+    // Outer rails (Z direction)
+    for (const fx of [-SKID_W/2 + 0.07, SKID_W/2 - 0.07]) {
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.10, SKID_T, SKID_D), ssDkMat);
+        rail.position.set(fx, SKID_LEG + SKID_T/2, 0);
+        g.add(rail);
+    }
+    // Cross members (X direction)
+    for (const fz of [-SKID_D/2+0.07, -SKID_D/4, 0, SKID_D/4, SKID_D/2-0.07]) {
+        const xr = new THREE.Mesh(new THREE.BoxGeometry(SKID_W, SKID_T, 0.10), ssDkMat);
+        xr.position.set(0, SKID_LEG + SKID_T/2, fz);
+        g.add(xr);
+    }
+    // 8 adjustable feet
+    for (const [fx, fz] of [
+        [-SKID_W/2+0.18, -SKID_D/2+0.18],[SKID_W/2-0.18, -SKID_D/2+0.18],
+        [-SKID_W/2+0.18,  SKID_D/4     ],[SKID_W/2-0.18,  SKID_D/4     ],
+        [-SKID_W/2+0.18,  SKID_D/2-0.18],[SKID_W/2-0.18,  SKID_D/2-0.18],
+        [-SKID_W/2+0.18, -SKID_D/4     ],[SKID_W/2-0.18, -SKID_D/4     ],
+    ]) {
+        const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.13, SKID_LEG, 10), ssDkMat);
+        foot.position.set(fx, SKID_LEG/2, fz);
+        g.add(foot);
+    }
+
+    const BASE_Y = SKID_LEG + SKID_T;
+
+    // ── Separator bowl — south half of skid, MUCH larger ──
+    // Wide flat disc housing — dominant visual element
+    const BOWL_R = 1.80, BOWL_H = 0.70;
+    const BOWL_Z = -SKID_D/2 + 1.6;
+    const BOWL_Y = BASE_Y + 0.55;    // raised up on a short pedestal
+
+    // Pedestal under bowl
+    const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.55, 0.55, 16), ssDkMat);
+    ped.position.set(0, BASE_Y + 0.275, BOWL_Z);
+    g.add(ped);
+
+    // Bowl disc housing
+    const bowl = new THREE.Mesh(new THREE.CylinderGeometry(BOWL_R, BOWL_R*1.04, BOWL_H, 28), ssMat);
+    bowl.userData.sprayable = true;
+    bowl.position.set(0, BOWL_Y + BOWL_H/2, BOWL_Z);
+    g.add(bowl);
+
+    // Cone spinner on top — wide and substantial
+    const CONE_BASE = BOWL_R * 0.80, CONE_H = 1.10;
+    const sepCone = new THREE.Mesh(new THREE.CylinderGeometry(0.06, CONE_BASE, CONE_H, 24), ssMat);
+    sepCone.position.set(0, BOWL_Y + BOWL_H + CONE_H/2, BOWL_Z);
+    g.add(sepCone);
+
+    // Cylindrical collar at base of cone
+    const collar = new THREE.Mesh(new THREE.CylinderGeometry(CONE_BASE, CONE_BASE*1.05, 0.14, 24), ssMat);
+    collar.position.set(0, BOWL_Y + BOWL_H + 0.07, BOWL_Z);
+    g.add(collar);
+
+    // Motor block behind bowl
+    const motor = new THREE.Mesh(new THREE.BoxGeometry(0.80, 0.75, 0.70),
+        new THREE.MeshStandardMaterial({ color: 0x1a2a3a, roughness: 0.7 }));
+    motor.position.set(0.9, BASE_Y + 0.38, BOWL_Z);
+    g.add(motor);
+
+    // ── Piping cluster — middle of skid ──
+    const pipeZ = 0.2;
+    const pipeY = BASE_Y + 0.75;
+    const manifold = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, SKID_D*0.45, 8), ssDkMat);
+    manifold.rotation.x = Math.PI/2;
+    manifold.position.set(-0.4, pipeY, pipeZ);
+    g.add(manifold);
+    const riser = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.5, 8), ssDkMat);
+    riser.position.set(-0.4, pipeY + 0.75, pipeZ + 0.3);
+    g.add(riser);
+    for (const [mz, my] of [[pipeZ-0.4, pipeY-0.1],[pipeZ+0.4, pipeY-0.05]]) {
+        const meter = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.42, 0.28),
+            new THREE.MeshStandardMaterial({ color: 0x224488, roughness: 0.5 }));
+        meter.position.set(0.3, my, mz);
+        g.add(meter);
+    }
+
+    // ── Control cabinet — north end of skid, facing -X (west, away from BBTs) ──
+    const CAB_W = 0.55, CAB_D = 1.20, CAB_H = 2.40;
+    const CAB_Z = SKID_D/2 - CAB_D/2 - 0.06;
+    const cab = new THREE.Mesh(new THREE.BoxGeometry(CAB_W, CAB_H, CAB_D), ssMat);
+    cab.userData.sprayable = true;
+    cab.position.set(0, BASE_Y + CAB_H/2, CAB_Z);
+    g.add(cab);
+
+    // Front face = -X side (facing west)
+    const cabFrontX = -CAB_W/2;
+
+    // Touchscreen on -X face
+    const screen = new THREE.Mesh(new THREE.BoxGeometry(0.02, CAB_H*0.15, CAB_D*0.38),
+        new THREE.MeshStandardMaterial({ color: 0x44aacc, emissive: 0x112233, roughness: 0.2 }));
+    screen.position.set(cabFrontX - 0.01, BASE_Y + CAB_H*0.73, CAB_Z);
+    g.add(screen);
+
+    // Yellow e-stop
+    const estop = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.06, 12),
+        new THREE.MeshStandardMaterial({ color: 0xffaa00, roughness: 0.3 }));
+    estop.rotation.z = Math.PI/2;
+    estop.position.set(cabFrontX - 0.04, BASE_Y + CAB_H*0.58, CAB_Z + CAB_D*0.28);
+    g.add(estop);
+
+    // Vent louvre strip
+    const louvre = new THREE.Mesh(new THREE.BoxGeometry(0.03, CAB_H*0.13, CAB_D*0.65),
+        new THREE.MeshStandardMaterial({ color: 0x777777, roughness: 0.8 }));
+    louvre.position.set(cabFrontX - 0.015, BASE_Y + CAB_H*0.27, CAB_Z);
+    g.add(louvre);
+
+    // Vertical seam
+    const seam = new THREE.Mesh(new THREE.BoxGeometry(0.02, CAB_H*0.75, 0.02),
+        new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.9 }));
+    seam.position.set(cabFrontX - 0.01, BASE_Y + CAB_H*0.42, CAB_Z);
+    g.add(seam);
+
+    g.position.set(x, 0, z);
+    scene.add(g);
+
+    // Collision proxy
+    const totalH = BASE_Y + CAB_H;
+    const proxy = new THREE.Mesh(
+        new THREE.BoxGeometry(SKID_W + 0.1, totalH, SKID_D + 0.1),
+        new THREE.MeshStandardMaterial()
+    );
+    proxy.visible = false;
+    proxy.position.set(x, totalH/2, z);
+    worldGroup.add(proxy);
+
+    return g;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  BUILD WORLD
+// ─────────────────────────────────────────────────────────────
+const worldGroup = new THREE.Group();
+
+// --- PHYSICAL FLOOR ---
+// 1. The Physics Shape (A flat plane)
+const floorShape = new CANNON.Plane();
+const floorBody = new CANNON.Body({ 
+    mass: 0, // Mass 0 means it's an "immovable object"
+    shape: floorShape 
+});
+
+// 2. Rotate the physics floor to be flat (it starts vertical by default)
+floorBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0); 
+world.addBody(floorBody);
+
+// 3. The Visual Floor — must live in worldGroup so every subsequent
+//    worldOctree.fromGraphNode(worldGroup) call includes it, and so
+//    bounceSurfaces (which traverses worldGroup) picks it up for
+//    particle collision. Previously it was added to scene directly and
+//    the octree bake was immediately overwritten by later rebuilds.
+const floorVisual = new THREE.Mesh(
+    new THREE.PlaneGeometry(200, 200),
+    floorMat
+);
+floorVisual.rotation.x = -Math.PI / 2;
+floorVisual.userData.isFloor = true;
+worldGroup.add(floorVisual);
+
+// Tanks — build visual + add collision proxy to worldGroup
+const tankGroups = [];
+TANK_LAYOUT.forEach(cfg => {
+    tankGroups.push(buildTank(cfg, worldGroup));
+});
+
+// ── Cannon static bodies for tanks — used by car physics ──
+// These complement the Octree proxies (which handle player collision).
+TANK_LAYOUT.forEach(cfg => {
+    const { x, z, r, h } = cfg;
+    const totalH = h + (cfg.type === 'fv' ? h * 0.40 : 1.5);  // body + legs/cone
+    const tankShape = new CANNON.Cylinder(r, r, totalH, 16);
+    const tankBody  = new CANNON.Body({ mass: 0, shape: tankShape });
+    tankBody.position.set(x, totalH / 2, z);
+    world.addBody(tankBody);
+});
+
+// ── West wall BBTs + centrifuge (built with dedicated functions) ──
+// Looking at real photo: centrifuge left (south), BBT4 middle, BBT5 right (north)
+// All along x=15 (west wall), centrifuge at z=36, BBT4 at z=44, BBT5 at z=52
+// legH=1.4 matches the tall skinny legs visible in the photo
+tankGroups.push(buildBBT(-10, 52, 2.4, 3.2, 1.4, worldGroup));  // BBT1 — smaller brite tank
+tankGroups.push(buildBBT(15, 44, 2.4, 3.8, 1.4, worldGroup));   // BBT4
+tankGroups.push(buildBBT(15, 52, 2.4, 3.8, 1.4, worldGroup));   // BBT5
+buildCentrifuge(14, 36, worldGroup);                              // centrifuge skid
+
+// ─────────────────────────────────────────────────────────────
+//  BREWHOUSE PLATFORM
+//  Rotated 90° — platform runs N-S (long in Z), narrow in X
+//  Stairs enter from the east side at z=4 (between FV1/FV2)
+//  climbing west (decreasing x) up to the platform at x≈-38
+//  Platform floor at y=9
+// ─────────────────────────────────────────────────────────────
+const PLAT_Y      = 9;
+const PLAT_W      = 14;
+const PLAT_D      = 6;    // narrowed from 7
+const PLAT_Z_MID  = -1;
+// Compute STAIR_END_X first so platform east edge aligns exactly with it
+const _NUM_STEPS  = 36;
+const _STAIR_D    = 0.35;
+const _STAIR_X0   = -30;
+const _STAIR_END  = _STAIR_X0 - _NUM_STEPS * _STAIR_D;
+const PLAT_X_MID  = _STAIR_END - PLAT_D / 2;
+const platMat     = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.8 });
+const railMat     = new THREE.MeshStandardMaterial({ color: 0xaaaaaa, roughness: 0.25, metalness: 0.9 });
+
+// Platform deck
+const DECK_T = 0.3;
+const platform = new THREE.Mesh(
+    new THREE.BoxGeometry(PLAT_D, DECK_T, PLAT_W),
+    platMat
+);
+platform.position.set(PLAT_X_MID, PLAT_Y - DECK_T/2, PLAT_Z_MID);
+worldGroup.add(platform);
+
+// Support columns (4 corners)
+for (const [cx, cz] of [
+    [PLAT_X_MID - PLAT_D/2 + 0.5, PLAT_Z_MID - PLAT_W/2 + 0.5],
+    [PLAT_X_MID + PLAT_D/2 - 0.5, PLAT_Z_MID - PLAT_W/2 + 0.5],
+    [PLAT_X_MID - PLAT_D/2 + 0.5, PLAT_Z_MID + PLAT_W/2 - 0.5],
+    [PLAT_X_MID + PLAT_D/2 - 0.5, PLAT_Z_MID + PLAT_W/2 - 0.5],
+]) {
+    const colH = PLAT_Y - 0.01;
+    const col = new THREE.Mesh(new THREE.BoxGeometry(0.25, colH, 0.25), railMat);
+    col.position.set(cx, 0.01 + colH / 2, cz);
+    worldGroup.add(col);
+}
+
+// ── PIPE HANDRAIL HELPER ──
+// Draws a run of pipe railing: top rail + mid rail + evenly spaced vertical posts
+// x1,y1,z1 → x2,y2,z2 are the two ends of the run at top-rail height
+// postAxis: 'x' or 'z' — which axis the run travels along
+const PLAT_RAIL_H = 1.0;
+const PIPE_R_RAIL = 0.04;   // handrail pipe radius
+
+function addPipeRail(x1, z1, x2, z2, baseY, postSpacing = 1.2) {
+    const dx = x2 - x1, dz = z2 - z1;
+    const len = Math.sqrt(dx*dx + dz*dz);
+    const ang = Math.atan2(dz, dx);
+    const mx = (x1+x2)/2, mz = (z1+z2)/2;
+    const topY  = baseY + PLAT_RAIL_H;
+    const midY  = baseY + PLAT_RAIL_H * 0.5;
+
+    // Top rail
+    const topRail = new THREE.Mesh(new THREE.CylinderGeometry(PIPE_R_RAIL, PIPE_R_RAIL, len, 8), railMat);
+    topRail.rotation.z = Math.PI / 2;
+    topRail.rotation.y = -ang;
+    topRail.position.set(mx, topY, mz);
+    scene.add(topRail);
+
+    // Mid rail
+    const midRail = new THREE.Mesh(new THREE.CylinderGeometry(PIPE_R_RAIL, PIPE_R_RAIL, len, 8), railMat);
+    midRail.rotation.z = Math.PI / 2;
+    midRail.rotation.y = -ang;
+    midRail.position.set(mx, midY, mz);
+    scene.add(midRail);
+
+    // Vertical posts
+    const nPosts = Math.max(2, Math.round(len / postSpacing) + 1);
+    for (let i = 0; i < nPosts; i++) {
+        const t = nPosts === 1 ? 0 : i / (nPosts - 1);
+        const px = x1 + dx * t, pz = z1 + dz * t;
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(PIPE_R_RAIL, PIPE_R_RAIL, PLAT_RAIL_H, 8), railMat);
+        post.position.set(px, baseY + PLAT_RAIL_H / 2, pz);
+        scene.add(post);
+    }
+
+    // Invisible thick collider for physics
+    const collider = new THREE.Mesh(new THREE.BoxGeometry(
+        Math.abs(dx) > Math.abs(dz) ? len : 0.2,
+        PLAT_RAIL_H,
+        Math.abs(dz) >= Math.abs(dx) ? len : 0.2
+    ), new THREE.MeshStandardMaterial());
+    collider.visible = false;
+    collider.position.set(mx, baseY + PLAT_RAIL_H / 2, mz);
+    worldGroup.add(collider);
+}
+
+// Platform edges
+const PE = PLAT_Y;   // base y = platform surface
+const PW2 = PLAT_W / 2, PD2 = PLAT_D / 2;
+const PXW = PLAT_X_MID - PD2;  // west X edge
+const PXE = PLAT_X_MID + PD2;  // east X edge
+const PZN = PLAT_Z_MID + PW2;  // north Z edge
+const PZS = PLAT_Z_MID - PW2;  // south Z edge
+
+// West, north, south full runs
+addPipeRail(PXW, PZS, PXW, PZN, PE);           // west
+addPipeRail(PXW, PZN, PXE, PZN, PE);           // north
+addPipeRail(PXW, PZS, PXE, PZS, PE);           // south
+
+// ── STAIRCASE ──
+const NUM_STEPS  = _NUM_STEPS;
+const STAIR_W    = 3.0;
+const STAIR_D    = _STAIR_D;
+const STAIR_H    = PLAT_Y / NUM_STEPS;
+const STAIR_Z    = -4;
+const STAIR_X0   = _STAIR_X0;
+const STAIR_END_X = _STAIR_END;
+
+// East rail — two pipe segments with gap where stairs arrive
+{
+    const STAIR_GAP_MIN = STAIR_Z - STAIR_W / 2 - 0.2;
+    const STAIR_GAP_MAX = STAIR_Z + STAIR_W / 2 + 0.2;
+    // South segment: south edge → stair gap
+    if (STAIR_GAP_MIN > PZS + 0.1)
+        addPipeRail(PXE, PZS, PXE, STAIR_GAP_MIN, PE);
+    // North segment: stair gap → north edge
+    if (PZN > STAIR_GAP_MAX + 0.1)
+        addPipeRail(PXE, STAIR_GAP_MAX, PXE, PZN, PE);
+}
+
+// ── VISUAL STEPS — thin tread slabs only (no floor-to-tread pillars) ──
+// Each step is just the tread surface + one riser height thick,
+// so the underside of the staircase is open and clean.
+const STAIR_LEN  = NUM_STEPS * STAIR_D;
+const TREAD_T    = STAIR_H + 0.01;   // slab thickness = one riser height
+for (let i = 0; i < NUM_STEPS; i++) {
+    const treadY = (i + 1) * STAIR_H;
+    const step   = new THREE.Mesh(
+        new THREE.BoxGeometry(STAIR_D + 0.01, TREAD_T, STAIR_W),
+        platMat
+    );
+    step.position.set(
+        STAIR_X0 - i * STAIR_D - STAIR_D / 2,
+        treadY - TREAD_T / 2,
+        STAIR_Z
+    );
+    scene.add(step);
+}
+
+// ── INVISIBLE PHYSICS RAMP — two segments so underside has ~2.5 m clearance ──
+// Segment A = short ground-level approach (first 6 steps).
+// Segment B = elevated main ramp. Walk *under* segment B at ground level.
+const RAMP_RUN   = STAIR_LEN;
+const RAMP_THICK = 0.5;
+
+const SEG_A_STEPS = 6;
+const SEG_A_RUN   = SEG_A_STEPS * STAIR_D;
+const SEG_A_RISE  = SEG_A_STEPS * STAIR_H;
+const SEG_A_HYPO  = Math.sqrt(SEG_A_RUN * SEG_A_RUN + SEG_A_RISE * SEG_A_RISE);
+const rampA = new THREE.Mesh(
+    new THREE.BoxGeometry(SEG_A_HYPO, RAMP_THICK, STAIR_W - 0.1),
+    new THREE.MeshStandardMaterial()
+);
+rampA.visible = false;
+rampA.position.set(STAIR_X0 - SEG_A_RUN / 2, SEG_A_RISE / 2, STAIR_Z);
+rampA.rotation.z = -Math.atan2(SEG_A_RISE, SEG_A_RUN);
+worldGroup.add(rampA);
+
+const SEG_B_STEPS = NUM_STEPS - SEG_A_STEPS;
+const SEG_B_RUN   = SEG_B_STEPS * STAIR_D;
+const SEG_B_RISE  = PLAT_Y - SEG_A_RISE;
+const SEG_B_HYPO  = Math.sqrt(SEG_B_RUN * SEG_B_RUN + SEG_B_RISE * SEG_B_RISE);
+const SEG_B_X0    = STAIR_X0 - SEG_A_RUN;
+const rampB = new THREE.Mesh(
+    new THREE.BoxGeometry(SEG_B_HYPO, RAMP_THICK, STAIR_W - 0.1),
+    new THREE.MeshStandardMaterial()
+);
+rampB.visible = false;
+rampB.position.set(SEG_B_X0 - SEG_B_RUN / 2, SEG_A_RISE + SEG_B_RISE / 2, STAIR_Z);
+rampB.rotation.z = -Math.atan2(SEG_B_RISE, SEG_B_RUN);
+worldGroup.add(rampB);
+
+// Invisible floor under the raised platform
+const underPlatFloor = new THREE.Mesh(
+    new THREE.BoxGeometry(PLAT_D + 1.0, 0.4, PLAT_W + 2.0),
+    new THREE.MeshStandardMaterial()
+);
+underPlatFloor.visible = false;
+underPlatFloor.position.set(PLAT_X_MID, -0.2, PLAT_Z_MID);
+worldGroup.add(underPlatFloor);
+
+// ── STAIR HANDRAILS — round pipe style matching platform railings ──
+const RAIL_H      = 1.1;
+const RAIL_BOT_Y  = RAIL_H;
+const RAIL_TOP_Y  = PLAT_Y + RAIL_H;
+
+for (const sz of [-1, 1]) {
+    const railZ = STAIR_Z + sz * (STAIR_W / 2 + 0.12);
+
+    // Sloped top rail pipe — one cylinder along the hypotenuse
+    const HYPO = Math.sqrt(STAIR_LEN * STAIR_LEN + PLAT_Y * PLAT_Y);
+    const RAIL_ANGLE = -Math.atan2(PLAT_Y, STAIR_LEN);
+    const RAIL_CEN_X = STAIR_X0 - STAIR_LEN / 2;
+    const RAIL_CEN_Y = (RAIL_BOT_Y + RAIL_TOP_Y) / 2;
+
+    const topRail = new THREE.Mesh(
+        new THREE.CylinderGeometry(PIPE_R_RAIL, PIPE_R_RAIL, HYPO, 8),
+        railMat
+    );
+    topRail.rotation.z = Math.PI / 2 + RAIL_ANGLE;
+    topRail.position.set(RAIL_CEN_X, RAIL_CEN_Y, railZ);
+    scene.add(topRail);
+
+    // Mid rail pipe — parallel, halfway up
+    const MID_BOT_Y = RAIL_BOT_Y * 0.5;
+    const MID_TOP_Y = PLAT_Y + RAIL_H * 0.5;
+    const midRail = new THREE.Mesh(
+        new THREE.CylinderGeometry(PIPE_R_RAIL, PIPE_R_RAIL, HYPO, 8),
+        railMat
+    );
+    midRail.rotation.z = Math.PI / 2 + RAIL_ANGLE;
+    midRail.position.set(RAIL_CEN_X, (MID_BOT_Y + MID_TOP_Y) / 2, railZ);
+    scene.add(midRail);
+
+    // Vertical balusters at each step interval
+    for (let i = 0; i <= NUM_STEPS; i += 3) {
+        const bx    = STAIR_X0 - i * STAIR_D;
+        const tread = i * STAIR_H;
+        const t     = i / NUM_STEPS;
+        const railTopHere = RAIL_BOT_Y + t * (RAIL_TOP_Y - RAIL_BOT_Y);
+        const postH = railTopHere - tread;
+        if (postH < 0.1) continue;
+        const post = new THREE.Mesh(
+            new THREE.CylinderGeometry(PIPE_R_RAIL, PIPE_R_RAIL, postH, 8),
+            railMat
+        );
+        post.position.set(bx, tread + postH / 2, railZ);
+        scene.add(post);
+    }
+
+    // Newel post at top — vertical pipe from platform surface up to rail
+    const postTop = new THREE.Mesh(
+        new THREE.CylinderGeometry(PIPE_R_RAIL * 1.5, PIPE_R_RAIL * 1.5, RAIL_H, 8),
+        railMat
+    );
+    postTop.position.set(STAIR_END_X, PLAT_Y + RAIL_H / 2, railZ);
+    scene.add(postTop);
+}
+
+// ── STAIR SIDE WALL COLLIDERS — solid invisible walls prevent falling through handrails ──
+for (const sz of [-1, 1]) {
+    const wallZ = STAIR_Z + sz * (STAIR_W / 2 + 0.15);
+    // A vertical wall the full height and run of the staircase
+    const wallH  = PLAT_Y + RAIL_H;
+    const wallLen = Math.sqrt(STAIR_LEN * STAIR_LEN + PLAT_Y * PLAT_Y) * 1.05;
+    const wall = new THREE.Mesh(
+        new THREE.BoxGeometry(wallLen, wallH, 0.22),
+        new THREE.MeshStandardMaterial()
+    );
+    wall.visible = false;
+    wall.position.set(STAIR_X0 - STAIR_LEN / 2, wallH / 2, wallZ);
+    wall.rotation.z = -Math.atan2(PLAT_Y, STAIR_LEN);
+    worldGroup.add(wall);
+}
+
+// Brewhouse vessels — 6 large cylindrical tanks surrounding the platform, no cones
+// Looking up the stairs: left=south, across=north, far-right=west end, near-right=east-north
+const BREW_Y = PLAT_Y;   // tanks sit on ground level, rise up beside platform
+const BREW_TANKS = [
+    { x: PLAT_X_MID - 0,      z: PLAT_Z_MID - PLAT_W/2 - 3.5, r: 3.2, h: 8.5, legH: 2, label: 'Mash Tun', steamStack: true  },
+    { x: PLAT_X_MID - 0,      z: PLAT_Z_MID + PLAT_W/2 + 4,   r: 3.2, h: 9.5, legH: 1, label: 'CLT',      steamStack: false },
+    { x: PLAT_X_MID - 7,      z: PLAT_Z_MID + PLAT_W/2 - 19.5,r: 3.2, h: 9.5, legH: 1, label: 'HLT',      steamStack: false },
+    { x: PLAT_X_MID - PLAT_D/2 - 3,   z: PLAT_Z_MID + 4,      r: 3.0, h: 6.5, legH: 4, label: 'Kettle',   steamStack: true  },
+    { x: PLAT_X_MID - PLAT_D/2 - 3.5, z: PLAT_Z_MID - 4,      r: 3.5, h: 6.5, legH: 4, label: 'lauter',   steamStack: true  },
+    { x: PLAT_X_MID + PLAT_D/2 + 4,   z: PLAT_Z_MID + 4.75,   r: 4,   h: 6.5, legH: 4, label: 'Whirlpool',steamStack: true  },
+];
+
+BREW_TANKS.forEach(cfg => {
+    const g = new THREE.Group();
+
+    // Legs are tall enough so tank body bottom sits just above mid-platform height
+    const LEG_H      = cfg.legH;
+    const BODY_BOT   = LEG_H;
+    const DOME_H     = cfg.r * 0.22;
+    const LEG_SPREAD = cfg.r * 0.85;
+
+    // Legs (4) — with individual collision proxies
+    for (let i = 0; i < 4; i++) {
+        const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
+        const lx = Math.cos(angle) * LEG_SPREAD;
+        const lz = Math.sin(angle) * LEG_SPREAD;
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, LEG_H, 8), ssDkMat);
+        leg.position.set(lx, LEG_H / 2, lz);
+        g.add(leg);
+        const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.07, 8), ssDkMat);
+        foot.position.set(lx, 0.035, lz);
+        g.add(foot);
+        // Invisible leg collider in worldGroup so octree picks it up
+        const legCol = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, LEG_H, 8), new THREE.MeshStandardMaterial());
+        legCol.visible = false;
+        legCol.position.set(cfg.x + lx, LEG_H / 2, cfg.z + lz);
+        worldGroup.add(legCol);
+    }
+
+    // Square pipe brace near base
+    const PIPE_R = 0.03;
+    for (let i = 0; i < 4; i++) {
+        const a1 = (i / 4) * Math.PI * 2 + Math.PI / 4;
+        const a2 = ((i + 1) / 4) * Math.PI * 2 + Math.PI / 4;
+        const x1 = Math.cos(a1) * LEG_SPREAD, z1 = Math.sin(a1) * LEG_SPREAD;
+        const x2 = Math.cos(a2) * LEG_SPREAD, z2 = Math.sin(a2) * LEG_SPREAD;
+        const len = Math.sqrt((x2-x1)**2 + (z2-z1)**2);
+        const ang = Math.atan2(z2-z1, x2-x1);
+        const pipe = new THREE.Mesh(new THREE.CylinderGeometry(PIPE_R, PIPE_R, len, 8), ssDkMat);
+        pipe.rotation.z = Math.PI / 2;
+        pipe.rotation.y = -ang;
+        pipe.position.set((x1+x2)/2, LEG_H * 0.12, (z1+z2)/2);
+        g.add(pipe);
+    }
+
+    // Main cylindrical body — starts cleanly at BODY_BOT, no bottom cone piece
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(cfg.r, cfg.r, cfg.h, 24), ssMat);
+    body.position.y = BODY_BOT + cfg.h / 2;
+    g.add(body);
+
+    // Shallow tapered top cap
+    const dome = new THREE.Mesh(
+        new THREE.CylinderGeometry(cfg.r * 0.15, cfg.r, DOME_H, 24),
+        ssMat
+    );
+    dome.position.y = BODY_BOT + cfg.h + DOME_H / 2;
+    g.add(dome);
+
+    // Vent / steam stack on top
+    const CEIL_Y     = 22;   // ceiling height in world units
+    const stackBot   = BODY_BOT + cfg.h + DOME_H;
+    if (cfg.steamStack) {
+        // Large-diameter steam stack rising to ceiling
+        const stackR  = cfg.r * 0.13;
+        const stackH  = CEIL_Y - stackBot;
+        const stack = new THREE.Mesh(new THREE.CylinderGeometry(stackR, stackR, stackH, 16), ssMat);
+        stack.position.y = stackBot + stackH / 2;
+        g.add(stack);
+        // Collision proxy for the stack — full height cylinder in worldGroup
+        const stackProxy = new THREE.Mesh(
+            new THREE.CylinderGeometry(stackR, stackR, stackH, 8),
+            new THREE.MeshStandardMaterial()
+        );
+        stackProxy.visible = false;
+        stackProxy.position.set(cfg.x, stackBot + stackH / 2, cfg.z);
+        worldGroup.add(stackProxy);
+    } else {
+        // Small vent pipe for CLT/HLT
+        const vent = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.4, 8), ssDkMat);
+        vent.position.y = stackBot + 0.2;
+        g.add(vent);
+    }
+
+    g.position.set(cfg.x, 0, cfg.z);
+    scene.add(g);
+
+    // Collision proxy — starts at LEG_H so player can walk freely under the legs
+    const proxyH = cfg.h + DOME_H;
+    const proxy = new THREE.Mesh(
+        new THREE.BoxGeometry(cfg.r * 2, proxyH, cfg.r * 2),
+        new THREE.MeshStandardMaterial()
+    );
+    proxy.visible = false;
+    proxy.position.set(cfg.x, LEG_H + proxyH / 2, cfg.z);
+    worldGroup.add(proxy);
+});
+
+// ── CEILING + STRUCTURAL BEAMS ──
+const CEIL_Y   = 22;
+const CEIL_MAT = new THREE.MeshStandardMaterial({ color: 0xd0d0d0, roughness: 0.9 });
+const BEAM_MAT = new THREE.MeshStandardMaterial({ color: 0x8b2020, roughness: 0.7 });  // dark red steel
+const CEIL_W   = 92,  CEIL_D = 103;
+
+// Main ceiling slab
+const ceiling = new THREE.Mesh(new THREE.BoxGeometry(CEIL_W, 0.4, CEIL_D), CEIL_MAT);
+ceiling.position.set(-25, CEIL_Y + 0.2, 8.5);
+scene.add(ceiling);
+
+// Puffy insulation bays between beams (white/light grey panels)
+const insulMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.6, roughness: 1.0 });
+// Insulation panels fill every bay between beams across full ceiling width and length
+for (let bz = -40; bz < 60; bz += 10) {
+    for (let bx = -70; bx < 20; bx += 20) {
+        const panel = new THREE.Mesh(new THREE.BoxGeometry(19.4, 0.5, 9.4), insulMat);
+        panel.position.set(bx + 10, CEIL_Y - 0.26, bz + 5);
+        scene.add(panel);
+    }
+}
+
+// Structural beams along X axis (run east-west across the building)
+for (let bz = -40; bz < 60; bz += 10) {
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(CEIL_W, 0.6, 0.4), BEAM_MAT);
+    beam.position.set(-25, CEIL_Y - 0.9, bz);
+    scene.add(beam);
+}
+// Structural beams along Z axis (run north-south) — every 20 units, x=-70 to +20
+for (let bx = -70; bx <= 20; bx += 20) {
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.6, CEIL_D), BEAM_MAT);
+    beam.position.set(bx, CEIL_Y - 0.9, 8.5);
+    scene.add(beam);
+}
+
+// ── SKYLIGHTS — rows inside the building ──
+{
+    const skylightMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        emissive: 0xfff8ee,
+        emissiveIntensity: 8.0,
+        roughness: 1.0
+    });
+    const SL_X = [-60, -20, 0];
+    const SL_Z = [15, 35, 55];     // three rows within z=-43 to z=60
+    const SL_W =  2.5;
+    const SL_D =  7.5;
+
+    for (const sx of SL_X) {
+        for (const sz of SL_Z) {
+            const panel = new THREE.Mesh(
+                new THREE.BoxGeometry(SL_W, 0.3, SL_D),
+                skylightMat
+            );
+            panel.position.set(sx, CEIL_Y - 0.8, sz);
+            scene.add(panel);
+
+            const sky = new THREE.PointLight(0xfff8ee, 1.4, 55);
+            sky.position.set(sx, CEIL_Y - 1.5, sz);
+            scene.add(sky);
+        }
+    }
+}
+
+// ── WALL WINDOWS ──
+// Small square windows high up on the north wall (z=100) and west wall (x=20).
+// Match the photo: ~1m square, evenly spaced, about 3m below the ceiling (y~19).
+{
+    const glassMat = new THREE.MeshStandardMaterial({
+        color: 0xaaccee,
+        emissive: 0x88bbdd,
+        emissiveIntensity: 1.2,
+        transparent: true,
+        opacity: 0.85,
+        roughness: 0.1
+    });
+    const frameMat2 = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.6 });
+    const WIN_SIZE  = 2.2;   // square window size
+    const WIN_Y     = CEIL_Y - 3.2;   // high up near ceiling
+    const FRAME_T   = 0.08;
+
+    function addWindow(wx, wy, wz, facingZ) {
+        // Glass pane
+        const glass = new THREE.Mesh(
+            facingZ ? new THREE.BoxGeometry(WIN_SIZE, WIN_SIZE, 0.06)
+                    : new THREE.BoxGeometry(0.06, WIN_SIZE, WIN_SIZE),
+            glassMat
+        );
+        glass.position.set(wx, wy, wz);
+        scene.add(glass);
+        // Frame — 4 thin bars around the glass
+        const frameGeo = facingZ
+            ? [[WIN_SIZE + FRAME_T*2, FRAME_T, FRAME_T*2, 0,  WIN_SIZE/2+FRAME_T/2, 0],
+               [WIN_SIZE + FRAME_T*2, FRAME_T, FRAME_T*2, 0, -WIN_SIZE/2-FRAME_T/2, 0],
+               [FRAME_T, WIN_SIZE, FRAME_T*2, -WIN_SIZE/2-FRAME_T/2, 0, 0],
+               [FRAME_T, WIN_SIZE, FRAME_T*2,  WIN_SIZE/2+FRAME_T/2, 0, 0]]
+            : [[FRAME_T*2, FRAME_T, WIN_SIZE + FRAME_T*2, 0,  WIN_SIZE/2+FRAME_T/2, 0],
+               [FRAME_T*2, FRAME_T, WIN_SIZE + FRAME_T*2, 0, -WIN_SIZE/2-FRAME_T/2, 0],
+               [FRAME_T*2, WIN_SIZE, FRAME_T,  0, 0, -WIN_SIZE/2-FRAME_T/2],
+               [FRAME_T*2, WIN_SIZE, FRAME_T,  0, 0,  WIN_SIZE/2+FRAME_T/2]];
+        for (const [fw, fh, fd, fdx, fdy, fdz] of frameGeo) {
+            const bar = new THREE.Mesh(new THREE.BoxGeometry(fw, fh, fd), frameMat2);
+            bar.position.set(wx + fdx, wy + fdy, wz + fdz);
+            scene.add(bar);
+        }
+        // Soft light from the window
+        const wLight = new THREE.PointLight(0xddeeff, 0.3, 12);
+        wLight.position.set(wx, wy, wz);
+        scene.add(wLight);
+    }
+
+    // North wall windows (z=60, facing south)
+    for (let wx = -56; wx <= 16; wx += 20) {
+        addWindow(wx, WIN_Y, 59.6, true);
+    }
+
+    // West wall windows (x=20, facing east)
+    for (let wz = -28; wz <= 55; wz += 20) {
+        addWindow(19.8, WIN_Y, wz, false);
+    }
+}
+
+scene.add(worldGroup);
+worldOctree.fromGraphNode(worldGroup);
+
+// ── STAINLESS WORK TABLES ──
+// buildTable(x, y, z, w, d) — w=width(X), d=depth(Z), y=floor height table sits on
+const ssMat2 = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.85, roughness: 0.2 });
+function buildTable(x, y, z, w, d) {
+    const TABLE_H  = 0.9;   // worktop height above floor
+    const TOP_T    = 0.04;
+    const SHELF_H  = 0.35;  // lower shelf height above floor
+    const LEG_R    = 0.025;
+    const g = new THREE.Group();
+
+    // Worktop
+    const top = new THREE.Mesh(new THREE.BoxGeometry(w, TOP_T, d), ssMat2);
+    top.position.y = TABLE_H;
+    g.add(top);
+
+    // Lower shelf
+    const shelf = new THREE.Mesh(new THREE.BoxGeometry(w - 0.1, TOP_T * 0.8, d - 0.1), ssMat2);
+    shelf.position.y = SHELF_H;
+    g.add(shelf);
+
+    // 4 legs
+    for (const [lx, lz] of [
+        [ w/2 - 0.06,  d/2 - 0.06],
+        [-w/2 + 0.06,  d/2 - 0.06],
+        [ w/2 - 0.06, -d/2 + 0.06],
+        [-w/2 + 0.06, -d/2 + 0.06],
+    ]) {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(LEG_R, LEG_R, TABLE_H, 8), ssMat2);
+        leg.position.set(lx, TABLE_H / 2, lz);
+        g.add(leg);
+    }
+
+    // Cross braces on long sides
+    for (const lz of [d/2 - 0.06, -d/2 + 0.06]) {
+        const brace = new THREE.Mesh(new THREE.CylinderGeometry(LEG_R * 0.8, LEG_R * 0.8, w - 0.12, 8), ssMat2);
+        brace.rotation.z = Math.PI / 2;
+        brace.position.set(0, SHELF_H + 0.15, lz);
+        g.add(brace);
+    }
+
+    g.position.set(x, y, z);
+    scene.add(g);
+
+    // Collision proxy for the worktop
+    const col = new THREE.Mesh(new THREE.BoxGeometry(w, TABLE_H + TOP_T, d), new THREE.MeshStandardMaterial());
+    col.visible = false;
+    col.position.set(x, y + (TABLE_H + TOP_T) / 2, z);
+    worldGroup.add(col);
+    worldOctree.fromGraphNode(worldGroup);  // re-bake octree to include table
+}
+
+// Table 1: near CLT — pushed tight against north rail
+buildTable(PLAT_X_MID, PLAT_Y, PLAT_Z_MID + PLAT_W/2 - 0.5, 2.0, 0.75);
+// Table 2: near stairs / whirlpool — pushed tight against east rail, rotated 90°
+buildTable(PLAT_X_MID + PLAT_D/2 - 0.45, PLAT_Y, STAIR_Z + STAIR_W/2 + 1.5, 0.75, 2.0);
+
+// ─────────────────────────────────────────────────────────────
+//  MEZZANINE  (-z south wall, runs in X direction)
+//  Single level, dark steel, flat-bar railings
+//  Rooms below with double doors, stairs run west→east with mid-landing
+// ─────────────────────────────────────────────────────────────
+const darkMat  = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8, metalness: 0.6 });
+const roomMat  = new THREE.MeshStandardMaterial({ color: 0xc8c0b4, roughness: 0.85 });
+
+const MEZ_Y    = 14;
+const MEZ_X0   = -70;   // east end
+const MEZ_X1   = 20;    // west end — covers full stair run
+const MEZ_Z0   = -42;   // south edge (back wall)
+const MEZ_Z1   = -33;   // north edge (open to brewery floor)
+const MEZ_W    = MEZ_X1 - MEZ_X0;
+const MEZ_D    = MEZ_Z1 - MEZ_Z0;
+const DECK_T2  = 0.25;
+
+// ── Flat-bar railing helper ──
+function addFlatBarRail(x1, z1, x2, z2, baseY, nBars = 4) {
+    const dx = x2-x1, dz = z2-z1;
+    const len = Math.sqrt(dx*dx + dz*dz);
+    if (len < 0.1) return;
+    const ang = Math.atan2(dz, dx);
+    const mx = (x1+x2)/2, mz = (z1+z2)/2;
+    const RAIL_H2 = 1.05, BAR_H = 0.04;
+    for (let b = 0; b <= nBars; b++) {
+        const by = baseY + (b / nBars) * RAIL_H2;
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(len, BAR_H, 0.05), darkMat);
+        bar.rotation.y = -ang;
+        bar.position.set(mx, by, mz);
+        scene.add(bar);
+    }
+    const nPosts = Math.max(2, Math.round(len / 1.2) + 1);
+    for (let i = 0; i < nPosts; i++) {
+        const t = i / (nPosts-1);
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.06, RAIL_H2, 0.06), darkMat);
+        post.position.set(x1 + dx*t, baseY + RAIL_H2/2, z1 + dz*t);
+        scene.add(post);
+    }
+    const col = new THREE.Mesh(new THREE.BoxGeometry(
+        Math.abs(dx) > Math.abs(dz) ? len : 0.2, RAIL_H2,
+        Math.abs(dz) >= Math.abs(dx) ? len : 0.2
+    ), new THREE.MeshStandardMaterial());
+    col.visible = false;
+    col.position.set(mx, baseY + RAIL_H2/2, mz);
+    worldGroup.add(col);
+}
+
+// ── Mezzanine deck ──
+const mezDeck = new THREE.Mesh(new THREE.BoxGeometry(MEZ_W, DECK_T2, MEZ_D), darkMat);
+mezDeck.position.set((MEZ_X0+MEZ_X1)/2, MEZ_Y - DECK_T2/2, (MEZ_Z0+MEZ_Z1)/2);
+worldGroup.add(mezDeck);
+
+// ── Rooms below mezzanine — proportions from actual floorplan ──
+// Walking west (-X): Brewer Office → Closet → Hop Cold → Malt Mill → Equipment/Grain
+// Key constraints from stair geometry:
+//   Brewer Office door at X=17 — east of stair foot (X=14), visible before stairs ✓
+//   Hop Cold door at X=-8 — between mid-landing (X=2) and stair top (X=-13.5) ✓
+const ROOM_H  = MEZ_Y - 0.02;
+const DOOR_H  = 2.8;
+const WALL_VIS_H = 3.5;   // visible wall height — matches interior ceiling, not full mez underside
+const FRAME_R = 0.08;
+
+const R_OFFI_X0  = -5;    const R_OFFI_X1  = MEZ_X1;  // Brewer Office:  -5 → 20  (25 units)
+const R_CLOS_X0  = -12;   const R_CLOS_X1  = R_OFFI_X0; // Closet:       -12 → -5  ( 7 units)
+const R_HOPC_X0  = -15;   const R_HOPC_X1  = R_CLOS_X0; // Hop Cold:     -32 → -12 (20 units)
+const R_MILL_X0  = -40;   const R_MILL_X1  = R_HOPC_X0; // Malt Mill:    -51 → -32 (19 units)
+const R_EQUIP_X0 = MEZ_X0; const R_EQUIP_X1 = R_MILL_X0; // Boiler:   -70 → -51 (19 units)
+
+// lowerWallBox — same pattern as wallBox but for the ground-floor rooms under the mezzanine.
+// Visual goes straight to scene; Cannon body handles player collision.
+// Meshes are also pushed to wallMeshes so the water raycaster can hit them.
+const offWallCannonMat = new CANNON.Material('officeWall');
+world.addContactMaterial(new CANNON.ContactMaterial(playerPhysMat, offWallCannonMat, {
+    friction: 0.0, restitution: 0.0,
+}));
+const wallMeshes = [];  // all scene-direct wall meshes for water hit detection
+
+function lowerWallBox(cx, cy, cz, w, h, d) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), roomMat);
+    m.position.set(cx, cy, cz);
+    scene.add(m);
+    wallMeshes.push(m);
+    const body = new CANNON.Body({ mass: 0, material: offWallCannonMat });
+    body.addShape(new CANNON.Box(new CANNON.Vec3(w / 2, h / 2, d / 2)));
+    body.position.set(cx, cy, cz);
+    world.addBody(body);
+}
+
+function buildRoom(rx0, rx1, doorCenterX, doorW) {
+    const rw   = rx1 - rx0;
+    const zmid = (MEZ_Z0 + MEZ_Z1) / 2;
+
+    // South wall — full height to mezzanine underside
+    lowerWallBox((rx0+rx1)/2, ROOM_H/2, MEZ_Z0, rw, ROOM_H, 1.0);
+    // West divider wall — full height
+    lowerWallBox(rx0, ROOM_H/2, zmid, 0.2, ROOM_H, MEZ_D);
+
+    // North face split around door — full height
+    const leftW  = doorCenterX - doorW/2 - rx0;
+    const rightW = rx1 - (doorCenterX + doorW/2);
+    if (leftW > 0.05)  lowerWallBox(rx0 + leftW/2,  ROOM_H/2, MEZ_Z1, leftW,  ROOM_H, 0.2);
+    if (rightW > 0.05) lowerWallBox(rx1 - rightW/2, ROOM_H/2, MEZ_Z1, rightW, ROOM_H, 0.2);
+
+    // Above door: full wall from DOOR_H to ROOM_H (closes the gap)
+    const aboveH = ROOM_H - DOOR_H;
+    lowerWallBox(doorCenterX, DOOR_H + aboveH/2, MEZ_Z1, doorW, aboveH, 0.2);
+
+    // Slim visible transom strip just above door up to WALL_VIS_H
+    const transomH = WALL_VIS_H - DOOR_H;
+    if (transomH > 0.02) {
+        const t = new THREE.Mesh(new THREE.BoxGeometry(doorW, transomH, 0.2), roomMat);
+        t.position.set(doorCenterX, DOOR_H + transomH/2, MEZ_Z1);
+        scene.add(t);
+        wallMeshes.push(t);
+    }
+
+    // Door frame (visual only)
+    for (const fdx of [-doorW/2, doorW/2]) {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(FRAME_R, DOOR_H, FRAME_R), darkMat);
+        post.position.set(doorCenterX + fdx, DOOR_H/2, MEZ_Z1);
+        scene.add(post);
+    }
+    const ftop = new THREE.Mesh(new THREE.BoxGeometry(doorW + FRAME_R*2, FRAME_R, FRAME_R), darkMat);
+    ftop.position.set(doorCenterX, DOOR_H, MEZ_Z1);
+    scene.add(ftop);
+}
+
+// ── Rooms — 4 exterior rooms + closet alcove inside Brewer Office ──
+// Equipment/Grain: X=-70 to -51
+buildRoom(R_EQUIP_X0, R_EQUIP_X1, (R_EQUIP_X0+R_EQUIP_X1)/2, 3.0);
+// Malt Mill: X=-51 to -32
+buildRoom(R_MILL_X0, R_MILL_X1, (R_MILL_X0+R_MILL_X1)/2, 2.4);
+// Hop Cold: extended to X=-5 so door at X=-8 (width 3.0) fits inside bounds
+buildRoom(R_HOPC_X0, R_OFFI_X0, -8, 3.0);
+// Brewer Office: X=-5 to 20, door at X=17
+buildRoom(R_OFFI_X0, R_OFFI_X1, 17, 1.6);
+
+// Closet inside Brewer Office
+{
+    const CLOS_X0 = R_OFFI_X0;
+    const CLOS_X1 = R_OFFI_X0 + 7;
+    const CLOS_Z0 = MEZ_Z0;
+    const CLOS_Z1 = MEZ_Z0 + MEZ_D;
+    const CLOS_D  = CLOS_Z1 - CLOS_Z0;
+    const zmid    = (CLOS_Z0 + CLOS_Z1) / 2;
+    const CLOS_W  = CLOS_X1 - CLOS_X0;
+
+    // North wall — full height
+    lowerWallBox((CLOS_X0+CLOS_X1)/2, ROOM_H/2, CLOS_Z1, CLOS_W, ROOM_H, 0.2);
+
+    // East wall with door — full height segments
+    const cDOOR_W = 1.0;
+    const cDOOR_Z = zmid + 3;
+    const botH = cDOOR_Z - cDOOR_W/2 - CLOS_Z0;
+    const topH = CLOS_Z1 - (cDOOR_Z + cDOOR_W/2);
+    if (botH > 0.05) lowerWallBox(CLOS_X1, ROOM_H/2, CLOS_Z0 + botH/2, 0.2, ROOM_H, botH);
+    if (topH > 0.05) lowerWallBox(CLOS_X1, ROOM_H/2, CLOS_Z1 - topH/2, 0.2, ROOM_H, topH);
+    // Full-height fill above door opening
+    const cAboveH = ROOM_H - DOOR_H;
+    lowerWallBox(CLOS_X1, DOOR_H + cAboveH/2, cDOOR_Z, 0.2, cAboveH, cDOOR_W);
+    // Slim visible transom
+    const transH = WALL_VIS_H - DOOR_H;
+    if (transH > 0.02) {
+        const t = new THREE.Mesh(new THREE.BoxGeometry(0.2, transH, cDOOR_W), roomMat);
+        t.position.set(CLOS_X1, DOOR_H + transH/2, cDOOR_Z);
+        scene.add(t);
+        wallMeshes.push(t);
+    }
+
+    // Door frame posts (visual only)
+    for (const fdz of [-cDOOR_W/2, cDOOR_W/2]) {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(FRAME_R, DOOR_H, FRAME_R), darkMat);
+        post.position.set(CLOS_X1, DOOR_H/2, cDOOR_Z + fdz);
+        scene.add(post);
+    }
+}
+
+// East cap wall — full height
+lowerWallBox(MEZ_X1, ROOM_H/2, (MEZ_Z0+MEZ_Z1)/2, 0.2, ROOM_H, MEZ_D);
+
+// ── Mezzanine railings (end walls only — north face gap added after stair constants) ──
+addFlatBarRail(MEZ_X0, MEZ_Z0, MEZ_X0, MEZ_Z1, MEZ_Y);          // east end wall
+addFlatBarRail(MEZ_X1, MEZ_Z0, MEZ_X1, MEZ_Z1, MEZ_Y);          // west end wall
+addFlatBarRail(MEZ_X0, MEZ_Z0, MEZ_X0, MEZ_Z1, MEZ_Y);          // east end wall
+addFlatBarRail(MEZ_X1, MEZ_Z0, MEZ_X1, MEZ_Z1, MEZ_Y);          // west end wall
+
+// ── Mezzanine Stairs — two flights with mid-landing ──
+// Stairs run in X: foot at MS_X_BOT (east/high X), top at MS_X_TOP (west/low X)
+// Each step rises in Y and steps in -X.
+// Mid-landing sits at exactly MEZ_Y/2.
+// Physics: one flat invisible ramp box per flight, axis-aligned (no tricky pivot math).
+
+const MS_STEPS   = 36;
+const MS_W       = 4.0;                        // stair width — now 4 units wide
+const MS_Z       = MEZ_Z1 + MS_W / 2 + 0.65;  // stair center Z, ~0.65m gap from mez deck north face
+const MS_X_BOT   = MEZ_X1 - 6;                 // foot of stairs (east)
+const MS_X_TOP   = MEZ_X1 - 30;                // top of stairs (west)
+const MS_TOTAL_RUN = MS_X_BOT - MS_X_TOP;      // total horizontal run
+const LAND_Y     = MEZ_Y / 2;                  // mid-landing height = exactly half of mez height
+const HALF_STEPS = MS_STEPS / 2;               // 18 steps per flight
+const STEP_H     = LAND_Y / HALF_STEPS;        // rise per step
+const STEP_D     = MS_TOTAL_RUN / MS_STEPS;    // run per step (same for both flights)
+const LAND_W     = 3.5;                         // mid-landing depth in X
+const LAND_D     = MS_W;                        // mid-landing width in Z (same as stairs)
+
+// Where does the lower flight end / landing begins?
+// After HALF_STEPS steps of width STEP_D each, starting from MS_X_BOT going west (-X):
+const LAND_X_E   = MS_X_BOT - HALF_STEPS * STEP_D;   // east edge of mid-landing
+const LAND_X_W   = LAND_X_E - LAND_W;                 // west edge of mid-landing
+const LAND_X     = (LAND_X_E + LAND_X_W) / 2;         // center of mid-landing
+
+// Upper flight starts at west edge of landing, goes to MS_X_TOP
+const UPPER_X_BOT = LAND_X_W;   // foot of upper flight
+// (UPPER_X_BOT - MS_X_TOP) should equal MS_TOTAL_RUN / 2 = HALF_STEPS * STEP_D ✓
+
+const ms_treadMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9, metalness: 0.5 });
+const RAIL_R = 0.04;
+const RAIL_RISE = 1.05;   // handrail height above tread surface
+
+// ── Visual steps — lower flight ──
+for (let i = 0; i < HALF_STEPS; i++) {
+    const treadY = (i + 1) * STEP_H;                            // top of this tread
+    const step = new THREE.Mesh(new THREE.BoxGeometry(STEP_D, STEP_H, MS_W), ms_treadMat);
+    step.position.set(MS_X_BOT - i * STEP_D - STEP_D / 2, treadY - STEP_H / 2, MS_Z);
+    scene.add(step);
+}
+
+// ── Visual steps — upper flight ──
+for (let i = 0; i < HALF_STEPS; i++) {
+    const treadY = LAND_Y + (i + 1) * STEP_H;
+    const step = new THREE.Mesh(new THREE.BoxGeometry(STEP_D, STEP_H, MS_W), ms_treadMat);
+    step.position.set(UPPER_X_BOT - i * STEP_D - STEP_D / 2, treadY - STEP_H / 2, MS_Z);
+    scene.add(step);
+}
+
+// ── Mid-landing (visual + collider) ──
+const landMesh = new THREE.Mesh(new THREE.BoxGeometry(LAND_W, DECK_T2, MS_W + 0.6), darkMat);
+landMesh.position.set(LAND_X, LAND_Y - DECK_T2 / 2, MS_Z);
+worldGroup.add(landMesh);   // in worldGroup so octree picks it up as solid surface
+
+// Mid-landing railing — north side only (south side faces mez wall gap, leave open)
+addFlatBarRail(LAND_X_E, MS_Z + MS_W / 2 - 0.2, LAND_X_W, MS_Z + MS_W / 2 - 0.2, LAND_Y);
+
+// Mid-landing support columns
+for (const lx of [LAND_X_E - 0.15, LAND_X_W + 0.15]) {
+    for (const lz of [MS_Z - MS_W / 2, MS_Z + MS_W / 2]) {
+        const col = new THREE.Mesh(new THREE.BoxGeometry(0.2, LAND_Y, 0.2), darkMat);
+        col.position.set(lx, LAND_Y / 2, lz);
+        worldGroup.add(col);
+    }
+}
+
+// ── Top landing — sits at the TOP of the stairs (MS_X_TOP, the west/high end) ──
+// The stair climbs westward (-X). MS_X_TOP is where the last step lands.
+// Platform extends a few units further west from there, with 4 legs to the floor.
+// A short bridge then connects the platform's SOUTH edge to the mez deck's north face (MEZ_Z1).
+//
+//   MEZ deck (south, at MEZ_Z1=-33)
+//       |  bridge (in Z, short)
+//   [platform] ← stair top arrives here from the east (MS_X_TOP)
+//       ↑
+//   4 floor legs
+
+const TOP_LAND_W = 4.0;                        // size in X (stair width direction)
+const TOP_LAND_D = MS_W;                           // match stair width
+// Center the platform in X around MS_X_TOP, sitting north of MEZ_Z1
+const TOP_LAND_X = UPPER_X_BOT - HALF_STEPS * STEP_D - TOP_LAND_W / 2;  // west edge at actual stair end
+const TOP_LAND_Z = MS_Z;                          // centered same as stairs in Z
+
+// Platform deck
+const topLandMesh = new THREE.Mesh(new THREE.BoxGeometry(TOP_LAND_W, DECK_T2, TOP_LAND_D), darkMat);
+topLandMesh.position.set(TOP_LAND_X, MEZ_Y - DECK_T2 / 2, TOP_LAND_Z);
+worldGroup.add(topLandMesh);
+
+// 4 support legs — floor to mez deck height
+for (const lx of [TOP_LAND_X - TOP_LAND_W / 2 + 0.2, TOP_LAND_X + TOP_LAND_W / 2 - 0.2]) {
+    for (const lz of [TOP_LAND_Z - TOP_LAND_D / 2 + 0.2, TOP_LAND_Z + TOP_LAND_D / 2 - 0.2]) {
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.25, MEZ_Y, 0.25), darkMat);
+        leg.position.set(lx, MEZ_Y / 2, lz);
+        worldGroup.add(leg);
+    }
+}
+
+// Railings: north face (open to brewery), east and west sides
+// South face is open — connects to bridge toward mez deck
+addFlatBarRail(TOP_LAND_X - TOP_LAND_W / 2, TOP_LAND_Z + TOP_LAND_D / 2,
+               TOP_LAND_X + TOP_LAND_W / 2, TOP_LAND_Z + TOP_LAND_D / 2, MEZ_Y); // north rail
+addFlatBarRail(TOP_LAND_X - TOP_LAND_W / 2, TOP_LAND_Z - TOP_LAND_D / 2,
+               TOP_LAND_X - TOP_LAND_W / 2, TOP_LAND_Z + TOP_LAND_D / 2, MEZ_Y); // west rail
+
+// ── Mez north face railing — full run with gap where platform connects ──
+// Platform spans X: TOP_LAND_X - TOP_LAND_W/2  to  TOP_LAND_X + TOP_LAND_W/2
+addFlatBarRail(-57, MEZ_Z1, TOP_LAND_X - TOP_LAND_W / 2, MEZ_Z1, MEZ_Y);  // east of stair platform, skip meeting room window wall
+addFlatBarRail(TOP_LAND_X + TOP_LAND_W / 2, MEZ_Z1, 9, MEZ_Z1, MEZ_Y); // west of platform, stop at Sensory/Lab east wall
+
+// ── Bridge slab — fills the Z gap between platform south edge and mez north face ──
+const BRIDGE_GAP   = TOP_LAND_Z - TOP_LAND_D / 2 - MEZ_Z1;   // = MS_Z gap (~0.65)
+const BRIDGE_CEN_Z = MEZ_Z1 + BRIDGE_GAP / 2;
+const bridgeSlab = new THREE.Mesh(new THREE.BoxGeometry(TOP_LAND_W, DECK_T2, BRIDGE_GAP), darkMat);
+bridgeSlab.position.set(TOP_LAND_X, MEZ_Y - DECK_T2 / 2, BRIDGE_CEN_Z);
+worldGroup.add(bridgeSlab);
+
+// ── Physics ramps — simple tilted boxes, no tricky pivot offsets ──
+// Strategy: compute the hypotenuse and angle for each flight, then position
+// the box center at the midpoint of its run/rise. The rotation.z sign convention:
+// stairs go in -X direction, so climbing means Y increases as X decreases.
+// rotation.z = +angle tilts the box so its left end (lower X = higher elevation) is up. ✓
+
+const LO_RUN  = HALF_STEPS * STEP_D;            // horizontal run of lower flight
+const LO_RISE = LAND_Y;                          // vertical rise of lower flight (0 → LAND_Y)
+const LO_HYPO = Math.sqrt(LO_RUN * LO_RUN + LO_RISE * LO_RISE);
+const LO_ANGLE = Math.atan2(LO_RISE, LO_RUN);   // positive angle
+const LO_CEN_X = MS_X_BOT - LO_RUN / 2;
+const LO_CEN_Y = LO_RISE / 2;                   // midpoint of rise: 0 to LAND_Y
+
+const rampLo = new THREE.Mesh(new THREE.BoxGeometry(LO_HYPO, 0.5, MS_W - 0.1), new THREE.MeshStandardMaterial());
+rampLo.visible = false;
+rampLo.position.set(LO_CEN_X, LO_CEN_Y, MS_Z);
+rampLo.rotation.z = -LO_ANGLE;  // negative: tilts high end toward lower X (west = uphill)
+worldGroup.add(rampLo);
+
+const HI_RUN  = HALF_STEPS * STEP_D;            // horizontal run of upper flight
+const HI_RISE = MEZ_Y - LAND_Y;                 // vertical rise (LAND_Y → MEZ_Y)
+const HI_HYPO = Math.sqrt(HI_RUN * HI_RUN + HI_RISE * HI_RISE);
+const HI_ANGLE = Math.atan2(HI_RISE, HI_RUN);
+const HI_CEN_X = UPPER_X_BOT - HI_RUN / 2;
+const HI_CEN_Y = LAND_Y + HI_RISE / 2;         // midpoint of rise: LAND_Y to MEZ_Y
+
+const rampHi = new THREE.Mesh(new THREE.BoxGeometry(HI_HYPO, 0.5, MS_W - 0.1), new THREE.MeshStandardMaterial());
+rampHi.visible = false;
+rampHi.position.set(HI_CEN_X, HI_CEN_Y, MS_Z);
+rampHi.rotation.z = -HI_ANGLE;  // negative: same — high end toward lower X (west = uphill)
+worldGroup.add(rampHi);
+
+// ── Handrails — sloped pipe + balusters grounded on each tread + collision walls ──
+const STAIR_ACTUAL_TOP_X = UPPER_X_BOT - HALF_STEPS * STEP_D;
+
+for (const sz of [-1, 1]) {
+    const rz = MS_Z + sz * (MS_W / 2 - 0.2);  // inset from stair edge so balusters land on treads
+
+    // ── Sloped rail pipes ──
+    // Lower flight: rail center is midpoint along slope, RAIL_RISE above the midpoint tread
+    const lo_railCenX = MS_X_BOT - LO_RUN / 2;
+    const lo_railCenY = LO_RISE / 2 + RAIL_RISE;
+    const lo_rail = new THREE.Mesh(new THREE.CylinderGeometry(RAIL_R, RAIL_R, LO_HYPO, 8), darkMat);
+    lo_rail.rotation.z = Math.PI / 2 - LO_ANGLE;
+    lo_rail.position.set(lo_railCenX, lo_railCenY, rz);
+    scene.add(lo_rail);
+
+    // Upper flight
+    const hi_railCenX = UPPER_X_BOT - HI_RUN / 2;
+    const hi_railCenY = LAND_Y + HI_RISE / 2 + RAIL_RISE;
+    const hi_rail = new THREE.Mesh(new THREE.CylinderGeometry(RAIL_R, RAIL_R, HI_HYPO, 8), darkMat);
+    hi_rail.rotation.z = Math.PI / 2 - HI_ANGLE;
+    hi_rail.position.set(hi_railCenX, hi_railCenY, rz);
+    scene.add(hi_rail);
+
+    // ── Balusters — each one starts AT its tread surface, height = RAIL_RISE exactly ──
+    // Lower flight
+    for (let i = 0; i <= HALF_STEPS; i += 3) {
+        const bx = MS_X_BOT - i * STEP_D;
+        const treadY = i * STEP_H;          // top of tread i
+        const bal = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, RAIL_RISE, 8), darkMat);
+        bal.position.set(bx, treadY + RAIL_RISE / 2, rz);
+        scene.add(bal);
+    }
+    // Upper flight
+    for (let i = 0; i <= HALF_STEPS; i += 3) {
+        const bx = UPPER_X_BOT - i * STEP_D;
+        const treadY = LAND_Y + i * STEP_H;
+        const bal = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, RAIL_RISE, 8), darkMat);
+        bal.position.set(bx, treadY + RAIL_RISE / 2, rz);
+        scene.add(bal);
+    }
+
+    // ── Newel posts ──
+    // Foot of lower flight — post from floor up to rail
+    const footPost = new THREE.Mesh(new THREE.CylinderGeometry(RAIL_R * 1.5, RAIL_R * 1.5, RAIL_RISE, 8), darkMat);
+    footPost.position.set(MS_X_BOT, RAIL_RISE / 2, rz);
+    scene.add(footPost);
+    // Top of upper flight — post from platform deck up to rail
+    const topPost = new THREE.Mesh(new THREE.CylinderGeometry(RAIL_R * 1.5, RAIL_R * 1.5, RAIL_RISE, 8), darkMat);
+    topPost.position.set(STAIR_ACTUAL_TOP_X, MEZ_Y + RAIL_RISE / 2, rz);
+    scene.add(topPost);
+    // Newel at mid-landing transition (bottom of upper flight)
+    const midPost = new THREE.Mesh(new THREE.CylinderGeometry(RAIL_R * 1.5, RAIL_R * 1.5, RAIL_RISE, 8), darkMat);
+    midPost.position.set(UPPER_X_BOT, LAND_Y + RAIL_RISE / 2, rz);
+    scene.add(midPost);
+}
+
+// ── Invisible collision walls along each side of both stair flights ──
+// A thin vertical wall the full height+run of each flight keeps player from walking through rails.
+for (const sz of [-1, 1]) {
+    const wallZ = MS_Z + sz * (MS_W / 2 - 0.05);  // match rail inset
+
+    // Lower flight wall — tilted to match slope
+    const loWall = new THREE.Mesh(
+        new THREE.BoxGeometry(LO_HYPO, RAIL_RISE * 1.5, 0.15),
+        new THREE.MeshStandardMaterial()
+    );
+    loWall.visible = false;
+    loWall.rotation.z = -LO_ANGLE;
+    loWall.position.set(MS_X_BOT - LO_RUN / 2, LO_RISE / 2 + RAIL_RISE * 0.5, wallZ);
+    worldGroup.add(loWall);
+
+    // Upper flight wall
+    const hiWall = new THREE.Mesh(
+        new THREE.BoxGeometry(HI_HYPO, RAIL_RISE * 1.5, 0.15),
+        new THREE.MeshStandardMaterial()
+    );
+    hiWall.visible = false;
+    hiWall.rotation.z = -HI_ANGLE;
+    hiWall.position.set(UPPER_X_BOT - HI_RUN / 2, LAND_Y + HI_RISE / 2 + RAIL_RISE * 0.5, wallZ);
+    worldGroup.add(hiWall);
+}
+
+// ── Mid-landing south rail (mez-wall side) — was removed, now restored ──
+// This is the rail on the south edge of the mid-landing facing the mez wall gap.
+addFlatBarRail(LAND_X_E, MS_Z - MS_W / 2 + 0.2, LAND_X_W, MS_Z - MS_W / 2 + 0.2, LAND_Y);
+
+// Re-bake octree
+worldOctree.fromGraphNode(worldGroup);
+
+
+
+// Mezzanine spans X direction along south (-z) wall
+// X: from -55 (west) to -10 (east, near cellar tanks)
+// Z: south wall at z=-22, mezzanine depth extends to z=-13 (9 units into building)
+
+
+// ─────────────────────────────────────────────────────────────
+//  MEZZANINE OFFICES
+//
+//  Floor at y = MEZ_Y = 14.
+//  Interior ceiling height: OFF_H = 3.5  (ceiling slab inside each room)
+//  Outer walls (back + end caps) extend full height to roof: OFF_H_FULL = CEIL_Y - MEZ_Y = 8
+//  Pathway between guardrail (MEZ_Z1=-33) and office front face is open to the roof.
+//
+//  Z layout (north = more negative z here):
+//    MEZ_Z1 = -33  ← guardrail (north edge of mez deck)
+//    pathway = 4 units wide
+//    OFF_Z_FRONT = -37  ← front face of all offices (corridor side)
+//    OFF_Z_BACK  = -42  ← back wall (= MEZ_Z0, south wall of building)
+//    OFF_DEPTH   = 5 units
+//
+//  X layout (west = higher X, east = lower/more-negative X):
+//    Sensory/Lab  x:  20 →  9   door on EAST side wall (x=9), path dead-ends here
+//    Paul's       x:   9 → -1   door on front (z=OFF_Z_FRONT)
+//    Tiffany's    x:  -1 → -11  door on front
+//    Closet       x: -11 → -16  door on front (smaller)
+//    Julien's     x: -16 → -26  door on front
+//    Miranda's    x: -26 → -36  door on front
+//    Trevor's     x: -36 → -46  door on front
+//    Sales        x: -46 → -57  door on front
+//    Meeting Room x: -57 → -70  door on WEST side wall (x=-57), path dead-ends here
+//
+//  The corridor (pathway) runs only between x=9 and x=-57.
+//  The end rooms' side walls naturally close the corridor ends.
+// ─────────────────────────────────────────────────────────────
+
+const OFF_FLOOR_Y  = MEZ_Y;           // 14
+const OFF_H        = 3.5;             // interior room height (floor → ceiling slab)
+const OFF_H_FULL   = CEIL_Y - MEZ_Y;  // 8 — outer walls go all the way to the roof
+const OFF_WALL_T   = 0.18;
+const OFF_Z_FRONT  = MEZ_Z1 - 4.0;   // -37
+const OFF_Z_BACK   = MEZ_Z0;          // -42
+const OFF_DEPTH    = OFF_Z_FRONT - OFF_Z_BACK;  // 5
+const OFF_DOOR_H   = 2.4;
+
+const offWallMat  = new THREE.MeshStandardMaterial({ color: 0xd4ccc0, roughness: 0.9, metalness: 0.0 });
+const offGlassMat = new THREE.MeshStandardMaterial({ color: 0x88bbdd, roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.35 });
+const offFrameMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.5, metalness: 0.7 });
+
+// Labels removed — makeOfficeLabel is now a no-op
+function makeOfficeLabel(text, x, y, z) { /* labels removed */ }
+
+// ── Wall helpers ──
+// wallBox: place a solid box — visual mesh in scene + Cannon static body.
+function wallBox(cx, y0, cz, w, h, d) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), offWallMat);
+    m.position.set(cx, y0 + h / 2, cz);
+    scene.add(m);
+    wallMeshes.push(m);
+    const body = new CANNON.Body({ mass: 0, material: offWallCannonMat });
+    body.addShape(new CANNON.Box(new CANNON.Vec3(w / 2, h / 2, d / 2)));
+    body.position.set(cx, y0 + h / 2, cz);
+    world.addBody(body);
+}
+
+// ceilBox: thin ceiling slab at interior ceiling height
+function ceilBox(cx, cz, w, d) {
+    const T = 0.15;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, T, d), offWallMat);
+    m.position.set(cx, OFF_FLOOR_Y + OFF_H + T / 2, cz);
+    scene.add(m);
+}
+
+// ── Glass panel helper ──
+function glassPanel(px0, px1, cz, panelH) {
+    const pw   = px1 - px0;
+    const pxM  = (px0 + px1) / 2;
+    const FR   = 0.07;
+    const FD   = OFF_WALL_T * 1.2;
+
+    // Frame: top bar, left post, right post
+    const topBar = new THREE.Mesh(new THREE.BoxGeometry(pw, FR, FD), offFrameMat);
+    topBar.position.set(pxM, OFF_FLOOR_Y + panelH - FR / 2, cz);
+    scene.add(topBar);
+
+    for (const fx of [px0 + FR / 2, px1 - FR / 2]) {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(FR, panelH, FD), offFrameMat);
+        post.position.set(fx, OFF_FLOOR_Y + panelH / 2, cz);
+        scene.add(post);
+    }
+
+    // Single full-height glass pane (no mid-rail)
+    const glW  = pw - FR * 2;
+    const glH  = panelH - FR;
+    const GD   = OFF_WALL_T * 0.3;
+    const pane = new THREE.Mesh(new THREE.BoxGeometry(glW, glH, GD), offGlassMat);
+    pane.position.set(pxM, OFF_FLOOR_Y + FR / 2 + glH / 2, cz);
+    scene.add(pane);
+
+    // Cannon collision for glass panel — no visible mesh needed
+    const glBody = new CANNON.Body({ mass: 0, material: offWallCannonMat });
+    glBody.addShape(new CANNON.Box(new CANNON.Vec3(pw / 2, panelH / 2, OFF_WALL_T / 2)));
+    glBody.position.set(pxM, OFF_FLOOR_Y + panelH / 2, cz);
+    world.addBody(glBody);
+}
+
+// frontWallWithDoor: solid wall (runs in X) with door + flanking glass panels.
+// Wall goes full height (OFF_H_FULL) to roof.
+// Glass panels fill the space left and right of the door up to OFF_H.
+function frontWallWithDoor(cx, cz, w, doorCX, doorW, doorH) {
+    const x0 = cx - w / 2;   // east edge
+    const x1 = cx + w / 2;   // west edge
+    const FR  = 0.07;
+
+    // ── Solid wall above door and above glass panels (from OFF_H to OFF_H_FULL) ──
+    // Full-width solid band from interior ceiling up to roof
+    wallBox(cx, OFF_FLOOR_Y + OFF_H, cz, w, OFF_H_FULL - OFF_H, OFF_WALL_T);
+
+    // ── Solid wall segments beside the glass panels (very thin strips at edges) ──
+    // We only need solid wall where there's no glass and no door.
+    // Layout: [x0 ... glassLeftEnd] [door] [glassRightStart ... x1]
+    // Glass panels extend from x0 to door left edge, and door right edge to x1.
+    // But we want a small solid border (FR wide) at each outer edge.
+    const doorX0 = doorCX - doorW / 2;
+    const doorX1 = doorCX + doorW / 2;
+
+    // Thin border posts at far left and far right (structural look)
+    wallBox(x0 + FR / 2, OFF_FLOOR_Y, cz, FR, OFF_H, OFF_WALL_T);
+    wallBox(x1 - FR / 2, OFF_FLOOR_Y, cz, FR, OFF_H, OFF_WALL_T);
+
+    // Solid wall segment between door edge and glass panel edge (door frame surround)
+    // Left of door (east side): thin solid strip for door frame only
+    const leftSolid = 0.12;
+    wallBox(doorX0 - leftSolid / 2, OFF_FLOOR_Y, cz, leftSolid, OFF_H, OFF_WALL_T);
+    wallBox(doorX1 + leftSolid / 2, OFF_FLOOR_Y, cz, leftSolid, OFF_H, OFF_WALL_T);
+
+    // Transom above door (from doorH to OFF_H)
+    const transH = OFF_H - doorH;
+    if (transH > 0.02) wallBox(doorCX, OFF_FLOOR_Y + doorH, cz, doorW + leftSolid * 2, transH, OFF_WALL_T);
+
+    // ── Glass panels ──
+    // Left panel: from x0+FR to doorX0-leftSolid
+    const leftGlW = doorX0 - leftSolid - (x0 + FR);
+    if (leftGlW > 0.2) glassPanel(x0 + FR, doorX0 - leftSolid, cz, OFF_H);
+    // Right panel: from doorX1+leftSolid to x1-FR
+    const rightGlW = (x1 - FR) - (doorX1 + leftSolid);
+    if (rightGlW > 0.2) glassPanel(doorX1 + leftSolid, x1 - FR, cz, OFF_H);
+
+    // ── Door frame ──
+    for (const fdx of [-doorW / 2, doorW / 2]) {
+        const fp = new THREE.Mesh(new THREE.BoxGeometry(FR, doorH, FR), offFrameMat);
+        fp.position.set(doorCX + fdx, OFF_FLOOR_Y + doorH / 2, cz);
+        scene.add(fp);
+    }
+    const ft = new THREE.Mesh(new THREE.BoxGeometry(doorW + FR * 2, FR, FR), offFrameMat);
+    ft.position.set(doorCX, OFF_FLOOR_Y + doorH, cz);
+    scene.add(ft);
+}
+
+// sideWallWithDoor: side wall (runs in Z) with a door gap, full height to roof.
+function sideWallWithDoor(cx, z0, z1, doorCZ, doorW, doorH) {
+    const botD   = doorCZ - doorW / 2 - z0;
+    const topD   = z1 - (doorCZ + doorW / 2);
+    const transH = OFF_H_FULL - doorH;
+    const FR = 0.07;
+
+    if (botD   > 0.02) wallBox(cx, OFF_FLOOR_Y, z0 + botD / 2,   OFF_WALL_T, OFF_H_FULL, botD);
+    if (topD   > 0.02) wallBox(cx, OFF_FLOOR_Y, z1 - topD / 2,   OFF_WALL_T, OFF_H_FULL, topD);
+    if (transH > 0.02) wallBox(cx, OFF_FLOOR_Y + doorH, doorCZ,  OFF_WALL_T, transH, doorW);
+
+    for (const fdz of [-doorW / 2, doorW / 2]) {
+        const fp = new THREE.Mesh(new THREE.BoxGeometry(FR, doorH, FR), offFrameMat);
+        fp.position.set(cx, OFF_FLOOR_Y + doorH / 2, doorCZ + fdz);
+        scene.add(fp);
+    }
+    const ft = new THREE.Mesh(new THREE.BoxGeometry(FR, FR, doorW + FR * 2), offFrameMat);
+    ft.position.set(cx, OFF_FLOOR_Y + doorH, doorCZ);
+    scene.add(ft);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SENSORY / LAB  x: 20 → 9
+//  Protrudes into the pathway — south face at MEZ_Z1 (guardrail line).
+//  Door on east side wall (x=9), centered in Z across full room depth
+//  (from OFF_Z_BACK to MEZ_Z1).
+//  All outer walls full height to roof.
+// ══════════════════════════════════════════════════════════════
+{
+    const xW = MEZ_X1, xE = 9;      // 20 → 9
+    const w  = xW - xE;              // 11
+    const xM = (xW + xE) / 2;       // 14.5
+    // Room depth spans the full mez deck depth including into the pathway
+    const labZ0 = OFF_Z_BACK;        // -42 (south/back wall)
+    const labZ1 = MEZ_Z1;            // -33 (north face, flush with guardrail)
+    const labD  = labZ1 - labZ0;     // 9
+    const labZM = (labZ0 + labZ1) / 2; // -37.5
+
+    // Back wall (south, z=-42) — full height
+    wallBox(xM, OFF_FLOOR_Y, labZ0 + OFF_WALL_T / 2, w, OFF_H_FULL, OFF_WALL_T);
+    // North face (z=MEZ_Z1=-33) — full height, solid (faces open brewery air)
+    wallBox(xM, OFF_FLOOR_Y, labZ1 - OFF_WALL_T / 2, w, OFF_H_FULL, OFF_WALL_T);
+    // West cap wall (x=20) — full height
+    wallBox(xW - OFF_WALL_T / 2, OFF_FLOOR_Y, labZM, OFF_WALL_T, OFF_H_FULL, labD);
+    // Interior ceiling slab
+    ceilBox(xM, labZM, w, labD);
+    // East side wall (x=9) with door centered on the pathway zone (OFF_Z_FRONT to MEZ_Z1)
+    const labDoorCZ = (OFF_Z_FRONT + MEZ_Z1) / 2;  // center of pathway strip
+    sideWallWithDoor(xE + OFF_WALL_T / 2, labZ0, labZ1, labDoorCZ, 1.6, OFF_DOOR_H);
+
+    makeOfficeLabel('Sensory / Lab', xM, OFF_FLOOR_Y + OFF_H - 0.8, labZM);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  MIDDLE OFFICES  x: 9 → -57  (door on front face, z=OFF_Z_FRONT)
+//  All walls full height to roof.
+// ══════════════════════════════════════════════════════════════
+const MIDDLE_OFFICES = [
+    { label: "Paul's Office", xW:  9,  xE: -1,  door: 1.2 },
+    { label: "Tiffany's",     xW: -1,  xE: -11, door: 1.2 },
+    { label: 'Closet',        xW: -11, xE: -16, door: 0.9, isCloset: true },
+    { label: "Julien's",      xW: -16, xE: -26, door: 1.2 },
+    { label: "Miranda's",     xW: -26, xE: -36, door: 1.2 },
+    { label: "Trevor's",      xW: -36, xE: -46, door: 1.2 },
+    { label: 'Sales',         xW: -46, xE: -57, door: 1.6 },
+];
+
+MIDDLE_OFFICES.forEach(cfg => {
+    const { xW, xE, door, isCloset } = cfg;
+    const w   = xW - xE;
+    const xM  = (xW + xE) / 2;
+    const zM  = (OFF_Z_FRONT + OFF_Z_BACK) / 2;
+    const dH  = isCloset ? 2.0 : OFF_DOOR_H;
+
+    // Back wall — full height
+    wallBox(xM, OFF_FLOOR_Y, OFF_Z_BACK + OFF_WALL_T / 2, w, OFF_H_FULL, OFF_WALL_T);
+    // West divider wall — full height
+    wallBox(xW - OFF_WALL_T / 2, OFF_FLOOR_Y, zM, OFF_WALL_T, OFF_H_FULL, OFF_DEPTH);
+    // Front wall with door — full height
+    frontWallWithDoor(xM, OFF_Z_FRONT - OFF_WALL_T / 2, w, xM, door, dH);
+    // Interior ceiling
+    ceilBox(xM, zM, w, OFF_DEPTH);
+
+    makeOfficeLabel(cfg.label, xM, OFF_FLOOR_Y + OFF_H - 0.8, OFF_Z_FRONT + 0.3);
+});
+
+// ══════════════════════════════════════════════════════════════
+//  MEETING ROOM  x: -57 → -70
+//  Protrudes into the pathway — north face at MEZ_Z1 (guardrail line).
+//  Door on west side wall (x=-57), centered in Z across full room depth.
+//  All outer walls full height to roof.
+// ══════════════════════════════════════════════════════════════
+{
+    const xW = -57, xE = MEZ_X0;    // -57 → -70
+    const w  = xW - xE;              // 13
+    const xM = (xW + xE) / 2;       // -63.5
+    const mtgZ0 = OFF_Z_BACK;        // -42
+    const mtgZ1 = MEZ_Z1;            // -33
+    const mtgD  = mtgZ1 - mtgZ0;     // 9
+    const mtgZM = (mtgZ0 + mtgZ1) / 2;
+
+    // Back wall (south, z=-42) — full height
+    wallBox(xM, OFF_FLOOR_Y, mtgZ0 + OFF_WALL_T / 2, w, OFF_H_FULL, OFF_WALL_T);
+    // North face (z=MEZ_Z1=-33) — 3 large glass panels with thin solid borders
+    {
+        const nz  = mtgZ1 - OFF_WALL_T / 2;
+        const panH = OFF_H;               // panels go up to interior ceiling height
+        const aboveH = OFF_H_FULL - OFF_H; // solid band above panels to roof
+        const BORD = 0.15;                // narrow solid border at each edge & between panels
+        const panW = (w - BORD * 4) / 3; // three equal panels
+
+        // Solid band above all three panels (interior ceiling → roof)
+        wallBox(xM, OFF_FLOOR_Y + OFF_H, nz, w, aboveH, OFF_WALL_T);
+        // Thin border strips between / beside panels
+        for (let i = 0; i <= 3; i++) {
+            const bx = xE + i * (panW + BORD) + BORD / 2;
+            wallBox(bx, OFF_FLOOR_Y, nz, BORD, panH, OFF_WALL_T);
+        }
+        // Three glass panels
+        for (let i = 0; i < 3; i++) {
+            const px0 = xE + BORD + i * (panW + BORD);
+            const px1 = px0 + panW;
+            glassPanel(px0, px1, nz, panH);
+        }
+    }
+    // East cap wall (x=-70) — full height
+    wallBox(xE + OFF_WALL_T / 2, OFF_FLOOR_Y, mtgZM, OFF_WALL_T, OFF_H_FULL, mtgD);
+    // Interior ceiling slab
+    ceilBox(xM, mtgZM, w, mtgD);
+    // West side wall (x=-57) with door centered on pathway zone
+    const mtgDoorCZ = (OFF_Z_FRONT + MEZ_Z1) / 2;
+    sideWallWithDoor(xW - OFF_WALL_T / 2, mtgZ0, mtgZ1, mtgDoorCZ, 1.6, OFF_DOOR_H);
+
+    makeOfficeLabel('Meeting Room', xM, OFF_FLOOR_Y + OFF_H - 0.8, mtgZM);
+}
+
+// ── Re-bake octree ──
+worldOctree.fromGraphNode(worldGroup);
+
+// ─────────────────────────────────────────────────────────────
+//  PERIMETER WALLS — east and west faces of the building
+//  Extend NORTH from the office block (MEZ_Z1=-33) to the
+//  north end of the building (z=+100), full height (CEIL_Y=22).
+//  West wall: x=20 (Sensory/Lab west face)
+//  East wall: x=-70 (Meeting Room east face)
+// ─────────────────────────────────────────────────────────────
+const WALL_MAT   = new THREE.MeshStandardMaterial({ color: 0xc8c0b4, roughness: 0.9 });
+const BLDG_Z_N   = 60;     // north wall — just past the brite tanks
+const WALL_RUN   = BLDG_Z_N - MEZ_Z1;
+const WALL_CEN_Z = (MEZ_Z1 + BLDG_Z_N) / 2;
+
+// West wall (x = MEZ_X1 = 20)
+const westWall = new THREE.Mesh(
+    new THREE.BoxGeometry(0.3, CEIL_Y, WALL_RUN),
+    WALL_MAT
+);
+westWall.position.set(MEZ_X1, CEIL_Y / 2, WALL_CEN_Z);
+worldGroup.add(westWall);
+
+// East wall (x = MEZ_X0 = -70)
+const eastWall = new THREE.Mesh(
+    new THREE.BoxGeometry(0.3, CEIL_Y, WALL_RUN),
+    WALL_MAT
+);
+eastWall.position.set(MEZ_X0, CEIL_Y / 2, WALL_CEN_Z);
+worldGroup.add(eastWall);
+
+// North wall connecting east and west (z = BLDG_Z_N)
+const northWall = new THREE.Mesh(
+    new THREE.BoxGeometry(MEZ_X1 - MEZ_X0, CEIL_Y, 0.3),
+    WALL_MAT
+);
+northWall.position.set((MEZ_X1 + MEZ_X0) / 2, CEIL_Y / 2, BLDG_Z_N);
+worldGroup.add(northWall);
+
+// ── CANNON PERIMETER WALL BODIES ──
+// These replace the thick invisible Octree collision boxes for the outer walls.
+// Cannon's continuous collision detection prevents tunneling at high speed.
+// Visual walls (above) stay in worldGroup for rendering; physics is handled here.
+{
+    const wallMat = new CANNON.Material('wallMaterial');
+    world.addContactMaterial(new CANNON.ContactMaterial(playerPhysMat, wallMat, {
+        friction: 0.0,
+        restitution: 0.0,
+    }));
+
+    function cannonWall(cx, cy, cz, hw, hh, hd) {
+        const body = new CANNON.Body({ mass: 0, material: wallMat });
+        body.addShape(new CANNON.Box(new CANNON.Vec3(hw, hh, hd)));
+        body.position.set(cx, cy, cz);
+        world.addBody(body);
+    }
+
+    const H  = CEIL_Y;
+    const CW = 1.0;   // half-extent of wall thickness
+
+    // Perimeter
+    cannonWall(MEZ_X1,                    H/2, WALL_CEN_Z,              CW, H/2, WALL_RUN/2);  // west
+    cannonWall(MEZ_X0,                    H/2, WALL_CEN_Z,              CW, H/2, WALL_RUN/2);  // east
+    cannonWall((MEZ_X1+MEZ_X0)/2,         H/2, BLDG_Z_N,   (MEZ_X1-MEZ_X0)/2, H/2, CW);      // north
+    cannonWall((MEZ_X1+MEZ_X0)/2,         H/2, MEZ_Z0,     (MEZ_X1-MEZ_X0)/2, H/2, CW);      // south
+}
+
+worldOctree.fromGraphNode(worldGroup);
+
+
+// ─────────────────────────────────────────────────────────────
+//  LIGHTING
+// ─────────────────────────────────────────────────────────────
+scene.add(new THREE.HemisphereLight(0xdde8ff, 0x443322, 1.8));
+const sun = new THREE.DirectionalLight(0xfff4e8, 0.8);
+sun.position.set(10, 20, -10);
+sun.castShadow = true;
+scene.add(sun);
+// Warm fill lights
+[[-25, 8, -5], [0, 8, 30], [15, 8, 50]].forEach(([lx,ly,lz]) => {
+    const pt = new THREE.PointLight(0xfff0d8, 1.2, 40);
+    pt.position.set(lx, ly, lz);
+    scene.add(pt);
+});
+
+// ─────────────────────────────────────────────────────────────
+//  COLLISION SURFACES (for future RC car use)
+// ─────────────────────────────────────────────────────────────
+const bounceSurfaces = [];
+worldGroup.traverse(o => { if (o.isMesh) bounceSurfaces.push(o); });
+wallMeshes.forEach(m => bounceSurfaces.push(m));
+tankGroups.forEach(g => {
+    g.traverse(o => { if (o.isMesh && o.userData.sprayable) bounceSurfaces.push(o); });
+});
+
+// ─────────────────────────────────────────────────────────────
+//  CONTROLS
+// ─────────────────────────────────────────────────────────────
+const ui        = document.getElementById('ui-layer');
+let   isLocked  = false;
+
+ui.addEventListener('click', () => document.body.requestPointerLock());
+
+document.addEventListener('pointerlockchange', () => {
+    isLocked = document.pointerLockElement === document.body;
+    ui.style.display = isLocked ? 'none' : 'flex';
+});
+
+const keys = {};
+window.addEventListener('keydown', e => { keys[e.code] = true; });
+window.addEventListener('keyup',   e => { keys[e.code] = false; });
+
+document.addEventListener('mousemove', e => {
+    if (!isLocked) return;
+    camera.rotation.y -= e.movementX * 0.002;
+    camera.rotation.x -= e.movementY * 0.002;
+    camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x));
+});
+
+// ─────────────────────────────────────────────────────────────
+//  GAME LOOP
+// ─────────────────────────────────────────────────────────────
+const clock = new THREE.Clock();
+
 function animate() {
     requestAnimationFrame(animate);
     const delta = Math.min(0.05, clock.getDelta());
@@ -54,3 +2152,34 @@ function animate() {
     if (result) {
         playerOnFloor = result.normal.y > 0;
         playerCapsule.translate(result.normal.multiplyScalar(result.depth));
+    }
+
+    // 5. Sync Cannon Body and Visual Car
+    playerBody.position.set(playerCapsule.end.x, playerCapsule.end.y - 0.35, playerCapsule.end.z);
+    playerBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), playerAngle);
+
+    if (carModel) {
+        carModel.position.copy(playerCapsule.start);
+        carModel.quaternion.copy(playerBody.quaternion);
+        carModel.position.y -= 0.35; 
+
+        // 6. Camera Follow
+        const idealOffset = new THREE.Vector3(0, 0.5, 1.5); 
+        idealOffset.applyQuaternion(carModel.quaternion);
+        idealOffset.add(carModel.position);
+
+        const idealLookat = new THREE.Vector3(0, 0, -2);
+        idealLookat.applyQuaternion(carModel.quaternion);
+        idealLookat.add(carModel.position);
+
+        camera.position.lerp(idealOffset, 0.1);
+        camera.lookAt(idealLookat);
+    }
+}
+    renderer.render(scene, camera);
+}
+
+animate();
+</script>
+</body>
+</html>
