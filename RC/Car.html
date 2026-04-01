@@ -2107,9 +2107,9 @@ function animate() {
     }
 
 // 1. Steering & Movement
-    const moveSpeed = 8;     // Boosted slightly since we have friction now
+    const moveSpeed = 6;     // Boosted slightly since we have friction now
     const turnSpeed = 3.5;   // Snappy turns for dodging brewery tanks
-    const acceleration = 5;  // Higher = Snappier, Lower = Weightier/Slower to start
+    const acceleration = 2;  // Higher = Snappier, Lower = Weightier/Slower to start
 
     if (keys['KeyA']) playerAngle += turnSpeed * delta;
     if (keys['KeyD']) playerAngle -= turnSpeed * delta;
@@ -2128,7 +2128,7 @@ function animate() {
     }
 
     // 2. Gravity & Acceleration Logic
-    let damping = Math.exp(-2 * delta) - 1; // Natural coasting
+    let damping = Math.exp(-.8 * delta) - 1; // Natural coasting
     if (!playerOnFloor) {
         playerVelocity.y -= 30 * delta;
         damping = Math.exp(-1.5 * delta) - 1; // Air resistance
@@ -2174,7 +2174,7 @@ function animate() {
 
         camera.position.lerp(idealOffset, 0.1);
         camera.lookAt(idealLookat);
-    }
+}
     renderer.render(scene, camera);
 }
 
