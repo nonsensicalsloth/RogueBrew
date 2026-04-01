@@ -2115,17 +2115,17 @@ function animate() {
     }
 
     // ─── GTA5-STYLE CAR PHYSICS ────────────────────────────────────────────
-    // Tuning knobs
-    const TOP_SPEED_FWD  = 14;    // m/s forward top speed
-    const TOP_SPEED_REV  = 7;     // m/s reverse top speed
-    const ENGINE_FORCE   = 22;    // forward acceleration
-    const BRAKE_FORCE    = 30;    // braking deceleration
-    const COAST_DRAG     = 3.5;   // engine braking when no throttle
-    const TURN_SPEED_MAX = 2.6;   // max yaw rate (rad/s) at low speed
-    const GRIP           = 9.0;   // lateral grip (how fast sideslip bleeds off)
-    const HANDBRAKE_GRIP = 1.8;   // lateral grip during handbrake (lower = more slide)
-    const SPEED_STEER_FACTOR = 0.6; // steering gets lighter at high speed (like GTA)
-    const STEER_MAX      = 0.40;  // max visual front wheel angle (rad)
+    // ── RC Car tuning — small, zippy, tight turns ──
+    const TOP_SPEED_FWD  = 7;     // m/s — fast for its size but not flying across the room
+    const TOP_SPEED_REV  = 4;     // m/s reverse
+    const ENGINE_FORCE   = 18;    // snappy acceleration
+    const BRAKE_FORCE    = 28;    // strong brakes
+    const COAST_DRAG     = 6;     // slows quickly when you let off (RC cars have little momentum)
+    const TURN_SPEED_MAX = 4.5;   // rad/s — RC cars turn on a dime
+    const GRIP           = 12.0;  // high grip normally
+    const HANDBRAKE_GRIP = 1.5;   // low grip on handbrake = fun slides
+    const SPEED_STEER_FACTOR = 0.15; // steering stays sharp at speed (RC cars are light)
+    const STEER_MAX      = 0.45;  // max visual front wheel angle (rad)
 
     const speedAbs = Math.abs(carSpeed);
     const movingFwd = carSpeed > 0.2;
@@ -2167,7 +2167,7 @@ function animate() {
 
     // When turning at speed, build up lateral slip proportional to speed × turn rate
     const inputTurn = (keys['KeyA'] ? 1 : 0) - (keys['KeyD'] ? 1 : 0);
-    lateralVel += inputTurn * speedAbs * 0.12 * delta;  // centrifugal push
+    lateralVel += inputTurn * speedAbs * 0.06 * delta;  // centrifugal push (light for RC)
     lateralVel = Math.max(-8, Math.min(8, lateralVel));
 
     // 4. Compose world-space velocity from heading + lateral components
@@ -2265,12 +2265,12 @@ function animate() {
         const cameraRotation = new THREE.Quaternion();
         cameraRotation.setFromAxisAngle(new THREE.Vector3(0, 1, 0), camYaw);
 
-        // Camera sits further back + higher for better brewery overview
-        const idealOffset = new THREE.Vector3(0, 1.6, 2.2);
+        // Camera — close and low, feels like watching an RC car
+        const idealOffset = new THREE.Vector3(0, 0.6, 0.9);
         idealOffset.applyQuaternion(cameraRotation);
         idealOffset.add(carModel.position);
 
-        const idealLookat = new THREE.Vector3(0, 0.4, -2.5);
+        const idealLookat = new THREE.Vector3(0, 0.1, -1.0);
         idealLookat.applyQuaternion(cameraRotation);
         idealLookat.add(carModel.position);
 
