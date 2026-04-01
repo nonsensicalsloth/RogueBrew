@@ -2161,7 +2161,7 @@ function animate() {
     if (carModel) {
         carModel.position.copy(playerCapsule.start);
         carModel.quaternion.copy(playerBody.quaternion);
-        carModel.position.y -= 0.35; 
+        carModel.position.y -= 0.34; 
 
         // 6. Camera Follow
         const idealOffset = new THREE.Vector3(0, 0.5, 1.5); 
@@ -2172,7 +2172,7 @@ function animate() {
         idealLookat.applyQuaternion(carModel.quaternion);
         idealLookat.add(carModel.position);
 
-        camera.position.lerp(idealOffset, 0.1);
+        camera.position.lerp(idealOffset, 0.05);
         camera.lookAt(idealLookat);
 }
     renderer.render(scene, camera);
