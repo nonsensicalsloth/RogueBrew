@@ -2163,7 +2163,7 @@ function animate() {
 
 if (carModel) {
         // 1. POSITIONING
-        carModel.position.copy(playerCapsule.start);
+        carModel.position.lerp(playerCapsule.start, .5);
         carModel.position.y += 0.05; // Slightly higher to stop jitter
         
         // 2. DIRECTION (Horizontal)
