@@ -2159,10 +2159,41 @@ function animate() {
     playerBody.position.set(playerCapsule.end.x, playerCapsule.end.y - 0.35, playerCapsule.end.z);
     playerBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), playerAngle);
 
-    if (carModel) {
+if (carModel) {
         carModel.position.copy(playerCapsule.start);
         carModel.quaternion.copy(playerBody.quaternion);
-        carModel.position.y -= 0.34; 
+        carModel.position.y += 0.02; // Tiny lift to prevent floor flickering
+
+        // --- 1. SETUP TARGETS ---
+        const leanAmount = 0.08;   // Subtle body roll
+        const steerAmount = 0.4;  // How far the wheels turn (in radians)
+        
+        let targetLean = 0;
+        let targetSteer = 0;
+
+        if (keys['KeyA']) {
+            targetLean = leanAmount;   // Tilt right when turning left
+            targetSteer = steerAmount;
+        }
+        if (keys['KeyD']) {
+            targetLean = -leanAmount;  // Tilt left when turning right
+            targetSteer = -steerAmount;
+        }
+
+        // --- 2. APPLY BODY LEAN (The "Juice") ---
+        // This tilts the car on its side slightly
+        carModel.rotation.z = THREE.MathUtils.lerp(carModel.rotation.z, targetLean, 0.1);
+
+        // --- 3. APPLY WHEEL STEERING ---
+        const wheelFL = carModel.getObjectByName('wheel-fl');
+        const wheelFR = carModel.getObjectByName('wheel-fr');
+
+        if (wheelFL && wheelFR) {
+            // We use lerp so the wheels "glide" into position instead of snapping
+            wheelFL.rotation.y = THREE.MathUtils.lerp(wheelFL.rotation.y, targetSteer, 0.15);
+            wheelFR.rotation.y = THREE.MathUtils.lerp(wheelFR.rotation.y, targetSteer, 0.15);
+        }
+
 
         // 6. Camera Follow
         const idealOffset = new THREE.Vector3(0, 1, 1.5); 
