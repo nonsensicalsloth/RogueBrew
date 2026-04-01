@@ -198,7 +198,7 @@ const playerBody = new CANNON.Body({
     shape: new CANNON.Sphere(0.35),   // matches capsule radius
     fixedRotation: true,               // no tumbling
     material: playerPhysMat,
-    linearDamping: 0.99,               // strong damping — movement is key-driven not force-driven
+    linearDamping: 0.5,               // strong damping — movement is key-driven not force-driven
 });
 playerBody.position.set(0, 1.65, 0);
 world.addBody(playerBody);
@@ -2107,7 +2107,7 @@ function animate() {
     }
 
     // 1. Steering & Movement
-    const moveSpeed = 12; 
+    const moveSpeed = 6; 
     const turnSpeed = 3.0; 
 
     if (keys['KeyA']) playerAngle += turnSpeed * delta;
@@ -2115,12 +2115,12 @@ function animate() {
 
     let vx = 0, vz = 0;
     if (keys['KeyW']) {
-        vx = Math.sin(playerAngle) * moveSpeed;
-        vz = Math.cos(playerAngle) * moveSpeed;
-    }
-    if (keys['KeyS']) {
         vx = -Math.sin(playerAngle) * moveSpeed;
         vz = -Math.cos(playerAngle) * moveSpeed;
+    }
+    if (keys['KeyS']) {
+        vx = Math.sin(playerAngle) * moveSpeed;
+        vz = Math.cos(playerAngle) * moveSpeed;
     }
 
     // 2. Gravity & Jumping
@@ -2156,7 +2156,7 @@ function animate() {
     if (carModel) {
         carModel.position.copy(playerBody.position);
         carModel.quaternion.copy(playerBody.quaternion);
-        carModel.position.y -= 0.15; 
+        carModel.position.y -= 0.80; 
 
         // 6. Camera Follow
         const idealOffset = new THREE.Vector3(0, 0.5, 1.5); 
