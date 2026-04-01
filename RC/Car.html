@@ -2156,7 +2156,7 @@ function animate() {
     if (carModel) {
         carModel.position.copy(playerCapsule.start);
         carModel.quaternion.copy(playerBody.quaternion);
-        carModel.position.y -= 0.50; 
+        carModel.position.y -= 0.40; 
 
         // 6. Camera Follow
         const idealOffset = new THREE.Vector3(0, 0.5, 1.5); 
