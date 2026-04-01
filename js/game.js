@@ -1558,6 +1558,17 @@ function catchPokemon(pokemon, node) {
     if (state.team.length < teamCap) {
       state.team.push(pokemon);
       if (state.team.length > state.maxTeamSize) state.maxTeamSize = state.team.length;
+      // Deep Cellar: team grew so the per-pokemon item cap may have dropped.
+      // Trim any overflow items back to the bag so the modal never sees a negative slot count.
+      if (state.modifiers && state.modifiers.has('deep_cellar')) {
+        const newCap = getMaxHeldItems();
+        for (const p of state.team) {
+          if ((p.heldItems || []).length > newCap) {
+            const overflow = p.heldItems.splice(newCap);
+            for (const it of overflow) state.items.push(it);
+          }
+        }
+      }
       advanceFromNode(state.map, node.id);
       saveRun();
       showMapScreen();
@@ -1766,6 +1777,9 @@ function openItemEquipModal(item, { fromBagIdx = -1, fromPokemonIdx = -1, fromPo
       const pokemon = state.team[pokeIdx];
       const removed = pokemon.heldItems.splice(slotIdx, 1)[0];
       if (removed) state.items.push(removed);
+      // If the incoming item wasn't from the bag or another pokemon, it's a brand-new
+      // item that only existed in the modal — save it to the bag so it isn't lost.
+      if (fromBagIdx < 0 && fromPokemonIdx < 0) state.items.push(item);
       modal.remove();
       saveRun();
       done();
