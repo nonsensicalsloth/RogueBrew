@@ -88,8 +88,7 @@ function loadVehicle(modelName) {
         });
 
         // Lift it up by 2 units and make it 10 times bigger
-        vehicleModel.position.set(0, 2, 0); 
-        vehicleModel.scale.set(10, 10, 10); 
+        vehicleModel.position.set(0, 2, 0);  
 
         scene.add(vehicleModel);
         console.log("Loaded " + modelName);
@@ -99,7 +98,22 @@ function loadVehicle(modelName) {
 }
 
 // Now, let's call the function to load one of your files!
-loadVehicle('vehicle-racer');
+let carModel; // 1. Create a variable at the top level
+
+function loadVehicle(modelName) {
+    loader.load(modelName + '.glb', function (gltf) {
+        carModel = gltf.scene; // 2. Assign the loaded scene to our variable
+
+        carModel.traverse(function (child) {
+            if (child.isMesh) {
+                child.material.map = carTexture;
+            }
+        });
+
+        carModel.scale.set(1, 1, 1); // 3. Set scale to 1 (we'll adjust physics size later)
+        scene.add(carModel);
+    });
+}
 
 // ─────────────────────────────────────────────────────────────
 //  TANK LAYOUT  [x, z, radius, bodyHeight, type, label]
@@ -2165,6 +2179,16 @@ function animate() {
         playerBody.velocity.set(0, 0, 0);
 
         camera.position.copy(playerCapsule.end);
+
+    if (carModel && playerBody) {
+        // This "glues" the visual car to the invisible physics body
+        carModel.position.copy(playerBody.position);
+        carModel.quaternion.copy(playerBody.quaternion);
+        
+        // Offset adjustment: If the car is centered on its wheels, 
+        // you might need to nudge it down slightly
+        carModel.position.y -= 0.85; 
+    }
     }
 
     renderer.render(scene, camera);
