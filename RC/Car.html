@@ -204,25 +204,24 @@ const floorPhysMat = new CANNON.Material('floorMaterial');
 const playerBody = new CANNON.Body({
     mass: 8,
     shape: new CANNON.Sphere(0.35), 
-    fixedRotation: false,       // This allows the "tumble"
+    fixedRotation: false,       
     material: playerPhysMat,
     linearDamping: 0.1,
-    angularDamping: 0.9,        // This stops it from spinning like a top
+    angularDamping: 0.9,        
 });
 playerBody.position.set(0, 1.65, 0);
 world.addBody(playerBody);
 
 // 3. Define the Interaction (Grip & Bounce)
 const contactMat = new CANNON.ContactMaterial(playerPhysMat, floorPhysMat, {
-    friction: 0.5,              // Grip for those ramps!
-    restitution: 0.4,           // Bounce for the stairs!
+    friction: 0.5,              
+    restitution: 0.4,           
     contactEquationStiffness: 1e6,
     contactEquationRelaxation: 3
 });
 world.addContactMaterial(contactMat);
 
-}));
-
+// ── END OF PHYSICS SETUP ──
 // ─────────────────────────────────────────────────────────────
 //  MATERIALS
 // ─────────────────────────────────────────────────────────────
