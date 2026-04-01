@@ -2164,7 +2164,19 @@ function animate() {
         playerBody.position.set(playerCapsule.end.x, playerCapsule.end.y - 0.35, playerCapsule.end.z);
         playerBody.velocity.set(0, 0, 0);
 
-        camera.position.copy(playerCapsule.end);
+// 1. Define where the camera should be relative to the car
+	const idealOffset = new THREE.Vector3(0, 2, 5); 	// 2 units up, 5 units behind
+	idealOffset.applyQuaternion(carModel.quaternion);   // Rotate offset with the car
+	idealOffset.add(playerBody.position); 		// Move offset to car's position
+
+// 2. Define where the camera should look
+	const idealLookat = new THREE.Vector3(0, 0, -5); 	// Look 5 units ahead of car
+	idealLookat.applyQuaternion(carModel.quaternion);
+	idealLookat.add(playerBody.position);
+
+// 3. Smoothly move the camera to that spot
+	camera.position.lerp(idealOffset, 0.1); 
+	camera.lookAt(idealLookat);
 
     if (carModel && playerBody) {
         // This "glues" the visual car to the invisible physics body
