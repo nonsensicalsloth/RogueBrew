@@ -2168,7 +2168,7 @@ function animate() {
 if (carModel) {
         // 1. POSITIONING
         carModel.position.lerp(playerCapsule.start, .5);
-        carModel.position.y -= 0.34; // Slightly higher to stop jitter
+        carModel.position.y -= 0.1; // Slightly higher to stop jitter
         
         // 2. DIRECTION (Horizontal)
         carModel.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), playerAngle);
