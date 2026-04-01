@@ -64,6 +64,7 @@ import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OctreeHelper } from 'three/addons/helpers/OctreeHelper.js';
 
 
 // 2. Create the loader instance
@@ -2098,6 +2099,11 @@ document.addEventListener('mousemove', (e) => {
     // If you want to look up/down, add 'let mouseY = 0;' at the top
     // mouseY = Math.max(-0.5, Math.min(1.5, (mouseY || 0) + e.movementY * 0.002));
 });
+
+worldOctree.fromGraphNode(worldGroup);
+const helper = new OctreeHelper(worldOctree);
+helper.visible = true; 
+scene.add(helper);
 
 // ─────────────────────────────────────────────────────────────
 //  GAME LOOP
