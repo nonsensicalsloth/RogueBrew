@@ -198,7 +198,7 @@ const playerBody = new CANNON.Body({
     shape: new CANNON.Sphere(0.35),   // matches capsule radius
     fixedRotation: true,               // no tumbling
     material: playerPhysMat,
-    linearDamping: 0.5,               // strong damping — movement is key-driven not force-driven
+    linearDamping: 0.25,               // Less
 });
 playerBody.position.set(0, 1.65, 0);
 world.addBody(playerBody);
@@ -2154,9 +2154,9 @@ function animate() {
     playerBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), playerAngle);
 
     if (carModel) {
-        carModel.position.copy(playerBody.position);
+        carModel.position.copy(playerCapsule.start);
         carModel.quaternion.copy(playerBody.quaternion);
-        carModel.position.y -= 0.80; 
+        carModel.position.y -= 0.10; 
 
         // 6. Camera Follow
         const idealOffset = new THREE.Vector3(0, 0.5, 1.5); 
