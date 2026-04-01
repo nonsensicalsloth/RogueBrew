@@ -2165,7 +2165,7 @@ function animate() {
         playerBody.velocity.set(0, 0, 0);
 
 // 1. Define where the camera should be relative to the car
-	const idealOffset = new THREE.Vector3(0, 2, 5); 	// 2 units up, 5 units behind
+	const idealOffset = new THREE.Vector3(0, 1, 2); 	// 2 units up, 5 units behind
 	idealOffset.applyQuaternion(carModel.quaternion);   // Rotate offset with the car
 	idealOffset.add(playerBody.position); 		// Move offset to car's position
 
