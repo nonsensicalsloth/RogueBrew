@@ -80,6 +80,8 @@ carTexture.colorSpace = THREE.SRGBColorSpace; // Keeps colors looking bright and
 // Now, let's call the function to load one of your files!
 let carModel; // 1. Create a variable at the top level
 let playerAngle = 0;
+let currentLean = 0;
+let mouseX = 0;
 
 function loadVehicle(modelName) {
     loader.load(modelName + '.glb', function (gltf) {
@@ -2160,45 +2162,61 @@ function animate() {
     playerBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), playerAngle);
 
 if (carModel) {
-    // 1. First, get the basic position and direction from the physics
-    carModel.position.copy(playerCapsule.start);
-    carModel.position.y += 0.05; // Lift it slightly to stop the floor jitter
-    carModel.quaternion.copy(playerBody.quaternion);
+        // 1. POSITIONING
+        carModel.position.copy(playerCapsule.start);
+        carModel.position.y += 0.05; // Slightly higher to stop jitter
+        
+        // 2. DIRECTION (Horizontal)
+        carModel.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), playerAngle);
 
-    // 2. Calculate the Lean (Turn it way down to 0.03)
-    const leanAmount = 0.03; 
-    let targetLean = 0;
-    if (keys['KeyA']) targetLean = leanAmount;
-    if (keys['KeyD']) targetLean = -leanAmount;
+        // 3. THE "JUICE" (Lean & Steering Targets)
+        const leanMax = 0.04;   // Lowered to prevent extreme tilting
+        const steerMax = 0.4; 
+        
+        let targetLean = 0;
+        let targetSteer = 0;
 
-    // Use a temporary variable to track the current lean smoothly
-    this.currentLean = THREE.MathUtils.lerp(this.currentLean || 0, targetLean, 0.1);
-    
-    // 3. Apply the lean WITHOUT fighting the quaternion
-    carModel.rotateZ(this.currentLean);
+        if (keys['KeyA']) {
+            targetLean = leanMax;
+            targetSteer = steerMax;
+        }
+        if (keys['KeyD']) {
+            targetLean = -leanMax;
+            targetSteer = -steerMax;
+        }
 
-    // 4. Wheels (Check if these names match your console log exactly)
-    const wheelFL = carModel.getObjectByName('wheel-fl');
-    const wheelFR = carModel.getObjectByName('wheel-fr');
-    if (wheelFL && wheelFR) {
-        const steerTarget = keys['KeyA'] ? 0.4 : (keys['KeyD'] ? -0.4 : 0);
-        wheelFL.rotation.y = THREE.MathUtils.lerp(wheelFL.rotation.y, steerTarget, 0.1);
-        wheelFR.rotation.y = THREE.MathUtils.lerp(wheelFR.rotation.y, steerTarget, 0.1);
-    }
+        // Apply smooth transitions to our external variables
+        currentLean = THREE.MathUtils.lerp(currentLean, targetLean, 0.1);
 
+        // 4. APPLY THE LEAN
+        // We use rotateZ AFTER the quaternion to avoid the "only one side" bug
+        carModel.rotateZ(currentLean);
 
-        // 6. Camera Follow
+        // 5. WHEEL STEERING
+        const wheelFL = carModel.getObjectByName('wheel-fl');
+        const wheelFR = carModel.getObjectByName('wheel-fr');
+        if (wheelFL && wheelFR) {
+            wheelFL.rotation.y = THREE.MathUtils.lerp(wheelFL.rotation.y, targetSteer, 0.15);
+            wheelFR.rotation.y = THREE.MathUtils.lerp(wheelFR.rotation.y, targetSteer, 0.15);
+        }
+
+        // 6. CAMERA FOLLOW (With Mouse Look)
+        // This combines the car's direction with your mouse movement
+        const cameraRotation = new THREE.Quaternion();
+        cameraRotation.setFromAxisAngle(new THREE.Vector3(0, 1, 0), playerAngle + mouseX);
+
         const idealOffset = new THREE.Vector3(0, 1, 1.5); 
-        idealOffset.applyQuaternion(carModel.quaternion);
+        idealOffset.applyQuaternion(cameraRotation); // Use cameraRotation, not carModel.quaternion
         idealOffset.add(carModel.position);
 
-        const idealLookat = new THREE.Vector3(0, 0, -1.8);
-        idealLookat.applyQuaternion(carModel.quaternion);
+        const idealLookat = new THREE.Vector3(0, 0.5, -2);
+        idealLookat.applyQuaternion(cameraRotation);
         idealLookat.add(carModel.position);
 
-        camera.position.lerp(idealOffset, 0.05);
+        camera.position.lerp(idealOffset, 0.1);
         camera.lookAt(idealLookat);
-}
+    }
+	
     renderer.render(scene, camera);
 }
 
