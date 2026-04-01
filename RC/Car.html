@@ -79,6 +79,7 @@ carTexture.colorSpace = THREE.SRGBColorSpace; // Keeps colors looking bright and
 
 // Now, let's call the function to load one of your files!
 let carModel; // 1. Create a variable at the top level
+let playerAngle = 0;
 
 function loadVehicle(modelName) {
     loader.load(modelName + '.glb', function (gltf) {
@@ -2099,20 +2100,26 @@ function animate() {
     requestAnimationFrame(animate);
     const delta = Math.min(0.05, clock.getDelta());
 
-    if (isLocked) {
-        // ── Build move direction from keys ──
-        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-        forward.y = 0; forward.normalize();
-        const side = new THREE.Vector3().crossVectors(forward, camera.up);
+if (isLocked) {
+        const moveSpeed = 15; // Speeding it up for the brewery!
+        const turnSpeed = 3.0; // Snappy steering
 
-        const moveSpeed = 6;
+        // 1. Update the angle based on input
+        if (keys['KeyA']) playerAngle += turnSpeed * delta;
+        if (keys['KeyD']) playerAngle -= turnSpeed * delta;
+
+        // 2. Calculate velocity based on that angle
         let vx = 0, vz = 0;
-        if (keys['KeyW']) { vx += forward.x * moveSpeed; vz += forward.z * moveSpeed; }
-        if (keys['KeyS']) { vx -= forward.x * moveSpeed; vz -= forward.z * moveSpeed; }
-        if (keys['KeyA']) { vx -= side.x * moveSpeed; vz -= side.z * moveSpeed; }
-        if (keys['KeyD']) { vx += side.x * moveSpeed; vz += side.z * moveSpeed; }
+        if (keys['KeyW']) {
+            vx = Math.sin(playerAngle) * moveSpeed;
+            vz = Math.cos(playerAngle) * moveSpeed;
+        }
+        if (keys['KeyS']) {
+            vx = -Math.sin(playerAngle) * moveSpeed;
+            vz = -Math.cos(playerAngle) * moveSpeed;
+        }
 
-        // ── Gravity + damping on vertical ──
+        // 3. Gravity + vertical velocity (Keep your existing gravity logic here)
         let damping = Math.exp(-4 * delta) - 1;
         if (!playerOnFloor) {
             playerVelocity.y -= 30 * delta;
@@ -2120,14 +2127,14 @@ function animate() {
         }
         playerVelocity.x = vx;
         playerVelocity.z = vz;
-        // Only damp vertical (horizontal is key-driven, not accumulated)
         playerVelocity.y += playerVelocity.y * damping;
 
-        // Jump
         if (playerOnFloor && keys['Space']) playerVelocity.y = 12;
 
-        // ── Proposed move ──
-        const move = playerVelocity.clone().multiplyScalar(delta);
+        // 4. Apply rotation to the Physics Body
+        playerBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), playerAngle);
+        
+        // ... (rest of your world.step and collision logic)
 
         // ── Cannon wall check — cancel velocity into any wall before moving ──
         playerBody.velocity.set(playerVelocity.x, playerVelocity.y, playerVelocity.z);
