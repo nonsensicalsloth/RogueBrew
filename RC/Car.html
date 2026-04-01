@@ -198,7 +198,7 @@ const playerBody = new CANNON.Body({
     shape: new CANNON.Sphere(0.35),   // matches capsule radius
     fixedRotation: true,               // no tumbling
     material: playerPhysMat,
-    linearDamping: 0.25,               // Less
+    linearDamping: 0.5,               // Less
 });
 playerBody.position.set(0, 1.65, 0);
 world.addBody(playerBody);
@@ -2124,7 +2124,7 @@ function animate() {
     }
 
     // 2. Gravity & Jumping
-    let damping = Math.exp(-4 * delta) - 1;
+    let damping = Math.exp(-3 * delta) - 1;
     if (!playerOnFloor) {
         playerVelocity.y -= 30 * delta;
         damping = Math.exp(-1.5 * delta) - 1;
@@ -2156,7 +2156,7 @@ function animate() {
     if (carModel) {
         carModel.position.copy(playerCapsule.start);
         carModel.quaternion.copy(playerBody.quaternion);
-        carModel.position.y -= 0.10; 
+        carModel.position.y -= 0.50; 
 
         // 6. Camera Follow
         const idealOffset = new THREE.Vector3(0, 0.5, 1.5); 
