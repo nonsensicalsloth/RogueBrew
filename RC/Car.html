@@ -2160,34 +2160,32 @@ function animate() {
             playerVelocity.set(0, 0, 0);
         }
 
-        // Sync Cannon body to capsule position
+// 1. Sync Cannon body to capsule position
         playerBody.position.set(playerCapsule.end.x, playerCapsule.end.y - 0.35, playerCapsule.end.z);
         playerBody.velocity.set(0, 0, 0);
 
-// 1. Define where the camera should be relative to the car
-	const idealOffset = new THREE.Vector3(0, 1, 2); 	// 2 units up, 5 units behind
-	idealOffset.applyQuaternion(carModel.quaternion);   // Rotate offset with the car
-	idealOffset.add(playerBody.position); 		// Move offset to car's position
+        // 2. Sync the Visual Car to the Physics Body
+        if (carModel) {
+            carModel.position.copy(playerBody.position);
+            carModel.quaternion.copy(playerBody.quaternion);
+            
+            // Since you scaled the car to 0.25, use a smaller Y-offset 
+            // so it doesn't sink into the floor!
+            carModel.position.y -= 0.15; 
 
-// 2. Define where the camera should look
-	const idealLookat = new THREE.Vector3(0, 0, -5); 	// Look 5 units ahead of car
-	idealLookat.applyQuaternion(carModel.quaternion);
-	idealLookat.add(playerBody.position);
+            // 3. NOW move the camera relative to the car's new position
+            const idealOffset = new THREE.Vector3(0, 0.4, 1); // 0.4 up, 1 unit back (closer for tiny car)
+            idealOffset.applyQuaternion(carModel.quaternion);
+            idealOffset.add(playerBody.position);
 
-// 3. Smoothly move the camera to that spot
-	camera.position.lerp(idealOffset, 0.1); 
-	camera.lookAt(idealLookat);
+            const idealLookat = new THREE.Vector3(0, 0, -2); // Look 2 units ahead
+            idealLookat.applyQuaternion(carModel.quaternion);
+            idealLookat.add(playerBody.position);
 
-    if (carModel && playerBody) {
-        // This "glues" the visual car to the invisible physics body
-        carModel.position.copy(playerBody.position);
-        carModel.quaternion.copy(playerBody.quaternion);
-        
-        // Offset adjustment: If the car is centered on its wheels, 
-        // you might need to nudge it down slightly
-        carModel.position.y -= 0.85; 
-    }
-    }
+            camera.position.lerp(idealOffset, 0.2); // 0.2 is snappier for small cars
+            camera.lookAt(idealLookat);
+        }
+    } 
 
     renderer.render(scene, camera);
 }
