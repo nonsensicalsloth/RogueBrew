@@ -2164,11 +2164,11 @@ function animate() {
         carModel.position.y -= 0.34; 
 
         // 6. Camera Follow
-        const idealOffset = new THREE.Vector3(0, 0.5, 1.5); 
+        const idealOffset = new THREE.Vector3(0, 1, 1.5); 
         idealOffset.applyQuaternion(carModel.quaternion);
         idealOffset.add(carModel.position);
 
-        const idealLookat = new THREE.Vector3(0, 0, -2);
+        const idealLookat = new THREE.Vector3(0, 0, -1.8);
         idealLookat.applyQuaternion(carModel.quaternion);
         idealLookat.add(carModel.position);
 
