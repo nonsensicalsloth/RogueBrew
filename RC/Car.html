@@ -196,23 +196,31 @@ const playerCapsule = new Capsule(
 const playerVelocity = new THREE.Vector3();
 let playerOnFloor = false;
 
-// ── CANNON player body — drives mass/gravity feel, synced to Octree capsule ──
+// 1. Define Materials
 const playerPhysMat = new CANNON.Material('playerMaterial');
+const floorPhysMat = new CANNON.Material('floorMaterial');
+
+// 2. Setup the Player Body
 const playerBody = new CANNON.Body({
-    mass: 60,
-    shape: new CANNON.Sphere(0.35),   // matches capsule radius
-    fixedRotation: true,               // no tumbling
+    mass: 8,
+    shape: new CANNON.Sphere(0.35), 
+    fixedRotation: false,       // This allows the "tumble"
     material: playerPhysMat,
-    linearDamping: 0.3,               // Less
+    linearDamping: 0.1,
+    angularDamping: 0.9,        // This stops it from spinning like a top
 });
 playerBody.position.set(0, 1.65, 0);
 world.addBody(playerBody);
 
-// Contact material: player vs floor — no bounce, high friction
-const floorPhysMat = new CANNON.Material('floorMaterial');
-world.addContactMaterial(new CANNON.ContactMaterial(playerPhysMat, floorPhysMat, {
-    friction: 0.0,
-    restitution: 0.0,
+// 3. Define the Interaction (Grip & Bounce)
+const contactMat = new CANNON.ContactMaterial(playerPhysMat, floorPhysMat, {
+    friction: 0.5,              // Grip for those ramps!
+    restitution: 0.4,           // Bounce for the stairs!
+    contactEquationStiffness: 1e6,
+    contactEquationRelaxation: 3
+});
+world.addContactMaterial(contactMat);
+
 }));
 
 // ─────────────────────────────────────────────────────────────
@@ -2102,7 +2110,7 @@ document.addEventListener('mousemove', (e) => {
 
 worldOctree.fromGraphNode(worldGroup);
 const helper = new OctreeHelper(worldOctree);
-helper.visible = false; 
+helper.visible = true; 
 scene.add(helper);
 
 // ─────────────────────────────────────────────────────────────
@@ -2175,19 +2183,28 @@ function animate() {
     }
 
     // 9. SYNC VISUAL MODEL (Cleaned & Merged)
-    if (carModel) {
-        // POSITIONING: Uses Lerp for smoothness
-        carModel.position.lerp(playerCapsule.start, 0.5);
-        carModel.position.y -= 0.16; // Maintain your specific height offset
-        
-        // DIRECTION
-        carModel.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), playerAngle);
+if (carModel) {
+    // POSITIONING: Follow the physics body directly now
+    	carModel.position.copy(playerBody.position);
+  	  carModel.position.y -= 0.35; // Adjust this offset so wheels touch the floor
 
-        // THE "JUICE" (Lean)
-        const leanMax = 0.04;
-        let targetLean = keys['KeyA'] ? leanMax : (keys['KeyD'] ? -leanMax : 0);
-        currentLean = THREE.MathUtils.lerp(currentLean, targetLean, 0.1);
-        carModel.rotateZ(currentLean);
+ 	   if (playerOnFloor) {
+        // ON THE GROUND: Stay upright, use your steering angle
+  	      const uprightQuat = new THREE.Quaternion();
+      	  uprightQuat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), playerAngle);
+  	      
+        // Smoothly snap back to upright so it doesn't "jitter" when landing
+   	     carModel.quaternion.slerp(uprightQuat, 0.15);
+
+        // Add the "Juice" (Lean) back in while on the ground
+ 	       const leanMax = 0.04;
+    	    let targetLean = keys['KeyA'] ? leanMax : (keys['KeyD'] ? -leanMax : 0);
+  	      currentLean = THREE.MathUtils.lerp(currentLean, targetLean, 0.1);
+	        carModel.rotateZ(currentLean);
+	    } else {
+      // IN THE AIR: Total freedom. Let the physics body dictate the tumble.
+       	 carModel.quaternion.copy(playerBody.quaternion);
+    }
 
         // WHEEL STEERING: Linked to currentSteerAngle
         const wheelFL = carModel.getObjectByName('wheel-fl');
