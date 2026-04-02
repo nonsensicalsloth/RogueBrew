@@ -142,21 +142,22 @@
 
 		loader.load('vehicle-racer.glb', (glb) => {
 			carVisual = glb.scene;
-			
-			// Create a temporary list to find all wheels
 			let foundWheels = [];
+			
 			carVisual.traverse(child => {
 				if (child.isMesh && child.name.toLowerCase().includes('wheel')) {
+					// THE VISUAL FIX: 
+					// Rotate the geometry 90 degrees so the "tire" face 
+					// aligns with the physics axle (X-axis).
+					child.geometry.rotateY(Math.PI / 2); 
 					foundWheels.push(child);
 				}
 			});
 
-			// MANUALLY SORT THEM (This is the fix)
-			// We sort by their X position so the Left wheels (-X) and Right wheels (+X) 
-			// align with our wheelOffsets array.
+			// Sort them by X position so index 0/2 are Left, 1/3 are Right
 			foundWheels.sort((a, b) => a.position.x - b.position.x);
+			carWheels = foundWheels;
 			
-			carWheels = foundWheels; // Now index 0 is definitely Left, etc.
 			scene.add(carVisual);
 		});
 
@@ -226,14 +227,14 @@ function update() {
 				if (carWheels[i]) {
 					carWheels[i].position.copy(t.position);
 					carWheels[i].quaternion.copy(t.quaternion);
-					
-					// --- THE FIX FOR BACKWARD WHEELS ---
-					// If it's a "Right side" wheel, we rotate it 180 degrees (Math.PI)
-					// Adjust the index (i) based on which specific ones in your array are backward
-					if (i === 1 || i === 3) { 
-						const extraRotation = new THREE.Quaternion();
-						extraRotation.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
-						carWheels[i].quaternion.multiply(extraRotation);
+
+					// --- FLIP INWARD TIRES ---
+					// If sorting worked, indices 1 and 3 are the Right-side wheels.
+					// We rotate them 180 degrees around their local UP axis.
+					if (i === 1 || i === 3) {
+						const flipQuat = new THREE.Quaternion();
+						flipQuat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
+						carWheels[i].quaternion.multiply(flipQuat);
 					}
 
 					carVisual.worldToLocal(carWheels[i].position);
