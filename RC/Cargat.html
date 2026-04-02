@@ -115,7 +115,7 @@
         };
 
         // Add 4 wheels
-        const wheelOffsets = [
+			const wheelOffsets = [
             new CANNON.Vec3(0.4, -0.1, 0.5),  // Front Left
             new CANNON.Vec3(-0.4, -0.1, 0.5), // Front Right
             new CANNON.Vec3(0.4, -0.1, -0.5), // Back Left
@@ -128,17 +128,6 @@
         });
 
         vehicle.addToWorld(world);
-
-        // Visuals for Wheels and Car
-        const wheelMeshes = [];
-        const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x111111 });
-
-        vehicle.wheelInfos.forEach(() => {
-            const mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.1, 20), wheelMaterial);
-            mesh.geometry.rotateZ(Math.PI / 2);
-            scene.add(mesh);
-            wheelMeshes.push(mesh);
-        });
 
         let carVisual;
         loader.load('vehicle-racer.glb', (glb) => {
@@ -179,8 +168,8 @@
             const maxSteer = 0.5;
             const brakeForce = 10;
 
-            vehicle.applyEngineForce(keys.w ? -engineForce : (keys.s ? engineForce : 0), 2);
-            vehicle.applyEngineForce(keys.w ? -engineForce : (keys.s ? engineForce : 0), 3);
+            vehicle.applyEngineForce(keys.w ? engineForce : (keys.s ? -engineForce : 0), 2);
+            vehicle.applyEngineForce(keys.w ? engineForce : (keys.s ? -engineForce : 0), 3);
 
             const steer = (keys.a ? 1 : 0) + (keys.d ? -1 : 0);
             vehicle.setSteeringValue(steer * maxSteer, 0);
@@ -197,13 +186,6 @@
                 carVisual.quaternion.copy(chassisBody.quaternion);
             }
 
-            // 2. Sync Wheel Visuals
-            for (let i = 0; i < vehicle.wheelInfos.length; i++) {
-                vehicle.updateWheelTransform(i);
-                const t = vehicle.wheelInfos[i].worldTransform;
-                wheelMeshes[i].position.copy(t.position);
-                wheelMeshes[i].quaternion.copy(t.quaternion);
-            }
 
             // 3. Simple Follow Camera (Fixed Vector Math)
             // We convert Cannon's position to a Three.js Vector3 first
