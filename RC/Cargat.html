@@ -175,9 +175,9 @@
             world.step(1/60);
 
             // Drive logic
-            const engineForce = 800;
+            const engineForce = 150;
             const maxSteer = 0.5;
-            const brakeForce = 20;
+            const brakeForce = 10;
 
             vehicle.applyEngineForce(keys.w ? -engineForce : (keys.s ? engineForce : 0), 2);
             vehicle.applyEngineForce(keys.w ? -engineForce : (keys.s ? engineForce : 0), 3);
