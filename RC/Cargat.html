@@ -128,7 +128,8 @@
 			// We combine the template with the specific offset
 			const options = { 
 				...wheelOptions, 
-				chassisConnectionPointLocal: offset 
+				chassisConnectionPointLocal: offset
+				isFrontWheel: (index === 2 || index === 3)
 			};
 			vehicle.addWheel(options);
 		});
@@ -193,18 +194,19 @@ function update() {
             // Determine steer: D is right (positive), A is left (negative)
             const steer = (keys.d ? 1 : 0) + (keys.a ? -1 : 0);
 
-            // 2. Apply to Wheels
-            // Front Wheels (0, 1): STEER, but no engine force
-            vehicle.setSteeringValue(steer * maxSteer, 2);
-            vehicle.setSteeringValue(steer * maxSteer, 3);
-            vehicle.applyEngineForce(0, 0);
-            vehicle.applyEngineForce(0, 1);
+			// WHEELS 2 & 3: These are your STEERING wheels
+			vehicle.setSteeringValue(steer * maxSteer, 2);
+			vehicle.setSteeringValue(steer * maxSteer, 3);
+			// Ensure they aren't trying to drive (optional, but cleaner)
+			vehicle.applyEngineForce(0, 2);
+			vehicle.applyEngineForce(0, 3);
 
-            // Back Wheels (2, 3): DRIVE, but no steering
-            vehicle.applyEngineForce(force, 0);
-            vehicle.applyEngineForce(force, 1);
-            vehicle.setSteeringValue(0, 2);
-            vehicle.setSteeringValue(0, 3);
+			// WHEELS 0 & 1: These are your DRIVE wheels
+			vehicle.applyEngineForce(force, 0);
+			vehicle.applyEngineForce(force, 1);
+			// Ensure they aren't trying to steer
+			vehicle.setSteeringValue(0, 0);
+			vehicle.setSteeringValue(0, 1);
 
             // 3. Brakes (All 4 wheels)
             const currentBrake = keys.space ? brakeForce : 0;
