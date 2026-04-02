@@ -140,18 +140,23 @@
 
 		loader.load('vehicle-racer.glb', (glb) => {
 			carVisual = glb.scene;
+			
+			// Create a temporary list to find all wheels
+			let foundWheels = [];
 			carVisual.traverse(child => {
-        if (child.isMesh) {
-            child.material.map = colormap;
+				if (child.isMesh && child.name.toLowerCase().includes('wheel')) {
+					foundWheels.push(child);
+				}
+			});
 
-            // Check if the name of the mesh includes "wheel"
-            if (child.name.toLowerCase().includes('wheel')) {
-                carWheels.push(child);
-            }
-        }
-    });
-		scene.add(carVisual);
-});
+			// MANUALLY SORT THEM (This is the fix)
+			// We sort by their X position so the Left wheels (-X) and Right wheels (+X) 
+			// align with our wheelOffsets array.
+			foundWheels.sort((a, b) => a.position.x - b.position.x);
+			
+			carWheels = foundWheels; // Now index 0 is definitely Left, etc.
+			scene.add(carVisual);
+		});
 
         // --- Input Handling ---
         const keys = { w: false, s: false, a: false, d: false, space: false };
@@ -190,14 +195,14 @@ function update() {
 
             // 2. Apply to Wheels
             // Front Wheels (0, 1): STEER, but no engine force
-            vehicle.setSteeringValue(steer * maxSteer, 0);
-            vehicle.setSteeringValue(steer * maxSteer, 1);
+            vehicle.setSteeringValue(steer * maxSteer, 2);
+            vehicle.setSteeringValue(steer * maxSteer, 3);
             vehicle.applyEngineForce(0, 0);
             vehicle.applyEngineForce(0, 1);
 
             // Back Wheels (2, 3): DRIVE, but no steering
-            vehicle.applyEngineForce(force, 2);
-            vehicle.applyEngineForce(force, 3);
+            vehicle.applyEngineForce(force, 0);
+            vehicle.applyEngineForce(force, 1);
             vehicle.setSteeringValue(0, 2);
             vehicle.setSteeringValue(0, 3);
 
