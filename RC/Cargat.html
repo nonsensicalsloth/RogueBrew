@@ -117,10 +117,10 @@
 		// 2. Define the 4 unique locations for the wheels
 		// These are [Left/Right, Height, Front/Back]
 		const wheelOffsets = [
-			new CANNON.Vec3(0.4, 0, 0.5),  // Front Left
-			new CANNON.Vec3(-0.4, 0, 0.5), // Front Right
-			new CANNON.Vec3(0.4, 0, -0.5), // Back Left
-			new CANNON.Vec3(-0.4, 0, -0.5) // Back Right
+			new CANNON.Vec3(0.2, 0, 0.5),  // Front Left
+			new CANNON.Vec3(-0.2, 0, 0.5), // Front Right
+			new CANNON.Vec3(0.2, 0, -0.5), // Back Left
+			new CANNON.Vec3(-0.2, 0, -0.5) // Back Right
 		];
 
 		// --- 3. Add Wheels to Vehicle ---
@@ -146,9 +146,10 @@
 			
 			carVisual.traverse(child => {
 				if (child.isMesh && child.name.toLowerCase().includes('wheel')) {
-					// Reset and rotate on Z to fix the tumbling
-					child.geometry.rotateY(0); // Clear the previous Y rotation if still there
-					child.geometry.rotateZ(Math.PI / 2); // This should make them face out
+					// Clear previous attempts and use rotateX
+					child.geometry.rotateY(0); 
+					child.geometry.rotateZ(0);
+					child.geometry.rotateX(Math.PI / 2); // This should stand them upright
 					foundWheels.push(child);
 				}
 			});
