@@ -117,10 +117,10 @@
 		// 2. Define the 4 unique locations for the wheels
 		// These are [Left/Right, Height, Front/Back]
 		const wheelOffsets = [
-			new CANNON.Vec3(0.2, 0, 0.5),  // Front Left
-			new CANNON.Vec3(-0.2, 0, 0.5), // Front Right
-			new CANNON.Vec3(0.2, 0, -0.5), // Back Left
-			new CANNON.Vec3(-0.2, 0, -0.5) // Back Right
+			new CANNON.Vec3(0.2, 0, 0.2),  // Front Left
+			new CANNON.Vec3(-0.2, 0, 0.2), // Front Right
+			new CANNON.Vec3(0.2, 0, -0.2), // Back Left
+			new CANNON.Vec3(-0.2, 0, -0.2) // Back Right
 		];
 
 		// --- 3. Add Wheels to Vehicle ---
@@ -185,7 +185,21 @@
  // --- Animation Loop ---
 function update() {
             world.step(1/60);
+			const lerpSpeed = 0.1; // Higher = snappier, Lower = smoother/heavy truck feel
+			if (keys.a) {
+				currentSteer = -maxSteer;
+			} else if (keys.d) {
+				currentSteer = maxSteer;
+			} else {
+				// This is the "Snap Back" logic
+				// It slowly pulls the steering value back to 0 when you let go
+				currentSteer *= (1 - lerpSpeed); 
+				if (Math.abs(currentSteer) < 0.01) currentSteer = 0;
+			}
 
+				vehicle.setSteeringValue(currentSteer, 2);
+				vehicle.setSteeringValue(currentSteer, 3);
+				
             // 1. Drive & Steering Values
             const engineForce = 150; 
             const maxSteer = 0.5;
