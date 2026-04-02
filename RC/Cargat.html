@@ -101,7 +101,7 @@
 		const wheelOptions = {
 			radius: 0.15,
 			directionLocal: new CANNON.Vec3(0, -1, 0),
-			axleLocal: new CANNON.Vec3(0, 1, 0),
+			axleLocal: new CANNON.Vec3(1, 0, 0),
 			suspensionStiffness: 30,
 			suspensionRestLength: 0.1,
 			frictionSlip: 1.4,
@@ -195,17 +195,15 @@ function update() {
             // Determine steer: D is right (positive), A is left (negative)
             const steer = (keys.d ? 1 : 0) + (keys.a ? -1 : 0);
 
-			// WHEELS 2 & 3: These are your STEERING wheels
+			// WHEELS 2 & 3: These are your FRONT (Steering) wheels
 			vehicle.setSteeringValue(steer * maxSteer, 2);
 			vehicle.setSteeringValue(steer * maxSteer, 3);
-			// Ensure they aren't trying to drive (optional, but cleaner)
 			vehicle.applyEngineForce(0, 2);
 			vehicle.applyEngineForce(0, 3);
 
-			// WHEELS 0 & 1: These are your DRIVE wheels
+			// WHEELS 0 & 1: These are your BACK (Drive) wheels
 			vehicle.applyEngineForce(force, 0);
 			vehicle.applyEngineForce(force, 1);
-			// Ensure they aren't trying to steer
 			vehicle.setSteeringValue(0, 0);
 			vehicle.setSteeringValue(0, 1);
 
