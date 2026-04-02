@@ -214,10 +214,10 @@ world.addBody(playerBody);
 
 // 3. Define the Interaction (Grip & Bounce)
 const contactMat = new CANNON.ContactMaterial(playerPhysMat, floorPhysMat, {
-    friction: 0.5,              
-    restitution: 0.4,           
-    contactEquationStiffness: 1e6,
-    contactEquationRelaxation: 3
+    friction: 0.9,              
+    restitution: 0.1,           
+    contactEquationStiffness: 1e7,
+    contactEquationRelaxation: 1
 });
 world.addContactMaterial(contactMat);
 
@@ -2181,31 +2181,43 @@ function animate() {
         playerCapsule.translate(result.normal.multiplyScalar(result.depth));
     }
 
-    // 9. SYNC VISUAL MODEL (Cleaned & Merged)
-if (carModel) {
-    // POSITIONING: Follow the physics body directly now
-    	carModel.position.copy(playerBody.position);
-  	  carModel.position.y -= 0.16; // Adjust this offset so wheels touch the floor
+// 9. SYNC VISUAL MODEL & PHYSICS
+    if (carModel) {
+        // POSITIONING: Follow the physics body
+        carModel.position.copy(playerBody.position);
+        
+        // Offset: Adjust this if the car "floats" (0.35 matches your sphere radius)
+        carModel.position.y -= 0.35; 
 
- 	   if (playerOnFloor) {
-        // ON THE GROUND: Stay upright, use your steering angle
-  	      const uprightQuat = new THREE.Quaternion();
-      	  uprightQuat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), playerAngle);
-  	      
-        // Smoothly snap back to upright so it doesn't "jitter" when landing
-   	     carModel.quaternion.slerp(uprightQuat, 0.15);
+        if (playerOnFloor) {
+            // --- GROUND LOGIC: Stable Driving ---
+            
+            // 1. Stop the physics sphere from rolling away like a loose ball
+            playerBody.angularVelocity.set(0, 0, 0);
 
-        // Add the "Juice" (Lean) back in while on the ground
- 	       const leanMax = 0.04;
-    	    let targetLean = keys['KeyA'] ? leanMax : (keys['KeyD'] ? -leanMax : 0);
-  	      currentLean = THREE.MathUtils.lerp(currentLean, targetLean, 0.1);
-	        carModel.rotateZ(currentLean);
-	    } else {
-      // IN THE AIR: Total freedom. Let the physics body dictate the tumble.
-       	 carModel.quaternion.copy(playerBody.quaternion);
-    }
+            // 2. Force the physics body to face your steering direction
+            playerBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), playerAngle);
 
-        // WHEEL STEERING: Linked to currentSteerAngle
+            // 3. Match the visual car to that same direction
+            const targetQuat = new THREE.Quaternion();
+            targetQuat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), playerAngle);
+            
+            // Slerp (0.15) adds a "heavy" landing feel
+            carModel.quaternion.slerp(targetQuat, 0.15);
+
+            // 4. Add the "Juice" (Lean) when turning
+            const leanMax = 0.05;
+            let targetLean = keys['KeyA'] ? leanMax : (keys['KeyD'] ? -leanMax : 0);
+            currentLean = THREE.MathUtils.lerp(currentLean, targetLean, 0.1);
+            carModel.rotateZ(currentLean);
+
+        } else {
+            // --- AIR LOGIC: Tumble Physics ---
+            // Let the model flip and roll exactly like the physics sphere
+            carModel.quaternion.copy(playerBody.quaternion);
+        }
+
+        // 10. WHEEL STEERING
         const wheelFL = carModel.getObjectByName('wheel-fl');
         const wheelFR = carModel.getObjectByName('wheel-fr');
         if (wheelFL && wheelFR) {
@@ -2213,7 +2225,7 @@ if (carModel) {
             wheelFR.rotation.y = currentSteerAngle;
         }
 
-        // 10. CAMERA FOLLOW (With Mouse Look)
+        // 11. CAMERA FOLLOW
         const cameraRotation = new THREE.Quaternion();
         cameraRotation.setFromAxisAngle(new THREE.Vector3(0, 1, 0), playerAngle + mouseX);
 
@@ -2231,7 +2243,6 @@ if (carModel) {
 
     renderer.render(scene, camera);
 }
-
 animate();
 
 </script>
