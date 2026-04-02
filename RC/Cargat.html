@@ -54,7 +54,7 @@
         // --- Assets & Materials ---
         const loader = new GLTFLoader();
         const textureLoader = new THREE.TextureLoader();
-        const colormap = textureLoader.load('colormap.png');
+        const colormap = textureLoader.load('Textures/colormap.png');
         colormap.colorSpace = THREE.SRGBColorSpace;
         colormap.flipY = false;
 
@@ -129,14 +129,23 @@
 
         vehicle.addToWorld(world);
 
-        let carVisual;
-        loader.load('vehicle-racer.glb', (glb) => {
-            carVisual = glb.scene;
-            carVisual.traverse(child => {
-                if(child.isMesh) child.material.map = colormap;
-            });
-            scene.add(carVisual);
-        });
+		let carVisual;
+		let carWheels = []; // This will hold our 4 GLB wheel meshes
+
+		loader.load('vehicle-racer.glb', (glb) => {
+			carVisual = glb.scene;
+			carVisual.traverse(child => {
+        if (child.isMesh) {
+            child.material.map = colormap;
+
+            // Check if the name of the mesh includes "wheel"
+            if (child.name.toLowerCase().includes('wheel')) {
+                carWheels.push(child);
+            }
+        }
+    });
+		scene.add(carVisual);
+});
 
         // --- Input Handling ---
         const keys = { w: false, s: false, a: false, d: false, space: false };
@@ -185,223 +194,22 @@
                 carVisual.position.copy(chassisBody.position);
                 carVisual.quaternion.copy(chassisBody.quaternion);
             }
+			// Sync GLB Wheel Visuals
+			for (let i = 0; i < vehicle.wheelInfos.length; i++) {
+				vehicle.updateWheelTransform(i);
+				const t = vehicle.wheelInfos[i].worldTransform;
 
+			// If the wheel mesh from the GLB exists, move it
+			if (carWheels[i]) {
+				carWheels[i].position.copy(t.position);
+				carWheels[i].quaternion.copy(t.quaternion);
 
-            // 3. Simple Follow Camera (Fixed Vector Math)
-            // We convert Cannon's position to a Three.js Vector3 first
-            const chassisPos = new THREE.Vector3().copy(chassisBody.position);
-            
-            const cameraOffset = new THREE.Vector3(0, 2, 5);
-            if (carVisual) {
-                cameraOffset.applyQuaternion(carVisual.quaternion);
-            }
-            
-            const targetCameraPos = new THREE.Vector3().addVectors(chassisPos, cameraOffset);
-            camera.position.lerp(targetCameraPos, 0.1);
-            camera.lookAt(chassisPos);
-
-            renderer.render(scene, camera);
-            requestAnimationFrame(update);
-        }
-
-        update();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-    </script>
-</body>
-</html><!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Brewery RC - Raycast Edition</title>
-    <style>
-        body { margin: 0; overflow: hidden; background: #111; font-family: monospace; touch-action: none; }
-        #instructions {
-            position: absolute; bottom: 20px; left: 20px; color: #7fc; 
-            background: rgba(0,0,0,0.5); padding: 10px; pointer-events: none;
-        }
-    </style>
-</head>
-<body>
-    <div id="instructions">WASD: Drive | Space: Brake | R: Flip/Reset</div>
-
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
-                "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/+esm"
-            }
-        }
-    </script>
-
-    <script type="module">
-        import * as THREE from 'three';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-        import * as CANNON from 'cannon-es';
-
-        // --- Setup ---
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x222222);
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        document.body.appendChild(renderer.domElement);
-
-        const world = new CANNON.World();
-        world.gravity.set(0, -9.82, 0);
-        world.broadphase = new CANNON.SAPBroadphase(world);
-
-        // --- Lighting ---
-        const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambient);
-        const sun = new THREE.DirectionalLight(0xffffff, 1);
-        sun.position.set(10, 20, 10);
-        sun.castShadow = true;
-        scene.add(sun);
-
-        // --- Assets & Materials ---
-        const loader = new GLTFLoader();
-        const textureLoader = new THREE.TextureLoader();
-        const colormap = textureLoader.load('colormap.png');
-        colormap.colorSpace = THREE.SRGBColorSpace;
-        colormap.flipY = false;
-
-        // --- The Environment (Hidden Floor) ---
-        // Creating a large static box for the floor/brewery area
-        const floorBody = new CANNON.Body({ mass: 0 });
-        floorBody.addShape(new CANNON.Box(new CANNON.Vec3(50, 0.1, 50)));
-        floorBody.position.set(0, -0.1, 0);
-        world.addBody(floorBody);
-
-        const floorMesh = new THREE.Mesh(
-            new THREE.BoxGeometry(100, 0.2, 100),
-            new THREE.MeshStandardMaterial({ color: 0x333333 })
-        );
-        floorMesh.position.y = -0.1;
-        floorMesh.receiveShadow = true;
-        scene.add(floorMesh);
-
-        // --- Vehicle Setup ---
-		// 1. Create the shape (the physical box)
-		const chassisShape = new CANNON.Box(new CANNON.Vec3(0.3, 0.2, 0.6));
-
-		// 2. Create the body (the mass/physics object)
-		const chassisBody = new CANNON.Body({ mass: 150 });
-
-		// 3. Add the shape with an OFFSET
-		// We move the box UP by 0.2 meters. 
-		// Since the 'Center of Mass' stays at 0, the weight is now at the bottom of the box.
-		const centerOfMassOffset = new CANNON.Vec3(0, 0.2, 0); 
-		chassisBody.addShape(chassisShape, centerOfMassOffset);
-
-		// 4. Set the starting position
-		chassisBody.position.set(0, 2, 0);
-		chassisBody.angularDamping = 0.5;
-
-        const vehicle = new CANNON.RaycastVehicle({
-            chassisBody: chassisBody,
-            indexForwardAxis: 2,
-            indexRightAxis: 0,
-            indexUpAxis: 1
-        });
-
-        const wheelOptions = {
-            radius: 0.15,
-            directionLocal: new CANNON.Vec3(0, -1, 0),
-            suspensionStiffness: 30,
-            suspensionRestLength: 0.3,
-            frictionSlip: 1.4,
-            dampingRelaxation: 2.3,
-            dampingCompression: 4.4,
-            maxSuspensionForce: 100000,
-            rollInfluence:  0.01,
-            axleLocal: new CANNON.Vec3(-1, 0, 0),
-            chassisConnectionPointLocal: new CANNON.Vec3(1, 1, 1),
-            maxSuspensionTravel: 0.3,
-            customSlidingRotationalSpeed: -30,
-            useCustomSlidingRotationalSpeed: true
-        };
-
-        // Add 4 wheels
-			const wheelOffsets = [
-            new CANNON.Vec3(0.4, -0.1, 0.5),  // Front Left
-            new CANNON.Vec3(-0.4, -0.1, 0.5), // Front Right
-            new CANNON.Vec3(0.4, -0.1, -0.5), // Back Left
-            new CANNON.Vec3(-0.4, -0.1, -0.5) // Back Right
-        ];
-
-        wheelOffsets.forEach(offset => {
-            wheelOptions.chassisConnectionPointLocal.copy(offset);
-            vehicle.addWheel(wheelOptions);
-        });
-
-        vehicle.addToWorld(world);
-
-        let carVisual;
-        loader.load('vehicle-racer.glb', (glb) => {
-            carVisual = glb.scene;
-            carVisual.traverse(child => {
-                if(child.isMesh) child.material.map = colormap;
-            });
-            scene.add(carVisual);
-        });
-
-        // --- Input Handling ---
-        const keys = { w: false, s: false, a: false, d: false, space: false };
-        window.addEventListener('keydown', (e) => { 
-            const key = e.key.toLowerCase();
-            if(keys.hasOwnProperty(key)) keys[key] = true;
-            if(key === ' ') keys.space = true;
-            if(key === 'r') resetVehicle();
-        });
-        window.addEventListener('keyup', (e) => { 
-            const key = e.key.toLowerCase();
-            if(keys.hasOwnProperty(key)) keys[key] = false;
-            if(key === ' ') keys.space = false;
-        });
-
-        function resetVehicle() {
-            chassisBody.position.set(0, 2, 0);
-            chassisBody.quaternion.set(0, 0, 0, 1);
-            chassisBody.velocity.set(0,0,0);
-            chassisBody.angularVelocity.set(0,0,0);
-        }
-
- // --- Animation Loop ---
-        function update() {
-            world.step(1/60);
-
-            // Drive logic
-            const engineForce = 150;
-            const maxSteer = 0.5;
-            const brakeForce = 10;
-
-            vehicle.applyEngineForce(keys.w ? engineForce : (keys.s ? -engineForce : 0), 2);
-            vehicle.applyEngineForce(keys.w ? engineForce : (keys.s ? -engineForce : 0), 3);
-
-            const steer = (keys.a ? 1 : 0) + (keys.d ? -1 : 0);
-            vehicle.setSteeringValue(steer * maxSteer, 0);
-            vehicle.setSteeringValue(steer * maxSteer, 1);
-
-            vehicle.setBrake(keys.space ? brakeForce : 0, 0);
-            vehicle.setBrake(keys.space ? brakeForce : 0, 1);
-            vehicle.setBrake(keys.space ? brakeForce : 0, 2);
-            vehicle.setBrake(keys.space ? brakeForce : 0, 3);
-
-            // 1. Sync Chassis Visuals
-            if(carVisual) {
-                carVisual.position.copy(chassisBody.position);
-                carVisual.quaternion.copy(chassisBody.quaternion);
-            }
-
+			// This is the "magic" line:
+			// Since the wheels are children of the car, we must convert
+			// the world position (from Cannon) into local space for the car.
+				carVisual.worldToLocal(carWheels[i].position);
+			}
+		}
 
             // 3. Simple Follow Camera (Fixed Vector Math)
             // We convert Cannon's position to a Three.js Vector3 first
