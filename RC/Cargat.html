@@ -74,11 +74,21 @@
         scene.add(floorMesh);
 
         // --- Vehicle Setup ---
-        const chassisShape = new CANNON.Box(new CANNON.Vec3(0.3, 0.2, 0.6));
-        const chassisBody = new CANNON.Body({ mass: 150 });
-        chassisBody.addShape(chassisShape);
-        chassisBody.position.set(0, 2, 0);
-        chassisBody.angularDamping = 0.5; // Prevent endless rolling
+		// 1. Create the shape (the physical box)
+		const chassisShape = new CANNON.Box(new CANNON.Vec3(0.3, 0.2, 0.6));
+
+		// 2. Create the body (the mass/physics object)
+		const chassisBody = new CANNON.Body({ mass: 150 });
+
+		// 3. Add the shape with an OFFSET
+		// We move the box UP by 0.2 meters. 
+		// Since the 'Center of Mass' stays at 0, the weight is now at the bottom of the box.
+		const centerOfMassOffset = new CANNON.Vec3(0, 0.2, 0); 
+		chassisBody.addShape(chassisShape, centerOfMassOffset);
+
+		// 4. Set the starting position
+		chassisBody.position.set(0, 2, 0);
+		chassisBody.angularDamping = 0.5;
 
         const vehicle = new CANNON.RaycastVehicle({
             chassisBody: chassisBody,
