@@ -101,7 +101,7 @@
 		const wheelOptions = {
 			radius: 0.15,
 			directionLocal: new CANNON.Vec3(0, -1, 0),
-			axleLocal: new CANNON.Vec3(1, 0, 0),
+			axleLocal: new CANNON.Vec3(0, 1, 0),
 			suspensionStiffness: 30,
 			suspensionRestLength: 0.1,
 			frictionSlip: 1.4,
@@ -219,23 +219,28 @@ function update() {
             if(carVisual) {
                 carVisual.position.copy(chassisBody.position);
                 carVisual.quaternion.copy(chassisBody.quaternion);
-            }
+						}
 			// Sync GLB Wheel Visuals
 			for (let i = 0; i < vehicle.wheelInfos.length; i++) {
 				vehicle.updateWheelTransform(i);
 				const t = vehicle.wheelInfos[i].worldTransform;
 
-			// If the wheel mesh from the GLB exists, move it
-			if (carWheels[i]) {
-				carWheels[i].position.copy(t.position);
-				carWheels[i].quaternion.copy(t.quaternion);
+				if (carWheels[i]) {
+					carWheels[i].position.copy(t.position);
+					carWheels[i].quaternion.copy(t.quaternion);
+					
+					// --- THE FIX FOR BACKWARD WHEELS ---
+					// If it's a "Right side" wheel, we rotate it 180 degrees (Math.PI)
+					// Adjust the index (i) based on which specific ones in your array are backward
+					if (i === 1 || i === 3) { 
+						const extraRotation = new THREE.Quaternion();
+						extraRotation.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
+						carWheels[i].quaternion.multiply(extraRotation);
+					}
 
-			// This is the "magic" line:
-			// Since the wheels are children of the car, we must convert
-			// the world position (from Cannon) into local space for the car.
-				carVisual.worldToLocal(carWheels[i].position);
+					carVisual.worldToLocal(carWheels[i].position);
+				}
 			}
-		}
 
             // 3. Simple Follow Camera (Fixed Vector Math)
             // We convert Cannon's position to a Three.js Vector3 first
