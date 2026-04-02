@@ -97,12 +97,13 @@
             indexUpAxis: 1
         });
 
+// 1. Your general settings (The template)
 		const wheelOptions = {
 			radius: 0.15,
-			directionLocal: new CANNON.Vec3(0, -1, 0), // Pushes down
-			axleLocal: new CANNON.Vec3(1, 0, 0),      // Rotates side-to-side (Vertical spin)
+			directionLocal: new CANNON.Vec3(0, -1, 0),
+			axleLocal: new CANNON.Vec3(1, 0, 0),
 			suspensionStiffness: 30,
-			suspensionRestLength: 0.1,                // Reduced to stop floating
+			suspensionRestLength: 0.1,
 			frictionSlip: 1.4,
 			dampingRelaxation: 2.3,
 			dampingCompression: 4.4,
@@ -111,21 +112,26 @@
 			maxSuspensionTravel: 0.2,
 			customSlidingRotationalSpeed: -30,
 			useCustomSlidingRotationalSpeed: true
-				// Note: chassisConnectionPointLocal is usually set per-wheel in the loop
-};
+		};
 
-        // Add 4 wheels
-			const wheelOffsets = [
-            new CANNON.Vec3(0.4, -0.2, 0.5),  // Front Left
-            new CANNON.Vec3(-0.4, -0.2, 0.5), // Front Right
-            new CANNON.Vec3(0.4, -0.2, -0.5), // Back Left
-            new CANNON.Vec3(-0.4, -0.2, -0.5) // Back Right
-        ];
+		// 2. Define the 4 unique locations for the wheels
+		// These are [Left/Right, Height, Front/Back]
+		const wheelOffsets = [
+			new CANNON.Vec3(0.4, 0, 0.5),  // Front Left
+			new CANNON.Vec3(-0.4, 0, 0.5), // Front Right
+			new CANNON.Vec3(0.4, 0, -0.5), // Back Left
+			new CANNON.Vec3(-0.4, 0, -0.5) // Back Right
+		];
 
-        wheelOffsets.forEach(offset => {
-            wheelOptions.chassisConnectionPointLocal.copy(offset);
-            vehicle.addWheel(wheelOptions);
-        });
+		// 3. Add them to the vehicle
+		wheelOffsets.forEach((offset) => {
+			// We combine the template with the specific offset
+			const options = { 
+				...wheelOptions, 
+				chassisConnectionPointLocal: offset 
+			};
+			vehicle.addWheel(options);
+		});
 
         vehicle.addToWorld(world);
 
