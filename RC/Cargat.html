@@ -185,90 +185,78 @@
             chassisBody.angularVelocity.set(0,0,0);
         }
 
- // --- Animation Loop ---
-		function update() {
-			world.step(1/60);
+// --- Animation Loop ---
+function update() {
+    world.step(1/60);
 
-			// 1. Settings
-			const engineForce = 150; 
-			const maxSteer = 0.5;
-			const brakeForce = 20;
-			const lerpSpeed = 0.1; // Smoothness of the snap-back
+    // 1. Core Settings
+    const engineForce = 200;  // Slightly buffed for the brewery floor
+    const maxSteer = 0.5;
+    const brakeForce = 20;
+    const lerpSpeed = 0.1; 
 
-			// 2. Steering Logic)
-			if (keys.a) {
-				currentSteer = -maxSteer; // Left
-			} else if (keys.d) {
-				currentSteer = maxSteer;  // Right
-			} else {
-				currentSteer *= (1 - lerpSpeed); // Snap Back to center
-				if (Math.abs(currentSteer) < 0.001) currentSteer = 0;
-			}
+    // 2. Simplified Steering (One block, no fighting)
+    if (keys.a) {
+        currentSteer = -maxSteer; 
+    } else if (keys.d) {
+        currentSteer = maxSteer;  
+    } else {
+        currentSteer *= (1 - lerpSpeed); 
+        if (Math.abs(currentSteer) < 0.001) currentSteer = 0;
+    }
 
-			// 3. Driving Logic
-			const force = keys.w ? engineForce : (keys.s ? -engineForce : 0);
-			const currentBrake = keys.space ? brakeForce : 0;
+    // 3. Driving & Braking
+    const force = keys.w ? engineForce : (keys.s ? -engineForce : 0);
+    const currentBrake = keys.space ? brakeForce : 0;
 
-			// 4. Apply to Wheels
-			// Front Wheels (2, 3): These handle the STEERING
-			vehicle.setSteeringValue(currentSteer, 2);
-			vehicle.setSteeringValue(currentSteer, 3);
-			vehicle.applyEngineForce(0, 2);
-			vehicle.applyEngineForce(0, 3);
+    // 4. Apply Physics (0,1 = Front | 2,3 = Back)
+    // Adjusting these to the most common Raycast layout:
+    vehicle.setSteeringValue(currentSteer, 0);
+    vehicle.setSteeringValue(currentSteer, 1);
+    
+    vehicle.applyEngineForce(force, 2);
+    vehicle.applyEngineForce(force, 3);
 
-			// Back Wheels (0, 1): These handle the DRIVE
-			vehicle.applyEngineForce(force, 0);
-			vehicle.applyEngineForce(force, 1);
-			vehicle.setSteeringValue(0, 0);
-			vehicle.setSteeringValue(0, 1);
+    for (let i = 0; i < 4; i++) {
+        vehicle.setBrake(currentBrake, i);
+    }
 
-			// Apply Brakes to all
-			for (let i = 0; i < 4; i++) {
-				vehicle.setBrake(currentBrake, i);
-			}
+    // 5. Visual Sync (The only place we should have "extra" math)
+    if(carVisual) {
+        carVisual.position.copy(chassisBody.position);
+        carVisual.quaternion.copy(chassisBody.quaternion);
 
-            // 1. Sync Chassis Visuals
-            if(carVisual) {
-                carVisual.position.copy(chassisBody.position);
-                carVisual.quaternion.copy(chassisBody.quaternion);
-						}
-			// Sync GLB Wheel Visuals
-			for (let i = 0; i < vehicle.wheelInfos.length; i++) {
-				vehicle.updateWheelTransform(i);
-				const t = vehicle.wheelInfos[i].worldTransform;
+        for (let i = 0; i < vehicle.wheelInfos.length; i++) {
+            vehicle.updateWheelTransform(i);
+            const t = vehicle.wheelInfos[i].worldTransform;
 
-				if (carWheels[i]) {
-					carWheels[i].position.copy(t.position);
-					carWheels[i].quaternion.copy(t.quaternion);
+            if (carWheels[i]) {
+                carWheels[i].position.copy(t.position);
+                carWheels[i].quaternion.copy(t.quaternion);
 
-					// --- FLIP INWARD TIRES ---
-
-					if (i === 1 || i === 3) {
-						const flipQuat = new THREE.Quaternion();
-						flipQuat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
-						carWheels[i].quaternion.multiply(flipQuat);
-					}
-
-					carVisual.worldToLocal(carWheels[i].position);
-				}
-			}
-
-            // 3. Simple Follow Camera (Fixed Vector Math)
-            // We convert Cannon's position to a Three.js Vector3 first
-            const chassisPos = new THREE.Vector3().copy(chassisBody.position);
-            
-            const cameraOffset = new THREE.Vector3(0, 2, 5);
-            if (carVisual) {
-                cameraOffset.applyQuaternion(carVisual.quaternion);
+                // If the wheel is on the right side, flip it 180
+                // This is the ONLY visual fix we should need
+                if (i === 1 || i === 3) {
+                    const flip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
+                    carWheels[i].quaternion.multiply(flip);
+                }
+                carVisual.worldToLocal(carWheels[i].position);
             }
-            
-            const targetCameraPos = new THREE.Vector3().addVectors(chassisPos, cameraOffset);
-            camera.position.lerp(targetCameraPos, 0.1);
-            camera.lookAt(chassisPos);
-
-            renderer.render(scene, camera);
-            requestAnimationFrame(update);
         }
+    }
+
+    // 6. Camera Logic
+    const chassisPos = new THREE.Vector3().copy(chassisBody.position);
+    const cameraOffset = new THREE.Vector3(0, 2, 5); 
+    if (carVisual) {
+        cameraOffset.applyQuaternion(carVisual.quaternion);
+    }
+    camera.position.lerp(chassisPos.clone().add(cameraOffset), 0.1);
+    camera.lookAt(chassisPos);
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(update);
+}
 
         update();
 
