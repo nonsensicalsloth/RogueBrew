@@ -123,16 +123,17 @@
 			new CANNON.Vec3(-0.4, 0, -0.5) // Back Right
 		];
 
-		// 3. Add them to the vehicle
-		wheelOffsets.forEach((offset) => {
-			// We combine the template with the specific offset
+		// --- 3. Add Wheels to Vehicle ---
+		wheelOffsets.forEach((offset, index) => {
 			const options = { 
 				...wheelOptions, 
-				chassisConnectionPointLocal: offset
-				isFrontWheel: (index === 2 || index === 3)
-			};
+				chassisConnectionPointLocal: offset,
+				// Wheels 2 and 3 get steering (index 2 or 3)
+				isFrontWheel: (index === 2 || index === 3) 
+			}; // <--- This closes the 'options' object
+
 			vehicle.addWheel(options);
-		});
+		}); // <--- This closes the 'forEach' loop
 
         vehicle.addToWorld(world);
 
