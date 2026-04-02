@@ -189,51 +189,47 @@
 		function update() {
 			world.step(1/60);
 
+			// 1. Settings (Only declare these ONCE)
+			const engineForce = 150; 
 			const maxSteer = 0.5;
-			const lerpSpeed = 0.1; // How fast it snaps back (0.1 is smooth)
+			const brakeForce = 20;
+			const lerpSpeed = 0.1; // Smoothness of the snap-back
 
-			// Steering Logic
+			// 2. Steering Logic (Using the 'currentSteer' we defined outside)
 			if (keys.a) {
-				currentSteer = -maxSteer; // Now A is Left
+				currentSteer = -maxSteer; // Left
 			} else if (keys.d) {
-				currentSteer = maxSteer;  // Now D is Right
+				currentSteer = maxSteer;  // Right
 			} else {
-				// Smoothly return to 0 (The Snap Back)
+				// Snap Back to center
 				currentSteer *= (1 - lerpSpeed); 
 				if (Math.abs(currentSteer) < 0.001) currentSteer = 0;
 			}
 
-			// Apply the value to your front wheels (2 and 3)
+			// 3. Driving Logic
+			const force = keys.w ? engineForce : (keys.s ? -engineForce : 0);
+			const currentBrake = keys.space ? brakeForce : 0;
+
+			// 4. Apply to Wheels
+			// Front Wheels (2, 3): These handle the STEERING
 			vehicle.setSteeringValue(currentSteer, 2);
 			vehicle.setSteeringValue(currentSteer, 3);
-
-            // 1. Drive & Steering Values
-            const engineForce = 150; 
-            const maxSteer = 0.5;
-            const brakeForce = 20;
-
-            // Determine direction: W is forward (positive), S is backward (negative)
-            const force = keys.w ? engineForce : (keys.s ? -engineForce : 0);
-            // Determine steer: D is right (positive), A is left (negative)
-            const steer = (keys.d ? 1 : 0) + (keys.a ? -1 : 0);
-
-			// WHEELS 2 & 3: These are your FRONT (Steering) wheels
-			vehicle.setSteeringValue(steer * maxSteer, 2);
-			vehicle.setSteeringValue(steer * maxSteer, 3);
 			vehicle.applyEngineForce(0, 2);
 			vehicle.applyEngineForce(0, 3);
 
-			// WHEELS 0 & 1: These are your BACK (Drive) wheels
+			// Back Wheels (0, 1): These handle the DRIVE
 			vehicle.applyEngineForce(force, 0);
 			vehicle.applyEngineForce(force, 1);
 			vehicle.setSteeringValue(0, 0);
 			vehicle.setSteeringValue(0, 1);
 
-            // 3. Brakes (All 4 wheels)
-            const currentBrake = keys.space ? brakeForce : 0;
-            for (let i = 0; i < 4; i++) {
-                vehicle.setBrake(currentBrake, i);
-            }
+			// Apply Brakes to all
+			for (let i = 0; i < 4; i++) {
+				vehicle.setBrake(currentBrake, i);
+			}
+
+		
+		}
 
             // 1. Sync Chassis Visuals
             if(carVisual) {
