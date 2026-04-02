@@ -43,6 +43,9 @@
         world.gravity.set(0, -9.82, 0);
         world.broadphase = new CANNON.SAPBroadphase(world);
 
+		let currentSteer = 0;
+
+
         // --- Lighting ---
         const ambient = new THREE.AmbientLight(0xffffff, 0.6);
         scene.add(ambient);
@@ -183,23 +186,27 @@
         }
 
  // --- Animation Loop ---
-function update() {
-            world.step(1/60);
-			const lerpSpeed = 0.1; // Higher = snappier, Lower = smoother/heavy truck feel
+		function update() {
+			world.step(1/60);
+
+			const maxSteer = 0.5;
+			const lerpSpeed = 0.1; // How fast it snaps back (0.1 is smooth)
+
+			// Steering Logic
 			if (keys.a) {
-				currentSteer = -maxSteer;
+				currentSteer = -maxSteer; // Now A is Left
 			} else if (keys.d) {
-				currentSteer = maxSteer;
+				currentSteer = maxSteer;  // Now D is Right
 			} else {
-				// This is the "Snap Back" logic
-				// It slowly pulls the steering value back to 0 when you let go
+				// Smoothly return to 0 (The Snap Back)
 				currentSteer *= (1 - lerpSpeed); 
-				if (Math.abs(currentSteer) < 0.01) currentSteer = 0;
+				if (Math.abs(currentSteer) < 0.001) currentSteer = 0;
 			}
 
-				vehicle.setSteeringValue(currentSteer, 2);
-				vehicle.setSteeringValue(currentSteer, 3);
-				
+			// Apply the value to your front wheels (2 and 3)
+			vehicle.setSteeringValue(currentSteer, 2);
+			vehicle.setSteeringValue(currentSteer, 3);
+
             // 1. Drive & Steering Values
             const engineForce = 150; 
             const maxSteer = 0.5;
