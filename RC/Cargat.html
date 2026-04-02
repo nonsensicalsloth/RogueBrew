@@ -160,7 +160,7 @@
             chassisBody.angularVelocity.set(0,0,0);
         }
 
-        // --- Animation Loop ---
+ // --- Animation Loop ---
         function update() {
             world.step(1/60);
 
@@ -181,12 +181,13 @@
             vehicle.setBrake(keys.space ? brakeForce : 0, 2);
             vehicle.setBrake(keys.space ? brakeForce : 0, 3);
 
-            // Sync Visuals
+            // 1. Sync Chassis Visuals
             if(carVisual) {
                 carVisual.position.copy(chassisBody.position);
                 carVisual.quaternion.copy(chassisBody.quaternion);
             }
 
+            // 2. Sync Wheel Visuals
             for (let i = 0; i < vehicle.wheelInfos.length; i++) {
                 vehicle.updateWheelTransform(i);
                 const t = vehicle.wheelInfos[i].worldTransform;
@@ -194,10 +195,18 @@
                 wheelMeshes[i].quaternion.copy(t.quaternion);
             }
 
-            // Simple Follow Camera
-            const cameraOffset = new THREE.Vector3(0, 2, 5).applyQuaternion(carVisual?.quaternion || new THREE.Quaternion());
-            camera.position.lerp(chassisBody.position.clone().add(cameraOffset), 0.1);
-            camera.lookAt(chassisBody.position.x, chassisBody.position.y, chassisBody.position.z);
+            // 3. Simple Follow Camera (Fixed Vector Math)
+            // We convert Cannon's position to a Three.js Vector3 first
+            const chassisPos = new THREE.Vector3().copy(chassisBody.position);
+            
+            const cameraOffset = new THREE.Vector3(0, 2, 5);
+            if (carVisual) {
+                cameraOffset.applyQuaternion(carVisual.quaternion);
+            }
+            
+            const targetCameraPos = new THREE.Vector3().addVectors(chassisPos, cameraOffset);
+            camera.position.lerp(targetCameraPos, 0.1);
+            camera.lookAt(chassisPos);
 
             renderer.render(scene, camera);
             requestAnimationFrame(update);
