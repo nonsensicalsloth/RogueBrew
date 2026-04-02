@@ -189,20 +189,19 @@
 		function update() {
 			world.step(1/60);
 
-			// 1. Settings (Only declare these ONCE)
+			// 1. Settings
 			const engineForce = 150; 
 			const maxSteer = 0.5;
 			const brakeForce = 20;
 			const lerpSpeed = 0.1; // Smoothness of the snap-back
 
-			// 2. Steering Logic (Using the 'currentSteer' we defined outside)
+			// 2. Steering Logic)
 			if (keys.a) {
 				currentSteer = -maxSteer; // Left
 			} else if (keys.d) {
 				currentSteer = maxSteer;  // Right
 			} else {
-				// Snap Back to center
-				currentSteer *= (1 - lerpSpeed); 
+				currentSteer *= (1 - lerpSpeed); // Snap Back to center
 				if (Math.abs(currentSteer) < 0.001) currentSteer = 0;
 			}
 
@@ -228,9 +227,6 @@
 				vehicle.setBrake(currentBrake, i);
 			}
 
-		
-		}
-
             // 1. Sync Chassis Visuals
             if(carVisual) {
                 carVisual.position.copy(chassisBody.position);
@@ -246,8 +242,7 @@
 					carWheels[i].quaternion.copy(t.quaternion);
 
 					// --- FLIP INWARD TIRES ---
-					// If sorting worked, indices 1 and 3 are the Right-side wheels.
-					// We rotate them 180 degrees around their local UP axis.
+
 					if (i === 1 || i === 3) {
 						const flipQuat = new THREE.Quaternion();
 						flipQuat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
