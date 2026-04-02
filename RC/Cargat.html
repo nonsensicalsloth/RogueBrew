@@ -191,7 +191,7 @@ function update() {
 
     // 1. Core Settings
     const engineForce = 200;  // Slightly buffed for the brewery floor
-    const maxSteer = 0.5;
+    const maxSteer = 0.3;
     const brakeForce = 20;
     const lerpSpeed = 0.1; 
 
@@ -221,29 +221,35 @@ function update() {
         vehicle.setBrake(currentBrake, i);
     }
 
-    // 5. Visual Sync (The only place we should have "extra" math)
-    if(carVisual) {
-        carVisual.position.copy(chassisBody.position);
-        carVisual.quaternion.copy(chassisBody.quaternion);
+	// --- 5. Visual Sync ---
+	if (carVisual) {
+		carVisual.position.copy(chassisBody.position);
+		carVisual.quaternion.copy(chassisBody.quaternion);
 
-        for (let i = 0; i < vehicle.wheelInfos.length; i++) {
-            vehicle.updateWheelTransform(i);
-            const t = vehicle.wheelInfos[i].worldTransform;
+		for (let i = 0; i < vehicle.wheelInfos.length; i++) {
+			vehicle.updateWheelTransform(i);
+			const t = vehicle.wheelInfos[i].worldTransform;
 
-            if (carWheels[i]) {
-                carWheels[i].position.copy(t.position);
-                carWheels[i].quaternion.copy(t.quaternion);
+			if (carWheels[i]) {
+				// Position is always easy
+				carWheels[i].position.copy(t.position);
+				
+				// Start with the Physics Rotation
+				carWheels[i].quaternion.copy(t.quaternion);
 
-                // If the wheel is on the right side, flip it 180
-                // This is the ONLY visual fix we should need
-                if (i === 1 || i === 3) {
-                    const flip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
-                    carWheels[i].quaternion.multiply(flip);
-                }
-                carVisual.worldToLocal(carWheels[i].position);
-            }
-        }
-    }
+				// FIX 1: Flip the Right-Side Tires 180 degrees
+				// (Assuming index 1 and 3 are Right side from your sort)
+				if (i === 1 || i === 3) {
+					const flip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
+					carWheels[i].quaternion.multiply(flip);
+				}
+
+				// FIX 2: Convert World position to Local position
+				// This stops the wheels from "drifting" away from the car
+				carVisual.worldToLocal(carWheels[i].position);
+			}
+		}
+	}
 
     // 6. Camera Logic
     const chassisPos = new THREE.Vector3().copy(chassisBody.position);
