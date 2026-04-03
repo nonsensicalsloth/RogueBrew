@@ -144,23 +144,29 @@
 		let carWheels = []; // This will hold our 4 GLB wheel meshes
 
 		loader.load('vehicle-racer.glb', (glb) => {
-			carVisual = glb.scene;
-			let foundWheels = [];
-			
-			carVisual.traverse(child => {
-				if (child.isMesh && child.name.toLowerCase().includes('wheel')) {
-					// Must be capital Y, X, or Z!
-					child.geometry.rotateX(Math.PI / 2); 
-					foundWheels.push(child);
-				}
-			});
+					carVisual = glb.scene;
+					let foundWheels = [];
+					
+					carVisual.traverse(child => {
+						if (child.isMesh && child.name.toLowerCase().includes('wheel')) {
+							// 1. Reset any previous messy rotations
+							child.geometry.rotateX(0);
+							child.geometry.rotateY(0);
+							child.geometry.rotateZ(0);
 
-			// Sort: Index 0/2 = Left, Index 1/3 = Right
-			foundWheels.sort((a, b) => a.position.x - b.position.x);
-			carWheels = foundWheels;
-			
-			scene.add(carVisual);
-		});
+							// 2. Stand them upright (Note the CAPITAL X)
+							child.geometry.rotateX(Math.PI / 2); 
+							
+							foundWheels.push(child);
+						}
+					});
+
+					// Sort: Index 0/2 = Left side | Index 1/3 = Right side
+					foundWheels.sort((a, b) => a.position.x - b.position.x);
+					carWheels = foundWheels;
+					
+					scene.add(carVisual);
+				});
 
         // --- Input Handling ---
         const keys = { w: false, s: false, a: false, d: false, space: false };
