@@ -149,15 +149,13 @@
 			
 			carVisual.traverse(child => {
 				if (child.isMesh && child.name.toLowerCase().includes('wheel')) {
-					// Clear previous attempts and use rotateX
-					child.geometry.rotateY(0); 
-					child.geometry.rotateZ(0);
-					child.geometry.rotateY(Math.PI / 2); // This should stand them upright
+					// Must be capital Y, X, or Z!
+					child.geometry.rotateX(Math.PI / 2); 
 					foundWheels.push(child);
 				}
 			});
 
-			// Sort them by X position so index 0/2 are Left, 1/3 are Right
+			// Sort: Index 0/2 = Left, Index 1/3 = Right
 			foundWheels.sort((a, b) => a.position.x - b.position.x);
 			carWheels = foundWheels;
 			
@@ -226,26 +224,31 @@ function update() {
 			carVisual.position.copy(chassisBody.position);
 			carVisual.quaternion.copy(chassisBody.quaternion);
 
+			// Inside your update() function...
 			for (let i = 0; i < vehicle.wheelInfos.length; i++) {
 				vehicle.updateWheelTransform(i);
 				const t = vehicle.wheelInfos[i].worldTransform;
 
 				if (carWheels[i]) {
-					// Position is always easy
 					carWheels[i].position.copy(t.position);
-					
-					// Start with the Physics Rotation
 					carWheels[i].quaternion.copy(t.quaternion);
 
-					// FIX 1: Flip the Right-Side Tires 180 degrees
-					// (Assuming index 1 and 3 are Right side from your sort)
+					// --- THE 180° FLIPS ---
+					// 1. Flip Right-side wheels (rims facing out)
 					if (i === 1 || i === 3) {
-						const flip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
-						carWheels[i].quaternion.multiply(flip);
+						const sideFlip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
+						carWheels[i].quaternion.multiply(sideFlip);
 					}
 
-					// FIX 2: Convert World position to Local position
-					// This stops the wheels from "drifting" away from the car
+					// 2. Flip Back wheels (if they are still backward)
+					// If your back wheels (index 2/3) are still wrong, uncomment this:
+					/*
+					if (i === 2 || i === 3) {
+						const backFlip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
+						carWheels[i].quaternion.multiply(backFlip);
+					}
+					*/
+
 					carVisual.worldToLocal(carWheels[i].position);
 				}
 			}
