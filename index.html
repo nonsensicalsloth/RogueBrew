@@ -245,9 +245,7 @@
 <!-- ===== EEVEE CHOICE OVERLAY ===== -->
 <div id="eevee-choice-overlay" style="display:none;position:fixed;inset:0;z-index:201;background:rgba(0,0,0,0.88);
      align-items:center;justify-content:center;flex-direction:column;gap:18px;">
-  <div style="font-family:'Press Start 2P',monospace;font-size:10px;color:#fff;text-align:center;line-height:1.8;">
-    Eevee is evolving!<br>Choose its evolution:
-  </div>
+  <div id="eevee-choice-title" style="font-family:'Press Start 2P',monospace;font-size:10px;color:#fff;text-align:center;line-height:1.8;"></div>
   <div id="eevee-choices" style="display:flex;gap:20px;"></div>
 </div>
 
@@ -255,13 +253,13 @@
 <canvas id="battle-anim-canvas" style="position:fixed;inset:0;pointer-events:none;z-index:150;display:none;"></canvas>
 
 <!-- Scripts (order matters) -->
-<script src="js/species.js?v=1.6"></script>
-<script src="js/data.js?v=1.6"></script>
-<script src="js/map.js?v=1.6"></script>
-<script src="js/battle.js?v=1.6"></script>
-<script src="js/ui.js?v=1.6"></script>
-<script src="js/save.js?v=1.6"></script>
-<script src="js/game.js?v=1.6"></script>
+<script src="js/species.js"></script>
+<script src="js/data.js"></script>
+<script src="js/map.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/save.js"></script>
+<script src="js/game.js"></script>
 <script>
   (function() {
     // The Konami Code sequence: Up, Up, Down, Down, Left, Right, Left, Right, B, A
