@@ -1628,13 +1628,13 @@ function doItemNode(node) {
 
   // ── Locked choices: generate once, store on node, reuse on refresh ──
   if (!node.lockedItemPicks) {
-    // Exclude held-type items already in bag or on a Pokemon (usable items can stack)
+    // Exclude held-type items already in bag or on a Pokemon (usable and stackable items can appear multiple times)
     const usedIds = new Set([
       ...state.items.filter(it => !it.usable).map(it => it.id),
       ...state.team.flatMap(p => (p.heldItems || []).map(it => it.id)),
     ]);
     const heldAvailable = ITEM_POOL.filter(it =>
-      !usedIds.has(it.id) && (it.minMap === undefined || state.currentMap >= it.minMap)
+      (it.stackable || !usedIds.has(it.id)) && (it.minMap === undefined || state.currentMap >= it.minMap)
     );
 
     // Usable items: filter out ones that can't be applied to current team
@@ -2105,13 +2105,13 @@ function runBattleScreen(enemyTeam, isBoss, onWin, onLose, enemyName = null, ene
       // Sync battle-result HP onto state team, then apply level gains
       for (let i = 0; i < state.team.length; i++) {
         if (resultP[i]) state.team[i].currentHp = resultP[i].currentHp;
+        // Reset Overcarbonated flags so it fires again next battle
+        delete state.team[i]._overcarb_fired;
+        delete state.team[i]._overcarb_vented;
       }
 
       // Pizza Party: heal 5% max HP per holder after every battle
       const pizzaHeals = applyPizzaParty(state.team);
-      if (pizzaHeals.length > 0) {
-        showMapNotification('🍕 Pizza Party! ' + pizzaHeals.map(h => `${h.name} +${h.amount}HP`).join(', '));
-      }
 
       // Nuzlocke: permanently release any brews that fainted this battle
       if (state.modifiers && state.modifiers.has('nuzlocke')) {
@@ -2122,6 +2122,11 @@ function runBattleScreen(enemyTeam, isBoss, onWin, onLose, enemyName = null, ene
           const names = fainted.map(p => p.nickname || p.brewName || p.name).join(', ');
           showMapNotification(`💀 Nuzlocke: ${names} permanently released.`);
         }
+      }
+
+      // Show Pizza Party notification after Nuzlocke so released pokemon aren't mentioned
+      if (pizzaHeals.length > 0) {
+        showMapNotification('🍕 Pizza Party! ' + pizzaHeals.map(h => `${h.name} +${h.amount}HP`).join(', '));
       }
 
       const maxEnemyLevel = Math.max(...resultE.map(p => p.level));
@@ -2139,6 +2144,15 @@ function runBattleScreen(enemyTeam, isBoss, onWin, onLose, enemyName = null, ene
         resolve(true);
       };
     } else {
+      // Reset Overcarbonated flags even on a loss
+      for (let i = 0; i < state.team.length; i++) {
+        delete state.team[i]._overcarb_fired;
+        delete state.team[i]._overcarb_vented;
+      }
+      // Sync HP so fainted pokemon don't incorrectly count as Pizza Party holders
+      for (let i = 0; i < state.team.length; i++) {
+        if (resultP[i]) state.team[i].currentHp = resultP[i].currentHp;
+      }
       // Pizza Party heals even on a loss
       const pizzaHeals = applyPizzaParty(state.team);
       if (pizzaHeals.length > 0) {

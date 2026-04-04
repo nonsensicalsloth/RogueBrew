@@ -278,8 +278,8 @@ const ITEM_POOL = [
   { id: 'focus_band',         name: 'Steel Toe Boots',      desc: '15% chance to survive a KO with 1 HP',                               icon: '🥾' },
   { id: 'air_balloon',        name: 'CO2 Purge',            desc: 'Immune to Brown-type moves',                                          icon: '💨' },
   // ── Team-wide ─────────────────────────────────────────────────────────────
-  { id: 'pizza_party',        name: 'Pizza Party',          desc: 'After every battle, the whole team heals 5% max HP (stackable)',      icon: '🍕' },
-  { id: 'edible_glitter',     name: 'Edible Glitter',       desc: '+5% shiny encounter chance per holder (stackable)',                   icon: '✨' },
+  { id: 'pizza_party',        name: 'Pizza Party',          desc: 'After every battle, the whole team heals 5% max HP (stackable)',      icon: '🍕', stackable: true },
+  { id: 'edible_glitter',     name: 'Edible Glitter',       desc: '+5% shiny encounter chance per holder (stackable)',                   icon: '✨', stackable: true },
   // ── Type-boosting items (all 18 types) — 40% boost ────────────────────────
   { id: 'silk_scarf',         name: 'Pale Malt',            desc: '+40% Blonde flavor/aroma damage',                                     icon: '🌾' },
   { id: 'charcoal',           name: 'Crystal Malt',         desc: '+40% Red flavor/aroma damage',                                        icon: '🍂' },
