@@ -2203,200 +2203,83 @@ async function playEvoAnimation(pokemon, evoData) {
 }
 
 // Show Eevee evolution choice and return the chosen evoData (from EEVEE_EVOLUTIONS)
+// ── Shared branching evolution choice UI ─────────────────────────────────────
+// options: [{ into, name, types }]  (same shape as EEVEE_EVOLUTIONS entries)
+function showBranchingEvoChoice(pokemon, titleText, options) {
+  return new Promise(resolve => {
+    const overlay   = document.getElementById('eevee-choice-overlay');
+    const titleEl   = document.getElementById('eevee-choice-title');
+    const choicesEl = document.getElementById('eevee-choices');
+
+    // Set the title dynamically using the pokemon's display name
+    const displayName = pokemon.nickname || pokemon.brewName || pokemon.name;
+    titleEl.innerHTML = `${displayName} is evolving!<br>Choose its evolution:`;
+
+    choicesEl.innerHTML = '';
+
+    for (const evoData of options) {
+      const spriteUrl = pokemon.isShiny
+        ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${evoData.into}.png`
+        : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${evoData.into}.png`;
+
+      // Use the brewName from species data if available
+      const species  = getSpeciesById(evoData.into);
+      const showName = species?.brewName || evoData.name;
+
+      const card = document.createElement('div');
+      card.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;' +
+        'border:2px solid #555;border-radius:8px;padding:12px 16px;background:#1a1a1a;' +
+        'transition:border-color 0.15s,background 0.15s;';
+      card.onmouseenter = () => { card.style.borderColor = '#fff'; card.style.background = '#2a2a2a'; };
+      card.onmouseleave = () => { card.style.borderColor = '#555'; card.style.background = '#1a1a1a'; };
+
+      const img = document.createElement('img');
+      img.src = spriteUrl;
+      img.style.cssText = 'width:72px;height:72px;image-rendering:pixelated;';
+
+      const nameEl = document.createElement('div');
+      nameEl.textContent = showName;
+      nameEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:8px;color:#fff;text-align:center;max-width:100px;line-height:1.6;";
+
+      const typeEl = document.createElement('div');
+      typeEl.textContent = evoData.types.join('/');
+      typeEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:7px;color:#aaa;";
+
+      card.append(img, nameEl, typeEl);
+      card.onclick = () => {
+        overlay.style.display = 'none';
+        resolve(evoData);
+      };
+      choicesEl.appendChild(card);
+    }
+
+    overlay.style.display = 'flex';
+  });
+}
+
 function showEeveeChoice(pokemon) {
-  return new Promise(resolve => {
-    const overlay  = document.getElementById('eevee-choice-overlay');
-    const choicesEl = document.getElementById('eevee-choices');
-    choicesEl.innerHTML = '';
-
-    for (const evoData of EEVEE_EVOLUTIONS) {
-      const spriteUrl = pokemon.isShiny
-        ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${evoData.into}.png`
-        : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${evoData.into}.png`;
-
-      const card = document.createElement('div');
-      card.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;' +
-        'border:2px solid #555;border-radius:8px;padding:12px 16px;background:#1a1a1a;' +
-        'transition:border-color 0.15s,background 0.15s;';
-      card.onmouseenter = () => { card.style.borderColor = '#fff'; card.style.background = '#2a2a2a'; };
-      card.onmouseleave = () => { card.style.borderColor = '#555'; card.style.background = '#1a1a1a'; };
-
-      const img = document.createElement('img');
-      img.src = spriteUrl;
-      img.style.cssText = 'width:72px;height:72px;image-rendering:pixelated;';
-
-      const nameEl = document.createElement('div');
-      nameEl.textContent = evoData.name;
-      nameEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:8px;color:#fff;";
-
-      const typeEl = document.createElement('div');
-      typeEl.textContent = evoData.types.join('/');
-      typeEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:7px;color:#aaa;";
-
-      card.append(img, nameEl, typeEl);
-      card.onclick = () => {
-        overlay.style.display = 'none';
-        resolve(evoData);
-      };
-      choicesEl.appendChild(card);
-    }
-
-    overlay.style.display = 'flex';
-  });
+  return showBranchingEvoChoice(pokemon, 'evolving', EEVEE_EVOLUTIONS);
 }
 
-// Show Gloom evolution choice — Vileplume or Bellossom
 function showGloomChoice(pokemon) {
-  return new Promise(resolve => {
-    const overlay  = document.getElementById('eevee-choice-overlay');
-    const choicesEl = document.getElementById('eevee-choices');
-    choicesEl.innerHTML = '';
-
-    // Inject a title above the choices
-    const titleEl = document.createElement('div');
-    titleEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:9px;color:#fff;text-align:center;margin-bottom:8px;width:100%;";
-    titleEl.textContent = 'Gloom is evolving! Choose:';
-    choicesEl.appendChild(titleEl);
-
-    const options = [
-      { into: 45,  name: 'Vileplume', types: ['Ipa', 'Brett'] },
-      { into: 182, name: 'Bellossom', types: ['Ipa'] },
-    ];
-
-    for (const evoData of options) {
-      const spriteUrl = pokemon.isShiny
-        ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${evoData.into}.png`
-        : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${evoData.into}.png`;
-
-      const card = document.createElement('div');
-      card.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;' +
-        'border:2px solid #555;border-radius:8px;padding:12px 16px;background:#1a1a1a;' +
-        'transition:border-color 0.15s,background 0.15s;';
-      card.onmouseenter = () => { card.style.borderColor = '#fff'; card.style.background = '#2a2a2a'; };
-      card.onmouseleave = () => { card.style.borderColor = '#555'; card.style.background = '#1a1a1a'; };
-
-      const img = document.createElement('img');
-      img.src = spriteUrl;
-      img.style.cssText = 'width:72px;height:72px;image-rendering:pixelated;';
-
-      const nameEl = document.createElement('div');
-      nameEl.textContent = evoData.name;
-      nameEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:8px;color:#fff;";
-
-      const typeEl = document.createElement('div');
-      typeEl.textContent = evoData.types.join('/');
-      typeEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:7px;color:#aaa;";
-
-      card.append(img, nameEl, typeEl);
-      card.onclick = () => {
-        overlay.style.display = 'none';
-        resolve(evoData);
-      };
-      choicesEl.appendChild(card);
-    }
-
-    overlay.style.display = 'flex';
-  });
+  return showBranchingEvoChoice(pokemon, 'evolving', [
+    { into: 45,  name: 'Vileplume', types: ['Ipa', 'Brett'] },
+    { into: 182, name: 'Bellossom', types: ['Ipa'] },
+  ]);
 }
 
-// Show Poliwhirl evolution choice — Poliwrath or Politoed
 function showPoliwhirlChoice(pokemon) {
-  return new Promise(resolve => {
-    const overlay   = document.getElementById('eevee-choice-overlay');
-    const choicesEl = document.getElementById('eevee-choices');
-    choicesEl.innerHTML = '';
-
-    const titleEl = document.createElement('div');
-    titleEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:9px;color:#fff;text-align:center;margin-bottom:8px;width:100%;";
-    titleEl.textContent = 'Poliwhirl is evolving! Choose:';
-    choicesEl.appendChild(titleEl);
-
-    const options = [
-      { into: 62,  name: 'Poliwrath', types: ['Lager', 'Barleywine'] },
-      { into: 186, name: 'Politoed',  types: ['Lager'] },
-    ];
-
-    for (const evoData of options) {
-      const spriteUrl = pokemon.isShiny
-        ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${evoData.into}.png`
-        : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${evoData.into}.png`;
-
-      const card = document.createElement('div');
-      card.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;' +
-        'border:2px solid #555;border-radius:8px;padding:12px 16px;background:#1a1a1a;' +
-        'transition:border-color 0.15s,background 0.15s;';
-      card.onmouseenter = () => { card.style.borderColor = '#fff'; card.style.background = '#2a2a2a'; };
-      card.onmouseleave = () => { card.style.borderColor = '#555'; card.style.background = '#1a1a1a'; };
-
-      const img = document.createElement('img');
-      img.src = spriteUrl;
-      img.style.cssText = 'width:72px;height:72px;image-rendering:pixelated;';
-
-      const nameEl = document.createElement('div');
-      nameEl.textContent = evoData.name;
-      nameEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:8px;color:#fff;";
-
-      const typeEl = document.createElement('div');
-      typeEl.textContent = evoData.types.join('/');
-      typeEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:7px;color:#aaa;";
-
-      card.append(img, nameEl, typeEl);
-      card.onclick = () => { overlay.style.display = 'none'; resolve(evoData); };
-      choicesEl.appendChild(card);
-    }
-
-    overlay.style.display = 'flex';
-  });
+  return showBranchingEvoChoice(pokemon, 'evolving', [
+    { into: 62,  name: 'Poliwrath', types: ['Lager', 'Barleywine'] },
+    { into: 186, name: 'Politoed',  types: ['Lager'] },
+  ]);
 }
 
-// Show Slowpoke evolution choice — Slowbro or Slowking
 function showSlowpokeChoice(pokemon) {
-  return new Promise(resolve => {
-    const overlay   = document.getElementById('eevee-choice-overlay');
-    const choicesEl = document.getElementById('eevee-choices');
-    choicesEl.innerHTML = '';
-
-    const titleEl = document.createElement('div');
-    titleEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:9px;color:#fff;text-align:center;margin-bottom:8px;width:100%;";
-    titleEl.textContent = 'Slowpoke is evolving! Choose:';
-    choicesEl.appendChild(titleEl);
-
-    const options = [
-      { into: 80,  name: 'Slowbro',  types: ['Lager', 'Belgian'] },
-      { into: 199, name: 'Slowking', types: ['Lager', 'Belgian'] },
-    ];
-
-    for (const evoData of options) {
-      const spriteUrl = pokemon.isShiny
-        ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${evoData.into}.png`
-        : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${evoData.into}.png`;
-
-      const card = document.createElement('div');
-      card.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;' +
-        'border:2px solid #555;border-radius:8px;padding:12px 16px;background:#1a1a1a;' +
-        'transition:border-color 0.15s,background 0.15s;';
-      card.onmouseenter = () => { card.style.borderColor = '#fff'; card.style.background = '#2a2a2a'; };
-      card.onmouseleave = () => { card.style.borderColor = '#555'; card.style.background = '#1a1a1a'; };
-
-      const img = document.createElement('img');
-      img.src = spriteUrl;
-      img.style.cssText = 'width:72px;height:72px;image-rendering:pixelated;';
-
-      const nameEl = document.createElement('div');
-      nameEl.textContent = evoData.name;
-      nameEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:8px;color:#fff;";
-
-      const typeEl = document.createElement('div');
-      typeEl.textContent = evoData.types.join('/');
-      typeEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:7px;color:#aaa;";
-
-      card.append(img, nameEl, typeEl);
-      card.onclick = () => { overlay.style.display = 'none'; resolve(evoData); };
-      choicesEl.appendChild(card);
-    }
-
-    overlay.style.display = 'flex';
-  });
+  return showBranchingEvoChoice(pokemon, 'evolving', [
+    { into: 80,  name: 'Slowbro',  types: ['Lager', 'Belgian'] },
+    { into: 199, name: 'Slowking', types: ['Lager', 'Belgian'] },
+  ]);
 }
 
 // Check team for pending evolutions after a won battle and play animations
