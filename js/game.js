@@ -1450,7 +1450,9 @@ async function doCatchNode(node) {
   // ── Locked choices: generate once, store on node, reuse on refresh ──
   if (!node.lockedCatchInstances && !node.lockedShiny) {
     // Shiny Hunt: 10% redirect to dedicated shiny node; normal: 1%
-    const shinyRedirectChance = isShinyHunt ? 0.10 : 0.01;
+    // Edible Glitter: each holder adds +5% to the redirect chance (stackable)
+    const glitterCount = state.team.filter(p => (p.heldItems||[]).some(it => it.id === 'edible_glitter')).length;
+    const shinyRedirectChance = (isShinyHunt ? 0.10 : 0.01) + (glitterCount * 0.05);
     if (Math.random() < shinyRedirectChance) {
       node.lockedShiny = true;
       saveRun();
@@ -1479,8 +1481,10 @@ async function doCatchNode(node) {
 
     // In shiny_hunt mode each card gets its own 10% shiny roll, locked now.
     // In normal mode each card gets the standard 1% shiny chance.
+    // Edible Glitter adds +5% per holder.
+    const cardShinyChance = (isShinyHunt ? 0.10 : 0.01) + (glitterCount * 0.05);
     node.lockedCatchInstances = choices.map(sp =>
-      createInstance(sp, level, isShinyHunt ? (Math.random() < 0.10) : (Math.random() < 0.01))
+      createInstance(sp, level, Math.random() < cardShinyChance)
     );
     saveRun(); // 🔒 freeze choices — refreshing reloads the same cards
   } else if (node.lockedShiny) {
@@ -2103,6 +2107,12 @@ function runBattleScreen(enemyTeam, isBoss, onWin, onLose, enemyName = null, ene
         if (resultP[i]) state.team[i].currentHp = resultP[i].currentHp;
       }
 
+      // Pizza Party: heal 5% max HP per holder after every battle
+      const pizzaHeals = applyPizzaParty(state.team);
+      if (pizzaHeals.length > 0) {
+        showMapNotification('🍕 Pizza Party! ' + pizzaHeals.map(h => `${h.name} +${h.amount}HP`).join(', '));
+      }
+
       // Nuzlocke: permanently release any brews that fainted this battle
       if (state.modifiers && state.modifiers.has('nuzlocke')) {
         const fainted = state.team.filter(p => p.currentHp <= 0);
@@ -2129,6 +2139,11 @@ function runBattleScreen(enemyTeam, isBoss, onWin, onLose, enemyName = null, ene
         resolve(true);
       };
     } else {
+      // Pizza Party heals even on a loss
+      const pizzaHeals = applyPizzaParty(state.team);
+      if (pizzaHeals.length > 0) {
+        showMapNotification('🍕 Pizza Party! ' + pizzaHeals.map(h => `${h.name} +${h.amount}HP`).join(', '));
+      }
       document.getElementById('btn-continue-battle').style.display = 'block';
       document.getElementById('btn-continue-battle').textContent = 'Continue...';
       document.getElementById('btn-continue-battle').onclick = () => {

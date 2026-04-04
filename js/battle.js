@@ -27,21 +27,25 @@ function calcDamage(attacker, defender, move, items, defItems = []) {
   }
 
   const typeBoostItem = getTypeBoostItem(moveType, items);
-  if (typeBoostItem) damage = Math.floor(damage * 1.5);
+  if (typeBoostItem) damage = Math.floor(damage * 1.4); // type boost: 40%
 
-  if (hasItem(items, 'life_orb'))    damage = Math.floor(damage * 1.3);
+  if (hasItem(items, 'life_orb'))      damage = Math.floor(damage * 1.3);
+  if (hasItem(items, 'hop_extract'))   damage = Math.floor(damage * 1.2);
+  if (hasItem(items, 'late_lunch'))    damage = Math.floor(damage * 1.5);
+  if (hasItem(items, 'pasteurization')) damage = Math.floor(damage * 2.0);
+  // Overcarbonated: first hit only — flag checked/set in the turn loop after calcDamage returns
+  if (hasItem(items, 'overcarbonated') && !attacker._overcarb_fired) damage = Math.floor(damage * 2.0);
 
-  // Physical/special split items
+  // Choice Band: +30% flavor (physical) damage, defender takes +30% more aroma (special) damage
+  // Choice Specs: +30% aroma (special) damage, defender takes +30% more flavor (physical) damage
   if (isSpecial) {
     if (hasItem(items, 'wise_glasses'))  damage = Math.floor(damage * 1.2);
-    if (hasItem(items, 'choice_specs'))  damage = Math.floor(damage * 1.4);
-    if (hasItem(items, 'choice_band'))   damage = Math.floor(damage * 0.7);
-    if (hasItem(items, 'muscle_band'))   damage = damage; // no effect on special
+    if (hasItem(items, 'choice_specs'))  damage = Math.floor(damage * 1.3);
+    if (hasItem(defItems, 'choice_band')) damage = Math.floor(damage * 1.3); // band wearer takes more aroma
   } else {
     if (hasItem(items, 'muscle_band'))   damage = Math.floor(damage * 1.2);
-    if (hasItem(items, 'choice_band'))   damage = Math.floor(damage * 1.4);
-    if (hasItem(items, 'choice_specs'))  damage = Math.floor(damage * 0.7);
-    if (hasItem(items, 'wise_glasses'))  damage = damage; // no effect on physical
+    if (hasItem(items, 'choice_band'))   damage = Math.floor(damage * 1.3);
+    if (hasItem(defItems, 'choice_specs')) damage = Math.floor(damage * 1.3); // specs wearer takes more flavor
   }
 
   // Adaptability Band: +50% if team has ≤2 unique types
@@ -53,12 +57,19 @@ function calcDamage(attacker, defender, move, items, defItems = []) {
   if (hasItem(items, 'expert_belt') && typeEff >= 1.5) damage = Math.floor(damage * 1.2);
   if (hasItem(defItems, 'air_balloon') && moveType.toLowerCase() === 'brown') damage = 0;
 
-  // Crit chance: 6.25% base, +20% with scope_lens or razor_claw
+  // Hop Extract: attacker takes 20% more damage (handled in post-hit recoil below via flag)
+  // Oak Barrel: defender takes 20% less damage
+  if (hasItem(defItems, 'oak_barrel')) damage = Math.floor(damage * 0.8);
+
+  // Crit chance: 6.25% base
+  // scope_lens (Centrifuge): double crit chance (12.5%), normal 1.5x crit damage
+  // razor_claw (C-Box): base crit chance, but crits deal 3x damage
   let critChance = 0.0625;
-  if (hasItem(items, 'scope_lens')) critChance = 0.20;
-  if (hasItem(items, 'razor_claw')) critChance = 0.20;
+  let critMult   = 1.5;
+  if (hasItem(items, 'scope_lens')) critChance = 0.125;
+  if (hasItem(items, 'razor_claw')) critMult   = 3.0;
   const crit = Math.random() < critChance;
-  if (crit) damage = Math.floor(damage * 1.5);
+  if (crit) damage = Math.floor(damage * critMult);
 
   const rng = 0.85 + Math.random() * 0.15;
   damage = Math.max(1, Math.floor(damage * rng));
@@ -76,19 +87,21 @@ function getEffectiveStat(pokemon, stat, items) {
 
   if (stat === 'def') {
     if (hasItem(items, 'eviolite'))     val = Math.floor(val * 1.5);
-    if (hasItem(items, 'assault_vest')) val = Math.floor(val * 1.5);
+    if (hasItem(items, 'assault_vest')) val = Math.floor(val * 1.4); // 40%
   }
   if (stat === 'special' || stat === 'spdef') {
     if (hasItem(items, 'eviolite'))     val = Math.floor(val * 1.5);
-    if (hasItem(items, 'assault_vest')) val = Math.floor(val * 1.5);
+    if (hasItem(items, 'assault_vest')) val = Math.floor(val * 1.4); // 40%
   }
   if (stat === 'atk') {
     if (hasItem(items, 'choice_scarf')) val = Math.floor(val * 0.75);
   }
   if (stat === 'speed') {
     if (hasItem(items, 'choice_scarf')) val = Math.floor(val * 1.5);
+    if (hasItem(items, 'oak_barrel'))   val = Math.floor(val * 0.8);  // -20% speed
+    if (hasItem(items, 'late_lunch'))   val = 0; // always goes last
   }
-  return Math.max(1, val);
+  return Math.max(stat === 'speed' && hasItem(items, 'late_lunch') ? 0 : 1, val);
 }
 
 function hasItem(items, id) {
@@ -203,8 +216,8 @@ function runBattle(playerTeam, enemyTeam, bagItems, enemyItems, onLog) {
       const targetPreHp = target.currentHp;
       target.currentHp = Math.max(0, target.currentHp - damage);
 
-      // Focus Band: 10% chance to survive a KO at 1 HP
-      if (target.currentHp === 0 && targetPreHp > 0 && tSide === 'player' && (target.heldItems||[]).some(it=>it.id==='focus_band') && Math.random() < 0.1) {
+      // Focus Band: 15% chance to survive a KO at 1 HP
+      if (target.currentHp === 0 && targetPreHp > 0 && tSide === 'player' && (target.heldItems||[]).some(it=>it.id==='focus_band') && Math.random() < 0.15) {
         target.currentHp = 1;
       }
 
@@ -235,6 +248,27 @@ function runBattle(playerTeam, enemyTeam, bagItems, enemyItems, onLog) {
           hpChange: -recoil, hpAfter: attacker.currentHp, reason: `${aName} lost ${recoil} HP from Banquet Beer Stash!` });
       }
 
+      // Hop Extract: attacker takes 20% of damage dealt as recoil
+      if (side === 'player' && (attacker.heldItems||[]).some(it=>it.id==='hop_extract')) {
+        const recoil = Math.max(1, Math.floor(damage * 0.2));
+        attacker.currentHp = Math.max(0, attacker.currentHp - recoil);
+        addLog(`${aName} took ${recoil} recoil from Hop Extract!`, 'log-item');
+        detailedLog.push({ type: 'effect', side: 'player', idx: aIdx, name: aName,
+          hpChange: -recoil, hpAfter: attacker.currentHp, reason: `${aName} took ${recoil} recoil from Hop Extract!` });
+      }
+
+      // Overcarbonated: first hit of the battle deals 2x (already applied in calcDamage via flag),
+      // then attacker loses 50% current HP (floor at 10% max HP)
+      if (side === 'player' && (attacker.heldItems||[]).some(it=>it.id==='overcarbonated') && !attacker._overcarb_fired) {
+        attacker._overcarb_fired = true;
+        const floor = Math.max(1, Math.floor(attacker.maxHp * 0.1));
+        const loss  = Math.floor(attacker.currentHp * 0.5);
+        attacker.currentHp = Math.max(floor, attacker.currentHp - loss);
+        addLog(`${aName} vented pressure! Lost ${loss} HP from Overcarbonated!`, 'log-item');
+        detailedLog.push({ type: 'effect', side: 'player', idx: aIdx, name: aName,
+          hpChange: -loss, hpAfter: attacker.currentHp, reason: `Overcarbonated pressure vent!` });
+      }
+
       // "Barrel-aged" Helmet
       if (side === 'enemy' && (target.heldItems||[]).some(it=>it.id==='"barrel-aged"_helmet')) {
         const helmet = Math.max(1, Math.floor(attacker.maxHp * 0.15));
@@ -244,9 +278,9 @@ function runBattle(playerTeam, enemyTeam, bagItems, enemyItems, onLog) {
           hpChange: -helmet, hpAfter: attacker.currentHp, reason: `Steel Jacket hurt ${aName} for ${helmet} HP!` });
       }
 
-      // Shell Bell
+      // Shell Bell: 20% lifesteal
       if (side === 'player' && (attacker.heldItems||[]).some(it=>it.id==='shell_bell')) {
-        const heal   = Math.max(1, Math.floor(damage * 0.25));
+        const heal   = Math.max(1, Math.floor(damage * 0.20));
         const actual = Math.min(heal, attacker.maxHp - attacker.currentHp);
         if (actual > 0) {
           attacker.currentHp += actual;
@@ -324,6 +358,9 @@ function applyLevelGain(team, bagItems, participantIdxs, maxEnemyLevel = 0, hard
     const getsXp = p.currentHp > 0 || (participantIdxs && participantIdxs.has(i));
     if (!getsXp) continue;
 
+    // Pasteurization: holder never levels up
+    if ((p.heldItems || []).some(it => it.id === 'pasteurization')) continue;
+
     const overleveled = !hardMode && maxEnemyLevel > 0 && p.level > maxEnemyLevel + 5;
     const gain = overleveled ? 1 : baseGain;
     const oldLevel = p.level;
@@ -342,4 +379,22 @@ function applyLevelGain(team, bagItems, participantIdxs, maxEnemyLevel = 0, hard
   }
 
   return levelUps;
+}
+
+// Pizza Party: heal 5% max HP to all living team members after every battle.
+// Stacks if multiple pokemon hold it.
+function applyPizzaParty(team) {
+  const holders = team.filter(p => p.currentHp > 0 && (p.heldItems||[]).some(it => it.id === 'pizza_party'));
+  if (holders.length === 0) return [];
+  const heals = [];
+  for (const p of team) {
+    if (p.currentHp <= 0) continue;
+    const healAmt = Math.max(1, Math.floor(p.maxHp * 0.05 * holders.length));
+    const actual  = Math.min(healAmt, p.maxHp - p.currentHp);
+    if (actual > 0) {
+      p.currentHp += actual;
+      heals.push({ name: p.nickname || p.brewName || p.name, amount: actual });
+    }
+  }
+  return heals;
 }
