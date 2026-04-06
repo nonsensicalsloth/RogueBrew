@@ -173,8 +173,8 @@ function runBattle(playerTeam, enemyTeam, bagItems, enemyItems, onLog) {
     const eSpeed = getEffectiveStat(eActive, 'speed', eActiveItems);
 
     // If both active Pokemon can only use noDamage moves, force Struggle to break the stalemate
-    const pMove = getBestMove(pActive.types || ['Blonde'], pActive.baseStats, pActive.speciesId);
-    const eMove = getBestMove(eActive.types || ['Blonde'], eActive.baseStats, eActive.speciesId);
+    const pMove = getBestMove(pActive.types || ['Blonde'], pActive.baseStats, pActive.speciesId, pActive.moveTier ?? 1);
+    const eMove = getBestMove(eActive.types || ['Blonde'], eActive.baseStats, eActive.speciesId, eActive.moveTier ?? 1);
     const bothUseless = pMove.noDamage && eMove.noDamage;
 
     const turns = pSpeed >= eSpeed
@@ -186,7 +186,7 @@ function runBattle(playerTeam, enemyTeam, bagItems, enemyItems, onLog) {
     for (const { attacker, aIdx, side, target, tIdx, tSide } of turns) {
       if (attacker.currentHp <= 0 || target.currentHp <= 0) continue;
 
-      let move = getBestMove(attacker.types || ['Blonde'], attacker.baseStats, attacker.speciesId);
+      let move = getBestMove(attacker.types || ['Blonde'], attacker.baseStats, attacker.speciesId, attacker.moveTier ?? 1);
       // If both sides are stuck with useless moves, force Struggle on both
       if (bothUseless) {
         move = { name: 'Struggle', power: 50, type: 'Blonde', isSpecial: false };

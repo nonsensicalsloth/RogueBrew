@@ -395,6 +395,9 @@ async function onNodeClick(node) {
     case NODE_TYPES.TRADE:
       await doTradeNode(node);
       break;
+    case NODE_TYPES.UPGRADE:
+      doUpgradeMoveNode(node);
+      break;
     case 'shiny':
       await doShinyNode(node);
       break;
@@ -1055,7 +1058,7 @@ function doTapTakeoverReplace(node, species, outIdx) {
   const skipBtn = document.getElementById('btn-skip-catch');
   skipBtn.style.display = 'none';
 
-  const offers = species.map(s => createInstance(s, outgoing.level));
+  const offers = species.map(s => createInstance(s, outgoing.level, false, getMoveTierForMap(state.currentMap)));
 
   for (const offer of offers) {
     const wrapper = document.createElement('div');
@@ -1102,7 +1105,7 @@ async function doBeerFestivalEvent(node) {
       seen.add(id);
       return true;
     }).slice(0, 6);
-    node.lockedFestivalInstances = unique.map(sp => createInstance(sp, level));
+    node.lockedFestivalInstances = unique.map(sp => createInstance(sp, level, false, getMoveTierForMap(state.currentMap)));
     saveRun();
   }
 
@@ -1137,7 +1140,7 @@ async function doCollabBrewEvent(node) {
     const [minL, maxL] = MAP_LEVEL_RANGES[state.currentMap];
     // Give it a level in the upper third of the current map range
     const level = Math.round(minL + (maxL - minL) * (0.67 + Math.random() * 0.33));
-    node.lockedCollabInstance = createInstance(species, Math.min(level, maxL));
+    node.lockedCollabInstance = createInstance(species, Math.min(level, maxL), false, getMoveTierForMap(state.currentMap));
     saveRun();
   }
 
@@ -1277,7 +1280,7 @@ async function doGhostTapEvent(node) {
     );
     const species = pool[Math.floor(Math.random() * pool.length)];
     const level = getLevelForNode(node);
-    node.lockedGhostInstance = createInstance(species, level, Math.random() < 0.05);
+    node.lockedGhostInstance = createInstance(species, level, Math.random() < 0.05, getMoveTierForMap(state.currentMap));
     saveRun();
   }
 
@@ -1360,7 +1363,7 @@ async function doBattleNode(node) {
       showMapScreen();
       return;
     }
-    node.lockedEnemy = createInstance(enemySpecies, level);
+    node.lockedEnemy = createInstance(enemySpecies, level, false, getMoveTierForMap(state.currentMap));
     saveRun(); // 🔒 enemy is now frozen — refreshing loads the same opponent
   }
 
@@ -1384,7 +1387,7 @@ async function doBossNode(node) {
     return;
   }
   const leader = GYM_LEADERS[state.currentMap];
-  const enemyTeam = leader.team.map(p => createInstance(p, p.level));
+  const enemyTeam = leader.team.map(p => createInstance(p, p.level, false, 1));
 
   showScreen('battle-screen');
   document.getElementById('battle-title').textContent = `Gym Battle vs ${leader.name}!`;
@@ -1406,7 +1409,7 @@ async function doElite4() {
   for (let i = state.eliteIndex; i < bosses.length; i++) {
     state.eliteIndex = i;
     const boss = bosses[i];
-    const enemyTeam = boss.team.map(p => createInstance(p, p.level));
+    const enemyTeam = boss.team.map(p => createInstance(p, p.level, false, 2));
 
     showScreen('battle-screen');
     document.getElementById('battle-title').textContent = `${boss.title}: ${boss.name}!`;
@@ -1487,7 +1490,7 @@ async function doCatchNode(node) {
     // Edible Glitter adds +5% per holder.
     const cardShinyChance = (isShinyHunt ? 0.10 : 0.01) + (glitterCount * 0.05);
     node.lockedCatchInstances = choices.map(sp =>
-      createInstance(sp, level, Math.random() < cardShinyChance)
+      createInstance(sp, level, Math.random() < cardShinyChance, getMoveTierForMap(state.currentMap))
     );
     saveRun(); // 🔒 freeze choices — refreshing reloads the same cards
   } else if (node.lockedShiny) {
@@ -2001,7 +2004,7 @@ async function doTradeNode(node) {
         const species = finalPool[Math.floor(Math.random() * finalPool.length)];
         if (!species) { advanceFromNode(state.map, node.id); saveRun(); showMapScreen(); return; }
         const offerLevel = Math.min(100, mine.level + 3);
-        node.lockedTrades[idx] = createInstance(species, offerLevel, Math.random() < 0.01);
+        node.lockedTrades[idx] = createInstance(species, offerLevel, Math.random() < 0.01, getMoveTierForMap(state.currentMap));
         saveRun(); // 🔒 lock the offer so refresh doesn't reroll
       }
 
@@ -2070,7 +2073,82 @@ async function doTradeNode(node) {
   };
 }
 
-function doQCLabNode(node) {
+// ---- Upgrade Move Node ----
+
+function doUpgradeMoveNode(node) {
+  const modal = document.createElement('div');
+  modal.id = 'item-equip-modal';
+  modal.className = 'item-equip-overlay';
+
+  function buildRows() {
+    return state.team.map((p, i) => {
+      const tier = p.moveTier ?? 1;
+      const maxed = tier >= 2;
+      const currentMove = getBestMove(p.types || ['Blonde'], p.baseStats, p.speciesId, tier);
+      const nextMove    = !maxed ? getBestMove(p.types || ['Blonde'], p.baseStats, p.speciesId, tier + 1) : null;
+      const tierLabels  = ['Tier I', 'Tier II', 'Tier III'];
+      const tierColors  = ['#888', '#4af', '#fa0'];
+
+      return `<div class="equip-pokemon-row" style="${maxed ? 'opacity:0.45;' : ''}">
+        <img src="${p.spriteUrl}" class="equip-poke-sprite" onerror="this.style.display='none'">
+        <div class="equip-poke-info">
+          <div class="equip-poke-name">${p.nickname || p.brewName || p.name}</div>
+          <div class="equip-poke-lv" style="color:${tierColors[tier]};">
+            Lv${p.level} &bull; ${currentMove.name} (${tierLabels[tier]}, ${currentMove.power}pw)
+          </div>
+        </div>
+        <div class="equip-btn-group">
+          ${maxed
+            ? `<span style="font-size:9px;color:#888;">Already maxed!</span>`
+            : `<button class="equip-btn" data-upgrade="${i}">
+                 → ${nextMove.name} (${nextMove.power}pw)
+               </button>`}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function render() {
+    modal.innerHTML = `
+      <div class="item-equip-box">
+        <div class="equip-item-header">
+          <span class="equip-item-icon" style="font-size:26px;">↑</span>
+          <div>
+            <div class="equip-item-name">Upgrade Move Damage</div>
+            <div class="equip-item-desc">Advance one brew to the next move tier.</div>
+          </div>
+        </div>
+        <div class="equip-pokemon-list">${buildRows()}</div>
+        <button id="btn-skip-upgrade" class="btn-secondary" style="width:100%;margin-top:8px;">Skip</button>
+      </div>`;
+
+    modal.querySelectorAll('button[data-upgrade]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.upgrade);
+        const pokemon = state.team[idx];
+        pokemon.moveTier = Math.min(2, (pokemon.moveTier ?? 1) + 1);
+        const newMove = getBestMove(pokemon.types || ['Blonde'], pokemon.baseStats, pokemon.speciesId, pokemon.moveTier);
+        modal.remove();
+        advanceFromNode(state.map, node.id);
+        saveRun();
+        showMapScreen();
+        showMapNotification(`↑ ${pokemon.nickname || pokemon.brewName || pokemon.name} upgraded to ${newMove.name} (${newMove.power}pw)!`);
+      });
+    });
+
+    modal.querySelector('#btn-skip-upgrade').addEventListener('click', () => {
+      modal.remove();
+      advanceFromNode(state.map, node.id);
+      saveRun();
+      showMapScreen();
+    });
+  }
+
+  render();
+  document.body.appendChild(modal);
+}
+
+
   for (const p of state.team) p.currentHp = p.maxHp;
 
   showScreen('event-screen');
@@ -2129,7 +2207,7 @@ async function doShinyNode(node) {
     const level = getLevelForNode(node);
     const species = choices[0];
     if (!species) { advanceFromNode(state.map, node.id); saveRun(); showMapScreen(); return; }
-    node.lockedShinyInstance = createInstance(species, level, true);
+    node.lockedShinyInstance = createInstance(species, level, true, getMoveTierForMap(state.currentMap));
     saveRun(); // 🔒 freeze the shiny species and level
   }
 

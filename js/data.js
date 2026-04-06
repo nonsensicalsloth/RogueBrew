@@ -65,59 +65,156 @@ const TYPE_IDS = {
   Red:10, Lager:11, Ipa:12, Sour:13, Belgian:14, Cryo:15, Stout:16,
 };
 
-// Move pools by type (physical/special split)
+// Move pools by type — each has physical/special arrays of [tier0, tier1, tier2]
+// Tier 0: weak early moves (~40–55 power), Tier 1: standard moves (~75–100), Tier 2: powerful moves (~110–130)
 const MOVE_POOL = {
-  Blonde:     { physical: {name:'Well-Balanced flavor',    power:80,  desc:'A reliable, consistent, and approachable strike.'},
-              special:  {name:'Light Malty Aroma',  power:90,  desc:'A gentle, sweet scent of pale grains.'} },
-  Red:        { physical: {name:'Maillard Hit',   power:75,  desc:'A complex, bready impact from specialty roasting.'},
-              special:  {name:'Caramelized Nose', power:94,  desc:'Rich notes of burnt sugar and toffee.'} },
-  Lager:      { physical: {name:'Crisp Snap',    power:82,  desc:'A dry, quick-finishing strike with zero lingering sweetness.'},
-              special:  {name:'Noble Hop Scent', power:90,  desc:'A classic, floral, and herbal aroma from traditional European hops.'} },
-  Sour:       { physical: {name:'Pucker Punch',power:75,  desc:'An immediate, mouth-watering strike of pure acidity.'},
-              special:  {name:'Tart Vapor',  power:90,  desc:'An effervescent, sharp scent that tickles the nose.'} },
-  Ipa:        { physical: {name:'Resinous Bite',   power:65,  desc:'A sharp, sticky strike that clings to the palate.'},
-              special:  {name:'Dry Hop Bomb',  power:110, desc:'An explosive late-addition nose of citrus and pine.'} },
-  Cryo:       { physical: {name:'Zero-Sulfur Snap',    power:75,  desc:'A flawlessly clean hit that proves the lager fermentation was perfect.'},
-              special:  {name:'Frigid Lupulin',     power:94,  desc:'A sharp, herbal scent of concentrated hop oils.'} },
-  Barleywine: { physical: {name:'Warming Aftertaste', power:120, desc:'A luxurious mouthfeel that coats the palate completely.'},
-              special:  {name:'Muscovado Nose',  power:80,  desc:'A rich, dark, unrefined sugar scent that suggests a massive original gravity.'} },
-  Brett:      { physical: {name:'Rustic Dryness',   power:82,  desc:'A physical sensation of the yeast eating every last sugar, leaving a bone-dry finish.'},
-              special:  {name:'Barnyard Bouquet',  power:90,  desc:'The classic, prized "horse blanket" and hay-like aroma.'} },
-  Brown:      { physical: {name:'Biscuity Balance',   power:100, desc:'A toasted bread strike that proves the base malt was high-quality.'},
-              special:  {name:'Nutty Nose',  power:90,  desc:'A classic, warm scent of toasted nutty malt.'} },
-  Wheat:      { physical: {name:'Fluffy Strike',   power:81,  desc:'A soft, pillowy mouthfeel that feels light and airy on the palate.'},
-              special:  {name:'Phenolic Spice',    power:93,  desc:'A sharp clove and banana nose that proves a traditional yeast strain was used.'} },
-  Belgian:    { physical: {name:'Sneaky ABV Slam', power:80,  desc:'A powerful yet sneaky hit that stays smooth on the palate.'},
-              special:  {name:'Bohemian Esters',      power:90,  desc:'A fruity nose that suggests a high-temperature fermentation.'} },
-  Saison:     { physical: {name:'Rustic Grain Hit',    power:80,  desc:'A textured strike from the use of spelt, rye, or unmalted wheat.'},
-              special:  {name:'Orchard Bloom',     power:90,  desc:'Sweet, rustic scents of pear, apple, and lemon zest.'} },
-  "Barrel-aged":     { physical: {name:'Vanilla Velvet',   power:75,  desc:'A smooth, coating mouthfeel from long-term vanillin extraction.'},
-              special:  {name:'Spirit-Soaked Nose',    power:80,  desc:'Bold aromatics of bourbon, rye, or rum that was pulled from the staves.'} },
-  Seltzer:    { physical: {name:'Crystalline Strike',  power:70,  desc:'A clear, transparent impact with no lingering sweetness.'},
-              special:  {name:'Effervescent Vapor',  power:80,  desc:'A sharp, prickly aroma carried purely by carbonation.'} },
-  Stout:      { physical: {name:'Obsidian Structure',  power:83,  desc:'A firm, "unbreakable" mouthfeel that provides a massive platform for the roasted flavors.'},
-              special:  {name:'Midnight Roast', power:94,  desc:'A deep aroma of coffee beans and dark cocoa.'} },
-  Export:      { physical: {name:'Clean Bitter Finish',  power:80,  desc:'A precise, pointed bitterness that lingers just long enough to refresh the palate.'},
-              special:  {name:'Skunky Nose', power:85,  desc:'A powerful dank aroma from green or clear bottles'} },
-  Pastry:      { physical: {name:'Lactose Hug',  power:95,  desc:'A massive, viscous sensation that feels like drinking a melted milkshake.'},
-              special:  {name:'Confectioner’s Extract', power:100,  desc:'A bright sugary nose that mimics the icing on a donut.'} },
-  Cascadian:   { physical: {name:'Light-Absorbing Body',  power:80,  desc:'A medium-light mouthfeel that defies the visual expectation of a heavy dark beer.'},
-              special:  {name:'Dehusked Grain Whiff', power:85,  desc:'smooth, subtle roast aroma that lacks any burnt or acrid notes.'} },
+  Blonde:        { physical: [{name:'Well-Balanced Flavor',    power:40,  desc:'A reliable, approachable strike with no rough edges.'},
+                               {name:'Balanced Body',           power:80,  desc:'A fuller, more confident mouthfeel from a refined grain bill.'},
+                               {name:'Session Mastery',         power:120, desc:'A deceptively powerful hit — all substance, no fluff.'}],
+                   special:  [{name:'Light Malty Aroma',        power:45,  desc:'A gentle, sweet scent of pale grains.'},
+                               {name:'Bready Bouquet',          power:90,  desc:'A richer, more complex grain aroma from a longer mash.'},
+                               {name:'Imperial Nose',           power:130, desc:'An overwhelming wave of sweet malt that fills the room.'}] },
+
+  Red:           { physical: [{name:'Maillard Hit',             power:40,  desc:'A light, bready impact from lightly toasted malt.'},
+                               {name:'Crystal Malt Crush',      power:75,  desc:'A deeper, caramel-forward strike from specialty grain.'},
+                               {name:'Roast Charge',            power:120, desc:'A full roast assault — rich, dark, and unrelenting.'}],
+                   special:  [{name:'Caramel Wisp',             power:50,  desc:'A faint, sweet scent of lightly kilned malt.'},
+                               {name:'Caramelized Nose',        power:90,  desc:'Rich notes of burnt sugar and toffee.'},
+                               {name:'Toffee Bomb',             power:120, desc:'An intense dark-sugar aroma that hits before you even lift the glass.'}] },
+
+  Lager:         { physical: [{name:'Crisp Snap',               power:40,  desc:'A light, quick-finishing strike with clean attenuation.'},
+                               {name:'Cold Conditioning Blow',  power:80,  desc:'A firm, lagered strike with zero off-flavors.'},
+                               {name:'Lagered to Perfection',   power:120, desc:'A devastating clean-lager hit — weeks of conditioning behind it.'}],
+                   special:  [{name:'Delicate Hop Scent',        power:45,  desc:'A faint, fresh aroma of noble hops.'},
+                               {name:'Noble Hop Scent',         power:90,  desc:'A classic, floral, and herbal aroma from traditional European hops.'},
+                               {name:'Saaz Surge',              power:110, desc:'An assertive, spicy noble-hop blast from dry-hopping at lager temps.'}] },
+
+  Sour:          { physical: [{name:'Pucker Punch',             power:40,  desc:'A small, sharp strike of citric acidity.'},
+                               {name:'Acid Spike',              power:80,  desc:'A bold, lactic strike that cuts right through.'},
+                               {name:'Kettle Sour Assault',     power:120, desc:'A scorching, pH-dropping hit from an overnight souring tank.'}],
+                   special:  [{name:'Tart Wisp',                power:45,  desc:'A faint prickle of acidity on the nose.'},
+                               {name:'Tart Vapor',              power:90,  desc:'An effervescent, sharp scent that tickles the nose.'},
+                               {name:'Wild Ferment Blast',      power:110, desc:'A complex cloud of lactic, acetic, and funky acids all at once.'}] },
+
+  Ipa:           { physical: [{name:'Resinous Bite',            power:45,  desc:'A sticky, piney nip of alpha acids.'},
+                               {name:'Lupulin Slam',            power:80,  desc:'A heavy resin-forward strike from high-alpha hop additions.'},
+                               {name:'Double Dry Hop Crush',    power:120, desc:'An overwhelming hop-matter hit from a massive late-addition charge.'}],
+                   special:  [{name:'Fresh Hop Scent',          power:50,  desc:'A bright, grassy aroma from first-run whole-cone hops.'},
+                               {name:'Dry Hop Bomb',            power:90,  desc:'An explosive late-addition nose of citrus and pine.'},
+                               {name:'Hazy Cloud',              power:120, desc:'A saturating, juice-forward aromatic surge from biotransformed hops.'}] },
+
+  Cryo:          { physical: [{name:'Cold Strike',              power:40,  desc:'A clean, crisp hit from a well-chilled bright tank.'},
+                               {name:'Zero-Sulfur Snap',        power:80,  desc:'A flawlessly clean hit that proves the lager fermentation was perfect.'},
+                               {name:'Cryogenic Finish',        power:120, desc:'An ice-cold, spotless blow from a beer that spent months at near-freezing temps.'}],
+                   special:  [{name:'Lupulin Chill',            power:45,  desc:'A delicate, concentrated hop aroma from early cryo additions.'},
+                               {name:'Frigid Lupulin',          power:90,  desc:'A sharp, herbal scent of concentrated hop oils.'},
+                               {name:'Cryo Bomb',               power:110, desc:'A massive, pure-lupulin aromatic detonation from cryo pellet dry hopping.'}] },
+
+  Barleywine:    { physical: [{name:'Warming Sip',              power:50,  desc:'A gentle burn of residual alcohol on the palate.'},
+                               {name:'Warming Aftertaste',      power:100, desc:'A luxurious mouthfeel that coats the palate completely.'},
+                               {name:'Barleywine Bludgeon',     power:130, desc:'A massive, viscous, high-ABV haymaker that staggers the senses.'}],
+                   special:  [{name:'Caramel Hint',             power:45,  desc:'A faint sweetness from high residual sugars.'},
+                               {name:'Muscovado Nose',          power:80,  desc:'A rich, dark, unrefined sugar scent that suggests a massive original gravity.'},
+                               {name:'Spirit-Forward Surge',    power:110, desc:'An almost wine-like aromatic wall of dark fruit and alcohol.'}] },
+
+  Brett:         { physical: [{name:'Light Dryness',            power:40,  desc:'A gentle dryness from partial brett attenuation.'},
+                               {name:'Rustic Dryness',          power:80,  desc:'A bone-dry finish from brett eating every last sugar.'},
+                               {name:'Total Attenuation',       power:120, desc:'A devastating, desiccating blow — brett has consumed everything.'}],
+                   special:  [{name:'Barnyard Hint',            power:45,  desc:'A faint whiff of brett character just beginning to develop.'},
+                               {name:'Barnyard Bouquet',        power:90,  desc:'The classic, prized horse-blanket and hay-like aroma.'},
+                               {name:'Funky Flood',             power:110, desc:'An overwhelming brett bomb — leather, earth, and tropical fruit colliding at once.'}] },
+
+  Brown:         { physical: [{name:'Biscuit Nip',              power:45,  desc:'A light, toasty malt snap on the front palate.'},
+                               {name:'Biscuity Balance',        power:85,  desc:'A toasted bread strike that proves the base malt was high-quality.'},
+                               {name:'Full Mash Wallop',        power:120, desc:'A dense, complex malt hit from a protein-rich, multi-step mash.'}],
+                   special:  [{name:'Mild Nutty Note',          power:45,  desc:'A faint roasted nut character from lightly kilned brown malt.'},
+                               {name:'Nutty Nose',              power:90,  desc:'A classic, warm scent of toasted nutty malt.'},
+                               {name:'Brown Malt Blast',        power:110, desc:'A deep, roasty-nutty aromatic surge from a heavy specialty malt bill.'}] },
+
+  Wheat:         { physical: [{name:'Soft Touch',               power:42,  desc:'A delicate, pillowy mouthfeel from high wheat content.'},
+                               {name:'Fluffy Strike',           power:82,  desc:'A soft, pillowy mouthfeel that feels light and airy on the palate.'},
+                               {name:'Protein Haze Hammer',     power:122, desc:'A thick, cloud-dense, wheat-forward hit from an unfiltered, high-adjunct grain bill.'}],
+                   special:  [{name:'Clove Whisper',            power:45,  desc:'A faint clove note from a low-temp wheat ale fermentation.'},
+                               {name:'Phenolic Spice',          power:90,  desc:'A sharp clove and banana nose that proves a traditional yeast strain was used.'},
+                               {name:'Hefeweizen Hurricane',    power:120, desc:'An explosive ester-and-phenol aromatic storm from an open fermentation.'}] },
+
+  Belgian:       { physical: [{name:'Gentle Fizz',              power:40,  desc:'A light, prickling carbonation on the front of the tongue.'},
+                               {name:'Sneaky ABV Slam',         power:80,  desc:'A powerful yet sneaky hit that stays smooth on the palate.'},
+                               {name:'Tripel Takedown',         power:120, desc:'A deceptively elegant but devastating high-gravity blow.'}],
+                   special:  [{name:'Ester Hint',               power:45,  desc:'A faint, fruity nose from a warm Belgian fermentation start.'},
+                               {name:'Bohemian Esters',         power:90,  desc:'A fruity nose that suggests a high-temperature fermentation.'},
+                               {name:'Belgian Funk Surge',      power:120, desc:'An all-out ester and phenol eruption from an unconstrained Belgian yeast.'}] },
+
+  Saison:        { physical: [{name:'Grain Graze',              power:40,  desc:'A light, rustic mouthfeel from unmalted adjunct grains.'},
+                               {name:'Rustic Grain Hit',        power:80,  desc:'A textured strike from spelt, rye, or unmalted wheat.'},
+                               {name:'Farmhouse Fury',          power:120, desc:'A full-force rustic blow from a high-gravity, bottle-conditioned saison.'}],
+                   special:  [{name:'Field Bloom',              power:45,  desc:'A faint, floral note from low-hopped farmhouse fermentation.'},
+                               {name:'Orchard Bloom',          power:90,  desc:'Sweet, rustic scents of pear, apple, and lemon zest.'},
+                               {name:'Wild Orchard Storm',      power:110, desc:'A volatile, complex fruit-and-spice aromatic explosion from a high-temp saison finish.'}] },
+
+  "Barrel-aged": { physical: [{name:'Light Oak Touch',          power:40,  desc:'A subtle hint of wood tannin from a short barrel rest.'},
+                               {name:'Vanilla Velvet',          power:80,  desc:'A smooth, coating mouthfeel from long-term vanillin extraction.'},
+                               {name:'Oak Obliteration',        power:120, desc:'A massive, structured tannin blow from a fully integrated, long-aged barrel beer.'}],
+                   special:  [{name:'Spirit Whisper',           power:45,  desc:'A faint background note of the spirit that once filled the barrel.'},
+                               {name:'Spirit-Soaked Nose',      power:80,  desc:'Bold aromatics of bourbon, rye, or rum pulled from the staves.'},
+                               {name:'Barrel Bomb',             power:110, desc:'An overwhelming aromatic convergence of wood, spirit, and aged beer.'}] },
+
+  Seltzer:       { physical: [{name:'Light Fizz',               power:40,  desc:'A prickling, effervescent hit with no residual sweetness.'},
+                               {name:'Crystalline Strike',      power:75,  desc:'A clear, transparent impact with no lingering sweetness.'},
+                               {name:'Force Carbonation Blast', power:120, desc:'A pressurized, ultra-carbonated strike force-carbed to maximum volume.'}],
+                   special:  [{name:'CO2 Wisp',                 power:45,  desc:'A faint, clean carbonic bite on the nose.'},
+                               {name:'Effervescent Vapor',      power:90,  desc:'A sharp, prickly aroma carried purely by carbonation.'},
+                               {name:'Flavor-Neutral Surge',    power:110, desc:'A clean, pure aromatic burst that proves the base spirit was truly neutral.'}] },
+
+  Stout:         { physical: [{name:'Dark Malt Tap',            power:45,  desc:'A light roast note from a modest charge of black patent malt.'},
+                               {name:'Obsidian Structure',      power:85,  desc:'A firm, unbreakable mouthfeel that carries the roasted flavors.'},
+                               {name:'Nitro Surge',             power:120, desc:'A cascading, nitrogen-driven tidal wave of roasted grain and creamy body.'}],
+                   special:  [{name:'Roast Hint',               power:45,  desc:'A faint coffee note from a small roasted barley addition.'},
+                               {name:'Midnight Roast',          power:90,  desc:'A deep aroma of coffee beans and dark cocoa.'},
+                               {name:'Imperial Darkness',       power:120, desc:'A crushing, high-gravity aromatic onslaught of espresso, dark chocolate, and molasses.'}] },
+
+  Export:        { physical: [{name:'Clean Bitter Nip',         power:40,  desc:'A light, crisp bitterness from a modest hopping rate.'},
+                               {name:'Clean Bitter Finish',     power:80,  desc:'A precise, pointed bitterness that lingers just long enough to refresh.'},
+                               {name:'Export Assault',          power:120, desc:'A formidable, high-bitterness broadside from an aggressively hopped export lager.'}],
+                   special:  [{name:'Green Note',               power:40,  desc:'A faint aroma suggesting the hops were added early and survived.'},
+                               {name:'Skunky Nose',             power:80,  desc:'A powerful dank aroma from green or clear bottles.'},
+                               {name:'Isohumulone Flood',       power:110, desc:'A stunning wall of iso-alpha acid aroma — raw, polarizing, unforgettable.'}] },
+
+  Pastry:        { physical: [{name:'Soft Sweetness',           power:45,  desc:'A gentle residual sugar coating on the front palate.'},
+                               {name:'Lactose Hug',             power:90,  desc:'A massive, viscous sensation that feels like drinking a melted milkshake.'},
+                               {name:'Milkshake Mauling',       power:130, desc:'An absurdly thick, lactose-and-adjunct impact that hits like dessert at full gravity.'}],
+                   special:  [{name:'Vanilla Hint',             power:45,  desc:'A faint extract note from a light vanilla addition.'},
+                               {name:"Confectioner's Extract",  power:95,  desc:'A bright sugary nose that mimics the icing on a donut.'},
+                               {name:'Sugar Rush Surge',        power:120, desc:'An overwhelming adjunct aromatic blast of vanilla, coconut, and peanut butter.'}] },
+
+  Cascadian:     { physical: [{name:'Dark Base Touch',          power:40,  desc:'A subtle roast note that barely hints at the black malt underneath.'},
+                               {name:'Light-Absorbing Body',    power:80,  desc:'A medium-light mouthfeel that defies the visual expectation of a heavy dark beer.'},
+                               {name:'Black IPA Broadside',     power:120, desc:'A punishing dual-threat blow — roasted malt body with a hop-forward finish.'}],
+                   special:  [{name:'Dehusked Grain Wisp',      power:40,  desc:'A subtle, smooth roast note from dehusked Carafa.'},
+                               {name:'Dehusked Grain Whiff',    power:80,  desc:'A smooth, subtle roast aroma that lacks any burnt or acrid notes.'},
+                               {name:'Dark Hop Fusion',         power:110, desc:'An aromatic collision of dark malt and assertive Pacific Northwest hops.'}] },
 };
 
-function getBestMove(types, baseStats, speciesId) {
+// Returns the move tier for wild encounters based on map index.
+// Maps 0-2: tier 0 (weak), maps 3-6: tier 1 (standard), maps 7-8: tier 2 (powerful).
+function getMoveTierForMap(mapIndex) {
+  if (mapIndex <= 2) return 0;
+  if (mapIndex <= 6) return 1;
+  return 2;
+}
+
+function getBestMove(types, baseStats, speciesId, moveTier = 1) {
   if (speciesId === 129) return { name: 'Splash',   power: 0, type: 'Blonde', isSpecial: false, noDamage: true };
   if (speciesId === 63)  return { name: 'Run Away', power: 0, type: 'Blonde', isSpecial: false, noDamage: true };
   const isSpecial = (baseStats?.special || 0) >= (baseStats?.atk || 0);
-  // Gather candidate moves from ALL types, then pick the one with the highest power.
-  // Dual-type pokemon use whichever of their type-moves hits harder rather than
-  // always defaulting to the first type in the array.
+  const tier = Math.max(0, Math.min(2, moveTier ?? 1));
+  // Check all types and pick the highest-power move at this tier (preserves dual-type best-pick logic)
   let best = null;
   for (const t of types) {
     const cap = t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
     if (MOVE_POOL[cap]) {
-      const move = isSpecial ? MOVE_POOL[cap].special : MOVE_POOL[cap].physical;
-      if (!best || move.power > best.power) {
+      const move = isSpecial ? MOVE_POOL[cap].special[tier] : MOVE_POOL[cap].physical[tier];
+      if (move && (!best || move.power > best.power)) {
         best = { ...move, type: cap, isSpecial };
       }
     }
@@ -403,7 +500,7 @@ function calcHp(baseHp, level) {
   return Math.floor(baseHp * level / 50) + level + 10;
 }
 
-function createInstance(species, level, isShiny = false) {
+function createInstance(species, level, isShiny = false, moveTier = 1) {
   const lvl = level || 5;
   const maxHp = calcHp(species.baseStats.hp, lvl);
   const id = species.id ?? species.speciesId;
@@ -424,6 +521,7 @@ function createInstance(species, level, isShiny = false) {
     spriteUrl,
     megaStone: null,
     heldItems: [],
+    moveTier: Math.max(0, Math.min(2, moveTier ?? 1)),
   };
 }
 
@@ -921,7 +1019,7 @@ const RUN_MODIFIERS = [
     id: 'deep_cellar',
     name: 'Deep Cellar',
     icon: '📦',
-    desc: 'Each brew can hold more items the smaller your team: from 8 slots on a solo run down to 2 with a full team of 6.',
+    desc: 'Brews can hold more items the smaller your team: 6→2, 5→3, 4→4, 3→5, 2→7, 1→8 items per brew.',
     hint: 'Rewards commitment to a small tap list.',
     conflicts: [],
   },
