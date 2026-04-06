@@ -207,6 +207,128 @@ const _mapTooltip = (() => {
   };
 })();
 
+// ── Shape builder — returns an SVG element for each node type ──────────────
+function makeNodeShape(node, fill, stroke, strokeWidth) {
+  const ns = 'http://www.w3.org/2000/svg';
+
+  function applyStyle(el) {
+    el.setAttribute('fill', fill);
+    el.setAttribute('stroke', stroke);
+    el.setAttribute('stroke-width', strokeWidth);
+    return el;
+  }
+
+  function polygon(pts) {
+    const el = document.createElementNS(ns, 'polygon');
+    el.setAttribute('points', pts.map(([x,y]) => `${x},${y}`).join(' '));
+    return applyStyle(el);
+  }
+
+  function path(d) {
+    const el = document.createElementNS(ns, 'path');
+    el.setAttribute('d', d);
+    return applyStyle(el);
+  }
+
+  function circle(r) {
+    const el = document.createElementNS(ns, 'circle');
+    el.setAttribute('r', r);
+    el.setAttribute('cx', 0);
+    el.setAttribute('cy', 0);
+    return applyStyle(el);
+  }
+
+  function rect(w, h, rx = 0) {
+    const el = document.createElementNS(ns, 'rect');
+    el.setAttribute('x', -w/2);
+    el.setAttribute('y', -h/2);
+    el.setAttribute('width', w);
+    el.setAttribute('height', h);
+    if (rx) el.setAttribute('rx', rx);
+    return applyStyle(el);
+  }
+
+  // Helper: regular polygon points
+  function regPoly(sides, r, offsetAngle = 0) {
+    const pts = [];
+    for (let i = 0; i < sides; i++) {
+      const a = (Math.PI * 2 * i / sides) + offsetAngle;
+      pts.push([Math.cos(a) * r, Math.sin(a) * r]);
+    }
+    return pts;
+  }
+
+  switch (node.type) {
+
+    // START — 6-point star
+    case NODE_TYPES.START: {
+      const outer = 22, inner = 10;
+      const pts = [];
+      for (let i = 0; i < 12; i++) {
+        const r = i % 2 === 0 ? outer : inner;
+        const a = (Math.PI * 2 * i / 12) - Math.PI / 2;
+        pts.push([Math.cos(a) * r, Math.sin(a) * r]);
+      }
+      return polygon(pts);
+    }
+
+    // BATTLE — circle (baseline, most common node)
+    case NODE_TYPES.BATTLE:
+      return circle(22);
+
+    // CATCH — diamond (rotated square, matches ⬟ icon)
+    case NODE_TYPES.CATCH:
+      return polygon([[ 0,-26],[22, 0],[ 0,26],[-22, 0]]);
+
+    // ITEM — rounded rectangle (loot/chest feel)
+    case NODE_TYPES.ITEM:
+      return rect(42, 34, 7);
+
+    // QUESTION — hexagon (multifaceted / unknown)
+    case NODE_TYPES.QUESTION:
+      return polygon(regPoly(6, 23, 0));
+
+    // BOSS — large spiked octagon
+    case NODE_TYPES.BOSS: {
+      const outer = 28, inner = 22;
+      const pts = [];
+      for (let i = 0; i < 16; i++) {
+        const r = i % 2 === 0 ? outer : inner;
+        const a = (Math.PI * 2 * i / 16) - Math.PI / 2;
+        pts.push([Math.cos(a) * r, Math.sin(a) * r]);
+      }
+      return polygon(pts);
+    }
+
+    // QC LAB — cross / plus shape
+    case NODE_TYPES.POKECENTER: {
+      const arm = 9, len = 23;
+      return path(`M ${-arm},${-len} L ${arm},${-len} L ${arm},${-arm}
+                   L ${len},${-arm} L ${len},${arm} L ${arm},${arm}
+                   L ${arm},${len} L ${-arm},${len} L ${-arm},${arm}
+                   L ${-len},${arm} L ${-len},${-arm} L ${-arm},${-arm} Z`);
+    }
+
+    // TRADE — parallelogram (suggests movement/exchange)
+    case NODE_TYPES.TRADE: {
+      const skew = 8;
+      return polygon([
+        [-22 + skew, -14],
+        [ 22 + skew, -14],
+        [ 22 - skew,  14],
+        [-22 - skew,  14],
+      ]);
+    }
+
+    // UPGRADE — upward-pointing pentagon (arrow/progress feel)
+    case NODE_TYPES.UPGRADE:
+      return polygon([[ 0,-26],[18,-8],[11,18],[-11,18],[-18,-8]]);
+
+    default:
+      return circle(22);
+  }
+}
+
 function renderMap(map, container, onNodeClick) {
   container.innerHTML = '';
   const W = container.clientWidth || 600;
@@ -269,17 +391,11 @@ function renderMap(map, container, onNodeClick) {
     if (isInaccessible) g.style.opacity = '0.7';
     if (node.visited) g.style.opacity = '0.35';
 
-    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    const r = node.type === NODE_TYPES.BOSS ? 26 : 22;
-    circle.setAttribute('r', r);
-    circle.setAttribute('fill', isInaccessible ? '#2a2a3a' : getNodeColor(node));
-    circle.setAttribute('stroke', isClickable ? '#fff' : (isInaccessible ? '#444' : '#555'));
-    circle.setAttribute('stroke-width', isClickable ? '3' : '1');
+    const fill    = isInaccessible ? '#2a2a3a' : getNodeColor(node);
+    const stroke  = isClickable ? '#fff' : (isInaccessible ? '#444' : '#555');
+    const strokeW = isClickable ? '3' : '1';
 
-    const hitTarget = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    hitTarget.setAttribute('r', r + 10);
-    hitTarget.setAttribute('fill', 'transparent');
-    hitTarget.setAttribute('stroke', 'none');
+    const shape = makeNodeShape(node, fill, stroke, strokeW);
 
     if (isClickable) {
       const anim = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
@@ -287,8 +403,13 @@ function renderMap(map, container, onNodeClick) {
       anim.setAttribute('values', '1;0.3;1');
       anim.setAttribute('dur', '1.5s');
       anim.setAttribute('repeatCount', 'indefinite');
-      circle.appendChild(anim);
+      shape.appendChild(anim);
     }
+
+    const hitTarget = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    hitTarget.setAttribute('r', '32');
+    hitTarget.setAttribute('fill', 'transparent');
+    hitTarget.setAttribute('stroke', 'none');
 
     const label = getNodeLabel(node);
     g.addEventListener('mouseenter', e => _mapTooltip.show(label, e.clientX, e.clientY));
@@ -302,7 +423,7 @@ function renderMap(map, container, onNodeClick) {
     text.setAttribute('fill', isInaccessible ? '#aaa' : '#fff');
     text.textContent = node.visited ? '✓' : getNodeIcon(node);
 
-    g.appendChild(circle);
+    g.appendChild(shape);
     g.appendChild(text);
     g.appendChild(hitTarget);
 
