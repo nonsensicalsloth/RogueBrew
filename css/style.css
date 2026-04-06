@@ -321,13 +321,32 @@ h1, h2, .pixel-font {
   align-items: center;
   gap: 4px;
   flex-wrap: wrap;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 .label-move-name {
   font-size: 7px;
   color: #6a5a3a;
   font-style: italic;
   font-family: Georgia, serif;
+}
+.label-move-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 3px;
+  padding: 0 1px;
+}
+.label-move-power {
+  font-size: 7.5px;
+  font-family: 'Press Start 2P', monospace;
+  color: #7a6a4a;
+  letter-spacing: 0;
+}
+.label-move-tier {
+  font-size: 7.5px;
+  font-family: 'Press Start 2P', monospace;
+  font-weight: bold;
+  letter-spacing: 0.5px;
 }
 .label-items {
   display: flex;
