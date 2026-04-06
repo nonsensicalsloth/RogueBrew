@@ -1019,7 +1019,7 @@ const RUN_MODIFIERS = [
     id: 'deep_cellar',
     name: 'Deep Cellar',
     icon: '📦',
-    desc: 'Brews can hold more items the smaller your team: 6→2, 5→3, 4→4, 3→5, 2→7, 1→8 items per brew.',
+    desc: 'Brews can hold more items the smaller your team is. From 8 items on a solo beer, down to 2 items for a full team of 6.',
     hint: 'Rewards commitment to a small tap list.',
     conflicts: [],
   },
