@@ -2543,6 +2543,48 @@ function openPokedexModal(initialTab = 'normal') {
 
 function openShinyDexModal() { openPokedexModal('shiny'); }
 
+function openCloseTaproomModal() {
+  const existing = document.getElementById('close-taproom-modal');
+  if (existing) { existing.remove(); return; }
+
+  const modal = document.createElement('div');
+  modal.id = 'close-taproom-modal';
+  modal.style.cssText = `
+    position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.85);
+    display:flex;align-items:center;justify-content:center;`;
+
+  modal.innerHTML = `
+    <div style="background:var(--bg2);border:2px solid #6a2a2a;border-radius:10px;
+                padding:28px 24px;max-width:300px;width:90%;text-align:center;">
+      <div style="font-family:'Press Start 2P',monospace;font-size:12px;color:#c66;margin-bottom:14px;">
+        🚪 Close the Taproom?
+      </div>
+      <p style="font-family:'Press Start 2P',monospace;font-size:9px;color:var(--text-dim);
+                line-height:1.8;margin-bottom:20px;">
+        This will end your current run and return to the main menu. Your progress will be lost.
+      </p>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button id="btn-taproom-confirm" class="btn-primary"
+          style="background:#6a2a2a;border-color:#c66;font-size:9px;">
+          Last Call 🍺
+        </button>
+        <button id="btn-taproom-cancel" class="btn-secondary" style="font-size:9px;">
+          Keep Brewing
+        </button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(modal);
+
+  document.getElementById('btn-taproom-confirm').addEventListener('click', () => {
+    modal.remove();
+    clearRun();
+    initGame();
+  });
+  document.getElementById('btn-taproom-cancel').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
 // ---- Patch Notes Modal ----
 
 const PATCH_NOTES = [
