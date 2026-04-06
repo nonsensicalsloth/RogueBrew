@@ -1362,7 +1362,7 @@ async function doGhostTapEvent(node) {
 
   const passBtn = document.createElement('button');
   passBtn.className = 'btn-secondary';
-  passBtn.textContent = 'Unplug the tap';
+  passBtn.textContent = 'Untap the keg';
   passBtn.addEventListener('click', () => {
     advanceFromNode(state.map, node.id);
     saveRun();
