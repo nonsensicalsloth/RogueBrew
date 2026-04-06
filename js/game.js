@@ -359,14 +359,6 @@ function showMapScreen() {
   const winsEl = document.getElementById('elite-wins-count');
   if (winsEl) winsEl.textContent = `Wins: ${getEliteWins()}`;
 
-  const rivalEl = document.getElementById('rival-info');
-  if (rivalEl && state.rivalId) {
-    const rival = getRivalBrewery();
-    const teamSize = MINI_BOSS_TEAM_SIZES[state.currentMap] ?? 1;
-    rivalEl.textContent = `${rival.icon} ${rival.name} (${teamSize})`;
-    rivalEl.title = rival.subtitle;
-  }
-
   renderTeamBar(state.team);
   renderItemBadges(state.items);
 
