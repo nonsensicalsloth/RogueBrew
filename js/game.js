@@ -392,6 +392,9 @@ async function onNodeClick(node) {
     case NODE_TYPES.POKECENTER:
       doQCLabNode(node);
       break;
+    case NODE_TYPES.TRADE:
+      await doTradeNode(node);
+      break;
     case 'shiny':
       await doShinyNode(node);
       break;
@@ -1954,6 +1957,92 @@ async function applyEvolution(pokemon) {
   renderItemBadges(state.items);
   renderTeamBar(state.team);
   saveRun();
+}
+
+// ---- Beer Trade Node ----
+
+async function doTradeNode(node) {
+  showScreen('trade-screen');
+  renderTeamBar(state.team, document.getElementById('trade-team-bar'));
+
+  const listEl = document.getElementById('trade-list');
+  listEl.innerHTML = '';
+
+  for (let i = 0; i < state.team.length; i++) {
+    const mine = state.team[i];
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = renderPokemonCard(mine, true, false);
+    const card = wrapper.querySelector('.poke-card');
+    card.style.cursor = 'pointer';
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+
+    const idx = i;
+    const doTrade = async () => {
+      // Lock the trade offer on first click so refresh can't reroll it
+      if (!node.lockedTrades) node.lockedTrades = {};
+      if (!node.lockedTrades[idx]) {
+        const pool = await getCatchChoices(state.currentMap);
+        const myBst = Object.values(mine.baseStats).reduce((a, b) => a + b, 0);
+        // Filter to species within ±50 BST of the traded pokemon
+        const matched = pool.filter(sp => {
+          const bst = Object.values(sp.baseStats).reduce((a, b) => a + b, 0);
+          return Math.abs(bst - myBst) <= 50;
+        });
+        // Fall back to full pool if nothing matches
+        const finalPool = matched.length > 0 ? matched : pool;
+        const species = finalPool[Math.floor(Math.random() * finalPool.length)];
+        if (!species) { advanceFromNode(state.map, node.id); saveRun(); showMapScreen(); return; }
+        const offerLevel = Math.min(100, mine.level + 3);
+        node.lockedTrades[idx] = createInstance(species, offerLevel, Math.random() < 0.01);
+        saveRun(); // 🔒 lock the offer so refresh doesn't reroll
+      }
+
+      const offer = node.lockedTrades[idx];
+      const released = state.team[idx];
+
+      // Return held items to bag
+      for (const it of (released.heldItems || [])) state.items.push(it);
+      state.team.splice(idx, 1, offer);
+
+      // Mark in dex
+      const normalUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${offer.speciesId}.png`;
+      markPokedexCaught(offer.speciesId, offer.name, offer.types, normalUrl);
+      if (offer.isShiny) markShinyDexCaught(offer.speciesId, offer.name, offer.types, offer.spriteUrl);
+      checkDexAchievements();
+
+      advanceFromNode(state.map, node.id);
+      saveRun();
+
+      // Show result on shiny screen (reuse for reveal)
+      showScreen('shiny-screen');
+      document.getElementById('shiny-content').innerHTML = `
+        <div class="shiny-title">⇄ Beer Trade!</div>
+        <p style="color:var(--text-dim);font-size:10px;margin-bottom:8px;">
+          ${released.nickname || released.brewName || released.name} was traded away.</p>
+        ${renderPokemonCard(offer, false, false)}
+        <button id="btn-trade-continue" class="btn-primary" style="margin-top:12px;">
+          Welcome to the team!
+        </button>`;
+      document.getElementById('btn-trade-continue').onclick = () => {
+        showNicknamePrompt(
+          document.querySelector('#shiny-content .poke-card'),
+          offer.brewName || offer.name,
+          (nick) => { offer.nickname = nick; saveRun(); showMapScreen(); }
+        );
+      };
+    };
+
+    card.addEventListener('click', doTrade);
+    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') doTrade(); });
+    listEl.appendChild(card);
+  }
+
+  document.getElementById('btn-skip-trade').onclick = () => {
+    advanceFromNode(state.map, node.id);
+    saveRun();
+    showMapScreen();
+  };
 }
 
 function doQCLabNode(node) {

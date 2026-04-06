@@ -8,23 +8,24 @@ const NODE_TYPES = {
   QUESTION: 'question',
   BOSS: 'boss',
   POKECENTER: 'qclab',
+  TRADE: 'trade',
 };
 
 const NODE_WEIGHTS = [
-  // L1
-  { battle: 50, catch: 30, item: 20, question: 0,  qclab: 0  },
-  // L2
-  { battle: 40, catch: 25, item: 20, question: 15, qclab: 0  },
-  // L3
-  { battle: 35, catch: 15, item: 15, question: 25, qclab: 10 },
-  // L4
-  { battle: 35, catch: 20, item: 15, question: 20, qclab: 10 },
-  // L5 — resource only: catch, item, event (no battles, no qclab)
-  { battle: 0,  catch: 40, item: 35, question: 25, qclab: 0  },
-  // L6
-  { battle: 40, catch: 15, item: 10, question: 25, qclab: 10 },
+  // L1 — no trade yet, team not established
+  { battle: 50, catch: 30, item: 20, question: 0,  qclab: 0,  trade: 0 },
+  // L2 — no trade yet
+  { battle: 40, catch: 25, item: 20, question: 15, qclab: 0,  trade: 0 },
+  // L3 — trade appears for the first time
+  { battle: 32, catch: 13, item: 13, question: 24, qclab: 10, trade: 8 },
+  // L4 — peak trade window
+  { battle: 32, catch: 18, item: 13, question: 19, qclab: 10, trade: 8 },
+  // L5 — resource only: catch, item, event, trade (no battles, no qclab)
+  { battle: 0,  catch: 37, item: 32, question: 25, qclab: 0,  trade: 6 },
+  // L6 — final push before QC, no trade
+  { battle: 40, catch: 15, item: 10, question: 25, qclab: 10, trade: 0 },
   // L7 — QC lab guaranteed separately, this is for extra nodes
-  { battle: 45, catch: 20, item: 20, question: 15, qclab: 0  },
+  { battle: 45, catch: 20, item: 20, question: 15, qclab: 0,  trade: 0 },
 ];
 
 function weightedRandom(weights) {
@@ -324,6 +325,7 @@ function getNodeColor(node) {
     [NODE_TYPES.QUESTION]:   '#6a4a2a',
     [NODE_TYPES.BOSS]:       '#8a2a8a',
     [NODE_TYPES.POKECENTER]: '#006666',
+    [NODE_TYPES.TRADE]:      '#1a5a5a',
   };
   return colors[node.type] || '#444';
 }
@@ -338,6 +340,7 @@ function getNodeIcon(node) {
     [NODE_TYPES.QUESTION]:   '?',
     [NODE_TYPES.BOSS]:       '♛',
     [NODE_TYPES.POKECENTER]: '+',
+    [NODE_TYPES.TRADE]:      '⇄',
   };
   return icons[node.type] || '●';
 }
@@ -352,6 +355,7 @@ function getNodeLabel(node) {
     [NODE_TYPES.QUESTION]:   'Random Event',
     [NODE_TYPES.BOSS]:       'Boss Battle',
     [NODE_TYPES.POKECENTER]: 'QC Lab',
+    [NODE_TYPES.TRADE]:      'Beer Trade',
   };
   return labels[node.type] || node.type;
 }
