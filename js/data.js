@@ -525,6 +525,101 @@ function createInstance(species, level, isShiny = false, moveTier = 1) {
   };
 }
 
+// ── Rival Breweries ─────────────────────────────────────────────────────────
+// One rival is locked per run (state.rivalId). Each has a full 6-member roster;
+// team size scales with map index: sizes[mapIndex] members are used each map.
+// New members are always introduced at the END of the roster so the player
+// sees them "show up" as the rival's operation grows.
+
+const MINI_BOSS_TEAM_SIZES = [1, 2, 2, 3, 3, 4, 4, 5, 6];
+
+const RIVAL_BREWERIES = [
+  {
+    id: 'fossil',
+    name: 'The Fossil Brewery',
+    subtitle: 'Ancient recipes, unearthed.',
+    icon: '🦕',
+    roster: [
+      // introduced first → last
+      { speciesId:142, name:'Aerodactyl', types:['Barrel-aged','Wheat'],
+        baseStats:{hp:80,atk:105,def:65,speed:130,special:60,spdef:75},
+        heldItems:[{id:'scope_lens',    name:'Centrifuge',       icon:'🔬', desc:'Double crit chance (12.5%); normal 1.5x crit damage'}] },
+      { speciesId:139, name:'Omastar',   types:['Barrel-aged','Lager'],
+        baseStats:{hp:70,atk:60,def:125,speed:55,special:115,spdef:70},
+        heldItems:[{id:'hard_stone',    name:'Specialty Barrel', icon:'🛢️', desc:'+40% Barrel-aged flavor/aroma damage'}] },
+      { speciesId:141, name:'Kabutops',  types:['Barrel-aged','Lager'],
+        baseStats:{hp:60,atk:115,def:105,speed:80,special:65,spdef:70},
+        heldItems:[{id:'choice_band',   name:'European Malt',    icon:'🌾', desc:'+30% flavor damage; holder takes +30% more aroma damage'}] },
+      { speciesId:346, name:'Cradily',   types:['Barrel-aged','Ipa'],
+        baseStats:{hp:86,atk:81,def:97,speed:43,special:81,spdef:107},
+        heldItems:[{id:'oak_barrel',    name:'Oak Barrel',       icon:'🛢️', desc:'-20% damage taken; -20% speed'}] },
+      { speciesId:348, name:'Armaldo',   types:['Barrel-aged','Saison'],
+        baseStats:{hp:75,atk:125,def:100,speed:45,special:70,spdef:80},
+        heldItems:[{id:'assault_vest',  name:'Thermal Insulation',icon:'🧊', desc:'+40% DEF & Sp.Def'}] },
+      { speciesId:369, name:'Relicanth', types:['Lager','Barrel-aged'],
+        baseStats:{hp:100,atk:90,def:130,speed:55,special:45,spdef:65},
+        heldItems:[{id:'oak_barrel',    name:'Oak Barrel',       icon:'🛢️', desc:'-20% damage taken; -20% speed'}] },
+    ],
+  },
+  {
+    id: 'bulk',
+    name: 'The Bulk Barrel',
+    subtitle: 'We never run dry.',
+    icon: '🛢️',
+    roster: [
+      { speciesId:113, name:'Chansey',   types:['Blonde'],
+        baseStats:{hp:250,atk:5,def:5,speed:50,special:35,spdef:105},
+        heldItems:[{id:'leftovers',     name:'Yeast Nutrient',   icon:'🧫', desc:'Restore 6% max HP per turn'}] },
+      { speciesId:143, name:'Snorlax',   types:['Blonde'],
+        baseStats:{hp:160,atk:110,def:65,speed:30,special:65,spdef:110},
+        heldItems:[{id:'shell_bell',    name:'Closed Transfer Loop',icon:'🔄', desc:'Heal 20% of damage dealt'}] },
+      { speciesId:202, name:'Wobbuffet', types:['Belgian'],
+        baseStats:{hp:190,atk:33,def:58,speed:33,special:33,spdef:58},
+        heldItems:[{id:'focus_band',    name:'Steel Toe Boots',  icon:'🥾', desc:'15% chance to survive a KO with 1 HP'}] },
+      { speciesId:321, name:'Wailord',   types:['Lager'],
+        baseStats:{hp:170,atk:90,def:45,speed:60,special:90,spdef:45},
+        heldItems:[{id:'shell_bell',    name:'Closed Transfer Loop',icon:'🔄', desc:'Heal 20% of damage dealt'}] },
+      { speciesId:242, name:'Blissey',   types:['Blonde'],
+        baseStats:{hp:255,atk:10,def:10,speed:55,special:75,spdef:135},
+        heldItems:[{id:'leftovers',     name:'Yeast Nutrient',   icon:'🧫', desc:'Restore 6% max HP per turn'}] },
+      { speciesId:131, name:'Lapras',    types:['Lager','Cryo'],
+        baseStats:{hp:130,atk:85,def:80,speed:60,special:95,spdef:95},
+        heldItems:[{id:'leftovers',     name:'Yeast Nutrient',   icon:'🧫', desc:'Restore 6% max HP per turn'}] },
+    ],
+  },
+  {
+    id: 'wall',
+    name: 'The Iron Taproom',
+    subtitle: 'Nothing gets through.',
+    icon: '🏗️',
+    roster: [
+      { speciesId:213, name:'Shuckle',   types:['Saison','Barrel-aged'],
+        baseStats:{hp:20,atk:10,def:230,speed:5,special:10,spdef:230},
+        heldItems:[{id:'assault_vest',  name:'Thermal Insulation',icon:'🧊', desc:'+40% DEF & Sp.Def'}] },
+      { speciesId:378, name:'Regice',    types:['Cryo'],
+        baseStats:{hp:80,atk:50,def:100,speed:50,special:100,spdef:200},
+        heldItems:[{id:'oak_barrel',    name:'Oak Barrel',       icon:'🛢️', desc:'-20% damage taken; -20% speed'}] },
+      { speciesId:350, name:'Milotic',   types:['Lager'],
+        baseStats:{hp:95,atk:60,def:79,speed:81,special:100,spdef:125},
+        heldItems:[{id:'shell_bell',    name:'Closed Transfer Loop',icon:'🔄', desc:'Heal 20% of damage dealt'}] },
+      { speciesId:208, name:'Steelix',   types:['Export','Brown'],
+        baseStats:{hp:75,atk:85,def:200,speed:30,special:55,spdef:65},
+        heldItems:[{id:'"barrel-aged"_helmet', name:'Steel Jacket', icon:'🧥', desc:'Attacker takes 15% of their max HP on each hit'}] },
+      { speciesId:306, name:'Aggron',    types:['Export','Barrel-aged'],
+        baseStats:{hp:70,atk:110,def:180,speed:50,special:60,spdef:60},
+        heldItems:[{id:'"barrel-aged"_helmet', name:'Steel Jacket', icon:'🧥', desc:'Attacker takes 15% of their max HP on each hit'}] },
+      { speciesId:379, name:'Registeel', types:['Export'],
+        baseStats:{hp:80,atk:75,def:150,speed:50,special:75,spdef:150},
+        heldItems:[{id:'assault_vest',  name:'Thermal Insulation',icon:'🧊', desc:'+40% DEF & Sp.Def'}] },
+    ],
+  },
+];
+
+function getRivalBrewery() {
+  const id = state.rivalId;
+  return RIVAL_BREWERIES.find(r => r.id === id) || RIVAL_BREWERIES[0];
+}
+
 // Starters
 const STARTER_IDS = [1, 4, 7];
 
@@ -1019,7 +1114,7 @@ const RUN_MODIFIERS = [
     id: 'deep_cellar',
     name: 'Deep Cellar',
     icon: '📦',
-    desc: 'Brews can hold more items the smaller your team is. From 8 items on a solo beer, down to 2 items for a full team of 6.',
+    desc: 'Brews can hold more items the smaller your team is. From 8 items on a solo beer, down to 2 items each for a full team of six.',
     hint: 'Rewards commitment to a small tap list.',
     conflicts: [],
   },

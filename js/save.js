@@ -42,6 +42,7 @@ function serializeRun() {
     stuckStandingPending: state.stuckStandingPending,
     modifiers: modifiersArr,
     nuzlockePerfect: state.nuzlockePerfect,
+    rivalId: state.rivalId || null,
     map: mapData,
     // Which screen the player was on so we can route them back
     activeScreen: getCurrentActiveScreen(),
@@ -117,6 +118,7 @@ function restoreRun() {
     state.stuckStandingPending = !!data.stuckStandingPending;
     state.modifiers            = mods;
     state.nuzlockePerfect      = data.nuzlockePerfect !== undefined ? data.nuzlockePerfect : true;
+    state.rivalId              = data.rivalId || RIVAL_BREWERIES[0].id;
     state.map                  = restoredMap;
     state.currentNode          = data.currentNodeId
       ? restoredMap.nodes[data.currentNodeId]

@@ -17,6 +17,7 @@ let state = {
   stuckStandingPending: false,
   modifiers: new Set(),
   nuzlockePerfect: true,
+  rivalId: null,
 };
 
 // ---- Initialization ----
@@ -128,7 +129,9 @@ function _setupTitleButtons() {
 async function startNewRun(hardMode = false) {
   clearRun(); // wipe any previous save before starting fresh
   const mods = getActiveModifiers();
-  state = { currentMap: 0, currentNode: null, team: [], items: [], badges: 0, map: null, eliteIndex: 0, trainer: 'boy', starterSpeciesId: null, maxTeamSize: 1, hardMode, breweryName: 'Nonsense Sloth Co.', perfectQC: true, stuckStandingPending: false, modifiers: mods, nuzlockePerfect: true };
+  state = { currentMap: 0, currentNode: null, team: [], items: [], badges: 0, map: null, eliteIndex: 0, trainer: 'boy', starterSpeciesId: null, maxTeamSize: 1, hardMode, breweryName: 'Nonsense Sloth Co.', perfectQC: true, stuckStandingPending: false, modifiers: mods, nuzlockePerfect: true,
+    rivalId: RIVAL_BREWERIES[Math.floor(Math.random() * RIVAL_BREWERIES.length)].id,
+  };
   await showTrainerSelect();
 }
 
@@ -356,6 +359,14 @@ function showMapScreen() {
   const winsEl = document.getElementById('elite-wins-count');
   if (winsEl) winsEl.textContent = `Wins: ${getEliteWins()}`;
 
+  const rivalEl = document.getElementById('rival-info');
+  if (rivalEl && state.rivalId) {
+    const rival = getRivalBrewery();
+    const teamSize = MINI_BOSS_TEAM_SIZES[state.currentMap] ?? 1;
+    rivalEl.textContent = `${rival.icon} ${rival.name} (${teamSize})`;
+    rivalEl.title = rival.subtitle;
+  }
+
   renderTeamBar(state.team);
   renderItemBadges(state.items);
 
@@ -395,6 +406,9 @@ async function onNodeClick(node) {
       break;
     case NODE_TYPES.UPGRADE:
       doUpgradeMoveNode(node);
+      break;
+    case NODE_TYPES.MINIBOSS:
+      await doMiniBossNode(node);
       break;
     case 'shiny':
       await doShinyNode(node);
@@ -2124,7 +2138,102 @@ async function doTradeNode(node) {
   };
 }
 
-// ---- Upgrade Move Node ----
+// ---- Mini-Boss Node ----
+
+async function doMiniBossNode(node) {
+  const rival = getRivalBrewery();
+  const teamSize = MINI_BOSS_TEAM_SIZES[state.currentMap] ?? 1;
+  const level = MAP_LEVEL_RANGES[state.currentMap][1]; // top of map range
+  const roster = rival.roster.slice(0, teamSize);
+  const enemyTeam = roster.map(p => {
+    const inst = createInstance(p, level, false, 1);
+    // Carry the designed held items onto the instance
+    inst.heldItems = p.heldItems ? [...p.heldItems] : [];
+    return inst;
+  });
+
+  showScreen('battle-screen');
+  const titleEl = document.getElementById('battle-title');
+  const subEl   = document.getElementById('battle-subtitle');
+  if (titleEl) titleEl.textContent = `${rival.icon} ${rival.name}!`;
+  if (subEl)   subEl.textContent   = `${rival.subtitle} — ${teamSize} brew${teamSize > 1 ? 's' : ''}`;
+
+  await runBattleScreen(enemyTeam, true, () => {
+    // Win — show 3 item choices as reward
+    advanceFromNode(state.map, node.id);
+    saveRun();
+    doMiniBossReward(node);
+  }, () => {
+    showGameOver();
+  }, rival.name);
+}
+
+function doMiniBossReward(node) {
+  // Same as doItemNode but shows 3 choices instead of 2
+  showScreen('item-screen');
+  document.querySelector('#item-screen h2').textContent = '🏆 Rival Defeated!';
+  document.querySelector('#item-screen p').textContent  = 'Choose your reward — 3 options for the extra challenge.';
+  renderTeamBar(state.team, document.getElementById('item-team-bar'));
+
+  const usedIds = new Set([
+    ...state.items.filter(it => !it.usable).map(it => it.id),
+    ...state.team.flatMap(p => (p.heldItems || []).map(it => it.id)),
+  ]);
+  const heldAvailable = ITEM_POOL.filter(it =>
+    (it.stackable || !usedIds.has(it.id)) && (it.minMap === undefined || state.currentMap >= it.minMap)
+  );
+  const canUseMaxRevive = state.team.some(p => p.currentHp <= 0);
+  const canUseEvoStone  = state.team.some(p => {
+    if (p.speciesId === 133) return true;
+    const evo = EVOLUTIONS[p.speciesId];
+    return evo && evo.into !== p.speciesId;
+  });
+  const usableAvailable = USABLE_ITEM_POOL.filter(it => {
+    if (it.id === 'max_revive') return canUseMaxRevive;
+    if (it.id === 'evo_stone')  return canUseEvoStone;
+    return true;
+  });
+  const available = [...heldAvailable, ...usableAvailable];
+  const picks = [...available].sort(() => Math.random() - 0.5).slice(0, 3);
+
+  const el = document.getElementById('item-choices');
+  el.innerHTML = '';
+  for (const item of picks) {
+    const div = document.createElement('div');
+    div.className = 'item-card';
+    div.innerHTML = `<div class="item-icon">${itemIconHtml(item, 36)}</div>
+      <div class="item-name">${item.name}</div>
+      <div class="item-desc">${item.desc}</div>
+      ${item.usable ? '<div style="font-size:9px;color:#4af;margin-top:4px;">USABLE ITEM</div>' : ''}`;
+    div.style.cursor = 'pointer';
+    div.addEventListener('click', () => {
+      if (item.usable) {
+        state.items.push({ ...item });
+        saveRun();
+        showMapScreen();
+        showMapNotification(`🏆 Rival defeated! Claimed ${item.name}.`);
+      } else {
+        openItemEquipModal(item, {
+          onComplete: () => {
+            saveRun();
+            showMapScreen();
+            showMapNotification(`🏆 Rival defeated! Claimed ${item.name}.`);
+          },
+        });
+      }
+    });
+    el.appendChild(div);
+  }
+
+  document.getElementById('btn-skip-item').textContent = 'Skip reward';
+  document.getElementById('btn-skip-item').onclick = () => {
+    saveRun();
+    showMapScreen();
+    showMapNotification(`🏆 ${getRivalBrewery().name} defeated!`);
+  };
+}
+
+
 
 function doUpgradeMoveNode(node) {
   const modal = document.createElement('div');

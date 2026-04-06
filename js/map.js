@@ -10,6 +10,7 @@ const NODE_TYPES = {
   POKECENTER: 'qclab',
   TRADE: 'trade',
   UPGRADE: 'upgrade',
+  MINIBOSS: 'miniboss',
 };
 
 const NODE_WEIGHTS = [
@@ -101,9 +102,12 @@ function generateMap(mapIndex) {
       const idx = layer.findIndex(n => n.type !== 'catch');
       layer[idx >= 0 ? idx : 0].type = 'battle';
     }
-    // L5: resource-only — at least one catch (weights already exclude battles)
-    if (l === 5 && !layer.some(n => n.type === 'catch')) {
-      layer[0].type = 'catch';
+    // L5: guaranteed miniboss at centre (col 1); col 0 and col 2 stay resource-only
+    if (l === 5) {
+      layer[1].type = NODE_TYPES.MINIBOSS;
+      // Ensure the flanking nodes are resource nodes, not miniboss
+      if (layer[0].type === 'miniboss') layer[0].type = 'catch';
+      if (layer[2].type === 'miniboss') layer[2].type = 'catch';
     }
     // L6: at least one battle (final push before QC)
     if (l === 6 && !layer.some(n => n.type === 'battle')) {
@@ -325,6 +329,18 @@ function makeNodeShape(node, fill, stroke, strokeWidth) {
     case NODE_TYPES.UPGRADE:
       return polygon([[ 0,-26],[18,-8],[11,18],[-11,18],[-18,-8]]);
 
+    // MINIBOSS — spiked octagon, between regular and boss size
+    case NODE_TYPES.MINIBOSS: {
+      const outer = 25, inner = 20;
+      const pts = [];
+      for (let i = 0; i < 16; i++) {
+        const r = i % 2 === 0 ? outer : inner;
+        const a = (Math.PI * 2 * i / 16) - Math.PI / 2;
+        pts.push([Math.cos(a) * r, Math.sin(a) * r]);
+      }
+      return polygon(pts);
+    }
+
     default:
       return circle(22);
   }
@@ -450,6 +466,7 @@ function getNodeColor(node) {
     [NODE_TYPES.POKECENTER]: '#006666',
     [NODE_TYPES.TRADE]:      '#1a5a5a',
     [NODE_TYPES.UPGRADE]:    '#4a2a6a',
+    [NODE_TYPES.MINIBOSS]:   '#7a3a1a',
   };
   return colors[node.type] || '#444';
 }
@@ -466,6 +483,7 @@ function getNodeIcon(node) {
     [NODE_TYPES.POKECENTER]: '+',
     [NODE_TYPES.TRADE]:      '⇄',
     [NODE_TYPES.UPGRADE]:    '↑',
+    [NODE_TYPES.MINIBOSS]:   '☆',
   };
   return icons[node.type] || '●';
 }
@@ -482,6 +500,7 @@ function getNodeLabel(node) {
     [NODE_TYPES.POKECENTER]: 'QC Lab',
     [NODE_TYPES.TRADE]:      'Beer Trade',
     [NODE_TYPES.UPGRADE]:    'Upgrade Move',
+    [NODE_TYPES.MINIBOSS]:   'Rival Brewery',
   };
   return labels[node.type] || node.type;
 }
