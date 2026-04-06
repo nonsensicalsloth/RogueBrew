@@ -216,8 +216,8 @@ function runBattle(playerTeam, enemyTeam, bagItems, enemyItems, onLog) {
       const targetPreHp = target.currentHp;
       target.currentHp = Math.max(0, target.currentHp - damage);
 
-      // Focus Band: 15% chance to survive a KO at 1 HP
-      if (target.currentHp === 0 && targetPreHp > 0 && tSide === 'player' && (target.heldItems||[]).some(it=>it.id==='focus_band') && Math.random() < 0.15) {
+      // Focus Band: 15% chance to survive a KO at 1 HP (works for both sides)
+      if (target.currentHp === 0 && targetPreHp > 0 && (target.heldItems||[]).some(it=>it.id==='focus_band') && Math.random() < 0.15) {
         target.currentHp = 1;
       }
 
@@ -278,14 +278,14 @@ function runBattle(playerTeam, enemyTeam, bagItems, enemyItems, onLog) {
           hpChange: -helmet, hpAfter: attacker.currentHp, reason: `Steel Jacket hurt ${aName} for ${helmet} HP!` });
       }
 
-      // Shell Bell: 20% lifesteal
-      if (side === 'player' && (attacker.heldItems||[]).some(it=>it.id==='shell_bell')) {
+      // Shell Bell: 20% lifesteal (works for both sides)
+      if ((attacker.heldItems||[]).some(it=>it.id==='shell_bell')) {
         const heal   = Math.max(1, Math.floor(damage * 0.20));
         const actual = Math.min(heal, attacker.maxHp - attacker.currentHp);
         if (actual > 0) {
           attacker.currentHp += actual;
           addLog(`Closed Loop restored ${actual} HP to ${aName}!`, 'log-item');
-          detailedLog.push({ type: 'effect', side: 'player', idx: aIdx, name: aName,
+          detailedLog.push({ type: 'effect', side, idx: aIdx, name: aName,
             hpChange: actual, hpAfter: attacker.currentHp, reason: `Closed Loop restored ${actual} HP to ${aName}!` });
         }
       }
