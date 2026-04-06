@@ -97,7 +97,7 @@ const MOVE_POOL = {
                                {name:'Wild Ferment Blast',      power:110, desc:'A complex cloud of lactic, acetic, and funky acids all at once.'}] },
 
   Ipa:           { physical: [{name:'Resinous Bite',            power:45,  desc:'A sticky, piney nip of alpha acids.'},
-                               {name:'Lupulin Slam',            power:80,  desc:'A heavy resin-forward strike from high-alpha hop additions.'},
+                               {name:'Lupulin Slam',            power:81,  desc:'A heavy resin-forward strike from high-alpha hop additions.'},
                                {name:'Double Dry Hop Crush',    power:120, desc:'An overwhelming hop-matter hit from a massive late-addition charge.'}],
                    special:  [{name:'Fresh Hop Scent',          power:50,  desc:'A bright, grassy aroma from first-run whole-cone hops.'},
                                {name:'Dry Hop Bomb',            power:90,  desc:'An explosive late-addition nose of citrus and pine.'},
@@ -117,15 +117,15 @@ const MOVE_POOL = {
                                {name:'Muscovado Nose',          power:80,  desc:'A rich, dark, unrefined sugar scent that suggests a massive original gravity.'},
                                {name:'Spirit-Forward Surge',    power:110, desc:'An almost wine-like aromatic wall of dark fruit and alcohol.'}] },
 
-  Brett:         { physical: [{name:'Light Dryness',            power:40,  desc:'A gentle dryness from partial brett attenuation.'},
-                               {name:'Rustic Dryness',          power:80,  desc:'A bone-dry finish from brett eating every last sugar.'},
+  Brett:         { physical: [{name:'Light Dryness',            power:46,  desc:'A gentle dryness from partial brett attenuation.'},
+                               {name:'Rustic Dryness',          power:85,  desc:'A bone-dry finish from brett eating every last sugar.'},
                                {name:'Total Attenuation',       power:123, desc:'A devastating, desiccating blow — brett has consumed everything.'}],
                    special:  [{name:'Barnyard Hint',            power:45,  desc:'A faint whiff of brett character just beginning to develop.'},
                                {name:'Barnyard Bouquet',        power:90,  desc:'The classic, prized horse-blanket and hay-like aroma.'},
                                {name:'Funky Flood',             power:110, desc:'An overwhelming brett bomb — leather, earth, and tropical fruit colliding at once.'}] },
 
   Brown:         { physical: [{name:'Biscuit Nip',              power:45,  desc:'A light, toasty malt snap on the front palate.'},
-                               {name:'Biscuity Balance',        power:85,  desc:'A toasted bread strike that proves the base malt was high-quality.'},
+                               {name:'Biscuity Balance',        power:86,  desc:'A toasted bread strike that proves the base malt was high-quality.'},
                                {name:'Full Mash Wallop',        power:120, desc:'A dense, complex malt hit from a protein-rich, multi-step mash.'}],
                    special:  [{name:'Mild Nutty Note',          power:45,  desc:'A faint roasted nut character from lightly kilned brown malt.'},
                                {name:'Nutty Nose',              power:90,  desc:'A classic, warm scent of toasted nutty malt.'},
@@ -187,11 +187,11 @@ const MOVE_POOL = {
                                {name:"Confectioner's Extract",  power:95,  desc:'A bright sugary nose that mimics the icing on a donut.'},
                                {name:'Sugar Rush Surge',        power:120, desc:'An overwhelming adjunct aromatic blast of vanilla, coconut, and peanut butter.'}] },
 
-  Cascadian:     { physical: [{name:'Dark Base Touch',          power:40,  desc:'A subtle roast note that barely hints at the black malt underneath.'},
-                               {name:'Light-Absorbing Body',    power:80,  desc:'A medium-light mouthfeel that defies the visual expectation of a heavy dark beer.'},
+  Cascadian:     { physical: [{name:'Dark Base Touch',          power:41,  desc:'A subtle roast note that barely hints at the black malt underneath.'},
+                               {name:'Light-Absorbing Body',    power:81,  desc:'A medium-light mouthfeel that defies the visual expectation of a heavy dark beer.'},
                                {name:'Black IPA Broadside',     power:120, desc:'A punishing dual-threat blow — roasted malt body with a hop-forward finish.'}],
                    special:  [{name:'Dehusked Grain Wisp',      power:40,  desc:'A subtle, smooth roast note from dehusked Carafa.'},
-                               {name:'Dehusked Grain Whiff',    power:80,  desc:'A smooth, subtle roast aroma that lacks any burnt or acrid notes.'},
+                               {name:'Dehusked Grain Whiff',    power:91,  desc:'A smooth, subtle roast aroma that lacks any burnt or acrid notes.'},
                                {name:'Dark Hop Fusion',         power:110, desc:'An aromatic collision of dark malt and assertive Pacific Northwest hops.'}] },
 };
 
