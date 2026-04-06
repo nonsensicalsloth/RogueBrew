@@ -38,39 +38,72 @@ function weightedRandom(weights) {
 }
 
 function generateMap(mapIndex) {
-  // Start(0) → L1→L2→L3→L4→L5→L6→L7(QC+extras) → Boss(8)
-  // L7 always has a QC lab (n7_0) reachable from all L6 nodes
-  // L1–L6 nodes each have 2–3 choices per layer
+  // Fixed layer sizes for consistent branching (Slay the Spire style):
+  // Start(1) → L1(3) → L2(4) → L3(3) → L4(4) → L5(3) → L6(2) → L7(3, QC guaranteed) → Boss(1)
+  const CONTENT_SIZES = [3, 4, 3, 4, 3, 2]; // layers 1–6
   const layers = [];
 
-  // Layer 0: Start
+  // ── Positional edge builder ───────────────────────────────────────────────
+  // Each node connects to the 2 positionally nearest nodes in the next layer,
+  // producing clean diagonal paths rather than random crossings.
+  function makeLayerEdges(fromLayer, toLayer) {
+    const N = fromLayer.length;
+    const M = toLayer.length;
+    const edges = [];
+    if (N === 1) {
+      return toLayer.map(t => ({ from: fromLayer[0].id, to: t.id }));
+    }
+    for (let i = 0; i < N; i++) {
+      let left, right;
+      if (M === 1) {
+        left = right = 0;
+      } else if (M < N && i === 0) {
+        left = right = 0;
+      } else if (M < N && i === N - 1) {
+        left = right = M - 1;
+      } else {
+        const pos = i * (M - 1) / (N - 1);
+        left  = Math.floor(pos);
+        right = left + 1;
+        if (right >= M) { right = M - 1; left = M - 2; }
+      }
+      edges.push({ from: fromLayer[i].id, to: toLayer[left].id });
+      if (left !== right) {
+        edges.push({ from: fromLayer[i].id, to: toLayer[right].id });
+      }
+    }
+    return edges;
+  }
+
+  // ── Layer 0: Start ────────────────────────────────────────────────────────
   layers.push([{ id: 'n0_0', type: NODE_TYPES.START, layer: 0, col: 0 }]);
 
-  // Layers 1–6: content layers (2–3 nodes each)
-  for (let l = 1; l <= 6; l++) {
-    const count = Math.random() < 0.5 ? 2 : 3;
-    // L5 uses resource-only weights (catch/item/event, no battles)
-    const w = NODE_WEIGHTS[l - 1];
+  // ── Layers 1–6: fixed-size content layers ────────────────────────────────
+  for (let li = 0; li < CONTENT_SIZES.length; li++) {
+    const l     = li + 1;
+    const count = CONTENT_SIZES[li];
+    const w     = NODE_WEIGHTS[li];
     const layer = [];
+
     for (let c = 0; c < count; c++) {
-      const t = weightedRandom(w);
-      layer.push({ id: `n${l}_${c}`, type: t, layer: l, col: c });
+      layer.push({ id: `n${l}_${c}`, type: weightedRandom(w), layer: l, col: c });
     }
 
-    // Layer 1: guarantee at least one catch node
+    // Content guarantees (same as before)
+    // L1: at least one catch
     if (l === 1 && !layer.some(n => n.type === 'catch')) {
       layer[0].type = 'catch';
     }
-    // Layers 1, 3: guarantee at least one battle node
+    // L1, L3: at least one battle
     if ((l === 1 || l === 3) && !layer.some(n => n.type === 'battle')) {
       const idx = layer.findIndex(n => n.type !== 'catch');
       layer[idx >= 0 ? idx : 0].type = 'battle';
     }
-    // Layer 5: guarantee at least one catch node (resource focus)
+    // L5: resource-only — at least one catch (weights already exclude battles)
     if (l === 5 && !layer.some(n => n.type === 'catch')) {
       layer[0].type = 'catch';
     }
-    // Layer 6: guarantee at least one battle node (final push before QC)
+    // L6: at least one battle (final push before QC)
     if (l === 6 && !layer.some(n => n.type === 'battle')) {
       const idx = layer.findIndex(n => n.type !== 'catch');
       layer[idx >= 0 ? idx : 0].type = 'battle';
@@ -79,12 +112,11 @@ function generateMap(mapIndex) {
     layers.push(layer);
   }
 
-  // Layer 7: QC lab guaranteed at col 0, plus 1–2 extra random nodes
+  // ── Layer 7: guaranteed QC Lab + 2 extra random nodes (3 total) ──────────
   {
     const w = NODE_WEIGHTS[NODE_WEIGHTS.length - 1];
-    const extraCount = 1 + Math.floor(Math.random() * 2);
     const layer7 = [{ id: 'n7_0', type: NODE_TYPES.POKECENTER, layer: 7, col: 0 }];
-    for (let c = 1; c <= extraCount; c++) {
+    for (let c = 1; c <= 2; c++) {
       let t = weightedRandom(w);
       if (t === 'qclab') t = 'battle';
       layer7.push({ id: `n7_${c}`, type: t, layer: 7, col: c });
@@ -92,84 +124,30 @@ function generateMap(mapIndex) {
     layers.push(layer7);
   }
 
-  // Layer 8: Boss
+  // ── Layer 8: Boss ─────────────────────────────────────────────────────────
   layers.push([{ id: 'n8_0', type: NODE_TYPES.BOSS, layer: 8, col: 0 }]);
 
+  // ── Build all edges using positional algorithm ────────────────────────────
   const edges = [];
-
-  // L0–L5: each node gets exactly 2 children from next layer
-  for (let l = 0; l <= 5; l++) {
-    const curr = layers[l];
-    const next = layers[l + 1];
-    const reachable = new Set();
-
-    for (const from of curr) {
-      const shuffled = [...next].sort(() => Math.random() - 0.5);
-      const count = Math.min(2, next.length);
-      for (let i = 0; i < count; i++) {
-        edges.push({ from: from.id, to: shuffled[i].id });
-        reachable.add(shuffled[i].id);
-      }
-    }
-    // Ensure every next-layer node has at least one incoming edge
-    for (const n of next) {
-      if (!reachable.has(n.id)) {
-        const from = curr[Math.floor(Math.random() * curr.length)];
-        edges.push({ from: from.id, to: n.id });
-      }
-    }
+  for (let l = 0; l < layers.length - 1; l++) {
+    edges.push(...makeLayerEdges(layers[l], layers[l + 1]));
   }
 
-  // L6: each node connects to QC lab (n7_0) + exactly 1 other L7 node
-  {
-    const l6 = layers[6];
-    const l7 = layers[7];
-    const extraL7 = l7.filter(n => n.id !== 'n7_0');
-    const reachable = new Set(['n7_0']);
-
-    for (const from of l6) {
-      edges.push({ from: from.id, to: 'n7_0' });
-      if (extraL7.length > 0) {
-        const other = extraL7[Math.floor(Math.random() * extraL7.length)];
-        edges.push({ from: from.id, to: other.id });
-        reachable.add(other.id);
-      }
-    }
-    // Ensure all L7 nodes have at least one incoming edge
-    for (const n of l7) {
-      if (!reachable.has(n.id)) {
-        const from = l6[Math.floor(Math.random() * l6.length)];
-        edges.push({ from: from.id, to: n.id });
-      }
-    }
-  }
-
-  // L7: all nodes connect to boss
-  for (const n of layers[7]) {
-    edges.push({ from: n.id, to: 'n8_0' });
-  }
-
-  // Flatten nodes — ALL start revealed (Slay the Spire style)
+  // ── Flatten nodes — all start revealed (Slay the Spire style) ────────────
   const nodes = {};
   for (const layer of layers) {
     for (const n of layer) {
-      n.visited = false;
+      n.visited    = false;
       n.accessible = false;
-      n.revealed = true;
-      nodes[n.id] = n;
+      n.revealed   = true;
+      nodes[n.id]  = n;
     }
   }
 
-  // Start node is visited
   nodes['n0_0'].visited = true;
-
-  // Layer-1 nodes connected to start are accessible
   for (const edge of edges) {
-    if (edge.from === 'n0_0') {
-      nodes[edge.to].accessible = true;
-    }
+    if (edge.from === 'n0_0') nodes[edge.to].accessible = true;
   }
-
 
   return { nodes, edges, layers, mapIndex };
 }
