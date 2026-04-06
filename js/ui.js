@@ -2557,7 +2557,7 @@ function openCloseTaproomModal() {
     <div style="background:var(--bg2);border:2px solid #6a2a2a;border-radius:10px;
                 padding:28px 24px;max-width:300px;width:90%;text-align:center;">
       <div style="font-family:'Press Start 2P',monospace;font-size:12px;color:#c66;margin-bottom:14px;">
-        🚪 Close the Taproom?
+        🔚 Close the Taproom?
       </div>
       <p style="font-family:'Press Start 2P',monospace;font-size:9px;color:var(--text-dim);
                 line-height:1.8;margin-bottom:20px;">
