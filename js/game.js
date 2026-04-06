@@ -2021,23 +2021,36 @@ async function doTradeNode(node) {
       advanceFromNode(state.map, node.id);
       saveRun();
 
-      // Show result on shiny screen (reuse for reveal)
+      // Show result — reuse shiny screen for the reveal
       showScreen('shiny-screen');
+      const defaultName = offer.brewName || offer.name;
       document.getElementById('shiny-content').innerHTML = `
         <div class="shiny-title">⇄ Beer Trade!</div>
         <p style="color:var(--text-dim);font-size:10px;margin-bottom:8px;">
           ${released.nickname || released.brewName || released.name} was traded away.</p>
         ${renderPokemonCard(offer, false, false)}
-        <button id="btn-trade-continue" class="btn-primary" style="margin-top:12px;">
-          Welcome to the team!
-        </button>`;
-      document.getElementById('btn-trade-continue').onclick = () => {
-        showNicknamePrompt(
-          document.querySelector('#shiny-content .poke-card'),
-          offer.brewName || offer.name,
-          (nick) => { offer.nickname = nick; saveRun(); showMapScreen(); }
-        );
+        <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:12px;width:100%;max-width:300px;margin-left:auto;margin-right:auto;">
+          <input id="trade-nickname-input" type="text" maxlength="28"
+            style="width:100%;background:var(--bg3);border:2px solid var(--border);border-radius:6px;
+                   color:var(--text);font-family:'Press Start 2P',monospace;font-size:10px;
+                   padding:10px 12px;box-sizing:border-box;outline:none;text-align:center;"
+            placeholder="${defaultName}" autocomplete="off" value="${defaultName}">
+          <button id="btn-trade-confirm" class="btn-primary" style="width:100%;">Welcome to the team!</button>
+        </div>`;
+
+      const input = document.getElementById('trade-nickname-input');
+      const confirmBtn = document.getElementById('btn-trade-confirm');
+      const finish = () => {
+        const val = input.value.trim();
+        offer.nickname = val || null;
+        if (val) { const a = unlockAchievement('house_special'); if (a) showAchievementToast(a); }
+        saveRun();
+        showMapScreen();
       };
+      confirmBtn.addEventListener('click', finish);
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') finish(); });
+      input.focus();
+      input.select();
     };
 
     card.addEventListener('click', doTrade);
