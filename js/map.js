@@ -114,15 +114,16 @@ function generateMap(mapIndex) {
     layers.push(layer);
   }
 
-  // ── Layer 7: guaranteed QC Lab + 2 extra random nodes (3 total) ──────────
+  // ── Layer 7: guaranteed QC Lab at centre + 1 random node each side ───────
   {
     const w = NODE_WEIGHTS[NODE_WEIGHTS.length - 1];
-    const layer7 = [{ id: 'n7_0', type: NODE_TYPES.POKECENTER, layer: 7, col: 0 }];
-    for (let c = 1; c <= 2; c++) {
-      let t = weightedRandom(w);
-      if (t === 'qclab') t = 'battle';
-      layer7.push({ id: `n7_${c}`, type: t, layer: 7, col: c });
-    }
+    let left  = weightedRandom(w); if (left  === 'qclab') left  = 'battle';
+    let right = weightedRandom(w); if (right === 'qclab') right = 'battle';
+    const layer7 = [
+      { id: 'n7_0', type: left,               layer: 7, col: 0 },
+      { id: 'n7_1', type: NODE_TYPES.POKECENTER, layer: 7, col: 1 },
+      { id: 'n7_2', type: right,              layer: 7, col: 2 },
+    ];
     layers.push(layer7);
   }
 
