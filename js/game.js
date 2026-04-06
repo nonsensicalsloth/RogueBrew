@@ -2169,11 +2169,9 @@ async function doMiniBossNode(node) {
 }
 
 function doMiniBossReward(node) {
-  // Same as doItemNode but shows 3 choices instead of 2
-  showScreen('item-screen');
-  document.querySelector('#item-screen h2').textContent = '🏆 Rival Defeated!';
-  document.querySelector('#item-screen p').textContent  = 'Choose your reward — 3 options for the extra challenge.';
-  renderTeamBar(state.team, document.getElementById('item-team-bar'));
+  // Show 3 item choices; player picks 2 then returns to map
+  const TOTAL_PICKS = 2;
+  let picksRemaining = TOTAL_PICKS;
 
   const usedIds = new Set([
     ...state.items.filter(it => !it.usable).map(it => it.id),
@@ -2196,41 +2194,67 @@ function doMiniBossReward(node) {
   const available = [...heldAvailable, ...usableAvailable];
   const picks = [...available].sort(() => Math.random() - 0.5).slice(0, 3);
 
-  const el = document.getElementById('item-choices');
-  el.innerHTML = '';
-  for (const item of picks) {
-    const div = document.createElement('div');
-    div.className = 'item-card';
-    div.innerHTML = `<div class="item-icon">${itemIconHtml(item, 36)}</div>
-      <div class="item-name">${item.name}</div>
-      <div class="item-desc">${item.desc}</div>
-      ${item.usable ? '<div style="font-size:9px;color:#4af;margin-top:4px;">USABLE ITEM</div>' : ''}`;
-    div.style.cursor = 'pointer';
-    div.addEventListener('click', () => {
-      if (item.usable) {
-        state.items.push({ ...item });
-        saveRun();
-        showMapScreen();
-        showMapNotification(`🏆 Rival defeated! Claimed ${item.name}.`);
-      } else {
-        openItemEquipModal(item, {
-          onComplete: () => {
+  function renderReward() {
+    showScreen('item-screen');
+    document.querySelector('#item-screen h2').textContent = '\u{1F3C6} Rival Defeated!';
+    document.querySelector('#item-screen p').textContent  =
+      picksRemaining === TOTAL_PICKS
+        ? `Choose ${TOTAL_PICKS} rewards — pick ${picksRemaining} more.`
+        : `Pick ${picksRemaining} more reward${picksRemaining > 1 ? 's' : ''}.`;
+    renderTeamBar(state.team, document.getElementById('item-team-bar'));
+
+    const el = document.getElementById('item-choices');
+    el.innerHTML = '';
+
+    for (const item of picks) {
+      const div = document.createElement('div');
+      div.className = 'item-card';
+      div.style.cursor = item._claimed ? 'default' : 'pointer';
+      if (item._claimed) div.style.opacity = '0.35';
+      div.innerHTML = `<div class="item-icon">${itemIconHtml(item, 36)}</div>
+        <div class="item-name">${item.name}</div>
+        <div class="item-desc">${item.desc}</div>
+        ${item.usable ? '<div style="font-size:9px;color:#4af;margin-top:4px;">USABLE ITEM</div>' : ''}
+        ${item._claimed ? '<div style="font-size:9px;color:#4a4;margin-top:4px;">\u2713 Claimed</div>' : ''}`;
+
+      if (!item._claimed) {
+        div.addEventListener('click', () => {
+          item._claimed = true;
+          picksRemaining--;
+
+          const afterClaim = () => {
             saveRun();
-            showMapScreen();
-            showMapNotification(`🏆 Rival defeated! Claimed ${item.name}.`);
-          },
+            if (picksRemaining > 0) {
+              renderReward();
+            } else {
+              picks.forEach(p => delete p._claimed);
+              showMapScreen();
+              showMapNotification(`\u{1F3C6} ${getRivalBrewery().name} defeated! Claimed ${TOTAL_PICKS} rewards.`);
+            }
+          };
+
+          if (item.usable) {
+            state.items.push({ ...item });
+            afterClaim();
+          } else {
+            openItemEquipModal(item, { onComplete: afterClaim });
+          }
         });
       }
-    });
-    el.appendChild(div);
+      el.appendChild(div);
+    }
+
+    const skipBtn = document.getElementById('btn-skip-item');
+    skipBtn.textContent = picksRemaining === TOTAL_PICKS ? 'Skip all rewards' : 'Skip remaining';
+    skipBtn.onclick = () => {
+      picks.forEach(p => delete p._claimed);
+      saveRun();
+      showMapScreen();
+      showMapNotification(`\u{1F3C6} ${getRivalBrewery().name} defeated!`);
+    };
   }
 
-  document.getElementById('btn-skip-item').textContent = 'Skip reward';
-  document.getElementById('btn-skip-item').onclick = () => {
-    saveRun();
-    showMapScreen();
-    showMapNotification(`🏆 ${getRivalBrewery().name} defeated!`);
-  };
+  renderReward();
 }
 
 
