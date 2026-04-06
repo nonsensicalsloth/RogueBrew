@@ -154,7 +154,7 @@ const MOVE_POOL = {
 
   "Barrel-aged": { physical: [{name:'Light Oak Touch',          power:40,  desc:'A subtle hint of wood tannin from a short barrel rest.'},
                                {name:'Vanilla Velvet',          power:80,  desc:'A smooth, coating mouthfeel from long-term vanillin extraction.'},
-                               {name:'Oak Obliteration',        power:120, desc:'A massive, structured tannin blow from a fully integrated, long-aged barrel beer.'}],
+                               {name:'Oak Obliteration',        power:122, desc:'A massive, structured tannin blow from a fully integrated, long-aged barrel beer.'}],
                    special:  [{name:'Spirit Whisper',           power:45,  desc:'A faint background note of the spirit that once filled the barrel.'},
                                {name:'Spirit-Soaked Nose',      power:80,  desc:'Bold aromatics of bourbon, rye, or rum pulled from the staves.'},
                                {name:'Barrel Bomb',             power:110, desc:'An overwhelming aromatic convergence of wood, spirit, and aged beer.'}] },
@@ -174,7 +174,7 @@ const MOVE_POOL = {
                                {name:'Imperial Darkness',       power:120, desc:'A crushing, high-gravity aromatic onslaught of espresso, dark chocolate, and molasses.'}] },
 
   Export:        { physical: [{name:'Clean Bitter Nip',         power:40,  desc:'A light, crisp bitterness from a modest hopping rate.'},
-                               {name:'Clean Bitter Finish',     power:80,  desc:'A precise, pointed bitterness that lingers just long enough to refresh.'},
+                               {name:'Clean Bitter Finish',     power:83,  desc:'A precise, pointed bitterness that lingers just long enough to refresh.'},
                                {name:'Export Assault',          power:120, desc:'A formidable, high-bitterness broadside from an aggressively hopped export lager.'}],
                    special:  [{name:'Green Note',               power:40,  desc:'A faint aroma suggesting the hops were added early and survived.'},
                                {name:'Skunky Nose',             power:80,  desc:'A powerful dank aroma from green or clear bottles.'},
