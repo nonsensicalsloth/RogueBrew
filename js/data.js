@@ -119,7 +119,7 @@ const MOVE_POOL = {
 
   Brett:         { physical: [{name:'Light Dryness',            power:40,  desc:'A gentle dryness from partial brett attenuation.'},
                                {name:'Rustic Dryness',          power:80,  desc:'A bone-dry finish from brett eating every last sugar.'},
-                               {name:'Total Attenuation',       power:120, desc:'A devastating, desiccating blow — brett has consumed everything.'}],
+                               {name:'Total Attenuation',       power:123, desc:'A devastating, desiccating blow — brett has consumed everything.'}],
                    special:  [{name:'Barnyard Hint',            power:45,  desc:'A faint whiff of brett character just beginning to develop.'},
                                {name:'Barnyard Bouquet',        power:90,  desc:'The classic, prized horse-blanket and hay-like aroma.'},
                                {name:'Funky Flood',             power:110, desc:'An overwhelming brett bomb — leather, earth, and tropical fruit colliding at once.'}] },
