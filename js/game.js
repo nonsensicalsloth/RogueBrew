@@ -1309,7 +1309,7 @@ async function doGhostTapEvent(node) {
 
   const passBtn = document.createElement('button');
   passBtn.className = 'btn-secondary';
-  passBtn.textContent = 'Untap the keg';
+  passBtn.textContent = 'Unplug the tap';
   passBtn.addEventListener('click', () => {
     advanceFromNode(state.map, node.id);
     saveRun();
@@ -1970,9 +1970,14 @@ async function doTradeNode(node) {
 
   for (let i = 0; i < state.team.length; i++) {
     const mine = state.team[i];
+    // Only allow trading living pokemon
+    if (mine.currentHp <= 0) continue;
+
     const wrapper = document.createElement('div');
     wrapper.innerHTML = renderPokemonCard(mine, true, false);
     const card = wrapper.querySelector('.poke-card');
+    if (!card) continue; // safety guard
+
     card.style.cursor = 'pointer';
     card.setAttribute('role', 'button');
     card.setAttribute('tabindex', '0');
@@ -1983,10 +1988,12 @@ async function doTradeNode(node) {
       if (!node.lockedTrades) node.lockedTrades = {};
       if (!node.lockedTrades[idx]) {
         const pool = await getCatchChoices(state.currentMap);
-        const myBst = Object.values(mine.baseStats).reduce((a, b) => a + b, 0);
-        // Filter to species within ±50 BST of the traded pokemon
+        const myBst = mine.baseStats
+          ? Object.values(mine.baseStats).reduce((a, b) => a + b, 0)
+          : 400;
+        // Filter to species within ±50 BST — use sp.bst if available, fall back to baseStats sum
         const matched = pool.filter(sp => {
-          const bst = Object.values(sp.baseStats).reduce((a, b) => a + b, 0);
+          const bst = sp.bst || Object.values(sp.baseStats || {}).reduce((a, b) => a + b, 0);
           return Math.abs(bst - myBst) <= 50;
         });
         // Fall back to full pool if nothing matches
@@ -2036,6 +2043,11 @@ async function doTradeNode(node) {
     card.addEventListener('click', doTrade);
     card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') doTrade(); });
     listEl.appendChild(card);
+  }
+
+  // If somehow no cards were added (all fainted), show a message
+  if (listEl.children.length === 0) {
+    listEl.innerHTML = '<p style="text-align:center;color:var(--text-dim);font-size:11px;">No brews available to trade.</p>';
   }
 
   document.getElementById('btn-skip-trade').onclick = () => {
