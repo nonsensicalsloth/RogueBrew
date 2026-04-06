@@ -62,9 +62,9 @@ function renderPokemonCard(pokemon, onClick, selected, dexCaught = false) {
   const secondType = (pokemon.types||[]).length > 1 ? pokemon.types[1] : null;
   const secondTypeClass = secondType ? 'tc-' + secondType.toLowerCase().replace('barrel-aged','barrelaged').replace(/-/g,'') : '';
   const move = getMoveForPokemon(pokemon);
-  const moveTierNum = pokemon.moveTier ?? 1;
-  const tierLabel = ['I', 'II', 'III'][moveTierNum] || 'II';
-  const tierColor = moveTierNum === 0 ? '#888' : moveTierNum === 1 ? '#4af' : '#fa0';
+  const moveTierNum = pokemon.moveTier ?? 0;
+  const tierLabel = moveTierNum === 0 ? 'I' : moveTierNum === 1 ? 'II' : 'III';
+  const tierColor = moveTierNum === 0 ? '#aaa' : moveTierNum === 1 ? '#4af' : '#fa0';
   const catLabel = move.isSpecial ? 'Aroma' : 'Flavor';
   const catClass = move.isSpecial ? 'move-cat-special' : 'move-cat-physical';
   const moveTypeClass = 'type-' + (move.type||'blonde').toLowerCase().replace(/-/g,'');
@@ -99,9 +99,11 @@ function renderPokemonCard(pokemon, onClick, selected, dexCaught = false) {
       <div class="label-move-row">
         <span class="move-cat-badge ${catClass}" title="${move.isSpecial ? 'Aroma — uses Special Attack stat' : 'Flavor — uses Physical Attack stat'}">${catLabel}</span>
         <span class="label-move-name">${move.name}</span>
-        <span style="font-size:7px;color:var(--text-dim);margin-left:3px;white-space:nowrap;">${move.power}pw</span>
-        <span style="font-size:7px;font-family:'Press Start 2P',monospace;color:${tierColor};margin-left:3px;white-space:nowrap;" title="Move Tier ${tierLabel}">T${tierLabel}</span>
         <span class="type-badge ${moveTypeClass}" style="font-size:7px;padding:1px 5px;margin-left:auto;">${move.type}</span>
+      </div>
+      <div class="label-move-stats-row">
+        <span class="label-move-power">${move.power} pw</span>
+        <span class="label-move-tier" style="color:${tierColor};">Tier ${tierLabel}</span>
       </div>
       ${heldHtml}
       <div class="label-footer">

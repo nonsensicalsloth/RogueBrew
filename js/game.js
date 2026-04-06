@@ -187,7 +187,7 @@ async function showBreweryNameScreen() {
     const starters = STARTER_IDS.map(id => getSpeciesById(id));
     for (const species of starters) {
       if (!species) continue;
-      const inst = createInstance(species, 5, true); // 100% shiny
+      const inst = createInstance(species, 5, true, 0); // 100% shiny, tier 0
       const wrapper = document.createElement('div');
       wrapper.innerHTML = renderPokemonCard(inst, true, false);
       const card = wrapper.querySelector('.poke-card');
@@ -210,7 +210,7 @@ async function showBreweryNameScreen() {
     const randomSpecies = SPECIES_DATA[Math.floor(Math.random() * SPECIES_DATA.length)];
     
     // Create the instance (1% natural shiny chance)
-    const inst = createInstance(randomSpecies, 5, Math.random() < 0.01);
+    const inst = createInstance(randomSpecies, 5, Math.random() < 0.01, 0);
     
     // Add a special header so the player knows what's happening
     const header = document.createElement('h2');
@@ -248,13 +248,11 @@ async function showBreweryNameScreen() {
 
   for (const species of starters) {
     if (!species) continue;
-    const inst = createInstance(species, 5, Math.random() < 0.01);
+    const inst = createInstance(species, 5, Math.random() < 0.01, 0);
     const wrapper = document.createElement('div');
     wrapper.innerHTML = renderPokemonCard(inst, true, false);
     const card = wrapper.querySelector('.poke-card');
-    
     if (card) {
-      card.style.cursor = 'pointer';
       card.setAttribute('role', 'button');
       card.setAttribute('tabindex', '0');
       card.addEventListener('click', () => selectStarter(inst));
