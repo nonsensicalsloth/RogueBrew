@@ -2351,12 +2351,14 @@ function showWinScreen() {
   // Solo run
   if (state.maxTeamSize === 1) queueAch('solo_run', 1200);
 
-  // Vertical tasting — all team same primary type
+  // Vertical tasting — all team share at least one common type (primary or secondary)
   if (state.team.length >= 2) {
-    const firstType = (state.team[0].types || [])[0];
-    if (firstType && state.team.every(p => (p.types || [])[0] === firstType)) {
-      queueAch('vertical', 1400);
-    }
+    // Collect all types from the first pokemon, then find if any appear on every team member
+    const firstTypes = state.team[0].types || [];
+    const sharedType = firstTypes.find(t =>
+      state.team.every(p => (p.types || []).includes(t))
+    );
+    if (sharedType) queueAch('vertical', 1400);
   }
 
   // Mixed fermentation — no two share primary type
