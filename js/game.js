@@ -2107,17 +2107,14 @@ async function doTradeNode(node) {
       // Lock the trade offer on first click so refresh can't reroll it
       if (!node.lockedTrades) node.lockedTrades = {};
       if (!node.lockedTrades[idx]) {
-        const pool = await getCatchChoices(state.currentMap);
-        const myBst = mine.baseStats
-          ? Object.values(mine.baseStats).reduce((a, b) => a + b, 0)
-          : 400;
-        // Filter to species within ±50 BST — use sp.bst if available, fall back to baseStats sum
-        const matched = pool.filter(sp => {
-          const bst = sp.bst || Object.values(sp.baseStats || {}).reduce((a, b) => a + b, 0);
-          return Math.abs(bst - myBst) <= 50;
-        });
-        // Fall back to full pool if nothing matches
-        const finalPool = matched.length > 0 ? matched : pool;
+      const myBst = mine.bst || 400;
+      const fullPool = SPECIES_DATA.filter(sp => {
+      const bst = sp.bst || 0;
+      return bst >= myBst - 25 && bst <= myBst + 50;
+      });
+      // Fall back to ±80 if nothing is in range (near BST floor or ceiling)
+      const finalPool = fullPool.length >= 3 ? fullPool
+      : SPECIES_DATA.filter(sp => Math.abs((sp.bst || 0) - myBst) <= 80);
         const species = finalPool[Math.floor(Math.random() * finalPool.length)];
         if (!species) { advanceFromNode(state.map, node.id); saveRun(); showMapScreen(); return; }
         const offerLevel = Math.min(100, mine.level + 3);
