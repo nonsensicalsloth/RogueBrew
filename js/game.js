@@ -361,10 +361,70 @@ function showMapScreen() {
 
   renderTeamBar(state.team);
   renderItemBadges(state.items);
+  renderRivalBanner();
 
   const mapContainer = document.getElementById('map-container');
   saveRun(); // lock map layout — prevents refreshing to reroll node positions
   renderMap(state.map, mapContainer, onNodeClick);
+}
+
+function renderRivalBanner() {
+  const existing = document.getElementById('rival-banner-wrap');
+  if (existing) existing.remove();
+
+  const rival = getRivalBrewery();
+  const seenCount = MINI_BOSS_TEAM_SIZES[state.currentMap] ?? 1;
+
+  const wrap = document.createElement('div');
+  wrap.id = 'rival-banner-wrap';
+
+  const miniSlots = rival.roster.map((p, i) => {
+    const seen = i < seenCount;
+    const url = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.speciesId}.png`;
+    return `<div class="rival-slot-mini ${seen ? 'seen' : 'unknown'}">
+      <img src="${url}" alt="${seen ? p.name : '???'}">
+    </div>`;
+  }).join('');
+
+  const rosterSlots = rival.roster.map((p, i) => {
+    const seen = i < seenCount;
+    const url = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.speciesId}.png`;
+    return `<div class="rival-roster-slot ${seen ? '' : 'unknown'}">
+      <div class="rival-roster-img"><img src="${url}" alt="${seen ? p.name : '???'}"></div>
+      <div class="rival-roster-name">${seen ? p.name : '???'}</div>
+    </div>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="rival-banner" onclick="toggleRivalBanner()">
+      <div class="rival-collapsed">
+        <div class="rival-pip"></div>
+        <span class="rival-tag">RIVAL</span>
+        <span class="rival-name-inline">${rival.icon} ${rival.name}</span>
+        <div class="rival-mini-slots">${miniSlots}</div>
+        <span class="rival-counter">${seenCount}/${rival.roster.length}</span>
+        <span class="rival-chevron" id="rival-chevron">▼</span>
+      </div>
+      <div class="rival-expanded" id="rival-expanded">
+        <div class="rival-exp-header">
+          <div class="rival-exp-icon">${rival.icon}</div>
+          <div>
+            <div class="rival-exp-name">${rival.name}</div>
+            <div class="rival-exp-sub">${rival.subtitle}</div>
+          </div>
+        </div>
+        <div class="rival-roster-label">ENCOUNTERED — ${seenCount} of ${rival.roster.length}</div>
+        <div class="rival-roster-row">${rosterSlots}</div>
+      </div>
+    </div>`;
+
+  const hudBars = document.querySelector('#map-screen .hud-bars');
+  if (hudBars) hudBars.after(wrap);
+}
+
+function toggleRivalBanner() {
+  document.getElementById('rival-expanded')?.classList.toggle('open');
+  document.getElementById('rival-chevron')?.classList.toggle('open');
 }
 
 async function onNodeClick(node) {
