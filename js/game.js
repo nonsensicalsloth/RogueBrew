@@ -2107,7 +2107,7 @@ async function doTradeNode(node) {
       // Lock the trade offer on first click so refresh can't reroll it
       if (!node.lockedTrades) node.lockedTrades = {};
       if (!node.lockedTrades[idx]) {
-      const myBst = mine.bst || 400;
+      const myBst = mine.bst || Object.values(mine.baseStats).reduce((a, b) => a + b, 0) || 400;
       const fullPool = SPECIES_DATA.filter(sp => {
       const bst = sp.bst || 0;
       return bst >= myBst - 25 && bst <= myBst + 50;
