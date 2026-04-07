@@ -518,6 +518,7 @@ function createInstance(species, level, isShiny = false, moveTier = 1) {
     isShiny,
     types: species.types,
     baseStats: species.baseStats,
+    bst: species.bst || Object.values(species.baseStats).reduce((a, b) => a + b, 0),
     spriteUrl,
     megaStone: null,
     heldItems: [],
