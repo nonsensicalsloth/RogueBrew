@@ -361,70 +361,12 @@ function showMapScreen() {
 
   renderTeamBar(state.team);
   renderItemBadges(state.items);
-  renderRivalBanner();
 
   const mapContainer = document.getElementById('map-container');
   saveRun(); // lock map layout — prevents refreshing to reroll node positions
   renderMap(state.map, mapContainer, onNodeClick);
 }
-function renderRivalBanner() {
-  const existing = document.getElementById('rival-banner-wrap');
-  if (existing) existing.remove();
 
-  const rival = getRivalBrewery();
-  const seenCount = MINI_BOSS_TEAM_SIZES[state.currentMap] ?? 1;
-
-  const wrap = document.createElement('div');
-  wrap.id = 'rival-banner-wrap';
-
-  const miniSlots = rival.roster.map((p, i) => {
-    const seen = i < seenCount;
-    const url = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.speciesId}.png`;
-    return `<div class="rival-slot-mini ${seen ? 'seen' : 'unknown'}">
-      <img src="${url}" alt="${seen ? p.name : '???'}">
-    </div>`;
-  }).join('');
-
-  const rosterSlots = rival.roster.map((p, i) => {
-    const seen = i < seenCount;
-    const url = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.speciesId}.png`;
-    return `<div class="rival-roster-slot ${seen ? '' : 'unknown'}">
-      <div class="rival-roster-img"><img src="${url}" alt="${seen ? p.name : '???'}"></div>
-      <div class="rival-roster-name">${seen ? p.name : '???'}</div>
-    </div>`;
-  }).join('');
-
-  wrap.innerHTML = `
-    <div class="rival-banner" onclick="toggleRivalBanner()">
-      <div class="rival-collapsed">
-        <div class="rival-pip"></div>
-        <span class="rival-tag">RIVAL</span>
-        <span class="rival-name-inline">${rival.icon} ${rival.name}</span>
-        <div class="rival-mini-slots">${miniSlots}</div>
-        <span class="rival-counter">${seenCount}/${rival.roster.length}</span>
-        <span class="rival-chevron" id="rival-chevron">▼</span>
-      </div>
-      <div class="rival-expanded" id="rival-expanded">
-        <div class="rival-exp-header">
-          <div class="rival-exp-icon">${rival.icon}</div>
-          <div>
-            <div class="rival-exp-name">${rival.name}</div>
-            <div class="rival-exp-sub">${rival.subtitle}</div>
-          </div>
-        </div>
-        <div class="rival-roster-label">ENCOUNTERED — ${seenCount} of ${rival.roster.length}</div>
-        <div class="rival-roster-row">${rosterSlots}</div>
-      </div>
-    </div>`;
-
-  const hudBars = document.querySelector('#map-screen .hud-bars');
-  if (hudBars) hudBars.after(wrap);
-}
-
-function toggleRivalBanner() {
-  document.getElementById('rival-expanded')?.classList.toggle('open');
-  document.getElementById('rival-chevron')?.classList.toggle('open');
-}
 async function onNodeClick(node) {
   state.currentNode = node;
   saveRun(); // lock node choice before RNG runs for catches, items, events
@@ -1502,7 +1444,7 @@ async function doBossNode(node) {
     return;
   }
   const leader = GYM_LEADERS[state.currentMap];
-  const enemyTeam = leader.team.map(p => createInstance(p, p.level, false, 1));
+  const enemyTeam = leader.team.map(p => createInstance(p, p.level, false, getMoveTierForMap(state.currentMap)));
 
   showScreen('battle-screen');
   document.getElementById('battle-title').textContent = `Gym Battle vs ${leader.name}!`;
@@ -2196,7 +2138,7 @@ async function doMiniBossNode(node) {
   const level = MAP_LEVEL_RANGES[state.currentMap][1]; // top of map range
   const roster = rival.roster.slice(0, teamSize);
   const enemyTeam = roster.map(p => {
-    const inst = createInstance(p, level, false, 1);
+    const inst = createInstance(p, level, false, getMoveTierForMap(state.currentMap));
     // Carry the designed held items onto the instance
     inst.heldItems = p.heldItems ? [...p.heldItems] : [];
     return inst;
