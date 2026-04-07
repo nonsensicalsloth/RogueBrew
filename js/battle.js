@@ -240,32 +240,32 @@ function runBattle(playerTeam, enemyTeam, bagItems, enemyItems, onLog) {
       });
 
       // Life Orb recoil
-      if (side === 'player' && (attacker.heldItems||[]).some(it=>it.id==='life_orb')) {
+      if ((attacker.heldItems||[]).some(it=>it.id==='life_orb')) {
         const recoil = Math.max(1, Math.floor(attacker.maxHp * 0.1));
         attacker.currentHp = Math.max(0, attacker.currentHp - recoil);
         addLog(`${aName} lost ${recoil} HP from Banquet Beer Stash!`, 'log-item');
-        detailedLog.push({ type: 'effect', side: 'player', idx: aIdx, name: aName,
+        detailedLog.push({ type: 'effect', side, idx: aIdx, name: aName,
           hpChange: -recoil, hpAfter: attacker.currentHp, reason: `${aName} lost ${recoil} HP from Banquet Beer Stash!` });
       }
 
       // Hop Extract: attacker takes 20% of damage dealt as recoil
-      if (side === 'player' && (attacker.heldItems||[]).some(it=>it.id==='hop_extract')) {
+      if ((attacker.heldItems||[]).some(it=>it.id==='hop_extract')) {
         const recoil = Math.max(1, Math.floor(damage * 0.2));
         attacker.currentHp = Math.max(0, attacker.currentHp - recoil);
         addLog(`${aName} took ${recoil} recoil from Hop Extract!`, 'log-item');
-        detailedLog.push({ type: 'effect', side: 'player', idx: aIdx, name: aName,
+        detailedLog.push({ type: 'effect', side, idx: aIdx, name: aName,
           hpChange: -recoil, hpAfter: attacker.currentHp, reason: `${aName} took ${recoil} recoil from Hop Extract!` });
       }
 
       // Overcarbonated: first hit of the battle deals 2x (already applied in calcDamage via flag),
       // then attacker loses 50% current HP (floor at 10% max HP)
-      if (side === 'player' && (attacker.heldItems||[]).some(it=>it.id==='overcarbonated') && !attacker._overcarb_fired) {
+      if ((attacker.heldItems||[]).some(it=>it.id==='overcarbonated') && !attacker._overcarb_fired) {
         attacker._overcarb_fired = true;
         const floor = Math.max(1, Math.floor(attacker.maxHp * 0.1));
         const loss  = Math.floor(attacker.currentHp * 0.5);
         attacker.currentHp = Math.max(floor, attacker.currentHp - loss);
         addLog(`${aName} vented pressure! Lost ${loss} HP from Overcarbonated!`, 'log-item');
-        detailedLog.push({ type: 'effect', side: 'player', idx: aIdx, name: aName,
+        detailedLog.push({ type: 'effect', side, idx: aIdx, name: aName,
           hpChange: -loss, hpAfter: attacker.currentHp, reason: `Overcarbonated pressure vent!` });
       }
 
@@ -318,19 +318,29 @@ function runBattle(playerTeam, enemyTeam, bagItems, enemyItems, onLog) {
       }
     }
 
-    // Leftovers: heal active player pokemon 1/16 maxHP each round (if they hold it)
-    const active = pTeam.map((p, i) => ({ p, i })).find(x => x.p.currentHp > 0);
-    if ((active?.p.heldItems||[]).some(it=>it.id==='leftovers')) {
-      {
-        const heal = Math.max(1, Math.floor(active.p.maxHp / 16));
-        const actual = Math.min(heal, active.p.maxHp - active.p.currentHp);
-        if (actual > 0) {
-          active.p.currentHp += actual;
-          const n = active.p.nickname || active.p.brewName || active.p.name;
-          addLog(`Yeast Nutrient restored ${actual} HP to ${n}!`, 'log-item');
-          detailedLog.push({ type: 'effect', side: 'player', idx: active.i, name: n,
-            hpChange: actual, hpAfter: active.p.currentHp, reason: `Yeast Nutrient restored ${actual} HP to ${n}!` });
-        }
+    // Leftovers: heal active pokemon on each side 1/16 maxHP each round
+    const activeP = pTeam.map((p, i) => ({ p, i })).find(x => x.p.currentHp > 0);
+    if ((activeP?.p.heldItems||[]).some(it=>it.id==='leftovers')) {
+      const heal = Math.max(1, Math.floor(activeP.p.maxHp / 16));
+      const actual = Math.min(heal, activeP.p.maxHp - activeP.p.currentHp);
+      if (actual > 0) {
+        activeP.p.currentHp += actual;
+        const n = activeP.p.nickname || activeP.p.brewName || activeP.p.name;
+        addLog(`Yeast Nutrient restored ${actual} HP to ${n}!`, 'log-item');
+        detailedLog.push({ type: 'effect', side: 'player', idx: activeP.i, name: n,
+          hpChange: actual, hpAfter: activeP.p.currentHp, reason: `Yeast Nutrient restored ${actual} HP to ${n}!` });
+      }
+    }
+    const activeE = eTeam.map((p, i) => ({ p, i })).find(x => x.p.currentHp > 0);
+    if ((activeE?.p.heldItems||[]).some(it=>it.id==='leftovers')) {
+      const heal = Math.max(1, Math.floor(activeE.p.maxHp / 16));
+      const actual = Math.min(heal, activeE.p.maxHp - activeE.p.currentHp);
+      if (actual > 0) {
+        activeE.p.currentHp += actual;
+        const n = activeE.p.nickname || activeE.p.brewName || activeE.p.name;
+        addLog(`Yeast Nutrient restored ${actual} HP to ${n}!`, 'log-item');
+        detailedLog.push({ type: 'effect', side: 'enemy', idx: activeE.i, name: n,
+          hpChange: actual, hpAfter: activeE.p.currentHp, reason: `Yeast Nutrient restored ${actual} HP to ${n}!` });
       }
     }
   }
