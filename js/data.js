@@ -563,8 +563,8 @@ const RIVAL_BREWERIES = [
   },
   {
     id: 'bulk',
-    name: 'The Bulk Barrel',
-    subtitle: 'We never run dry.',
+    name: 'The Hearty Barrel',
+    subtitle: 'Lots of health and healing.',
     icon: '🛢️',
     roster: [
       { speciesId:113, name:'Chansey',   brewName:'Chan Zee Pastry Blonde',        types:['Blonde'],
@@ -590,8 +590,8 @@ const RIVAL_BREWERIES = [
   {
     id: 'wall',
     name: 'The Iron Taproom',
-    subtitle: 'Nothing gets through.',
-    icon: '🏗️',
+    subtitle: 'Solid defense lineup.',
+    icon: '🚧',
     roster: [
       { speciesId:213, name:'Shuckle',   brewName:'Shuck El Saison Barrel-aged',         types:['Saison','Barrel-aged'],
         baseStats:{hp:20,atk:10,def:230,speed:5,special:10,spdef:230},
@@ -604,10 +604,10 @@ const RIVAL_BREWERIES = [
         heldItems:[{id:'shell_bell',            name:'Closed Transfer Loop',icon:'🔄', desc:'Heal 20% of damage dealt'}] },
       { speciesId:208, name:'Steelix',   brewName:'Steel Ix Imperial Export Brown',      types:['Export','Brown'],
         baseStats:{hp:75,atk:85,def:200,speed:30,special:55,spdef:65},
-        heldItems:[{id:'"barrel-aged"_helmet',  name:'Steel Jacket',      icon:'🧥', desc:'Attacker takes 15% of their max HP on each hit'}] },
+        heldItems:[{id:'focus_band',    name:'Steel Toe Boots',       icon:'🥾', desc:'15% chance to survive a KO with 1 HP'}] },
       { speciesId:306, name:'Aggron',    brewName:'Ag Ron Imperial Export Barrel-aged',  types:['Export','Barrel-aged'],
         baseStats:{hp:70,atk:110,def:180,speed:50,special:60,spdef:60},
-        heldItems:[{id:'"barrel-aged"_helmet',  name:'Steel Jacket',      icon:'🧥', desc:'Attacker takes 15% of their max HP on each hit'}] },
+        heldItems:[{id:'focus_band',    name:'Steel Toe Boots',       icon:'🥾', desc:'15% chance to survive a KO with 1 HP'}] },
       { speciesId:379, name:'Registeel', brewName:'Reg E Steel Imperial Export',         types:['Export'],
         baseStats:{hp:80,atk:75,def:150,speed:50,special:75,spdef:150},
         heldItems:[{id:'assault_vest',          name:'Thermal Insulation',icon:'🧊', desc:'+40% DEF & Sp.Def'}] },
@@ -615,8 +615,8 @@ const RIVAL_BREWERIES = [
   },
   {
     id: 'flash',
-    name: 'First Pour Brewing',
-    subtitle: 'Gone before you taste it.',
+    name: 'Fast Pour Brewing',
+    subtitle: 'Hits you fast.',
     icon: '⚡',
     roster: [
       // introduced first → last
@@ -625,7 +625,7 @@ const RIVAL_BREWERIES = [
         heldItems:[{id:'choice_scarf',  name:'Powerful Pump',     icon:'💨', desc:'+50% Speed, -25% ATK'}] },
       { speciesId:101, name:'Electrode', brewName:'Elec Trode Sour',               types:['Sour'],
         baseStats:{hp:60,atk:50,def:70,speed:140,special:80,spdef:80},
-        heldItems:[{id:'wise_glasses',  name:'Sensory Class',     icon:'🌀', desc:'+20% aroma damage'}] },
+        heldItems:[{id:'choice_scarf',  name:'Powerful Pump',     icon:'💨', desc:'+50% Speed, -25% ATK'}] },
       { speciesId:135, name:'Jolteon',   brewName:'Jolt Eon Imperial Sour',        types:['Sour'],
         baseStats:{hp:65,atk:65,def:60,speed:130,special:110,spdef:95},
         heldItems:[{id:'scope_lens',    name:'Centrifuge',        icon:'🔬', desc:'Double crit chance (12.5%); normal 1.5x crit damage'}] },
@@ -634,10 +634,10 @@ const RIVAL_BREWERIES = [
         heldItems:[{id:'hop_extract',   name:'Hop Extract',       icon:'🌿', desc:'+20% damage dealt; take 20% of damage dealt as recoil'}] },
       { speciesId:150, name:'Mewtwo',    brewName:'Mew Two Imperial Belgian',      types:['Belgian'],
         baseStats:{hp:106,atk:110,def:90,speed:130,special:154,spdef:90},
-        heldItems:[{id:'life_orb',      name:'Banquet Beer Stash',icon:'🍻', desc:'+30% damage; holder loses 10% max HP per hit'}] },
+        heldItems:[{id:'overcarbonated', name: 'Overcarbonated',  icon: '💥', desc: 'First hit deals 2x damage, then lose 50% current HP (min 10% max HP)'}] },
       { speciesId:386, name:'Deoxys',    brewName:'Dee Ox Is Imperial Belgian',    types:['Belgian'],
         baseStats:{hp:50,atk:150,def:50,speed:150,special:150,spdef:50},
-        heldItems:[{id:'choice_specs',  name:'Hop Oils',          icon:'🫙', desc:'+30% aroma damage; holder takes +30% more flavor damage'}] },
+        heldItems:[{id:'choice_scarf',  name:'Powerful Pump',     icon:'💨', desc:'+50% Speed, -25% ATK'}] },
     ],
   },
 ];
