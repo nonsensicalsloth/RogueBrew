@@ -672,7 +672,71 @@ const BREWERY_EVENTS = [
       }
     },
   },
-
+{
+    id: 'recipe_refinement',
+    weight: 10,
+    icon: '📐',
+    title: 'Recipe Refinement!',
+    flavor: 'The team wants to push the recipe further. Could sharpen the technique — or ruin what was working.',
+    type: 'pick_pokemon',
+    risky: true,
+    apply(node, pokemon) {
+      const tier = pokemon.moveTier ?? 0;
+      const maxed = tier >= 2;
+      const floored = tier <= 0;
+      if (Math.random() < 0.5) {
+        if (maxed) {
+          // Already tier 2 — give HP instead as consolation
+          const heal = Math.max(1, Math.floor(pokemon.maxHp * 0.2));
+          pokemon.currentHp = Math.min(pokemon.maxHp, pokemon.currentHp + heal);
+          showEventResult(node, {
+            icon: '📐', title: 'Already Perfected!',
+            lines: [
+              `${pokemon.nickname || pokemon.brewName || pokemon.name} is already at peak technique.`,
+              `Restored 20% HP instead.`,
+            ],
+            okLabel: `Nice!`,
+          });
+        } else {
+          pokemon.moveTier = Math.min(2, tier + 1);
+          const newMove = getBestMove(pokemon.types || ['Blonde'], pokemon.baseStats, pokemon.speciesId, pokemon.moveTier);
+          showEventResult(node, {
+            icon: '📐', title: 'Refined!',
+            lines: [
+              `${pokemon.nickname || pokemon.brewName || pokemon.name} levelled up its technique.`,
+              `Now using ${newMove.name} (${newMove.power}pw).`,
+            ],
+            okLabel: `Let's go!`,
+          });
+        }
+      } else {
+        if (floored) {
+          // Already tier 0 — take HP damage instead
+          const dmg = Math.max(1, Math.floor(pokemon.maxHp * 0.2));
+          pokemon.currentHp = Math.max(1, pokemon.currentHp - dmg);
+          showEventResult(node, {
+            icon: '💔', title: 'Nothing Left to Lose!',
+            lines: [
+              `${pokemon.nickname || pokemon.brewName || pokemon.name} is already using basic technique.`,
+              `Lost 20% HP from the failed attempt.`,
+            ],
+            badgeClass: 'event-bad',
+          });
+        } else {
+          pokemon.moveTier = Math.max(0, tier - 1);
+          const newMove = getBestMove(pokemon.types || ['Blonde'], pokemon.baseStats, pokemon.speciesId, pokemon.moveTier);
+          showEventResult(node, {
+            icon: '📐', title: 'Over-engineered!',
+            lines: [
+              `${pokemon.nickname || pokemon.brewName || pokemon.name}'s technique got worse, not better.`,
+              `Dropped to ${newMove.name} (${newMove.power}pw).`,
+            ],
+            badgeClass: 'event-bad',
+          });
+        }
+      }
+    },
+  },
   // ── TAP TAKEOVER (weight 10) ───────────────────────────────────────────
   {
     id: 'tap_takeover',
