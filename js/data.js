@@ -536,6 +536,7 @@ const MINI_BOSS_TEAM_SIZES = [1, 2, 2, 3, 3, 4, 4, 5, 6];
 const RIVAL_BREWERIES = [
   {
     id: 'fossil',
+    trainerSprite: 'scientist-gen3',
     name: 'The Fossil Brewery',
     subtitle: 'Ancient recipes, unearthed.',
     icon: '🦕',
@@ -563,6 +564,7 @@ const RIVAL_BREWERIES = [
   },
   {
     id: 'bulk',
+    trainerSprite: 'baker',
     name: 'The Hearty Barrel',
     subtitle: 'Lots of health and healing.',
     icon: '🛢️',
@@ -589,6 +591,7 @@ const RIVAL_BREWERIES = [
   },
   {
     id: 'wall',
+    trainerSprite: 'biker-gen4',
     name: 'The Iron Taproom',
     subtitle: 'Solid defense lineup.',
     icon: '🚧',
@@ -615,6 +618,7 @@ const RIVAL_BREWERIES = [
   },
   {
     id: 'flash',
+    trainerSprite: 'triathleterunner-gen6',
     name: 'Fast Pour Brewing',
     subtitle: 'Hits you fast.',
     icon: '⚡',
