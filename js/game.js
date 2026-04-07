@@ -2217,7 +2217,7 @@ async function doMiniBossNode(node) {
     doMiniBossReward(node);
   }, () => {
     showGameOver();
-  }, rival.name);
+  }, rival.trainerSprite);
 }
 
 function doMiniBossReward(node) {
