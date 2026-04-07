@@ -640,6 +640,152 @@ h1, h2, .pixel-font {
 .legend-item { display: flex; align-items: center; gap: 4px; }
 .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
 
+/* ---- Rival Banner ---- */
+.rival-banner {
+  background: var(--bg2);
+  border: 1px solid #5a3a7a;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+}
+.rival-banner:hover .rival-collapsed { background: var(--bg3); }
+
+.rival-collapsed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+}
+.rival-pip {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #a855f7;
+  flex-shrink: 0;
+}
+.rival-tag {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: #7a4a9a;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+.rival-name-inline {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #d8b4fe;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.rival-counter {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #7a4a9a;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.rival-mini-slots {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.rival-slot-mini {
+  width: 18px; height: 18px;
+  border-radius: 3px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rival-slot-mini.seen  { background: #2e1a44; border: 1px solid #7a3a9a; }
+.rival-slot-mini.unknown { background: #1e1226; border: 1px solid #3a1a50; }
+.rival-slot-mini img { width: 16px; height: 16px; image-rendering: pixelated; }
+.rival-slot-mini.unknown img { filter: brightness(0); opacity: 0.2; }
+.rival-chevron {
+  font-size: 7px;
+  color: #5a3a7a;
+  flex-shrink: 0;
+  transition: transform 0.15s;
+  display: inline-block;
+}
+.rival-chevron.open { transform: rotate(180deg); }
+
+.rival-expanded {
+  display: none;
+  border-top: 1px solid #2e1a44;
+  padding: 10px;
+}
+.rival-expanded.open { display: block; }
+.rival-exp-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.rival-exp-icon {
+  width: 38px; height: 38px;
+  background: var(--bg3);
+  border: 1px solid #6a3a8a;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.rival-exp-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #e9d5ff;
+  margin-bottom: 4px;
+}
+.rival-exp-sub {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: #7a5a9a;
+}
+.rival-roster-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: #5a3a7a;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+.rival-roster-row {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.rival-roster-slot { text-align: center; }
+.rival-roster-img {
+  width: 36px; height: 36px;
+  background: var(--bg3);
+  border: 1px solid #6a3a8a;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+  overflow: hidden;
+}
+.rival-roster-img img { width: 32px; height: 32px; image-rendering: pixelated; }
+.rival-roster-slot.unknown .rival-roster-img { border-color: #2e1a44; }
+.rival-roster-slot.unknown img { filter: brightness(0); opacity: 0.12; }
+.rival-roster-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: #8a5aaa;
+}
+.rival-roster-slot.unknown .rival-roster-name { color: #2e1a44; }
+
+/* Hide mini slots on very narrow screens — counter is enough */
+@media (max-width: 380px) {
+  .rival-mini-slots { display: none; }
+}
+
 /* ---- Battle Screen ---- */
 #battle-screen { gap: 12px; }
 .battle-header { text-align: center; }
