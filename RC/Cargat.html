@@ -253,7 +253,8 @@
                     }
                 });
 
-                foundWheels.sort((a, b) => b.position.x - a.position.x);
+                // Sort by Z descending: front wheels (positive Z) get indices 0 & 1
+                foundWheels.sort((a, b) => b.position.z - a.position.z);
 
                 // Build wheel physics using the ACTUAL positions from the GLB
                 // This way the physics wheels always match the visual model exactly
