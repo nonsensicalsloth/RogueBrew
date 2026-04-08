@@ -7,7 +7,7 @@
     <style>
         body { margin: 0; overflow: hidden; background: #111; font-family: monospace; touch-action: none; }
         #instructions {
-            position: absolute; bottom: 20px; left: 20px; color: #7fc; 
+            position: absolute; bottom: 20px; left: 20px; color: #7fc;
             background: rgba(0,0,0,0.5); padding: 10px; pointer-events: none;
         }
         #car-switcher {
@@ -15,16 +15,14 @@
             display: flex; align-items: center; gap: 12px;
             background: rgba(0,0,0,0.6); padding: 10px 16px; border-radius: 8px;
         }
-        #car-name {
-            color: #7fc; font-size: 14px; min-width: 160px; text-align: center; letter-spacing: 1px;
-        }
+        #car-name { color: #7fc; font-size: 14px; min-width: 160px; text-align: center; letter-spacing: 1px; }
         #car-switcher button {
             background: rgba(127,255,200,0.15); border: 1px solid #7fc; color: #7fc;
             font-family: monospace; font-size: 16px; padding: 4px 12px;
             cursor: pointer; border-radius: 4px;
         }
         #car-switcher button:hover { background: rgba(127,255,200,0.3); }
-        #loading { 
+        #loading {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
             color: #7fc; font-size: 18px; display: none;
         }
@@ -54,43 +52,47 @@
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         import * as CANNON from 'cannon-es';
 
-        // --- Setup ---
+        // ================================================================
+        // RENDERER & SCENE
+        // ================================================================
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x222222);
+
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
         document.body.appendChild(renderer.domElement);
 
-        const world = new CANNON.World();
-        world.gravity.set(0, -9.82, 0);
-        world.broadphase = new CANNON.SAPBroadphase(world);
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
 
-        // Collision groups: chassis won't collide with wheel bodies
-        const GROUP_CHASSIS = 1;
-        const GROUP_WORLD   = 4;
-
-		let currentSteer = 0;
-
-
-        // --- Lighting ---
-        const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambient);
+        // ================================================================
+        // LIGHTING
+        // ================================================================
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
         const sun = new THREE.DirectionalLight(0xffffff, 1);
         sun.position.set(10, 20, 10);
         sun.castShadow = true;
         scene.add(sun);
 
-        // --- Assets & Materials ---
-        const loader = new GLTFLoader();
-        const textureLoader = new THREE.TextureLoader();
-        const colormap = textureLoader.load('Textures/colormap.png');
-        colormap.colorSpace = THREE.SRGBColorSpace;
-        colormap.flipY = false;
+        // ================================================================
+        // PHYSICS WORLD
+        // ================================================================
+        const world = new CANNON.World();
+        world.gravity.set(0, -9.82, 0);
+        world.broadphase = new CANNON.SAPBroadphase(world);
 
-        // --- The Environment (Hidden Floor) ---
-        // Creating a large static box for the floor/brewery area
+        const GROUP_CHASSIS = 1;
+        const GROUP_WORLD   = 4;
+
+        // ================================================================
+        // FLOOR
+        // ================================================================
         const floorBody = new CANNON.Body({ mass: 0 });
         floorBody.addShape(new CANNON.Box(new CANNON.Vec3(50, 0.1, 50)));
         floorBody.position.set(0, -0.1, 0);
@@ -106,9 +108,31 @@
         floorMesh.receiveShadow = true;
         scene.add(floorMesh);
 
-        // ============================================================
-        // CAR PROFILES — tune each vehicle independently
-        // ============================================================
+        // ================================================================
+        // TEXTURE
+        // ================================================================
+        const textureLoader = new THREE.TextureLoader();
+        const colormap = textureLoader.load('Textures/colormap.png');
+        colormap.colorSpace = THREE.SRGBColorSpace;
+        colormap.flipY = false;
+
+        // ================================================================
+        // CAR PROFILES
+        //
+        // Wheel node names in each vehicle GLB (confirmed by inspection):
+        //   wheel-fl = front-left  (negative X, negative Z)
+        //   wheel-fr = front-right (positive X, negative Z)
+        //   wheel-bl = back-left   (negative X, positive Z)
+        //   wheel-br = back-right  (positive X, positive Z)
+        //
+        // Physics wheel index order used throughout: FL=0, FR=1, BL=2, BR=3
+        //   Steering: indices 0 & 1 (front)
+        //   Engine:   indices 2 & 3 (rear)
+        //
+        // Wheel mesh orientation fix (baked into geometry at load time):
+        //   All wheels: rotateX(PI/2) — GLB wheels are flat, need to stand upright
+        //   Right-side wheels (FR=1, BR=3): rotateY(PI) — tread faces outward
+        // ================================================================
         const CAR_PROFILES = [
             {
                 name: 'RACER',
@@ -176,14 +200,14 @@
             },
         ];
 
-        let currentCarIndex = 0;
-        let activProfile = CAR_PROFILES[0];
-
-        // --- Vehicle Setup ---
-        const chassisShape = new CANNON.Box(new CANNON.Vec3(0.3, 0.2, 0.6));
-        const chassisBody = new CANNON.Body({ mass: activProfile.mass });
-        const centerOfMassOffset = new CANNON.Vec3(0, 0.2, 0);
-        chassisBody.addShape(chassisShape, centerOfMassOffset);
+        // ================================================================
+        // CHASSIS PHYSICS (shared body, mass updated per car)
+        // ================================================================
+        const chassisBody = new CANNON.Body({ mass: CAR_PROFILES[0].mass });
+        chassisBody.addShape(
+            new CANNON.Box(new CANNON.Vec3(0.3, 0.2, 0.6)),
+            new CANNON.Vec3(0, 0.2, 0)  // offset shape upward so centre of mass sits low
+        );
         chassisBody.position.set(0, 2, 0);
         chassisBody.angularDamping = 0.5;
         chassisBody.collisionFilterGroup = GROUP_CHASSIS;
@@ -193,22 +217,26 @@
             chassisBody,
             indexForwardAxis: 2,
             indexRightAxis: 0,
-            indexUpAxis: 1
+            indexUpAxis: 1,
         });
-
-        // Wheels are built dynamically from GLB positions in loadCar()
         vehicle.addToWorld(world);
 
-        // --- Visual state ---
-        let carVisual = null;
-        let carWheels = [];
+        // ================================================================
+        // VISUAL STATE
+        // ================================================================
+        const loader = new GLTFLoader();
+        let carVisual = null;   // car body — scene-level object
+        let carWheels = [];     // [FL, FR, BL, BR] — scene-level objects
 
         function clearVisual() {
             if (carVisual) { scene.remove(carVisual); carVisual = null; }
-            carWheels.forEach(w => scene.remove(w));
+            carWheels.forEach(w => { if (w) scene.remove(w); });
             carWheels = [];
         }
 
+        // ================================================================
+        // LOAD CAR
+        // ================================================================
         function loadCar(profile) {
             document.getElementById('loading').style.display = 'block';
             document.getElementById('car-name').textContent = profile.name;
@@ -217,77 +245,63 @@
             chassisBody.mass = profile.mass;
             chassisBody.updateMassProperties();
 
-            // Load car body and wheel GLB in parallel
             Promise.all([
                 new Promise(res => loader.load(profile.file, res)),
-                new Promise(res => loader.load(profile.wheelFile, res))
+                new Promise(res => loader.load(profile.wheelFile, res)),
             ]).then(([carGlb, wheelGlb]) => {
+
                 carVisual = carGlb.scene;
 
-                // --- Find wheel positions by name from the car GLB ---
-                // Names are wheel-fl, wheel-fr, wheel-bl, wheel-br
-                // Front = negative Z, fl = negative X, fr = positive X
-                // Physics order: [0]=FL [1]=FR [2]=BL [3]=BR
-                const wheelSlots = { fl: null, fr: null, bl: null, br: null };
-
+                // Find each wheel slot by exact node name
+                const slots = { fl: null, fr: null, bl: null, br: null };
                 carVisual.traverse(child => {
-                    const n = child.name.toLowerCase();
-                    if (n.includes('wheel-fl') || n === 'wheel-fl') wheelSlots.fl = child;
-                    else if (n.includes('wheel-fr') || n === 'wheel-fr') wheelSlots.fr = child;
-                    else if (n.includes('wheel-bl') || n === 'wheel-bl') wheelSlots.bl = child;
-                    else if (n.includes('wheel-br') || n === 'wheel-br') wheelSlots.br = child;
+                    switch (child.name.toLowerCase()) {
+                        case 'wheel-fl': slots.fl = child; break;
+                        case 'wheel-fr': slots.fr = child; break;
+                        case 'wheel-bl': slots.bl = child; break;
+                        case 'wheel-br': slots.br = child; break;
+                    }
                 });
 
-                // Ordered array: FL, FR, BL, BR
-                const wheelOrder = [wheelSlots.fl, wheelSlots.fr, wheelSlots.bl, wheelSlots.br];
+                // FL=0, FR=1, BL=2, BR=3 — order must match physics indices below
+                const slotOrder = [slots.fl, slots.fr, slots.bl, slots.br];
 
-                // --- Build physics wheels from exact GLB positions ---
+                // Rebuild physics wheels using exact positions from GLB nodes
                 while (vehicle.wheelInfos.length) vehicle.wheelInfos.pop();
-
-                wheelOrder.forEach((slot, index) => {
-                    if (!slot) return;
-                    const pos = slot.position;
+                slotOrder.forEach((slot, i) => {
+                    if (!slot) { console.warn(`wheel slot missing at index ${i}`); return; }
+                    const p = slot.position;
                     vehicle.addWheel({
-                        radius: profile.wheelRadius,
-                        directionLocal: new CANNON.Vec3(0, -1, 0),
-                        axleLocal: new CANNON.Vec3(1, 0, 0),
-                        suspensionStiffness: profile.suspension.stiffness,
-                        suspensionRestLength: profile.suspension.restLength,
-                        frictionSlip: profile.frictionSlip,
-                        dampingRelaxation: profile.suspension.damping,
-                        dampingCompression: profile.suspension.compression,
-                        maxSuspensionForce: 100000,
-                        rollInfluence: 0.01,
-                        maxSuspensionTravel: profile.suspension.travel,
-                        customSlidingRotationalSpeed: -30,
+                        radius:                          profile.wheelRadius,
+                        directionLocal:                  new CANNON.Vec3(0, -1, 0),
+                        axleLocal:                       new CANNON.Vec3(1, 0, 0),
+                        chassisConnectionPointLocal:     new CANNON.Vec3(p.x, p.y, p.z),
+                        isFrontWheel:                    i < 2,
+                        suspensionStiffness:             profile.suspension.stiffness,
+                        suspensionRestLength:            profile.suspension.restLength,
+                        maxSuspensionTravel:             profile.suspension.travel,
+                        dampingRelaxation:               profile.suspension.damping,
+                        dampingCompression:              profile.suspension.compression,
+                        frictionSlip:                    profile.frictionSlip,
+                        maxSuspensionForce:              100000,
+                        rollInfluence:                   0.01,
+                        customSlidingRotationalSpeed:    -30,
                         useCustomSlidingRotationalSpeed: true,
-                        chassisConnectionPointLocal: new CANNON.Vec3(pos.x, pos.y, pos.z),
-                        isFrontWheel: index < 2  // FL=0, FR=1 are front
                     });
                 });
 
-                // --- Clone wheel mesh for each slot ---
-                // Get the wheel mesh template from the wheel GLB
+                // Get wheel mesh template from external wheel GLB
                 let wheelTemplate = null;
-                wheelGlb.scene.traverse(child => {
-                    if (child.isMesh) wheelTemplate = child;
-                });
+                wheelGlb.scene.traverse(child => { if (child.isMesh) wheelTemplate = child; });
 
-                carWheels = wheelOrder.map((slot, i) => {
+                // Clone wheel mesh for each corner, bake orientation into geometry once
+                carWheels = slotOrder.map((slot, i) => {
                     if (!slot || !wheelTemplate) return null;
                     const mesh = wheelTemplate.clone();
                     mesh.geometry = wheelTemplate.geometry.clone();
-                    mesh.geometry.rotateX(Math.PI / 2);
-
-                    // FR and BR are on the right (positive X) — flip to face outward
-                    // FL and BL are on the left (negative X) — face outward by default
-                    const isRight = (i === 1 || i === 3); // FR=1, BR=3
-                    if (isRight) {
-                        mesh.geometry.rotateY(Math.PI);
-                    }
-
-                    // Remove the original wheel placeholder from car visual
-                    if (slot.parent) slot.parent.remove(slot);
+                    mesh.geometry.rotateX(Math.PI / 2);              // stand upright
+                    if (i === 1 || i === 3) mesh.geometry.rotateY(Math.PI); // right side: tread outward
+                    if (slot.parent) slot.parent.remove(slot);        // remove placeholder from car
                     scene.add(mesh);
                     return mesh;
                 });
@@ -298,121 +312,115 @@
             });
         }
 
-        // Load the first car
-        loadCar(activProfile);
+        // ================================================================
+        // CAR CYCLING
+        // ================================================================
+        let currentCarIndex = 0;
+        let activProfile = CAR_PROFILES[0];
 
-        // --- Car cycling ---
-        function cyclecar(dir) {
+        function cycleCar(dir) {
             currentCarIndex = (currentCarIndex + dir + CAR_PROFILES.length) % CAR_PROFILES.length;
             activProfile = CAR_PROFILES[currentCarIndex];
             loadCar(activProfile);
         }
 
-        document.getElementById('btn-next').addEventListener('click', () => cyclecar(1));
-        document.getElementById('btn-prev').addEventListener('click', () => cyclecar(-1));
+        document.getElementById('btn-prev').addEventListener('click', () => cycleCar(-1));
+        document.getElementById('btn-next').addEventListener('click', () => cycleCar(1));
 
-        // --- Input Handling ---
+        // ================================================================
+        // INPUT
+        // ================================================================
         const keys = { w: false, s: false, a: false, d: false, space: false };
-        window.addEventListener('keydown', (e) => { 
-            const key = e.key.toLowerCase();
-            if(keys.hasOwnProperty(key)) keys[key] = true;
-            if(key === ' ') keys.space = true;
-            if(key === 'r') resetVehicle();
-            if(key === 'c') cyclecar(1);
+
+        window.addEventListener('keydown', e => {
+            const k = e.key.toLowerCase();
+            if (k in keys)  keys[k] = true;
+            if (k === ' ')  keys.space = true;
+            if (k === 'r')  resetVehicle();
+            if (k === 'c')  cycleCar(1);
         });
-        window.addEventListener('keyup', (e) => { 
-            const key = e.key.toLowerCase();
-            if(keys.hasOwnProperty(key)) keys[key] = false;
-            if(key === ' ') keys.space = false;
+        window.addEventListener('keyup', e => {
+            const k = e.key.toLowerCase();
+            if (k in keys)  keys[k] = false;
+            if (k === ' ')  keys.space = false;
         });
 
         function resetVehicle() {
             chassisBody.position.set(0, 2, 0);
             chassisBody.quaternion.set(0, 0, 0, 1);
-            chassisBody.velocity.set(0,0,0);
-            chassisBody.angularVelocity.set(0,0,0);
+            chassisBody.velocity.set(0, 0, 0);
+            chassisBody.angularVelocity.set(0, 0, 0);
         }
 
-// --- Animation Loop ---
-function update() {
-    world.step(1/60);
+        // ================================================================
+        // ANIMATION LOOP
+        // ================================================================
+        let currentSteer = 0;
 
-    // Read live from active car profile
-    const engineForce = activProfile.engineForce;
-    const maxSteer    = activProfile.maxSteer;
-    const brakeForce  = activProfile.brakeForce;
-    const lerpSpeed   = 0.1;
+        function update() {
+            requestAnimationFrame(update);
+            world.step(1 / 60);
 
-    // 2. Smooth Steering — lerp toward target, never snaps
-    const steerTarget = keys.a ? -maxSteer : keys.d ? maxSteer : 0;
-    currentSteer += (steerTarget - currentSteer) * lerpSpeed;
-    if (Math.abs(currentSteer) < 0.001) currentSteer = 0;
-    // Clamp just in case
-    currentSteer = Math.max(-maxSteer, Math.min(maxSteer, currentSteer));
+            const { engineForce, brakeForce, maxSteer } = activProfile;
 
-    // 4. Only apply forces once wheels are built
-    if (vehicle.wheelInfos.length === 0) {
-        renderer.render(scene, camera);
-        requestAnimationFrame(update);
-        return;
-    }
-    const force = keys.w ? engineForce : (keys.s ? -engineForce : 0);
-    const currentBrake = keys.space ? brakeForce : 0;
+            // Smooth steering
+            const steerTarget = keys.a ? -maxSteer : keys.d ? maxSteer : 0;
+            currentSteer += (steerTarget - currentSteer) * 0.1;
+            if (Math.abs(currentSteer) < 0.001) currentSteer = 0;
 
-    // 4. Apply Physics — steer on 2&3 (front in this GLB's layout), drive on 0&1
-    vehicle.setSteeringValue(currentSteer, 0);  // FL
-    vehicle.setSteeringValue(currentSteer, 1);  // FR
-    vehicle.setSteeringValue(0, 2);
-    vehicle.setSteeringValue(0, 3);
+            // Skip physics forces until wheels are loaded from GLB
+            if (vehicle.wheelInfos.length === 0) {
+                renderer.render(scene, camera);
+                return;
+            }
 
-    vehicle.applyEngineForce(force, 2);  // BL
-    vehicle.applyEngineForce(force, 3);  // BR
-    vehicle.applyEngineForce(0, 0);
-    vehicle.applyEngineForce(0, 1);
+            const force = keys.w ? engineForce : keys.s ? -engineForce : 0;
+            const brake = keys.space ? brakeForce : 0;
 
-    for (let i = 0; i < 4; i++) {
-        vehicle.setBrake(currentBrake, i);
-    }
+            // Front wheels steer (FL=0, FR=1)
+            vehicle.setSteeringValue(currentSteer, 0);
+            vehicle.setSteeringValue(currentSteer, 1);
 
-		// --- 5. Visual Sync ---
-		if (carVisual) {
-			carVisual.position.copy(chassisBody.position);
-			carVisual.quaternion.copy(chassisBody.quaternion);
+            // Rear wheels drive (BL=2, BR=3)
+            vehicle.applyEngineForce(force, 2);
+            vehicle.applyEngineForce(force, 3);
+            vehicle.applyEngineForce(0, 0);
+            vehicle.applyEngineForce(0, 1);
 
-			for (let i = 0; i < vehicle.wheelInfos.length; i++) {
-				vehicle.updateWheelTransform(i);
-				const t = vehicle.wheelInfos[i].worldTransform;
+            for (let i = 0; i < 4; i++) vehicle.setBrake(brake, i);
 
-				if (carWheels[i]) {
-					// Wheels are scene-level objects — set world transforms directly
-					carWheels[i].position.copy(t.position);
-					carWheels[i].quaternion.copy(t.quaternion);
+            // Sync car body visual to physics
+            if (carVisual) {
+                carVisual.position.copy(chassisBody.position);
+                carVisual.quaternion.copy(chassisBody.quaternion);
+            }
 
-					// Flips are baked into geometry at load time — no per-frame flip needed
-				}
-			}
-		}
+            // Sync wheel visuals to physics transforms
+            // Wheels are scene-level (not children of carVisual) so world transform applies directly
+            for (let i = 0; i < vehicle.wheelInfos.length; i++) {
+                vehicle.updateWheelTransform(i);
+                const t = vehicle.wheelInfos[i].worldTransform;
+                if (carWheels[i]) {
+                    carWheels[i].position.copy(t.position);
+                    carWheels[i].quaternion.copy(t.quaternion);
+                }
+            }
 
-    // 6. Camera Logic
-    const chassisPos = new THREE.Vector3().copy(chassisBody.position);
-    const cameraOffset = new THREE.Vector3(0, 2, 5); 
-    if (carVisual) {
-        cameraOffset.applyQuaternion(carVisual.quaternion);
-    }
-    camera.position.lerp(chassisPos.clone().add(cameraOffset), 0.1);
-    camera.lookAt(chassisPos);
+            // Chase camera
+            const chassisPos = new THREE.Vector3().copy(chassisBody.position);
+            const offset = new THREE.Vector3(0, 2, 5);
+            if (carVisual) offset.applyQuaternion(carVisual.quaternion);
+            camera.position.lerp(chassisPos.clone().add(offset), 0.1);
+            camera.lookAt(chassisPos);
 
-    renderer.render(scene, camera);
-    requestAnimationFrame(update);
-}
+            renderer.render(scene, camera);
+        }
 
+        // ================================================================
+        // INIT
+        // ================================================================
+        loadCar(activProfile);
         update();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
 
     </script>
 </body>
