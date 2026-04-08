@@ -113,25 +113,25 @@
 			radius: 0.15,
 			directionLocal: new CANNON.Vec3(0, -1, 0),
 			axleLocal: new CANNON.Vec3(1, 0, 0),
-			suspensionStiffness: 30,
-			suspensionRestLength: 0.1,
+			suspensionStiffness: 55,
+			suspensionRestLength: 0.25,
 			frictionSlip: 1.4,
 			dampingRelaxation: 2.3,
 			dampingCompression: 4.4,
 			maxSuspensionForce: 100000,
 			rollInfluence: 0.01,
-			maxSuspensionTravel: 0.2,
+			maxSuspensionTravel: 0.3,
 			customSlidingRotationalSpeed: -30,
 			useCustomSlidingRotationalSpeed: true
 		};
 
 		// 2. Define the 4 unique locations for the wheels
-		// These are [Left/Right, Height, Front/Back]
+		// Y = -0.1 so connection points are at bottom edge of chassis box
 		const wheelOffsets = [
-			new CANNON.Vec3(0.2, 0, 0.15),  // Front Left
-			new CANNON.Vec3(-0.2, 0, 0.15), // Front Right
-			new CANNON.Vec3(0.2, 0, -0.15), // Back Left
-			new CANNON.Vec3(-0.2, 0, -0.15) // Back Right
+			new CANNON.Vec3( 0.28, -0.1,  0.35),  // Front Left
+			new CANNON.Vec3(-0.28, -0.1,  0.35),  // Front Right
+			new CANNON.Vec3( 0.28, -0.1, -0.35),  // Back Left
+			new CANNON.Vec3(-0.28, -0.1, -0.35)   // Back Right
 		];
 
 		// --- 3. Add Wheels to Vehicle ---
@@ -157,22 +157,22 @@
 					
 					carVisual.traverse(child => {
 						if (child.isMesh && child.name.toLowerCase().includes('wheel')) {
-							// 1. Reset any previous messy rotations
-							child.geometry.rotateX(0);
-							child.geometry.rotateY(0);
-							child.geometry.rotateZ(0);
-
-							// 2. Stand them upright (Note the CAPITAL X)
 							child.geometry.rotateX(Math.PI / 2); 
-							
 							foundWheels.push(child);
 						}
 					});
 
-					// Sort: Index 0/2 = Left side | Index 1/3 = Right side
-					foundWheels.sort((a, b) => a.position.x - b.position.x);
+					// Sort: left side (positive X) first
+					foundWheels.sort((a, b) => b.position.x - a.position.x);
+
+					// Detach wheels from the car hierarchy so we can drive them
+					// directly with world-space physics transforms — no worldToLocal needed
+					foundWheels.forEach(w => {
+						carVisual.remove(w);
+						scene.add(w);
+					});
 					carWheels = foundWheels;
-					
+
 					scene.add(carVisual);
 				});
 
@@ -235,32 +235,22 @@ function update() {
 			carVisual.position.copy(chassisBody.position);
 			carVisual.quaternion.copy(chassisBody.quaternion);
 
-			// Inside your update() function...
 			for (let i = 0; i < vehicle.wheelInfos.length; i++) {
 				vehicle.updateWheelTransform(i);
 				const t = vehicle.wheelInfos[i].worldTransform;
 
 				if (carWheels[i]) {
+					// Wheels are scene-level objects — set world transforms directly
 					carWheels[i].position.copy(t.position);
 					carWheels[i].quaternion.copy(t.quaternion);
 
-					// --- THE 180° FLIPS ---
-					// 1. Flip Right-side wheels (rims facing out)
+					// Flip right-side wheels so rims face outward (indices 1 and 3)
 					if (i === 1 || i === 3) {
-						const sideFlip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
+						const sideFlip = new THREE.Quaternion().setFromAxisAngle(
+							new THREE.Vector3(0, 1, 0), Math.PI
+						);
 						carWheels[i].quaternion.multiply(sideFlip);
 					}
-
-					// 2. Flip Back wheels (if they are still backward)
-					// If your back wheels (index 2/3) are still wrong, uncomment this:
-					/*
-					if (i === 2 || i === 3) {
-						const backFlip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
-						carWheels[i].quaternion.multiply(backFlip);
-					}
-					*/
-
-					carVisual.worldToLocal(carWheels[i].position);
 				}
 			}
 		}
