@@ -125,34 +125,6 @@ window.addEventListener('resize', () => {
     renderer.setSize(innerWidth, innerHeight);
 });
 
-// Physics — using the real Three.js Octree/Capsule addons (same as OG)
-// (octree removed)
-// (walker code removed)
-    new THREE.Vector3(0, 0.35, 0),
-    new THREE.Vector3(0, 1.65, 0),
-    0.35
-);
-// (walker code removed)
-let playerOnFloor = false;
-
-// ── CANNON player body — drives mass/gravity feel, synced to Octree capsule ──
-// (carPhysMat defined below)
-const playerBody = new CANNON.Body({
-    mass: 60,
-    shape: new CANNON.Sphere(0.35),   // matches capsule radius
-    fixedRotation: true,               // no tumbling
-    material: carPhysMat,
-    linearDamping: 0.99,               // strong damping — movement is key-driven not force-driven
-});
-playerBody.position.set(0, 1.65, 0);
-world.addBody(playerBody);
-
-// Contact material: player vs floor — no bounce, high friction
-// (carPhysMat defined below)
-world.addContactMaterial(new CANNON.ContactMaterial(carPhysMat, carPhysMat, {
-    friction: 0.0,
-    restitution: 0.0,
-}));
 
 // ─────────────────────────────────────────────────────────────
 //  MATERIALS
