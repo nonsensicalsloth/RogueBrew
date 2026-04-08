@@ -364,7 +364,7 @@
             const { engineForce, brakeForce, maxSteer } = activProfile;
 
             // Smooth steering
-            const steerTarget = keys.a ? -maxSteer : keys.d ? maxSteer : 0;
+            const steerTarget = keys.a ? maxSteer : keys.d ? -maxSteer : 0;
             currentSteer += (steerTarget - currentSteer) * 0.1;
             if (Math.abs(currentSteer) < 0.001) currentSteer = 0;
 
