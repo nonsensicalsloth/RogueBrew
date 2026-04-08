@@ -119,10 +119,6 @@
                 maxSteer: 0.3,
                 suspension: { stiffness: 55, restLength: 0.08, travel: 0.2, damping: 2.3, compression: 4.4 },
                 wheelRadius: 0.15,
-                wheelOffsets: [
-                    [ 0.28, 0,  0.35], [-0.28, 0,  0.35],
-                    [ 0.28, 0, -0.35], [-0.28, 0, -0.35]
-                ],
                 frictionSlip: 0.8,
             },
             {
@@ -134,10 +130,6 @@
                 maxSteer: 0.28,
                 suspension: { stiffness: 60, restLength: 0.06, travel: 0.15, damping: 2.0, compression: 4.0 },
                 wheelRadius: 0.14,
-                wheelOffsets: [
-                    [ 0.28, 0,  0.35], [-0.28, 0,  0.35],
-                    [ 0.28, 0, -0.35], [-0.28, 0, -0.35]
-                ],
                 frictionSlip: 0.9,
             },
             {
@@ -149,10 +141,6 @@
                 maxSteer: 0.2,
                 suspension: { stiffness: 70, restLength: 0.07, travel: 0.15, damping: 2.5, compression: 5.0 },
                 wheelRadius: 0.16,
-                wheelOffsets: [
-                    [ 0.2,  0,  0.5], [-0.2,  0,  0.5],
-                    [ 0.35, 0, -0.4], [-0.35, 0, -0.4]
-                ],
                 frictionSlip: 1.0,
             },
             {
@@ -164,10 +152,6 @@
                 maxSteer: 0.35,
                 suspension: { stiffness: 35, restLength: 0.3, travel: 0.5, damping: 1.8, compression: 3.5 },
                 wheelRadius: 0.28,
-                wheelOffsets: [
-                    [ 0.45, 0,  0.45], [-0.45, 0,  0.45],
-                    [ 0.45, 0, -0.45], [-0.45, 0, -0.45]
-                ],
                 frictionSlip: 0.7,
             },
             {
@@ -179,10 +163,6 @@
                 maxSteer: 0.32,
                 suspension: { stiffness: 65, restLength: 0.07, travel: 0.18, damping: 2.2, compression: 4.2 },
                 wheelRadius: 0.14,
-                wheelOffsets: [
-                    [ 0.28, 0,  0.38], [-0.28, 0,  0.38],
-                    [ 0.28, 0, -0.38], [-0.28, 0, -0.38]
-                ],
                 frictionSlip: 0.85,
             },
             {
@@ -194,10 +174,6 @@
                 maxSteer: 0.3,
                 suspension: { stiffness: 45, restLength: 0.2, travel: 0.35, damping: 2.0, compression: 4.0 },
                 wheelRadius: 0.2,
-                wheelOffsets: [
-                    [ 0.38, 0,  0.45], [-0.38, 0,  0.45],
-                    [ 0.38, 0, -0.45], [-0.38, 0, -0.45]
-                ],
                 frictionSlip: 0.75,
             },
             {
@@ -209,10 +185,6 @@
                 maxSteer: 0.25,
                 suspension: { stiffness: 40, restLength: 0.22, travel: 0.4, damping: 2.1, compression: 4.1 },
                 wheelRadius: 0.22,
-                wheelOffsets: [
-                    [ 0.4,  0,  0.55], [-0.4,  0,  0.55],
-                    [ 0.4,  0, -0.55], [-0.4,  0, -0.55]
-                ],
                 frictionSlip: 0.7,
             },
             {
@@ -224,10 +196,6 @@
                 maxSteer: 0.35,
                 suspension: { stiffness: 30, restLength: 0.12, travel: 0.25, damping: 1.5, compression: 3.0 },
                 wheelRadius: 0.15,
-                wheelOffsets: [
-                    [ 0.28, 0,  0.38], [-0.28, 0,  0.38],
-                    [ 0.28, 0, -0.38], [-0.28, 0, -0.38]
-                ],
                 frictionSlip: 0.65,
             },
         ];
@@ -252,32 +220,7 @@
             indexUpAxis: 1
         });
 
-        function buildWheels(profile) {
-            // Remove existing wheels
-            while (vehicle.wheelInfos.length) vehicle.wheelInfos.pop();
-
-            profile.wheelOffsets.forEach((off, index) => {
-                vehicle.addWheel({
-                    radius: profile.wheelRadius,
-                    directionLocal: new CANNON.Vec3(0, -1, 0),
-                    axleLocal: new CANNON.Vec3(1, 0, 0),
-                    suspensionStiffness: profile.suspension.stiffness,
-                    suspensionRestLength: profile.suspension.restLength,
-                    frictionSlip: profile.frictionSlip,
-                    dampingRelaxation: profile.suspension.damping,
-                    dampingCompression: profile.suspension.compression,
-                    maxSuspensionForce: 100000,
-                    rollInfluence: 0.01,
-                    maxSuspensionTravel: profile.suspension.travel,
-                    customSlidingRotationalSpeed: -30,
-                    useCustomSlidingRotationalSpeed: true,
-                    chassisConnectionPointLocal: new CANNON.Vec3(...off),
-                    isFrontWheel: index < 2
-                });
-            });
-        }
-
-        buildWheels(activProfile);
+        // Wheels are built dynamically from GLB positions in loadCar()
         vehicle.addToWorld(world);
 
         // --- Visual state ---
@@ -299,9 +242,6 @@
             chassisBody.mass = profile.mass;
             chassisBody.updateMassProperties();
 
-            // Rebuild wheel physics
-            buildWheels(profile);
-
             loader.load(profile.file, (glb) => {
                 carVisual = glb.scene;
                 const foundWheels = [];
@@ -314,6 +254,32 @@
                 });
 
                 foundWheels.sort((a, b) => b.position.x - a.position.x);
+
+                // Build wheel physics using the ACTUAL positions from the GLB
+                // This way the physics wheels always match the visual model exactly
+                while (vehicle.wheelInfos.length) vehicle.wheelInfos.pop();
+
+                foundWheels.forEach((w, index) => {
+                    const pos = w.position; // local position within the GLB
+                    vehicle.addWheel({
+                        radius: profile.wheelRadius,
+                        directionLocal: new CANNON.Vec3(0, -1, 0),
+                        axleLocal: new CANNON.Vec3(1, 0, 0),
+                        suspensionStiffness: profile.suspension.stiffness,
+                        suspensionRestLength: profile.suspension.restLength,
+                        frictionSlip: profile.frictionSlip,
+                        dampingRelaxation: profile.suspension.damping,
+                        dampingCompression: profile.suspension.compression,
+                        maxSuspensionForce: 100000,
+                        rollInfluence: 0.01,
+                        maxSuspensionTravel: profile.suspension.travel,
+                        customSlidingRotationalSpeed: -30,
+                        useCustomSlidingRotationalSpeed: true,
+                        chassisConnectionPointLocal: new CANNON.Vec3(pos.x, pos.y, pos.z),
+                        isFrontWheel: index < 2
+                    });
+                });
+
                 foundWheels.forEach(w => { carVisual.remove(w); scene.add(w); });
                 carWheels = foundWheels;
                 scene.add(carVisual);
