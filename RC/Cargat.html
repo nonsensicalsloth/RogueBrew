@@ -253,8 +253,13 @@
                     }
                 });
 
-                // Sort by Z descending: front wheels (positive Z) get indices 0 & 1
-                foundWheels.sort((a, b) => b.position.z - a.position.z);
+                // Sort front (high Z) before rear, then left (high X) before right within each pair
+                // Result: [0]=FrontLeft [1]=FrontRight [2]=RearLeft [3]=RearRight
+                foundWheels.sort((a, b) => {
+                    const zDiff = b.position.z - a.position.z;
+                    if (Math.abs(zDiff) > 0.01) return zDiff;   // front before rear
+                    return b.position.x - a.position.x;          // left before right within pair
+                });
 
                 // Build wheel physics using the ACTUAL positions from the GLB
                 // This way the physics wheels always match the visual model exactly
@@ -384,10 +389,14 @@ function update() {
 					const yFlip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
 					const zFlip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI);
 
-					if (i === 0) { /* Front Left  — no flip needed */ }
-					if (i === 1) { carWheels[i].quaternion.multiply(zFlip); } // Front Right
-					if (i === 2) { carWheels[i].quaternion.multiply(yFlip); } // Back Left
-					if (i === 3) { /* Back Right — no flip needed */ }
+					// i=0 FrontLeft, i=1 FrontRight, i=2 RearLeft, i=3 RearRight
+					const isRight = (i === 1 || i === 3);
+					const isFront = (i === 0 || i === 1);
+
+					if (isFront && !isRight)  { /* FL — no flip */ }
+					if (isFront &&  isRight)  { carWheels[i].quaternion.multiply(zFlip); }
+					if (!isFront && !isRight) { carWheels[i].quaternion.multiply(yFlip); }
+					if (!isFront &&  isRight) { /* RR — no flip */ }
 				}
 			}
 		}
