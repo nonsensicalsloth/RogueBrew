@@ -87,7 +87,7 @@
 		const chassisShape = new CANNON.Box(new CANNON.Vec3(0.3, 0.2, 0.6));
 
 		// 2. Create the body (the mass/physics object)
-		const chassisBody = new CANNON.Body({ mass: 150 });
+		const chassisBody = new CANNON.Body({ mass: 300 });
 
 		// 3. Add the shape with an OFFSET
 		// We move the box UP by 0.2 meters. 
@@ -115,7 +115,7 @@
 			axleLocal: new CANNON.Vec3(1, 0, 0),
 			suspensionStiffness: 55,
 			suspensionRestLength: 0.08,
-			frictionSlip: 1.4,
+			frictionSlip: 0.8,
 			dampingRelaxation: 2.3,
 			dampingCompression: 4.4,
 			maxSuspensionForce: 100000,
@@ -246,12 +246,17 @@ function update() {
 					carWheels[i].position.copy(t.position);
 					carWheels[i].quaternion.copy(t.quaternion);
 
-					// Flip left-side wheels so rims face outward (indices 0 and 2)
+					// Front wheels (0,2): flip on Y to face outward
 					if (i === 0 || i === 2) {
-						const sideFlip = new THREE.Quaternion().setFromAxisAngle(
-							new THREE.Vector3(0, 1, 0), Math.PI
+						carWheels[i].quaternion.multiply(
+							new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI)
 						);
-						carWheels[i].quaternion.multiply(sideFlip);
+					}
+					// Back wheels (1,3): flip on Y then Z to correct facing
+					if (i === 1 || i === 3) {
+						carWheels[i].quaternion.multiply(
+							new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI)
+						);
 					}
 				}
 			}
