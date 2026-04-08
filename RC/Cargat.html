@@ -113,92 +113,66 @@
             {
                 name: 'RACER',
                 file: 'vehicle-racer.glb',
-                mass: 300,
-                engineForce: 50,
-                brakeForce: 20,
-                maxSteer: 0.3,
+                wheelFile: 'wheel-small.glb',
+                mass: 300, engineForce: 50, brakeForce: 20, maxSteer: 0.3,
                 suspension: { stiffness: 55, restLength: 0.08, travel: 0.2, damping: 2.3, compression: 4.4 },
-                wheelRadius: 0.15,
-                frictionSlip: 0.8,
+                wheelRadius: 0.125, frictionSlip: 0.8,
             },
             {
                 name: 'RACER LOW',
                 file: 'vehicle-racer-low.glb',
-                mass: 280,
-                engineForce: 60,
-                brakeForce: 25,
-                maxSteer: 0.28,
+                wheelFile: 'wheel-small.glb',
+                mass: 280, engineForce: 60, brakeForce: 25, maxSteer: 0.28,
                 suspension: { stiffness: 60, restLength: 0.06, travel: 0.15, damping: 2.0, compression: 4.0 },
-                wheelRadius: 0.14,
-                frictionSlip: 0.9,
+                wheelRadius: 0.125, frictionSlip: 0.9,
             },
             {
                 name: 'DRAG RACER',
                 file: 'vehicle-drag-racer.glb',
-                mass: 320,
-                engineForce: 90,
-                brakeForce: 30,
-                maxSteer: 0.2,
+                wheelFile: 'wheel-medium.glb',
+                mass: 320, engineForce: 90, brakeForce: 30, maxSteer: 0.2,
                 suspension: { stiffness: 70, restLength: 0.07, travel: 0.15, damping: 2.5, compression: 5.0 },
-                wheelRadius: 0.16,
-                frictionSlip: 1.0,
+                wheelRadius: 0.15, frictionSlip: 1.0,
             },
             {
                 name: 'MONSTER TRUCK',
                 file: 'vehicle-monster-truck.glb',
-                mass: 600,
-                engineForce: 120,
-                brakeForce: 40,
-                maxSteer: 0.35,
+                wheelFile: 'wheel-large.glb',
+                mass: 600, engineForce: 120, brakeForce: 40, maxSteer: 0.35,
                 suspension: { stiffness: 35, restLength: 0.1, travel: 0.5, damping: 1.8, compression: 3.5 },
-                wheelRadius: 0.4,
-                frictionSlip: 0.7,
-                // Explicitly set all 4: FL=none, FR=yFlip+zFlip, RL=yFlip+zFlip, RR=none
-                flipOverrides: { 0: 'none', 1: 'yzFlip', 2: 'yzFlip', 3: 'none' },
+                wheelRadius: 0.3, frictionSlip: 0.7,
             },
             {
                 name: 'SPEEDSTER',
                 file: 'vehicle-speedster.glb',
-                mass: 250,
-                engineForce: 70,
-                brakeForce: 22,
-                maxSteer: 0.32,
+                wheelFile: 'wheel-small.glb',
+                mass: 250, engineForce: 70, brakeForce: 22, maxSteer: 0.32,
                 suspension: { stiffness: 65, restLength: 0.07, travel: 0.18, damping: 2.2, compression: 4.2 },
-                wheelRadius: 0.14,
-                frictionSlip: 0.85,
+                wheelRadius: 0.125, frictionSlip: 0.85,
             },
             {
                 name: 'SUV',
                 file: 'vehicle-suv.glb',
-                mass: 500,
-                engineForce: 80,
-                brakeForce: 35,
-                maxSteer: 0.3,
+                wheelFile: 'wheel-medium.glb',
+                mass: 500, engineForce: 80, brakeForce: 35, maxSteer: 0.3,
                 suspension: { stiffness: 45, restLength: 0.2, travel: 0.35, damping: 2.0, compression: 4.0 },
-                wheelRadius: 0.2,
-                frictionSlip: 0.75,
+                wheelRadius: 0.175, frictionSlip: 0.75,
             },
             {
                 name: 'TRUCK',
                 file: 'vehicle-truck.glb',
-                mass: 700,
-                engineForce: 100,
-                brakeForce: 45,
-                maxSteer: 0.25,
+                wheelFile: 'wheel-medium.glb',
+                mass: 700, engineForce: 100, brakeForce: 45, maxSteer: 0.25,
                 suspension: { stiffness: 40, restLength: 0.22, travel: 0.4, damping: 2.1, compression: 4.1 },
-                wheelRadius: 0.22,
-                frictionSlip: 0.7,
+                wheelRadius: 0.175, frictionSlip: 0.7,
             },
             {
                 name: 'VINTAGE',
                 file: 'vehicle-vintage-racer.glb',
-                mass: 350,
-                engineForce: 45,
-                brakeForce: 15,
-                maxSteer: 0.35,
+                wheelFile: 'wheel-small.glb',
+                mass: 350, engineForce: 45, brakeForce: 15, maxSteer: 0.35,
                 suspension: { stiffness: 30, restLength: 0.12, travel: 0.25, damping: 1.5, compression: 3.0 },
-                wheelRadius: 0.15,
-                frictionSlip: 0.65,
+                wheelRadius: 0.125, frictionSlip: 0.65,
             },
         ];
 
@@ -240,35 +214,39 @@
             document.getElementById('car-name').textContent = profile.name;
             clearVisual();
 
-            // Update physics mass
             chassisBody.mass = profile.mass;
             chassisBody.updateMassProperties();
 
-            loader.load(profile.file, (glb) => {
-                carVisual = glb.scene;
-                const foundWheels = [];
+            // Load car body and wheel GLB in parallel
+            Promise.all([
+                new Promise(res => loader.load(profile.file, res)),
+                new Promise(res => loader.load(profile.wheelFile, res))
+            ]).then(([carGlb, wheelGlb]) => {
+                carVisual = carGlb.scene;
+
+                // --- Find wheel positions by name from the car GLB ---
+                // Names are wheel-fl, wheel-fr, wheel-bl, wheel-br
+                // Front = negative Z, fl = negative X, fr = positive X
+                // Physics order: [0]=FL [1]=FR [2]=BL [3]=BR
+                const wheelSlots = { fl: null, fr: null, bl: null, br: null };
 
                 carVisual.traverse(child => {
-                    if (child.isMesh && child.name.toLowerCase().includes('wheel')) {
-                        child.geometry.rotateX(Math.PI / 2);
-                        foundWheels.push(child);
-                    }
+                    const n = child.name.toLowerCase();
+                    if (n.includes('wheel-fl') || n === 'wheel-fl') wheelSlots.fl = child;
+                    else if (n.includes('wheel-fr') || n === 'wheel-fr') wheelSlots.fr = child;
+                    else if (n.includes('wheel-bl') || n === 'wheel-bl') wheelSlots.bl = child;
+                    else if (n.includes('wheel-br') || n === 'wheel-br') wheelSlots.br = child;
                 });
 
-                // Sort front (high Z) before rear, then left (high X) before right within each pair
-                // Result: [0]=FrontLeft [1]=FrontRight [2]=RearLeft [3]=RearRight
-                foundWheels.sort((a, b) => {
-                    const zDiff = b.position.z - a.position.z;
-                    if (Math.abs(zDiff) > 0.01) return zDiff;   // front before rear
-                    return b.position.x - a.position.x;          // left before right within pair
-                });
+                // Ordered array: FL, FR, BL, BR
+                const wheelOrder = [wheelSlots.fl, wheelSlots.fr, wheelSlots.bl, wheelSlots.br];
 
-                // Build wheel physics using the ACTUAL positions from the GLB
-                // This way the physics wheels always match the visual model exactly
+                // --- Build physics wheels from exact GLB positions ---
                 while (vehicle.wheelInfos.length) vehicle.wheelInfos.pop();
 
-                foundWheels.forEach((w, index) => {
-                    const pos = w.position; // local position within the GLB
+                wheelOrder.forEach((slot, index) => {
+                    if (!slot) return;
+                    const pos = slot.position;
                     vehicle.addWheel({
                         radius: profile.wheelRadius,
                         directionLocal: new CANNON.Vec3(0, -1, 0),
@@ -284,14 +262,37 @@
                         customSlidingRotationalSpeed: -30,
                         useCustomSlidingRotationalSpeed: true,
                         chassisConnectionPointLocal: new CANNON.Vec3(pos.x, pos.y, pos.z),
-                        isFrontWheel: index < 2
+                        isFrontWheel: index < 2  // FL=0, FR=1 are front
                     });
                 });
 
-                foundWheels.forEach(w => { carVisual.remove(w); scene.add(w); });
-                carWheels = foundWheels;
-                scene.add(carVisual);
+                // --- Clone wheel mesh for each slot ---
+                // Get the wheel mesh template from the wheel GLB
+                let wheelTemplate = null;
+                wheelGlb.scene.traverse(child => {
+                    if (child.isMesh) wheelTemplate = child;
+                });
 
+                carWheels = wheelOrder.map((slot, i) => {
+                    if (!slot || !wheelTemplate) return null;
+                    const mesh = wheelTemplate.clone();
+                    mesh.geometry = wheelTemplate.geometry.clone();
+                    mesh.geometry.rotateX(Math.PI / 2);
+
+                    // FL and BL are on the left (negative X) — flip to face outward
+                    // FR and BR are on the right (positive X) — they face outward by default
+                    const isLeft = (i === 0 || i === 2); // FL=0, BL=2
+                    if (isLeft) {
+                        mesh.geometry.rotateY(Math.PI);
+                    }
+
+                    // Remove the original wheel placeholder from car visual
+                    if (slot.parent) slot.parent.remove(slot);
+                    scene.add(mesh);
+                    return mesh;
+                });
+
+                scene.add(carVisual);
                 resetVehicle();
                 document.getElementById('loading').style.display = 'none';
             });
@@ -387,23 +388,7 @@ function update() {
 					carWheels[i].position.copy(t.position);
 					carWheels[i].quaternion.copy(t.quaternion);
 
-					// Apply per-wheel flip — use profile override if set, else default logic
-					const yFlip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
-					const zFlip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI);
-					const overrides = activProfile.flipOverrides;
-
-					if (overrides && overrides[i] !== undefined) {
-						if (overrides[i] === 'yFlip')  carWheels[i].quaternion.multiply(yFlip);
-						if (overrides[i] === 'zFlip')  carWheels[i].quaternion.multiply(zFlip);
-						if (overrides[i] === 'yzFlip') { carWheels[i].quaternion.multiply(yFlip); carWheels[i].quaternion.multiply(zFlip); }
-						// 'none' = intentionally no flip
-					} else {
-						// Default: FL=no flip, FR=zFlip, RL=yFlip, RR=no flip
-						const isRight = (i === 1 || i === 3);
-						const isFront = (i === 0 || i === 1);
-						if (isFront &&  isRight)  carWheels[i].quaternion.multiply(zFlip);
-						if (!isFront && !isRight) carWheels[i].quaternion.multiply(yFlip);
-					}
+					// Flips are baked into geometry at load time — no per-frame flip needed
 				}
 			}
 		}
