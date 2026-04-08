@@ -341,7 +341,12 @@ function update() {
     // Clamp just in case
     currentSteer = Math.max(-maxSteer, Math.min(maxSteer, currentSteer));
 
-    // 3. Driving & Braking
+    // 4. Only apply forces once wheels are built
+    if (vehicle.wheelInfos.length === 0) {
+        renderer.render(scene, camera);
+        requestAnimationFrame(update);
+        return;
+    }
     const force = keys.w ? engineForce : (keys.s ? -engineForce : 0);
     const currentBrake = keys.space ? brakeForce : 0;
 
