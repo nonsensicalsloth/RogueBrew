@@ -1004,9 +1004,14 @@ async function doBreweryEventNode(node) {
   const ev = BREWERY_EVENTS.find(e => e.id === node.lockedEventId) || BREWERY_EVENTS[0];
 
   if (ev.type === 'item_choice') {
-    doItemNode(node);
-    return;
-  }
+      // No Adjuncts: treat as a catch node instead
+      if (state.modifiers && state.modifiers.has('no_adjuncts')) {
+        await doCatchNode(node);
+        return;
+      }
+      doItemNode(node);
+      return;
+}
 
   if (ev.type === 'tap_takeover') {
     await doTapTakeoverEvent(node, ev);
@@ -1024,9 +1029,13 @@ async function doBreweryEventNode(node) {
   }
 
   if (ev.type === 'ingredient_windfall') {
-    doIngredientWindfallEvent(node);
-    return;
-  }
+      if (state.modifiers && state.modifiers.has('no_adjuncts')) {
+        await doCatchNode(node);
+        return;
+      }
+      doIngredientWindfallEvent(node);
+      return;
+}
 
   if (ev.type === 'ghost_tap') {
     await doGhostTapEvent(node);
