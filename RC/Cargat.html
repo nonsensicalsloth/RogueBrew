@@ -279,10 +279,10 @@
                     mesh.geometry = wheelTemplate.geometry.clone();
                     mesh.geometry.rotateX(Math.PI / 2);
 
-                    // FL and BL are on the left (negative X) — flip to face outward
-                    // FR and BR are on the right (positive X) — they face outward by default
-                    const isLeft = (i === 0 || i === 2); // FL=0, BL=2
-                    if (isLeft) {
+                    // FR and BR are on the right (positive X) — flip to face outward
+                    // FL and BL are on the left (negative X) — face outward by default
+                    const isRight = (i === 1 || i === 3); // FR=1, BR=3
+                    if (isRight) {
                         mesh.geometry.rotateY(Math.PI);
                     }
 
@@ -344,7 +344,7 @@ function update() {
     const lerpSpeed   = 0.1;
 
     // 2. Smooth Steering — lerp toward target, never snaps
-    const steerTarget = keys.a ? maxSteer : keys.d ? -maxSteer : 0;
+    const steerTarget = keys.a ? -maxSteer : keys.d ? maxSteer : 0;
     currentSteer += (steerTarget - currentSteer) * lerpSpeed;
     if (Math.abs(currentSteer) < 0.001) currentSteer = 0;
     // Clamp just in case
@@ -360,15 +360,15 @@ function update() {
     const currentBrake = keys.space ? brakeForce : 0;
 
     // 4. Apply Physics — steer on 2&3 (front in this GLB's layout), drive on 0&1
-    vehicle.setSteeringValue(currentSteer, 2);
-    vehicle.setSteeringValue(currentSteer, 3);
-    vehicle.setSteeringValue(0, 0);
-    vehicle.setSteeringValue(0, 1);
+    vehicle.setSteeringValue(currentSteer, 0);  // FL
+    vehicle.setSteeringValue(currentSteer, 1);  // FR
+    vehicle.setSteeringValue(0, 2);
+    vehicle.setSteeringValue(0, 3);
 
-    vehicle.applyEngineForce(force, 0);
-    vehicle.applyEngineForce(force, 1);
-    vehicle.applyEngineForce(0, 2);
-    vehicle.applyEngineForce(0, 3);
+    vehicle.applyEngineForce(force, 2);  // BL
+    vehicle.applyEngineForce(force, 3);  // BR
+    vehicle.applyEngineForce(0, 0);
+    vehicle.applyEngineForce(0, 1);
 
     for (let i = 0; i < 4; i++) {
         vehicle.setBrake(currentBrake, i);
