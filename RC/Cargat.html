@@ -150,11 +150,11 @@
                 engineForce: 120,
                 brakeForce: 40,
                 maxSteer: 0.35,
-                suspension: { stiffness: 35, restLength: 0.3, travel: 0.5, damping: 1.8, compression: 3.5 },
-                wheelRadius: 0.28,
+                suspension: { stiffness: 35, restLength: 0.1, travel: 0.5, damping: 1.8, compression: 3.5 },
+                wheelRadius: 0.4,
                 frictionSlip: 0.7,
-                // FL=0, FR=1, RL=2, RR=3 — override flips for wheels that deviate from default
-                flipOverrides: { 1: 'zFlip', 2: 'yFlip' },
+                // Explicitly set all 4: FL=none, FR=yFlip+zFlip, RL=yFlip+zFlip, RR=none
+                flipOverrides: { 0: 'none', 1: 'yzFlip', 2: 'yzFlip', 3: 'none' },
             },
             {
                 name: 'SPEEDSTER',
@@ -393,9 +393,10 @@ function update() {
 					const overrides = activProfile.flipOverrides;
 
 					if (overrides && overrides[i] !== undefined) {
-						if (overrides[i] === 'yFlip') carWheels[i].quaternion.multiply(yFlip);
-						if (overrides[i] === 'zFlip') carWheels[i].quaternion.multiply(zFlip);
-						// 'none' = no flip
+						if (overrides[i] === 'yFlip')  carWheels[i].quaternion.multiply(yFlip);
+						if (overrides[i] === 'zFlip')  carWheels[i].quaternion.multiply(zFlip);
+						if (overrides[i] === 'yzFlip') { carWheels[i].quaternion.multiply(yFlip); carWheels[i].quaternion.multiply(zFlip); }
+						// 'none' = intentionally no flip
 					} else {
 						// Default: FL=no flip, FR=zFlip, RL=yFlip, RR=no flip
 						const isRight = (i === 1 || i === 3);
