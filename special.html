@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brewery Profile — RogueBrew</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Special+Elite&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #1a1a1a;
+    --bg2:      #2d2d2d;
+    --bg3:      #3d3d3d;
+    --border:   #555;
+    --gold:     #ffcc00;
+    --accent:   #d4af37;
+    --text:     #e0e0e0;
+    --dim:      #888;
+    --green:    #2e8b57;
+    --red:      #c0392b;
+    --pixel:    'Press Start 2P', monospace;
+    --serif:    'Special Elite', cursive;
+    --mono:     'Courier Prime', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 48px;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .header-title {
+    font-family: var(--pixel);
+    font-size: clamp(10px, 2.5vw, 16px);
+    color: var(--gold);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  .header-sub {
+    font-family: var(--serif);
+    font-size: clamp(13px, 2vw, 16px);
+    color: var(--dim);
+    letter-spacing: 1px;
+  }
+
+  /* ── Main layout ── */
+  .layout {
+    width: 100%;
+    max-width: 860px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 600px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  /* ── Panel ── */
+  .panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .panel-title {
+    font-family: var(--pixel);
+    font-size: 8px;
+    color: var(--accent);
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Questions ── */
+  .question-block { margin-bottom: 20px; }
+  .question-label {
+    font-family: var(--pixel);
+    font-size: 7px;
+    color: var(--dim);
+    margin-bottom: 10px;
+    line-height: 1.8;
+  }
+  .question-label span { color: var(--gold); }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .opt-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--dim);
+    font-family: var(--pixel);
+    font-size: 7px;
+    padding: 8px 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    line-height: 1.6;
+  }
+  .opt-btn:hover { border-color: var(--accent); color: var(--text); }
+  .opt-btn.selected {
+    background: #2a2000;
+    border-color: var(--gold);
+    color: var(--gold);
+    box-shadow: 0 0 8px rgba(255,204,0,0.2);
+  }
+  .opt-btn .opt-icon { font-size: 14px; display: block; margin-bottom: 4px; }
+  .opt-btn .opt-sub { font-size: 6px; color: var(--dim); display: block; margin-top: 3px; line-height: 1.5; }
+  .opt-btn.selected .opt-sub { color: #aa8800; }
+
+  /* ── Sliders ── */
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .slider-label {
+    font-family: var(--pixel);
+    font-size: 7px;
+    color: var(--dim);
+    width: 70px;
+    flex-shrink: 0;
+  }
+  .slider-track {
+    flex: 1;
+    height: 6px;
+    background: var(--bg3);
+    border-radius: 3px;
+    position: relative;
+    cursor: pointer;
+  }
+  .slider-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.2s;
+  }
+  .slider-dots {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 2px;
+    margin-top: 3px;
+  }
+  .slider-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .slider-dot.active { background: var(--gold); border-color: var(--gold); }
+  .slider-val {
+    font-family: var(--pixel);
+    font-size: 7px;
+    color: var(--gold);
+    width: 20px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* ── Generate button ── */
+  .generate-wrap {
+    grid-column: 1 / -1;
+    text-align: center;
+    margin-top: 8px;
+  }
+  .btn-generate {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    font-family: var(--pixel);
+    font-size: 10px;
+    padding: 14px 32px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.15s;
+  }
+  .btn-generate:hover { background: var(--gold); transform: translateY(-2px); }
+  .btn-generate:disabled { background: var(--bg3); color: var(--dim); cursor: not-allowed; transform: none; }
+
+  /* ── Results ── */
+  .results {
+    grid-column: 1 / -1;
+    display: none;
+  }
+  .results.visible { display: block; }
+  .results-header {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .results-style {
+    font-family: var(--pixel);
+    font-size: clamp(10px, 2vw, 14px);
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+  .results-desc {
+    font-family: var(--serif);
+    font-size: clamp(13px, 1.8vw, 16px);
+    color: var(--dim);
+    line-height: 1.7;
+    max-width: 560px;
+    margin: 0 auto 12px;
+  }
+  .results-tags {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .result-tag {
+    font-family: var(--pixel);
+    font-size: 7px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--dim);
+  }
+
+  /* ── Pokemon cards ── */
+  .cards-label {
+    font-family: var(--pixel);
+    font-size: 8px;
+    color: var(--accent);
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cards-grid {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Beer label card style matching the game */
+  .poke-card {
+    background: #fdf9f0;
+    border: 1px solid #d4c9b0;
+    border-radius: 8px;
+    width: clamp(140px, 42vw, 170px);
+    display: flex;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+  }
+  .poke-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+  .poke-card.selected-card { box-shadow: 0 0 0 3px var(--gold), 0 4px 16px rgba(255,204,0,0.3); }
+
+  .label-stripe { width: 7px; flex-shrink: 0; }
+  .label-inner {
+    flex: 1;
+    margin: 6px 6px 6px 0;
+    border: 1px solid #c8bda0;
+    border-radius: 4px;
+    background: #fdf9f0;
+    padding: 8px 8px 7px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .label-brewery {
+    font-size: 6px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: #8a7a5a;
+    text-align: center;
+    margin-bottom: 4px;
+    font-family: var(--pixel);
+  }
+  .label-divider { height: 0.5px; background: #c8bda0; margin: 0 0 6px; }
+  .label-sprite-wrap { position: relative; width: 72px; height: 72px; margin: 0 auto 4px; }
+  .poke-sprite { width: 72px; height: 72px; image-rendering: pixelated; }
+  .label-name {
+    font-family: Georgia, serif;
+    font-size: 9px;
+    font-weight: 700;
+    color: #1a1208;
+    text-align: center;
+    line-height: 1.3;
+    margin-bottom: 1px;
+  }
+  .label-style {
+    font-family: Georgia, serif;
+    font-style: italic;
+    font-size: 7px;
+    color: #6a5a3a;
+    text-align: center;
+    margin-bottom: 5px;
+  }
+  .label-types {
+    display: flex;
+    gap: 3px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 5px;
+  }
+  .label-type-pill {
+    font-size: 6px;
+    padding: 1px 5px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-family: var(--pixel);
+  }
+  .label-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-top: 4px;
+    border-top: 0.5px solid #d4c9b0;
+    margin-top: 2px;
+  }
+  .label-abv-val { font-family: Georgia, serif; font-size: 15px; font-weight: 700; line-height: 1; }
+  .label-abv-label { font-size: 5px; color: #8a7a5a; text-transform: uppercase; letter-spacing: 0.08em; font-family: var(--pixel); }
+  .label-batch-val { font-family: 'Courier Prime', monospace; font-size: 12px; font-weight: 700; color: #3a2a10; line-height: 1; display: block; text-align: right; }
+  .label-batch-label { font-size: 5px; color: #8a7a5a; text-transform: uppercase; letter-spacing: 0.08em; font-family: var(--pixel); }
+
+  /* Type colours */
+  .tc-ipa      { --stripe:#78c850; --tint:#eefae0; --ink:#285010; }
+  .tc-brett    { --stripe:#a040a0; --tint:#f5e5f5; --ink:#4a1060; }
+  .tc-red      { --stripe:#f08030; --tint:#fef0e0; --ink:#7a3808; }
+  .tc-wheat    { --stripe:#a890f0; --tint:#f0ecfe; --ink:#38186a; }
+  .tc-lager    { --stripe:#6890f0; --tint:#eef2fe; --ink:#1a2880; }
+  .tc-saison   { --stripe:#a8b820; --tint:#f5f8d0; --ink:#484808; }
+  .tc-blonde   { --stripe:#a8a878; --tint:#f5f5e8; --ink:#4a4a28; }
+  .tc-sour     { --stripe:#c8a008; --tint:#fefbe0; --ink:#5a3808; }
+  .tc-brown    { --stripe:#8b5e3c; --tint:#f5ece4; --ink:#3a1808; }
+  .tc-pastry   { --stripe:#ee99ac; --tint:#fdeef2; --ink:#7a2840; }
+  .tc-barleywine { --stripe:#c03028; --tint:#fdecea; --ink:#6a0808; }
+  .tc-belgian  { --stripe:#f85888; --tint:#feebf0; --ink:#780828; }
+  .tc-barrelaged { --stripe:#b8a038; --tint:#faf6e0; --ink:#584808; }
+  .tc-export   { --stripe:#8080a0; --tint:#eeeef5; --ink:#282838; }
+  .tc-cryo     { --stripe:#60b8b8; --tint:#e4f8f8; --ink:#1a5858; }
+  .tc-seltzer  { --stripe:#705898; --tint:#ede5f5; --ink:#281848; }
+  .tc-stout    { --stripe:#7038f8; --tint:#ede0fe; --ink:#200868; }
+  .tc-cascadian { --stripe:#705848; --tint:#f0ebe5; --ink:#302010; }
+
+  /* Reroll / confirm */
+  .result-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .btn-reroll {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--dim);
+    font-family: var(--pixel);
+    font-size: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-reroll:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-confirm {
+    background: var(--green);
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    font-family: var(--pixel);
+    font-size: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-confirm:hover { background: #3aab6e; transform: translateY(-1px); }
+
+  /* Stat bars on result */
+  .stat-bars { margin-top: 16px; }
+  .stat-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .stat-name { font-family: var(--pixel); font-size: 7px; color: var(--dim); width: 90px; flex-shrink: 0; }
+  .stat-track { flex: 1; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+  .stat-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+  .stat-val { font-family: var(--pixel); font-size: 7px; color: var(--gold); width: 28px; text-align: right; flex-shrink: 0; }
+
+  .fade-in { animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .incomplete-hint {
+    font-family: var(--pixel);
+    font-size: 7px;
+    color: var(--red);
+    text-align: center;
+    margin-top: 8px;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">🍺 BREWERY PROFILE</div>
+  <div class="header-sub">Tell us about your ideal brew — we'll build your team</div>
+</div>
+
+<div class="layout" id="layout">
+
+  <!-- LEFT: Flavour + Strength -->
+  <div class="panel">
+    <div class="panel-title">FLAVOUR PROFILE</div>
+
+    <div class="question-block">
+      <div class="question-label"><span>01.</span> What's the dominant character?</div>
+      <div class="options-grid" id="q-flavour">
+        <button class="opt-btn" data-val="bitter">
+          <span class="opt-icon">🌿</span>Bitter
+          <span class="opt-sub">Hops forward, dry finish</span>
+        </button>
+        <button class="opt-btn" data-val="malty">
+          <span class="opt-icon">🌾</span>Malty
+          <span class="opt-sub">Rich, sweet, roasty</span>
+        </button>
+        <button class="opt-btn" data-val="fruity">
+          <span class="opt-icon">🍑</span>Fruity
+          <span class="opt-sub">Esters, stone fruit, citrus</span>
+        </button>
+        <button class="opt-btn" data-val="clean">
+          <span class="opt-icon">💧</span>Clean
+          <span class="opt-sub">Crisp, neutral, refreshing</span>
+        </button>
+        <button class="opt-btn" data-val="dark">
+          <span class="opt-icon">🌑</span>Dark
+          <span class="opt-sub">Roast, coffee, chocolate</span>
+        </button>
+        <button class="opt-btn" data-val="wild">
+          <span class="opt-icon">🦠</span>Wild
+          <span class="opt-sub">Funky, sour, unpredictable</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="question-block">
+      <div class="question-label"><span>02.</span> How strong?</div>
+      <div class="options-grid" id="q-strength">
+        <button class="opt-btn" data-val="session">
+          <span class="opt-icon">🥤</span>Session
+          <span class="opt-sub">Under 4.5% — all day drinking</span>
+        </button>
+        <button class="opt-btn" data-val="regular">
+          <span class="opt-icon">🍺</span>Regular
+          <span class="opt-sub">4.5–7% — the sweet spot</span>
+        </button>
+        <button class="opt-btn" data-val="imperial">
+          <span class="opt-icon">🔥</span>Imperial
+          <span class="opt-sub">7%+ — sip slowly</span>
+        </button>
+        <button class="opt-btn" data-val="any">
+          <span class="opt-icon">🎲</span>Surprise me
+          <span class="opt-sub">Whatever fits best</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Character sliders + Special -->
+  <div class="panel">
+    <div class="panel-title">BREWERY CHARACTER</div>
+
+    <div class="question-block">
+      <div class="question-label"><span>03.</span> Dial in your brewery's personality</div>
+
+      <div class="slider-row">
+        <div class="slider-label">Simplicity</div>
+        <div style="flex:1">
+          <div class="slider-track">
+            <div class="slider-fill" id="fill-simple" style="width:50%"></div>
+          </div>
+          <div class="slider-dots" id="dots-simple"></div>
+        </div>
+        <div class="slider-val" id="val-simple">3</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:6px;color:var(--dim);font-family:var(--pixel);margin-bottom:14px;padding:0 2px;">
+        <span>Complex</span><span>Crisp</span>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-label">Tradition</div>
+        <div style="flex:1">
+          <div class="slider-track">
+            <div class="slider-fill" id="fill-trad" style="width:50%"></div>
+          </div>
+          <div class="slider-dots" id="dots-trad"></div>
+        </div>
+        <div class="slider-val" id="val-trad">3</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:6px;color:var(--dim);font-family:var(--pixel);margin-bottom:14px;padding:0 2px;">
+        <span>Experimental</span><span>Classic</span>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-label">Aggression</div>
+        <div style="flex:1">
+          <div class="slider-track">
+            <div class="slider-fill" id="fill-agg" style="width:50%"></div>
+          </div>
+          <div class="slider-dots" id="dots-agg"></div>
+        </div>
+        <div class="slider-val" id="val-agg">3</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:6px;color:var(--dim);font-family:var(--pixel);margin-bottom:14px;padding:0 2px;">
+        <span>Subtle</span><span>Aggressive</span>
+      </div>
+    </div>
+
+    <div class="question-block">
+      <div class="question-label"><span>04.</span> Any special character?</div>
+      <div class="options-grid" id="q-special">
+        <button class="opt-btn" data-val="none">
+          <span class="opt-icon">⚪</span>None
+          <span class="opt-sub">Pure to style</span>
+        </button>
+        <button class="opt-btn" data-val="sour">
+          <span class="opt-icon">🍋</span>Sour
+          <span class="opt-sub">Tart, acidic edge</span>
+        </button>
+        <button class="opt-btn" data-val="barrel">
+          <span class="opt-icon">🛢️</span>Barrel-aged
+          <span class="opt-sub">Oak, spirit, vanilla</span>
+        </button>
+        <button class="opt-btn" data-val="hazy">
+          <span class="opt-icon">🌫️</span>Hazy
+          <span class="opt-sub">Juicy, unfiltered</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generate -->
+  <div class="generate-wrap">
+    <button class="btn-generate" id="btn-generate" onclick="generateProfile()">
+      ⬟ BUILD MY BREWERY
+    </button>
+    <div class="incomplete-hint" id="hint">Select at least Flavour and Strength to continue</div>
+  </div>
+
+  <!-- Results -->
+  <div class="results" id="results"></div>
+
+</div>
+
+<script src="species.js?v=2.7"></script>
+<script>
+// ── Preference state ──────────────────────────────────────────────────────
+const prefs = { flavour: null, strength: null, special: null };
+const sliders = { simple: 3, trad: 3, agg: 3 };
+
+// ── Option buttons ────────────────────────────────────────────────────────
+document.querySelectorAll('.options-grid').forEach(grid => {
+  const key = grid.id.replace('q-', '');
+  grid.querySelectorAll('.opt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      grid.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      prefs[key] = btn.dataset.val;
+    });
+  });
+});
+
+// ── Sliders ───────────────────────────────────────────────────────────────
+['simple','trad','agg'].forEach(key => {
+  const dotsEl = document.getElementById('dots-' + key);
+  const fillEl = document.getElementById('fill-' + key);
+  const valEl  = document.getElementById('val-' + key);
+  for (let i = 1; i <= 5; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'slider-dot' + (i === 3 ? ' active' : '');
+    dot.addEventListener('click', () => {
+      sliders[key] = i;
+      dotsEl.querySelectorAll('.slider-dot').forEach((d, idx) => {
+        d.classList.toggle('active', idx + 1 === i);
+      });
+      fillEl.style.width = ((i - 1) / 4 * 100) + '%';
+      valEl.textContent = i;
+    });
+    dotsEl.appendChild(dot);
+  }
+});
+
+// ── Style determination ───────────────────────────────────────────────────
+const STYLE_MAP = {
+  bitter: {
+    session:  { name: 'Session IPA',        desc: 'All the hop character, none of the regret. A nimble, bitter brew built for repeat pours.',       types: ['Ipa'], abvRange: [3.5, 4.5] },
+    regular:  { name: 'West Coast IPA',      desc: 'Resinous, dry, and unapologetically bitter. The brewery that never compromises on hop clarity.',  types: ['Ipa', 'Cascadian'], abvRange: [6.0, 7.0] },
+    imperial: { name: 'Double IPA',          desc: 'Imperial hop aggression. High gravity, higher standards. Built for those who want more of everything.', types: ['Ipa', 'Barleywine'], abvRange: [8.0, 10.0] },
+    any:      { name: 'IPA Program',         desc: 'A brewery defined by its hop philosophy — whatever the ABV, the bitterness is always the point.', types: ['Ipa', 'Cascadian'], abvRange: [4.5, 8.0] },
+  },
+  malty: {
+    session:  { name: 'English Mild',        desc: 'Low and slow, malt-forward and honest. A brew that respects the grain bill above all else.',       types: ['Brown', 'Blonde'], abvRange: [3.0, 4.0] },
+    regular:  { name: 'Red Ale',             desc: 'Caramel malt richness with just enough bitterness to keep it honest. A classic for good reason.',  types: ['Red', 'Brown'], abvRange: [5.0, 6.5] },
+    imperial: { name: 'Barleywine',          desc: 'A landmark brew. High gravity, complex malt character, demanding patience from brewer and drinker alike.', types: ['Barleywine', 'Barrel-aged'], abvRange: [9.0, 12.0] },
+    any:      { name: 'Malt-Forward Program',desc: 'A brewery that believes the grain bill is the soul of any beer. Hops are supporting cast only.',  types: ['Red', 'Brown', 'Barrel-aged'], abvRange: [4.0, 9.0] },
+  },
+  fruity: {
+    session:  { name: 'Wheat Beer',          desc: 'Soft, cloudy, and expressive. A yeast-driven brew that lets the fermentation character shine.',    types: ['Wheat', 'Belgian'], abvRange: [4.0, 5.0] },
+    regular:  { name: 'Belgian Ale',         desc: 'Esters, phenols, and complexity from a yeast strain that has opinions of its own.',                types: ['Belgian', 'Pastry'], abvRange: [5.5, 7.5] },
+    imperial: { name: 'Belgian Tripel',      desc: 'Dangerously drinkable at high gravity. The yeast does the heavy lifting and never lets you know.', types: ['Belgian', 'Wheat'], abvRange: [8.0, 10.0] },
+    any:      { name: 'Yeast-Forward Program',desc: 'A brewery that treats yeast selection as the most important decision in the recipe.',             types: ['Belgian', 'Wheat', 'Pastry'], abvRange: [4.5, 9.0] },
+  },
+  clean: {
+    session:  { name: 'Czech Lager',         desc: 'Noble hops, soft water, time. The most technically demanding style done perfectly.',              types: ['Lager', 'Blonde'], abvRange: [3.5, 5.0] },
+    regular:  { name: 'American Lager',      desc: 'Clean fermentation, precise attenuation, and the discipline to not add anything unnecessary.',     types: ['Lager', 'Cryo'], abvRange: [4.5, 5.5] },
+    imperial: { name: 'Doppelbock',          desc: 'Lagered to imperial strength. Months of cold conditioning that most breweries lack the patience for.', types: ['Lager', 'Brown'], abvRange: [7.0, 10.0] },
+    any:      { name: 'Lager Program',       desc: 'A brewery that believes fermentation at cold temperatures reveals the truth about your ingredients.', types: ['Lager', 'Blonde', 'Cryo'], abvRange: [3.5, 7.0] },
+  },
+  dark: {
+    session:  { name: 'Dark Mild',           desc: 'Roasty but restrained. A dark beer that proves big colour does not require big alcohol.',          types: ['Stout', 'Brown'], abvRange: [3.0, 4.5] },
+    regular:  { name: 'Stout',               desc: 'Coffee, dark chocolate, and a dry roasty finish. The definitive expression of dark malt.',        types: ['Stout', 'Cascadian'], abvRange: [4.5, 7.0] },
+    imperial: { name: 'Imperial Stout',      desc: 'A landmark dark beer. Viscous, complex, and built to age. The brewery\'s annual showpiece.',       types: ['Stout', 'Barrel-aged'], abvRange: [10.0, 13.0] },
+    any:      { name: 'Dark Beer Program',   desc: 'A brewery where roasted malt is not an afterthought — it\'s the identity.',                       types: ['Stout', 'Brown', 'Cascadian'], abvRange: [3.5, 10.0] },
+  },
+  wild: {
+    session:  { name: 'Berliner Weisse',     desc: 'Tart, refreshing, and unfiltered. A wild fermentation kept light enough to drink by the litre.', types: ['Sour', 'Wheat'], abvRange: [2.5, 4.0] },
+    regular:  { name: 'Saison',              desc: 'Farmhouse and free. A style that rewards brewers who trust the process and resist over-engineering.', types: ['Saison', 'Brett'], abvRange: [5.0, 7.5] },
+    imperial: { name: 'Lambic / Gueuze',     desc: 'Years in the making. Wild fermentation taken to its logical extreme — patience as a brewing ingredient.', types: ['Brett', 'Sour'], abvRange: [6.0, 8.0] },
+    any:      { name: 'Wild Fermentation Program', desc: 'A brewery that invites the environment into every batch. Consistency is the one thing they never promise.', types: ['Brett', 'Sour', 'Saison'], abvRange: [3.0, 8.0] },
+  },
+};
+
+// ── BST → ABV ─────────────────────────────────────────────────────────────
+function calcAbv(bst) {
+  const pct = Math.min(1, Math.max(0, (bst - 200) / 480));
+  return (3.5 + pct * 8).toFixed(1);
+}
+
+// ── Type colour class ─────────────────────────────────────────────────────
+function typeClass(t) {
+  return 'tc-' + t.toLowerCase().replace(/[^a-z]/g, '');
+}
+
+// Type pill colours matching the game
+const TYPE_COLORS = {
+  Ipa:{bg:'#78c850',c:'#000'}, Brett:{bg:'#a040a0',c:'#fff'}, Red:{bg:'#f08030',c:'#000'},
+  Wheat:{bg:'#a890f0',c:'#000'}, Lager:{bg:'#6890f0',c:'#000'}, Saison:{bg:'#a8b820',c:'#000'},
+  Blonde:{bg:'#a8a878',c:'#000'}, Sour:{bg:'#f8d030',c:'#000'}, Brown:{bg:'#e0c068',c:'#000'},
+  Pastry:{bg:'#ee99ac',c:'#000'}, Barleywine:{bg:'#c03028',c:'#fff'}, Belgian:{bg:'#f85888',c:'#fff'},
+  'Barrel-aged':{bg:'#b8a038',c:'#000'}, Export:{bg:'#b8b8d0',c:'#000'}, Cryo:{bg:'#98d8d8',c:'#000'},
+  Seltzer:{bg:'#705898',c:'#fff'}, Stout:{bg:'#7038f8',c:'#fff'}, Cascadian:{bg:'#705848',c:'#fff'},
+};
+
+function typePill(t) {
+  const col = TYPE_COLORS[t] || { bg:'#888', c:'#fff' };
+  return `<span class="label-type-pill" style="background:${col.bg};color:${col.c};border:0.5px solid ${col.bg};">${t}</span>`;
+}
+
+// ── Pokemon card renderer ─────────────────────────────────────────────────
+function renderCard(pokemon, selected = false) {
+  const tc = typeClass(pokemon.types[0]);
+  const abv = calcAbv(pokemon.bst);
+  const batchNum = String(pokemon.id).padStart(3, '0');
+  const types = pokemon.types.map(typePill).join('');
+  return `
+    <div class="poke-card ${tc}${selected ? ' selected-card' : ''}" data-id="${pokemon.id}" onclick="toggleSelect(this, ${pokemon.id})">
+      <div class="label-stripe" style="background:var(--stripe)"></div>
+      <div class="label-inner">
+        <div class="label-brewery">${pokemon.brewName || 'Roguebrew Co.'}</div>
+        <div class="label-divider"></div>
+        <div class="label-sprite-wrap">
+          <img class="poke-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png" alt="${pokemon.name}">
+        </div>
+        <div class="label-name">${pokemon.brewName || pokemon.name}</div>
+        <div class="label-style">${pokemon.name}</div>
+        <div class="label-types">${types}</div>
+        <div class="label-footer">
+          <div class="label-abv">
+            <span class="label-abv-val" style="color:var(--stripe)">${abv}%</span>
+            <span class="label-abv-label">ABV</span>
+          </div>
+          <div class="label-batch">
+            <span class="label-batch-val">#${batchNum}</span>
+            <span class="label-batch-label">Batch</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Selection toggle ──────────────────────────────────────────────────────
+const selected = new Set();
+function toggleSelect(el, id) {
+  el.classList.toggle('selected-card');
+  if (selected.has(id)) selected.delete(id);
+  else selected.add(id);
+}
+
+// ── Main generation ───────────────────────────────────────────────────────
+function generateProfile() {
+  if (!prefs.flavour || !prefs.strength) {
+    document.getElementById('hint').style.display = 'block';
+    return;
+  }
+  document.getElementById('hint').style.display = 'none';
+
+  const style = STYLE_MAP[prefs.flavour][prefs.strength];
+  const special = prefs.special;
+  const { simple, trad, agg } = sliders;
+
+  // Adjust types based on special character
+  let targetTypes = [...style.types];
+  if (special === 'sour')   targetTypes = [...new Set([...targetTypes, 'Sour', 'Brett'])];
+  if (special === 'barrel') targetTypes = [...new Set([...targetTypes, 'Barrel-aged'])];
+  if (special === 'hazy')   targetTypes = [...new Set([...targetTypes, 'Wheat', 'Belgian'])];
+
+  // BST range from strength
+  const bstRanges = { session: [180, 380], regular: [380, 500], imperial: [500, 999], any: [180, 999] };
+  const [bstMin, bstMax] = bstRanges[prefs.strength];
+
+  // Score each pokemon
+  const scored = SPECIES_DATA.map(p => {
+    let score = 0;
+    // Type match
+    const typeMatches = p.types.filter(t => targetTypes.includes(t)).length;
+    score += typeMatches * 30;
+    // BST range
+    if (p.bst >= bstMin && p.bst <= bstMax) score += 20;
+    else score -= Math.abs(p.bst - ((bstMin + bstMax) / 2)) / 10;
+    // Aggression slider: high agg → high ATK
+    const atkRatio = p.baseStats.atk / (p.bst || 1);
+    score += (agg / 5) * atkRatio * 20;
+    // Simplicity slider: high simple → lower BST (fewer complex stats)
+    if (simple >= 4 && p.bst < 420) score += 10;
+    if (simple <= 2 && p.bst > 480) score += 10;
+    // Tradition slider: high trad → Gen 1 (id <= 151)
+    if (trad >= 4 && p.id <= 151) score += 15;
+    if (trad <= 2 && p.id > 151) score += 10;
+    return { p, score };
+  }).sort((a, b) => b.score - a.score);
+
+  // Pick top 3 distinct types where possible
+  const picks = [];
+  const usedTypes = new Set();
+  for (const { p } of scored) {
+    if (picks.length >= 3) break;
+    const primaryType = p.types[0];
+    if (!usedTypes.has(primaryType) || picks.length === 2) {
+      picks.push(p);
+      usedTypes.add(primaryType);
+    }
+  }
+  // Fill to 3 if needed
+  if (picks.length < 3) {
+    for (const { p } of scored) {
+      if (picks.length >= 3) break;
+      if (!picks.includes(p)) picks.push(p);
+    }
+  }
+
+  // Derived profile stats
+  const bitterScore = Math.round(
+    (prefs.flavour === 'bitter' ? 80 : prefs.flavour === 'wild' ? 40 : prefs.flavour === 'clean' ? 30 : 20)
+    + (agg / 5) * 15
+  );
+  const maltScore = Math.round(
+    (prefs.flavour === 'malty' ? 80 : prefs.flavour === 'dark' ? 70 : prefs.flavour === 'fruity' ? 30 : 20)
+    + (5 - simple) / 5 * 15
+  );
+  const sourScore = Math.round(
+    (prefs.flavour === 'wild' ? 75 : special === 'sour' ? 60 : prefs.flavour === 'fruity' ? 30 : 10)
+  );
+  const strengthScore = Math.round(
+    (prefs.strength === 'imperial' ? 85 : prefs.strength === 'regular' ? 55 : prefs.strength === 'session' ? 25 : 50)
+  );
+  const complexScore = Math.round(
+    (5 - simple) / 4 * 70
+    + (special !== 'none' && special ? 20 : 0)
+    + (trad <= 2 ? 15 : 0)
+  );
+
+  // Tags
+  const tags = [prefs.flavour, prefs.strength === 'any' ? 'flexible ABV' : prefs.strength];
+  if (special && special !== 'none') tags.push(special);
+  if (agg >= 4) tags.push('aggressive');
+  if (simple >= 4) tags.push('approachable');
+  if (trad >= 4) tags.push('traditional');
+  if (trad <= 2) tags.push('experimental');
+
+  const results = document.getElementById('results');
+  results.className = 'results visible fade-in';
+  results.innerHTML = `
+    <div class="panel">
+      <div class="panel-title">YOUR BREWERY PROFILE</div>
+      <div class="results-header">
+        <div class="results-style">${style.name}</div>
+        <div class="results-desc">${style.desc}</div>
+        <div class="results-tags">
+          ${tags.map(t => `<span class="result-tag">${t}</span>`).join('')}
+        </div>
+      </div>
+
+      <div class="stat-bars">
+        ${statBar('Bitterness', bitterScore, '#78c850')}
+        ${statBar('Malt body', maltScore, '#b8a038')}
+        ${statBar('Sourness', sourScore, '#c8a008')}
+        ${statBar('Strength', strengthScore, '#c03028')}
+        ${statBar('Complexity', complexScore, '#7038f8')}
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:20px;">
+      <div class="cards-label">SUGGESTED LINEUP — click to select your starters</div>
+      <div class="cards-grid">
+        ${picks.map(p => renderCard(p)).join('')}
+      </div>
+      <div class="result-actions">
+        <button class="btn-reroll" onclick="generateProfile()">↺ Reroll lineup</button>
+        <button class="btn-confirm" onclick="confirmTeam()">✓ This is my brewery</button>
+      </div>
+    </div>`;
+
+  results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function statBar(label, val, color) {
+  const clamped = Math.min(100, Math.max(0, val));
+  return `<div class="stat-row">
+    <div class="stat-name">${label}</div>
+    <div class="stat-track"><div class="stat-fill" style="width:${clamped}%;background:${color}"></div></div>
+    <div class="stat-val">${clamped}</div>
+  </div>`;
+}
+
+function confirmTeam() {
+  // In the full game this would pass the selected pokemon back
+  // For now show a confirmation
+  const picks = document.querySelectorAll('.poke-card.selected-card');
+  const names = [...picks].map(c => {
+    const id = parseInt(c.dataset.id);
+    const p = SPECIES_DATA.find(s => s.id === id);
+    return p ? (p.brewName || p.name) : '???';
+  });
+  if (names.length === 0) {
+    alert('Select at least one brew from the lineup first!');
+    return;
+  }
+  alert(`Brewery confirmed!\n\nYour starters:\n${names.join('\n')}\n\nReturning to the taproom...`);
+  // window.location.href = 'index.html'; // uncomment to redirect back
+}
+</script>
+</body>
+</html>
