@@ -10,10 +10,34 @@
             position: absolute; bottom: 20px; left: 20px; color: #7fc; 
             background: rgba(0,0,0,0.5); padding: 10px; pointer-events: none;
         }
+        #car-switcher {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; gap: 12px;
+            background: rgba(0,0,0,0.6); padding: 10px 16px; border-radius: 8px;
+        }
+        #car-name {
+            color: #7fc; font-size: 14px; min-width: 160px; text-align: center; letter-spacing: 1px;
+        }
+        #car-switcher button {
+            background: rgba(127,255,200,0.15); border: 1px solid #7fc; color: #7fc;
+            font-family: monospace; font-size: 16px; padding: 4px 12px;
+            cursor: pointer; border-radius: 4px;
+        }
+        #car-switcher button:hover { background: rgba(127,255,200,0.3); }
+        #loading { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            color: #7fc; font-size: 18px; display: none;
+        }
     </style>
 </head>
 <body>
-    <div id="instructions">WASD: Drive | Space: Brake | R: Flip/Reset</div>
+    <div id="instructions">WASD: Drive | Space: Brake | R: Reset | C: Next Car</div>
+    <div id="car-switcher">
+        <button id="btn-prev">◀</button>
+        <div id="car-name">RACER</div>
+        <button id="btn-next">▶</button>
+    </div>
+    <div id="loading">Loading...</div>
 
     <script type="importmap">
         {
@@ -82,98 +106,235 @@
         floorMesh.receiveShadow = true;
         scene.add(floorMesh);
 
+        // ============================================================
+        // CAR PROFILES — tune each vehicle independently
+        // ============================================================
+        const CAR_PROFILES = [
+            {
+                name: 'RACER',
+                file: 'vehicle-racer.glb',
+                mass: 300,
+                engineForce: 50,
+                brakeForce: 20,
+                maxSteer: 0.3,
+                suspension: { stiffness: 55, restLength: 0.08, travel: 0.2, damping: 2.3, compression: 4.4 },
+                wheelRadius: 0.15,
+                wheelOffsets: [
+                    [ 0.28, 0,  0.35], [-0.28, 0,  0.35],
+                    [ 0.28, 0, -0.35], [-0.28, 0, -0.35]
+                ],
+                frictionSlip: 0.8,
+            },
+            {
+                name: 'RACER LOW',
+                file: 'vehicle-racer-low.glb',
+                mass: 280,
+                engineForce: 60,
+                brakeForce: 25,
+                maxSteer: 0.28,
+                suspension: { stiffness: 60, restLength: 0.06, travel: 0.15, damping: 2.0, compression: 4.0 },
+                wheelRadius: 0.14,
+                wheelOffsets: [
+                    [ 0.28, 0,  0.35], [-0.28, 0,  0.35],
+                    [ 0.28, 0, -0.35], [-0.28, 0, -0.35]
+                ],
+                frictionSlip: 0.9,
+            },
+            {
+                name: 'DRAG RACER',
+                file: 'vehicle-drag-racer.glb',
+                mass: 320,
+                engineForce: 90,
+                brakeForce: 30,
+                maxSteer: 0.2,
+                suspension: { stiffness: 70, restLength: 0.07, travel: 0.15, damping: 2.5, compression: 5.0 },
+                wheelRadius: 0.16,
+                wheelOffsets: [
+                    [ 0.2,  0,  0.5], [-0.2,  0,  0.5],
+                    [ 0.35, 0, -0.4], [-0.35, 0, -0.4]
+                ],
+                frictionSlip: 1.0,
+            },
+            {
+                name: 'MONSTER TRUCK',
+                file: 'vehicle-monster-truck.glb',
+                mass: 600,
+                engineForce: 120,
+                brakeForce: 40,
+                maxSteer: 0.35,
+                suspension: { stiffness: 35, restLength: 0.3, travel: 0.5, damping: 1.8, compression: 3.5 },
+                wheelRadius: 0.28,
+                wheelOffsets: [
+                    [ 0.45, 0,  0.45], [-0.45, 0,  0.45],
+                    [ 0.45, 0, -0.45], [-0.45, 0, -0.45]
+                ],
+                frictionSlip: 0.7,
+            },
+            {
+                name: 'SPEEDSTER',
+                file: 'vehicle-speedster.glb',
+                mass: 250,
+                engineForce: 70,
+                brakeForce: 22,
+                maxSteer: 0.32,
+                suspension: { stiffness: 65, restLength: 0.07, travel: 0.18, damping: 2.2, compression: 4.2 },
+                wheelRadius: 0.14,
+                wheelOffsets: [
+                    [ 0.28, 0,  0.38], [-0.28, 0,  0.38],
+                    [ 0.28, 0, -0.38], [-0.28, 0, -0.38]
+                ],
+                frictionSlip: 0.85,
+            },
+            {
+                name: 'SUV',
+                file: 'vehicle-suv.glb',
+                mass: 500,
+                engineForce: 80,
+                brakeForce: 35,
+                maxSteer: 0.3,
+                suspension: { stiffness: 45, restLength: 0.2, travel: 0.35, damping: 2.0, compression: 4.0 },
+                wheelRadius: 0.2,
+                wheelOffsets: [
+                    [ 0.38, 0,  0.45], [-0.38, 0,  0.45],
+                    [ 0.38, 0, -0.45], [-0.38, 0, -0.45]
+                ],
+                frictionSlip: 0.75,
+            },
+            {
+                name: 'TRUCK',
+                file: 'vehicle-truck.glb',
+                mass: 700,
+                engineForce: 100,
+                brakeForce: 45,
+                maxSteer: 0.25,
+                suspension: { stiffness: 40, restLength: 0.22, travel: 0.4, damping: 2.1, compression: 4.1 },
+                wheelRadius: 0.22,
+                wheelOffsets: [
+                    [ 0.4,  0,  0.55], [-0.4,  0,  0.55],
+                    [ 0.4,  0, -0.55], [-0.4,  0, -0.55]
+                ],
+                frictionSlip: 0.7,
+            },
+            {
+                name: 'VINTAGE',
+                file: 'vehicle-vintage-racer.glb',
+                mass: 350,
+                engineForce: 45,
+                brakeForce: 15,
+                maxSteer: 0.35,
+                suspension: { stiffness: 30, restLength: 0.12, travel: 0.25, damping: 1.5, compression: 3.0 },
+                wheelRadius: 0.15,
+                wheelOffsets: [
+                    [ 0.28, 0,  0.38], [-0.28, 0,  0.38],
+                    [ 0.28, 0, -0.38], [-0.28, 0, -0.38]
+                ],
+                frictionSlip: 0.65,
+            },
+        ];
+
+        let currentCarIndex = 0;
+        let activProfile = CAR_PROFILES[0];
+
         // --- Vehicle Setup ---
-		// 1. Create the shape (the physical box)
-		const chassisShape = new CANNON.Box(new CANNON.Vec3(0.3, 0.2, 0.6));
-
-		// 2. Create the body (the mass/physics object)
-		const chassisBody = new CANNON.Body({ mass: 300 });
-
-		// 3. Add the shape with an OFFSET
-		// We move the box UP by 0.2 meters. 
-		// Since the 'Center of Mass' stays at 0, the weight is now at the bottom of the box.
-		const centerOfMassOffset = new CANNON.Vec3(0, 0.2, 0); 
-		chassisBody.addShape(chassisShape, centerOfMassOffset);
-
-		// 4. Set the starting position
-		chassisBody.position.set(0, 2, 0);
-		chassisBody.angularDamping = 0.5;
+        const chassisShape = new CANNON.Box(new CANNON.Vec3(0.3, 0.2, 0.6));
+        const chassisBody = new CANNON.Body({ mass: activProfile.mass });
+        const centerOfMassOffset = new CANNON.Vec3(0, 0.2, 0);
+        chassisBody.addShape(chassisShape, centerOfMassOffset);
+        chassisBody.position.set(0, 2, 0);
+        chassisBody.angularDamping = 0.5;
         chassisBody.collisionFilterGroup = GROUP_CHASSIS;
         chassisBody.collisionFilterMask  = GROUP_WORLD;
 
         const vehicle = new CANNON.RaycastVehicle({
-            chassisBody: chassisBody,
+            chassisBody,
             indexForwardAxis: 2,
             indexRightAxis: 0,
             indexUpAxis: 1
         });
 
-// 1. Your general settings (The template)
-		const wheelOptions = {
-			radius: 0.15,
-			directionLocal: new CANNON.Vec3(0, -1, 0),
-			axleLocal: new CANNON.Vec3(1, 0, 0),
-			suspensionStiffness: 55,
-			suspensionRestLength: 0.08,
-			frictionSlip: 0.8,
-			dampingRelaxation: 2.3,
-			dampingCompression: 4.4,
-			maxSuspensionForce: 100000,
-			rollInfluence: 0.01,
-			maxSuspensionTravel: 0.2,
-			customSlidingRotationalSpeed: -30,
-			useCustomSlidingRotationalSpeed: true
-		};
+        function buildWheels(profile) {
+            // Remove existing wheels
+            while (vehicle.wheelInfos.length) vehicle.wheelInfos.pop();
 
-		// Connection points at the bottom corners of the chassis
-		// Y = 0 relative to chassis center (CoM offset handles the rest)
-		const wheelOffsets = [
-			new CANNON.Vec3( 0.28, 0,  0.35),  // Front Left
-			new CANNON.Vec3(-0.28, 0,  0.35),  // Front Right
-			new CANNON.Vec3( 0.28, 0, -0.35),  // Rear Left
-			new CANNON.Vec3(-0.28, 0, -0.35)   // Rear Right
-		];
+            profile.wheelOffsets.forEach((off, index) => {
+                vehicle.addWheel({
+                    radius: profile.wheelRadius,
+                    directionLocal: new CANNON.Vec3(0, -1, 0),
+                    axleLocal: new CANNON.Vec3(1, 0, 0),
+                    suspensionStiffness: profile.suspension.stiffness,
+                    suspensionRestLength: profile.suspension.restLength,
+                    frictionSlip: profile.frictionSlip,
+                    dampingRelaxation: profile.suspension.damping,
+                    dampingCompression: profile.suspension.compression,
+                    maxSuspensionForce: 100000,
+                    rollInfluence: 0.01,
+                    maxSuspensionTravel: profile.suspension.travel,
+                    customSlidingRotationalSpeed: -30,
+                    useCustomSlidingRotationalSpeed: true,
+                    chassisConnectionPointLocal: new CANNON.Vec3(...off),
+                    isFrontWheel: index < 2
+                });
+            });
+        }
 
-		// --- 3. Add Wheels to Vehicle ---
-		wheelOffsets.forEach((offset, index) => {
-			const options = { 
-				...wheelOptions, 
-				chassisConnectionPointLocal: offset,
-				isFrontWheel: (index === 0 || index === 1)
-			};
-
-			vehicle.addWheel(options);
-		}); // <--- This closes the 'forEach' loop
-
+        buildWheels(activProfile);
         vehicle.addToWorld(world);
 
-		let carVisual;
-		let carWheels = []; // This will hold our 4 GLB wheel meshes
+        // --- Visual state ---
+        let carVisual = null;
+        let carWheels = [];
 
-		loader.load('vehicle-racer.glb', (glb) => {
-					carVisual = glb.scene;
-					let foundWheels = [];
-					
-					carVisual.traverse(child => {
-						if (child.isMesh && child.name.toLowerCase().includes('wheel')) {
-							child.geometry.rotateX(Math.PI / 2); 
-							foundWheels.push(child);
-						}
-					});
+        function clearVisual() {
+            if (carVisual) { scene.remove(carVisual); carVisual = null; }
+            carWheels.forEach(w => scene.remove(w));
+            carWheels = [];
+        }
 
-					// Sort: left side (positive X) first
-					foundWheels.sort((a, b) => b.position.x - a.position.x);
+        function loadCar(profile) {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('car-name').textContent = profile.name;
+            clearVisual();
 
-					// Detach wheels from the car hierarchy so we can drive them
-					// directly with world-space physics transforms — no worldToLocal needed
-					foundWheels.forEach(w => {
-						carVisual.remove(w);
-						scene.add(w);
-					});
-					carWheels = foundWheels;
+            // Update physics mass
+            chassisBody.mass = profile.mass;
+            chassisBody.updateMassProperties();
 
-					scene.add(carVisual);
-				});
+            // Rebuild wheel physics
+            buildWheels(profile);
+
+            loader.load(profile.file, (glb) => {
+                carVisual = glb.scene;
+                const foundWheels = [];
+
+                carVisual.traverse(child => {
+                    if (child.isMesh && child.name.toLowerCase().includes('wheel')) {
+                        child.geometry.rotateX(Math.PI / 2);
+                        foundWheels.push(child);
+                    }
+                });
+
+                foundWheels.sort((a, b) => b.position.x - a.position.x);
+                foundWheels.forEach(w => { carVisual.remove(w); scene.add(w); });
+                carWheels = foundWheels;
+                scene.add(carVisual);
+
+                resetVehicle();
+                document.getElementById('loading').style.display = 'none';
+            });
+        }
+
+        // Load the first car
+        loadCar(activProfile);
+
+        // --- Car cycling ---
+        function cyclecar(dir) {
+            currentCarIndex = (currentCarIndex + dir + CAR_PROFILES.length) % CAR_PROFILES.length;
+            activProfile = CAR_PROFILES[currentCarIndex];
+            loadCar(activProfile);
+        }
+
+        document.getElementById('btn-next').addEventListener('click', () => cyclecar(1));
+        document.getElementById('btn-prev').addEventListener('click', () => cyclecar(-1));
 
         // --- Input Handling ---
         const keys = { w: false, s: false, a: false, d: false, space: false };
@@ -182,6 +343,7 @@
             if(keys.hasOwnProperty(key)) keys[key] = true;
             if(key === ' ') keys.space = true;
             if(key === 'r') resetVehicle();
+            if(key === 'c') cyclecar(1);
         });
         window.addEventListener('keyup', (e) => { 
             const key = e.key.toLowerCase();
@@ -200,11 +362,11 @@
 function update() {
     world.step(1/60);
 
-    // 1. Core Settings
-    const engineForce = 50;
-    const maxSteer = 0.3;
-    const brakeForce = 20;
-    const lerpSpeed = 0.1; 
+    // Read live from active car profile
+    const engineForce = activProfile.engineForce;
+    const maxSteer    = activProfile.maxSteer;
+    const brakeForce  = activProfile.brakeForce;
+    const lerpSpeed   = 0.1;
 
     // 2. Smooth Steering — lerp toward target, never snaps
     const steerTarget = keys.a ? maxSteer : keys.d ? -maxSteer : 0;
