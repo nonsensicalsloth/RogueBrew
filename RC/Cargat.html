@@ -45,7 +45,6 @@
 
         // Collision groups: chassis won't collide with wheel bodies
         const GROUP_CHASSIS = 1;
-        const GROUP_WHEEL   = 2;
         const GROUP_WORLD   = 4;
 
 		let currentSteer = 0;
@@ -148,12 +147,6 @@
 		}); // <--- This closes the 'forEach' loop
 
         vehicle.addToWorld(world);
-
-        // Prevent wheel ray bodies from colliding with the chassis
-        vehicle.wheelBodies.forEach(wb => {
-            wb.collisionFilterGroup = GROUP_WHEEL;
-            wb.collisionFilterMask  = GROUP_WORLD;
-        });
 
 		let carVisual;
 		let carWheels = []; // This will hold our 4 GLB wheel meshes
