@@ -207,7 +207,7 @@ function update() {
     const lerpSpeed = 0.1; 
 
     // 2. Smooth Steering — lerp toward target, never snaps
-    const steerTarget = keys.a ? -maxSteer : keys.d ? maxSteer : 0;
+    const steerTarget = keys.a ? maxSteer : keys.d ? -maxSteer : 0;
     currentSteer += (steerTarget - currentSteer) * lerpSpeed;
     if (Math.abs(currentSteer) < 0.001) currentSteer = 0;
     // Clamp just in case
@@ -246,8 +246,8 @@ function update() {
 					carWheels[i].position.copy(t.position);
 					carWheels[i].quaternion.copy(t.quaternion);
 
-					// Flip right-side wheels so rims face outward (indices 1 and 3)
-					if (i === 1 || i === 3) {
+					// Flip left-side wheels so rims face outward (indices 0 and 2)
+					if (i === 0 || i === 2) {
 						const sideFlip = new THREE.Quaternion().setFromAxisAngle(
 							new THREE.Vector3(0, 1, 0), Math.PI
 						);
