@@ -114,7 +114,7 @@
 			directionLocal: new CANNON.Vec3(0, -1, 0),
 			axleLocal: new CANNON.Vec3(1, 0, 0),
 			suspensionStiffness: 55,
-			suspensionRestLength: 0.15,
+			suspensionRestLength: 0.08,
 			frictionSlip: 1.4,
 			dampingRelaxation: 2.3,
 			dampingCompression: 4.4,
@@ -201,7 +201,7 @@ function update() {
     world.step(1/60);
 
     // 1. Core Settings
-    const engineForce = 80;
+    const engineForce = 50;
     const maxSteer = 0.3;
     const brakeForce = 20;
     const lerpSpeed = 0.1; 
@@ -217,15 +217,16 @@ function update() {
     const force = keys.w ? engineForce : (keys.s ? -engineForce : 0);
     const currentBrake = keys.space ? brakeForce : 0;
 
-    // 4. Apply Physics — 0,1 = Front (steer) | 2,3 = Rear (drive)
-    vehicle.setSteeringValue(currentSteer, 0);
-    vehicle.setSteeringValue(currentSteer, 1);
+    // 4. Apply Physics — steer on 2&3 (front in this GLB's layout), drive on 0&1
+    vehicle.setSteeringValue(currentSteer, 2);
+    vehicle.setSteeringValue(currentSteer, 3);
+    vehicle.setSteeringValue(0, 0);
+    vehicle.setSteeringValue(0, 1);
 
-    vehicle.applyEngineForce(force, 2);
-    vehicle.applyEngineForce(force, 3);
-    // Clear engine force from front wheels
-    vehicle.applyEngineForce(0, 0);
-    vehicle.applyEngineForce(0, 1);
+    vehicle.applyEngineForce(force, 0);
+    vehicle.applyEngineForce(force, 1);
+    vehicle.applyEngineForce(0, 2);
+    vehicle.applyEngineForce(0, 3);
 
     for (let i = 0; i < 4; i++) {
         vehicle.setBrake(currentBrake, i);
