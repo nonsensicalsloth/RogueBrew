@@ -2003,7 +2003,7 @@ const CAR_PROFILES = [
         name: 'RACER',
         file: 'vehicle-racer.glb',
         wheelFile: 'wheel-small.glb',
-        mass: 300, engineForce: 50, brakeForce: 20, maxSteer: 0.3,
+        mass: 240, engineForce: 80, brakeForce: 20, maxSteer: 0.3,
         suspension: { stiffness: 55, restLength: 0.08, travel: 0.2, damping: 2.3, compression: 4.4 },
         wheelRadius: 0.125, frictionSlip: 0.8,
     },
@@ -2011,7 +2011,7 @@ const CAR_PROFILES = [
         name: 'RACER LOW',
         file: 'vehicle-racer-low.glb',
         wheelFile: 'wheel-small.glb',
-        mass: 280, engineForce: 60, brakeForce: 25, maxSteer: 0.28,
+        mass: 224, engineForce: 96, brakeForce: 25, maxSteer: 0.28,
         suspension: { stiffness: 60, restLength: 0.06, travel: 0.15, damping: 2.0, compression: 4.0 },
         wheelRadius: 0.125, frictionSlip: 0.9,
     },
@@ -2019,7 +2019,7 @@ const CAR_PROFILES = [
         name: 'DRAG RACER',
         file: 'vehicle-drag-racer.glb',
         wheelFile: 'wheel-medium.glb',
-        mass: 320, engineForce: 90, brakeForce: 30, maxSteer: 0.2,
+        mass: 256, engineForce: 144, brakeForce: 30, maxSteer: 0.2,
         suspension: { stiffness: 70, restLength: 0.07, travel: 0.15, damping: 2.5, compression: 5.0 },
         wheelRadius: 0.15, frictionSlip: 1.0,
     },
@@ -2027,7 +2027,7 @@ const CAR_PROFILES = [
         name: 'MONSTER TRUCK',
         file: 'vehicle-monster-truck.glb',
         wheelFile: 'wheel-large.glb',
-        mass: 600, engineForce: 120, brakeForce: 40, maxSteer: 0.35,
+        mass: 480, engineForce: 192, brakeForce: 40, maxSteer: 0.35,
         suspension: { stiffness: 35, restLength: 0.1, travel: 0.5, damping: 1.8, compression: 3.5 },
         wheelRadius: 0.3, frictionSlip: 0.7,
     },
@@ -2035,7 +2035,7 @@ const CAR_PROFILES = [
         name: 'SPEEDSTER',
         file: 'vehicle-speedster.glb',
         wheelFile: 'wheel-small.glb',
-        mass: 250, engineForce: 70, brakeForce: 22, maxSteer: 0.32,
+        mass: 200, engineForce: 112, brakeForce: 22, maxSteer: 0.32,
         suspension: { stiffness: 65, restLength: 0.07, travel: 0.18, damping: 2.2, compression: 4.2 },
         wheelRadius: 0.125, frictionSlip: 0.85,
     },
@@ -2043,7 +2043,7 @@ const CAR_PROFILES = [
         name: 'SUV',
         file: 'vehicle-suv.glb',
         wheelFile: 'wheel-medium.glb',
-        mass: 500, engineForce: 80, brakeForce: 35, maxSteer: 0.3,
+        mass: 400, engineForce: 128, brakeForce: 35, maxSteer: 0.3,
         suspension: { stiffness: 45, restLength: 0.2, travel: 0.35, damping: 2.0, compression: 4.0 },
         wheelRadius: 0.175, frictionSlip: 0.75,
     },
@@ -2051,7 +2051,7 @@ const CAR_PROFILES = [
         name: 'TRUCK',
         file: 'vehicle-truck.glb',
         wheelFile: 'wheel-medium.glb',
-        mass: 700, engineForce: 100, brakeForce: 45, maxSteer: 0.25,
+        mass: 560, engineForce: 160, brakeForce: 45, maxSteer: 0.25,
         suspension: { stiffness: 40, restLength: 0.22, travel: 0.4, damping: 2.1, compression: 4.1 },
         wheelRadius: 0.175, frictionSlip: 0.7,
     },
@@ -2059,7 +2059,7 @@ const CAR_PROFILES = [
         name: 'VINTAGE',
         file: 'vehicle-vintage-racer.glb',
         wheelFile: 'wheel-small.glb',
-        mass: 350, engineForce: 45, brakeForce: 15, maxSteer: 0.35,
+        mass: 280, engineForce: 72, brakeForce: 15, maxSteer: 0.35,
         suspension: { stiffness: 30, restLength: 0.12, travel: 0.25, damping: 1.5, compression: 3.0 },
         wheelRadius: 0.125, frictionSlip: 0.65,
     },
@@ -2142,6 +2142,7 @@ function loadCar(profile) {
         });
 
         scene.add(carVisual);
+        carVisual.scale.setScalar(0.4);  // visual only — physics unchanged
         resetVehicle();
         document.getElementById('loading').style.display = 'none';
     });
