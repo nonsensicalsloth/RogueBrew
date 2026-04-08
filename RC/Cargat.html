@@ -43,6 +43,11 @@
         world.gravity.set(0, -9.82, 0);
         world.broadphase = new CANNON.SAPBroadphase(world);
 
+        // Collision groups: chassis won't collide with wheel bodies
+        const GROUP_CHASSIS = 1;
+        const GROUP_WHEEL   = 2;
+        const GROUP_WORLD   = 4;
+
 		let currentSteer = 0;
 
 
@@ -66,6 +71,8 @@
         const floorBody = new CANNON.Body({ mass: 0 });
         floorBody.addShape(new CANNON.Box(new CANNON.Vec3(50, 0.1, 50)));
         floorBody.position.set(0, -0.1, 0);
+        floorBody.collisionFilterGroup = GROUP_WORLD;
+        floorBody.collisionFilterMask  = GROUP_CHASSIS | GROUP_WHEEL;
         world.addBody(floorBody);
 
         const floorMesh = new THREE.Mesh(
@@ -92,6 +99,8 @@
 		// 4. Set the starting position
 		chassisBody.position.set(0, 2, 0);
 		chassisBody.angularDamping = 0.5;
+        chassisBody.collisionFilterGroup = GROUP_CHASSIS;
+        chassisBody.collisionFilterMask  = GROUP_WORLD;
 
         const vehicle = new CANNON.RaycastVehicle({
             chassisBody: chassisBody,
@@ -139,6 +148,12 @@
 		}); // <--- This closes the 'forEach' loop
 
         vehicle.addToWorld(world);
+
+        // Prevent wheel ray bodies from colliding with the chassis
+        vehicle.wheelBodies.forEach(wb => {
+            wb.collisionFilterGroup = GROUP_WHEEL;
+            wb.collisionFilterMask  = GROUP_WORLD;
+        });
 
 		let carVisual;
 		let carWheels = []; // This will hold our 4 GLB wheel meshes
@@ -199,15 +214,12 @@ function update() {
     const brakeForce = 20;
     const lerpSpeed = 0.1; 
 
-    // 2. Simplified Steering (One block, no fighting)
-    if (keys.a) {
-        currentSteer = -maxSteer; 
-    } else if (keys.d) {
-        currentSteer = maxSteer;  
-    } else {
-        currentSteer *= (1 - lerpSpeed); 
-        if (Math.abs(currentSteer) < 0.001) currentSteer = 0;
-    }
+    // 2. Smooth Steering — lerp toward target, never snaps
+    const steerTarget = keys.a ? -maxSteer : keys.d ? maxSteer : 0;
+    currentSteer += (steerTarget - currentSteer) * lerpSpeed;
+    if (Math.abs(currentSteer) < 0.001) currentSteer = 0;
+    // Clamp just in case
+    currentSteer = Math.max(-maxSteer, Math.min(maxSteer, currentSteer));
 
     // 3. Driving & Braking
     const force = keys.w ? engineForce : (keys.s ? -engineForce : 0);
