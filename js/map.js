@@ -85,7 +85,15 @@ function generateMap(mapIndex) {
   for (let li = 0; li < CONTENT_SIZES.length; li++) {
     const l     = li + 1;
     const count = CONTENT_SIZES[li];
-    const w     = NODE_WEIGHTS[li];
+    let w = NODE_WEIGHTS[li];
+        if (typeof state !== 'undefined' && state.modifiers && state.modifiers.has('no_adjuncts')) {
+        w = { ...w, item: 0 };
+        // redistribute item weight to catch, battle and upgrade proportionally
+        const freed = NODE_WEIGHTS[li].item;
+        w.catch    = (w.catch    || 0) + Math.floor(freed * 0.4);
+        w.battle   = (w.battle   || 0) + Math.floor(freed * 0.4);
+        w.upgrade  = (w.upgrade  || 0) + Math.floor(freed * 0.2);
+}
     const layer = [];
 
     for (let c = 0; c < count; c++) {
