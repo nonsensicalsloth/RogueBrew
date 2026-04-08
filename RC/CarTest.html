@@ -1984,7 +1984,7 @@ chassisBody.addShape(
     new CANNON.Box(new CANNON.Vec3(0.3, 0.2, 0.6)),
     new CANNON.Vec3(0, 0.2, 0)
 );
-chassisBody.position.set(-25, 2, 0);  // spawn in middle of brewery
+chassisBody.position.set(-17, 2, 20);  // open aisle between fermenter rows
 chassisBody.angularDamping = 0.5;
 
 const vehicle = new CANNON.RaycastVehicle({
@@ -2181,7 +2181,7 @@ window.addEventListener('keyup', e => {
 });
 
 function resetVehicle() {
-    chassisBody.position.set(-25, 2, 0);
+    chassisBody.position.set(-17, 2, 20);
     chassisBody.quaternion.set(0, 0, 0, 1);
     chassisBody.velocity.set(0, 0, 0);
     chassisBody.angularVelocity.set(0, 0, 0);
