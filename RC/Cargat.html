@@ -153,6 +153,8 @@
                 suspension: { stiffness: 35, restLength: 0.3, travel: 0.5, damping: 1.8, compression: 3.5 },
                 wheelRadius: 0.28,
                 frictionSlip: 0.7,
+                // FL=0, FR=1, RL=2, RR=3 — override flips for wheels that deviate from default
+                flipOverrides: { 1: 'zFlip', 2: 'yFlip' },
             },
             {
                 name: 'SPEEDSTER',
@@ -385,18 +387,22 @@ function update() {
 					carWheels[i].position.copy(t.position);
 					carWheels[i].quaternion.copy(t.quaternion);
 
-					// Each wheel flipped individually to face outward
+					// Apply per-wheel flip — use profile override if set, else default logic
 					const yFlip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
 					const zFlip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI);
+					const overrides = activProfile.flipOverrides;
 
-					// i=0 FrontLeft, i=1 FrontRight, i=2 RearLeft, i=3 RearRight
-					const isRight = (i === 1 || i === 3);
-					const isFront = (i === 0 || i === 1);
-
-					if (isFront && !isRight)  { /* FL — no flip */ }
-					if (isFront &&  isRight)  { carWheels[i].quaternion.multiply(zFlip); }
-					if (!isFront && !isRight) { carWheels[i].quaternion.multiply(yFlip); }
-					if (!isFront &&  isRight) { /* RR — no flip */ }
+					if (overrides && overrides[i] !== undefined) {
+						if (overrides[i] === 'yFlip') carWheels[i].quaternion.multiply(yFlip);
+						if (overrides[i] === 'zFlip') carWheels[i].quaternion.multiply(zFlip);
+						// 'none' = no flip
+					} else {
+						// Default: FL=no flip, FR=zFlip, RL=yFlip, RR=no flip
+						const isRight = (i === 1 || i === 3);
+						const isFront = (i === 0 || i === 1);
+						if (isFront &&  isRight)  carWheels[i].quaternion.multiply(zFlip);
+						if (!isFront && !isRight) carWheels[i].quaternion.multiply(yFlip);
+					}
 				}
 			}
 		}
