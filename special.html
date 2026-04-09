@@ -8,660 +8,477 @@
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Special+Elite&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:       #1a1a1a;
-    --bg2:      #2d2d2d;
-    --bg3:      #3d3d3d;
-    --border:   #555;
-    --gold:     #ffcc00;
-    --accent:   #d4af37;
-    --text:     #e0e0e0;
-    --dim:      #888;
-    --green:    #2e8b57;
-    --red:      #c0392b;
-    --pixel:    'Press Start 2P', monospace;
-    --serif:    'Special Elite', cursive;
-    --mono:     'Courier Prime', monospace;
+    --bg:     #1a1a1a;
+    --bg2:    #2d2d2d;
+    --bg3:    #3d3d3d;
+    --border: #555;
+    --gold:   #ffcc00;
+    --accent: #d4af37;
+    --text:   #e0e0e0;
+    --dim:    #888;
+    --green:  #2e8b57;
+    --red:    #c0392b;
+    --pixel:  'Press Start 2P', monospace;
+    --serif:  'Special Elite', cursive;
+    --mono:   'Courier Prime', monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background:var(--bg); color:var(--text); font-family:var(--mono); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:24px 16px 48px; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--mono);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 24px 16px 48px;
-  }
+  .header { text-align:center; margin-bottom:32px; }
+  .header-title { font-family:var(--pixel); font-size:clamp(10px,2.5vw,16px); color:var(--gold); letter-spacing:2px; margin-bottom:8px; }
+  .header-sub { font-family:var(--serif); font-size:clamp(13px,2vw,16px); color:var(--dim); letter-spacing:1px; }
 
-  /* ── Header ── */
-  .header {
-    text-align: center;
-    margin-bottom: 32px;
-  }
-  .header-title {
-    font-family: var(--pixel);
-    font-size: clamp(10px, 2.5vw, 16px);
-    color: var(--gold);
-    letter-spacing: 2px;
-    margin-bottom: 8px;
-  }
-  .header-sub {
-    font-family: var(--serif);
-    font-size: clamp(13px, 2vw, 16px);
-    color: var(--dim);
-    letter-spacing: 1px;
-  }
+  .layout { width:100%; max-width:880px; display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width:620px) { .layout { grid-template-columns:1fr; } }
 
-  /* ── Main layout ── */
-  .layout {
-    width: 100%;
-    max-width: 860px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-  }
-  @media (max-width: 600px) {
-    .layout { grid-template-columns: 1fr; }
-  }
-
-  /* ── Panel ── */
-  .panel {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 20px;
-  }
-  .panel-title {
-    font-family: var(--pixel);
-    font-size: 8px;
-    color: var(--accent);
-    letter-spacing: 1px;
-    margin-bottom: 16px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  /* ── Questions ── */
-  .question-block { margin-bottom: 20px; }
-  .question-label {
-    font-family: var(--pixel);
-    font-size: 7px;
-    color: var(--dim);
-    margin-bottom: 10px;
-    line-height: 1.8;
-  }
-  .question-label span { color: var(--gold); }
-
-  .options-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-  }
-  .opt-btn {
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    color: var(--dim);
-    font-family: var(--pixel);
-    font-size: 7px;
-    padding: 8px 6px;
-    cursor: pointer;
-    transition: all 0.15s;
-    text-align: center;
-    line-height: 1.6;
-  }
-  .opt-btn:hover { border-color: var(--accent); color: var(--text); }
-  .opt-btn.selected {
-    background: #2a2000;
-    border-color: var(--gold);
-    color: var(--gold);
-    box-shadow: 0 0 8px rgba(255,204,0,0.2);
-  }
-  .opt-btn .opt-icon { font-size: 14px; display: block; margin-bottom: 4px; }
-  .opt-btn .opt-sub { font-size: 6px; color: var(--dim); display: block; margin-top: 3px; line-height: 1.5; }
-  .opt-btn.selected .opt-sub { color: #aa8800; }
+  .panel { background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:20px; }
+  .panel-title { font-family:var(--pixel); font-size:8px; color:var(--accent); letter-spacing:1px; margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid var(--border); }
 
   /* ── Sliders ── */
-  .slider-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  .slider-label {
-    font-family: var(--pixel);
-    font-size: 7px;
-    color: var(--dim);
-    width: 70px;
-    flex-shrink: 0;
-  }
-  .slider-track {
-    flex: 1;
-    height: 6px;
-    background: var(--bg3);
-    border-radius: 3px;
-    position: relative;
-    cursor: pointer;
-  }
-  .slider-fill {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 3px;
-    transition: width 0.2s;
-  }
-  .slider-dots {
-    display: flex;
-    justify-content: space-between;
-    padding: 0 2px;
-    margin-top: 3px;
-  }
-  .slider-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .slider-dot.active { background: var(--gold); border-color: var(--gold); }
-  .slider-val {
-    font-family: var(--pixel);
-    font-size: 7px;
-    color: var(--gold);
-    width: 20px;
-    text-align: right;
-    flex-shrink: 0;
-  }
+  .slider-block { margin-bottom:22px; }
+  .slider-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .slider-title { font-family:var(--pixel); font-size:8px; color:var(--gold); }
+  .slider-value { font-family:var(--pixel); font-size:8px; color:var(--gold); min-width:48px; text-align:right; }
+  .slider-track { width:100%; height:12px; border-radius:6px; position:relative; cursor:pointer; user-select:none; }
+  .slider-thumb { position:absolute; width:20px; height:20px; border-radius:50%; background:var(--gold); border:3px solid var(--bg); cursor:grab; transform:translateX(-50%); top:50%; margin-top:-10px; box-shadow:0 2px 8px rgba(0,0,0,0.6); z-index:2; }
+  .slider-thumb:active { cursor:grabbing; }
+  .slider-endlabels { display:flex; justify-content:space-between; font-size:7px; color:var(--dim); font-family:var(--pixel); padding:5px 2px 0; line-height:1.6; }
 
-  /* ── Generate button ── */
-  .generate-wrap {
-    grid-column: 1 / -1;
-    text-align: center;
-    margin-top: 8px;
-  }
-  .btn-generate {
-    background: var(--accent);
-    color: #000;
-    border: none;
-    border-radius: 6px;
-    font-family: var(--pixel);
-    font-size: 10px;
-    padding: 14px 32px;
-    cursor: pointer;
-    letter-spacing: 1px;
-    transition: all 0.15s;
-  }
-  .btn-generate:hover { background: var(--gold); transform: translateY(-2px); }
-  .btn-generate:disabled { background: var(--bg3); color: var(--dim); cursor: not-allowed; transform: none; }
+  /* Gradient tracks */
+  .ibu-track  { background:linear-gradient(to right, #5a9a5a, #8ab830, #c8a000, #c06000, #a02000, #701000); }
+  .srm-track  { background:linear-gradient(to right, #f8e888, #e8c040, #c87830, #8b3a1a, #3a1008, #140404); }
+  .abv-track  { background:linear-gradient(to right, #3a6a9a, #5a9a7a, #8a9a3a, #9a6a2a, #8a2a2a, #5a0a5a); }
+  .fruity-track { background:linear-gradient(to right, #6a9a6a, #a8c840, #f8c030, #e88030, #d84060, #a830a0); }
+
+  /* ── Special character buttons ── */
+  .question-block { margin-bottom:4px; }
+  .question-label { font-family:var(--pixel); font-size:7px; color:var(--dim); margin-bottom:10px; line-height:1.8; }
+  .question-label span { color:var(--gold); }
+  .options-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+  @media (max-width:380px) { .options-grid { grid-template-columns:1fr 1fr; } }
+  .opt-btn { background:var(--bg3); border:1px solid var(--border); border-radius:5px; color:var(--dim); font-family:var(--pixel); font-size:6px; padding:8px 4px; cursor:pointer; transition:all 0.15s; text-align:center; line-height:1.6; }
+  .opt-btn:hover { border-color:var(--accent); color:var(--text); }
+  .opt-btn.selected { background:#2a2000; border-color:var(--gold); color:var(--gold); box-shadow:0 0 8px rgba(255,204,0,0.2); }
+  .opt-btn .opt-icon { font-size:16px; display:block; margin-bottom:4px; }
+  .opt-btn .opt-sub { font-size:5px; color:var(--dim); display:block; margin-top:3px; line-height:1.5; }
+  .opt-btn.selected .opt-sub { color:#aa8800; }
+
+  /* ── Generate ── */
+  .generate-wrap { grid-column:1/-1; text-align:center; margin-top:4px; }
+  .btn-generate { background:var(--accent); color:#000; border:none; border-radius:6px; font-family:var(--pixel); font-size:10px; padding:14px 32px; cursor:pointer; letter-spacing:1px; transition:all 0.15s; }
+  .btn-generate:hover { background:var(--gold); transform:translateY(-2px); }
 
   /* ── Results ── */
-  .results {
-    grid-column: 1 / -1;
-    display: none;
-  }
-  .results.visible { display: block; }
-  .results-header {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-    text-align: center;
-  }
-  .results-style {
-    font-family: var(--pixel);
-    font-size: clamp(10px, 2vw, 14px);
-    color: var(--gold);
-    margin-bottom: 8px;
-  }
-  .results-desc {
-    font-family: var(--serif);
-    font-size: clamp(13px, 1.8vw, 16px);
-    color: var(--dim);
-    line-height: 1.7;
-    max-width: 560px;
-    margin: 0 auto 12px;
-  }
-  .results-tags {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  .result-tag {
-    font-family: var(--pixel);
-    font-size: 7px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    color: var(--dim);
-  }
+  .results { grid-column:1/-1; display:none; }
+  .results.visible { display:block; }
+  .results-header { background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:20px; margin-bottom:20px; text-align:center; }
+  .results-style { font-family:var(--pixel); font-size:clamp(10px,2vw,13px); color:var(--gold); margin-bottom:4px; }
+  .results-code { font-family:var(--pixel); font-size:7px; color:var(--dim); margin-bottom:10px; }
+  .results-desc { font-family:var(--serif); font-size:clamp(13px,1.8vw,16px); color:var(--dim); line-height:1.7; max-width:560px; margin:0 auto 12px; }
+  .results-stats { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:8px; }
+  .result-stat { font-family:var(--pixel); font-size:7px; padding:4px 10px; border-radius:4px; background:var(--bg3); border:1px solid var(--border); color:var(--text); }
+  .results-tags { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
+  .result-tag { font-family:var(--pixel); font-size:6px; padding:3px 8px; border-radius:20px; border:1px solid var(--border); color:var(--dim); }
 
-  /* ── Pokemon cards ── */
-  .cards-label {
-    font-family: var(--pixel);
-    font-size: 8px;
-    color: var(--accent);
-    margin-bottom: 14px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
-  }
-  .cards-grid {
-    display: flex;
-    gap: 14px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
+  .match-bars { margin-top:14px; }
+  .match-bar-row { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+  .match-bar-label { font-family:var(--pixel); font-size:6px; color:var(--dim); width:80px; flex-shrink:0; }
+  .match-bar-track { flex:1; height:5px; background:var(--bg3); border-radius:3px; overflow:hidden; }
+  .match-bar-fill { height:100%; border-radius:3px; transition:width 0.7s ease; }
+  .match-bar-val { font-family:var(--pixel); font-size:6px; color:var(--gold); width:28px; text-align:right; }
 
-  /* Beer label card style matching the game */
-  .poke-card {
-    background: #fdf9f0;
-    border: 1px solid #d4c9b0;
-    border-radius: 8px;
-    width: clamp(140px, 42vw, 170px);
-    display: flex;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.2s, box-shadow 0.2s;
-    cursor: pointer;
-  }
-  .poke-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
-  .poke-card.selected-card { box-shadow: 0 0 0 3px var(--gold), 0 4px 16px rgba(255,204,0,0.3); }
+  /* ── Beer label cards ── */
+  .cards-panel { background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:20px; margin-top:20px; }
+  .cards-label { font-family:var(--pixel); font-size:8px; color:var(--accent); margin-bottom:14px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  .cards-grid { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+  .runner-up-note { font-family:var(--pixel); font-size:6px; color:var(--dim); text-align:right; margin-top:10px; }
 
-  .label-stripe { width: 7px; flex-shrink: 0; }
-  .label-inner {
-    flex: 1;
-    margin: 6px 6px 6px 0;
-    border: 1px solid #c8bda0;
-    border-radius: 4px;
-    background: #fdf9f0;
-    padding: 8px 8px 7px;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-  .label-brewery {
-    font-size: 6px;
-    letter-spacing: 0.13em;
-    text-transform: uppercase;
-    color: #8a7a5a;
-    text-align: center;
-    margin-bottom: 4px;
-    font-family: var(--pixel);
-  }
-  .label-divider { height: 0.5px; background: #c8bda0; margin: 0 0 6px; }
-  .label-sprite-wrap { position: relative; width: 72px; height: 72px; margin: 0 auto 4px; }
-  .poke-sprite { width: 72px; height: 72px; image-rendering: pixelated; }
-  .label-name {
-    font-family: Georgia, serif;
-    font-size: 9px;
-    font-weight: 700;
-    color: #1a1208;
-    text-align: center;
-    line-height: 1.3;
-    margin-bottom: 1px;
-  }
-  .label-style {
-    font-family: Georgia, serif;
-    font-style: italic;
-    font-size: 7px;
-    color: #6a5a3a;
-    text-align: center;
-    margin-bottom: 5px;
-  }
-  .label-types {
-    display: flex;
-    gap: 3px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-bottom: 5px;
-  }
-  .label-type-pill {
-    font-size: 6px;
-    padding: 1px 5px;
-    border-radius: 20px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    font-family: var(--pixel);
-  }
-  .label-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    padding-top: 4px;
-    border-top: 0.5px solid #d4c9b0;
-    margin-top: 2px;
-  }
-  .label-abv-val { font-family: Georgia, serif; font-size: 15px; font-weight: 700; line-height: 1; }
-  .label-abv-label { font-size: 5px; color: #8a7a5a; text-transform: uppercase; letter-spacing: 0.08em; font-family: var(--pixel); }
-  .label-batch-val { font-family: 'Courier Prime', monospace; font-size: 12px; font-weight: 700; color: #3a2a10; line-height: 1; display: block; text-align: right; }
-  .label-batch-label { font-size: 5px; color: #8a7a5a; text-transform: uppercase; letter-spacing: 0.08em; font-family: var(--pixel); }
+  .poke-card { background:#fdf9f0; border:1px solid #d4c9b0; border-radius:8px; width:clamp(140px,42vw,170px); display:flex; position:relative; overflow:hidden; transition:transform 0.2s,box-shadow 0.2s; cursor:pointer; }
+  .poke-card:hover { transform:translateY(-4px); box-shadow:0 8px 20px rgba(0,0,0,0.3); }
+  .poke-card.selected-card { box-shadow:0 0 0 3px var(--gold),0 4px 16px rgba(255,204,0,0.3); }
+  .label-stripe { width:7px; flex-shrink:0; }
+  .label-inner { flex:1; margin:6px 6px 6px 0; border:1px solid #c8bda0; border-radius:4px; background:#fdf9f0; padding:8px 8px 7px; display:flex; flex-direction:column; }
+  .label-brewery { font-size:6px; letter-spacing:0.13em; text-transform:uppercase; color:#8a7a5a; text-align:center; margin-bottom:4px; font-family:var(--pixel); }
+  .label-divider { height:0.5px; background:#c8bda0; margin:0 0 6px; }
+  .label-sprite-wrap { position:relative; width:72px; height:72px; margin:0 auto 4px; }
+  .poke-sprite { width:72px; height:72px; image-rendering:pixelated; }
+  .label-name { font-family:Georgia,serif; font-size:9px; font-weight:700; color:#1a1208; text-align:center; line-height:1.3; margin-bottom:1px; }
+  .label-style-sub { font-family:Georgia,serif; font-style:italic; font-size:7px; color:#6a5a3a; text-align:center; margin-bottom:5px; }
+  .label-types { display:flex; gap:3px; justify-content:center; flex-wrap:wrap; margin-bottom:5px; }
+  .label-type-pill { font-size:6px; padding:1px 5px; border-radius:20px; letter-spacing:0.04em; text-transform:uppercase; font-family:var(--pixel); }
+  .label-footer { display:flex; justify-content:space-between; align-items:flex-end; padding-top:4px; border-top:0.5px solid #d4c9b0; margin-top:auto; }
+  .label-abv-val { font-family:Georgia,serif; font-size:15px; font-weight:700; line-height:1; }
+  .label-abv-label { font-size:5px; color:#8a7a5a; text-transform:uppercase; letter-spacing:0.08em; font-family:var(--pixel); }
+  .label-batch-val { font-family:'Courier Prime',monospace; font-size:12px; font-weight:700; color:#3a2a10; line-height:1; display:block; text-align:right; }
+  .label-batch-label { font-size:5px; color:#8a7a5a; text-transform:uppercase; letter-spacing:0.08em; font-family:var(--pixel); }
 
-  /* Type colours */
-  .tc-ipa      { --stripe:#78c850; --tint:#eefae0; --ink:#285010; }
-  .tc-brett    { --stripe:#a040a0; --tint:#f5e5f5; --ink:#4a1060; }
-  .tc-red      { --stripe:#f08030; --tint:#fef0e0; --ink:#7a3808; }
-  .tc-wheat    { --stripe:#a890f0; --tint:#f0ecfe; --ink:#38186a; }
-  .tc-lager    { --stripe:#6890f0; --tint:#eef2fe; --ink:#1a2880; }
-  .tc-saison   { --stripe:#a8b820; --tint:#f5f8d0; --ink:#484808; }
-  .tc-blonde   { --stripe:#a8a878; --tint:#f5f5e8; --ink:#4a4a28; }
-  .tc-sour     { --stripe:#c8a008; --tint:#fefbe0; --ink:#5a3808; }
-  .tc-brown    { --stripe:#8b5e3c; --tint:#f5ece4; --ink:#3a1808; }
-  .tc-pastry   { --stripe:#ee99ac; --tint:#fdeef2; --ink:#7a2840; }
-  .tc-barleywine { --stripe:#c03028; --tint:#fdecea; --ink:#6a0808; }
-  .tc-belgian  { --stripe:#f85888; --tint:#feebf0; --ink:#780828; }
-  .tc-barrelaged { --stripe:#b8a038; --tint:#faf6e0; --ink:#584808; }
-  .tc-export   { --stripe:#8080a0; --tint:#eeeef5; --ink:#282838; }
-  .tc-cryo     { --stripe:#60b8b8; --tint:#e4f8f8; --ink:#1a5858; }
-  .tc-seltzer  { --stripe:#705898; --tint:#ede5f5; --ink:#281848; }
-  .tc-stout    { --stripe:#7038f8; --tint:#ede0fe; --ink:#200868; }
-  .tc-cascadian { --stripe:#705848; --tint:#f0ebe5; --ink:#302010; }
+  .tc-ipa{--stripe:#78c850;--tint:#eefae0;--ink:#285010}
+  .tc-brett{--stripe:#a040a0;--tint:#f5e5f5;--ink:#4a1060}
+  .tc-red{--stripe:#f08030;--tint:#fef0e0;--ink:#7a3808}
+  .tc-wheat{--stripe:#a890f0;--tint:#f0ecfe;--ink:#38186a}
+  .tc-lager{--stripe:#6890f0;--tint:#eef2fe;--ink:#1a2880}
+  .tc-saison{--stripe:#a8b820;--tint:#f5f8d0;--ink:#484808}
+  .tc-blonde{--stripe:#a8a878;--tint:#f5f5e8;--ink:#4a4a28}
+  .tc-sour{--stripe:#c8a008;--tint:#fefbe0;--ink:#5a3808}
+  .tc-brown{--stripe:#8b5e3c;--tint:#f5ece4;--ink:#3a1808}
+  .tc-pastry{--stripe:#ee99ac;--tint:#fdeef2;--ink:#7a2840}
+  .tc-barleywine{--stripe:#c03028;--tint:#fdecea;--ink:#6a0808}
+  .tc-belgian{--stripe:#f85888;--tint:#feebf0;--ink:#780828}
+  .tc-barrelaged{--stripe:#b8a038;--tint:#faf6e0;--ink:#584808}
+  .tc-export{--stripe:#8080a0;--tint:#eeeef5;--ink:#282838}
+  .tc-cryo{--stripe:#60b8b8;--tint:#e4f8f8;--ink:#1a5858}
+  .tc-seltzer{--stripe:#705898;--tint:#ede5f5;--ink:#281848}
+  .tc-stout{--stripe:#7038f8;--tint:#ede0fe;--ink:#200868}
+  .tc-cascadian{--stripe:#705848;--tint:#f0ebe5;--ink:#302010}
 
-  /* Reroll / confirm */
-  .result-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    margin-top: 20px;
-    flex-wrap: wrap;
-  }
-  .btn-reroll {
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    color: var(--dim);
-    font-family: var(--pixel);
-    font-size: 8px;
-    padding: 10px 20px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .btn-reroll:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-confirm {
-    background: var(--green);
-    border: none;
-    border-radius: 5px;
-    color: #fff;
-    font-family: var(--pixel);
-    font-size: 8px;
-    padding: 10px 20px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .btn-confirm:hover { background: #3aab6e; transform: translateY(-1px); }
+  .result-actions { display:flex; gap:12px; justify-content:center; margin-top:20px; flex-wrap:wrap; }
+  .btn-reroll { background:transparent; border:1px solid var(--border); border-radius:5px; color:var(--dim); font-family:var(--pixel); font-size:8px; padding:10px 20px; cursor:pointer; transition:all 0.15s; }
+  .btn-reroll:hover { border-color:var(--accent); color:var(--accent); }
+  .btn-confirm { background:var(--green); border:none; border-radius:5px; color:#fff; font-family:var(--pixel); font-size:8px; padding:10px 20px; cursor:pointer; transition:all 0.15s; }
+  .btn-confirm:hover { background:#3aab6e; transform:translateY(-1px); }
 
-  /* Stat bars on result */
-  .stat-bars { margin-top: 16px; }
-  .stat-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-  }
-  .stat-name { font-family: var(--pixel); font-size: 7px; color: var(--dim); width: 90px; flex-shrink: 0; }
-  .stat-track { flex: 1; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
-  .stat-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
-  .stat-val { font-family: var(--pixel); font-size: 7px; color: var(--gold); width: 28px; text-align: right; flex-shrink: 0; }
-
-  .fade-in { animation: fadeIn 0.4s ease; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-  .incomplete-hint {
-    font-family: var(--pixel);
-    font-size: 7px;
-    color: var(--red);
-    text-align: center;
-    margin-top: 8px;
-    display: none;
-  }
+  .fade-in { animation:fadeIn 0.4s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 </style>
 </head>
 <body>
 
 <div class="header">
   <div class="header-title">🍺 BREWERY PROFILE</div>
-  <div class="header-sub">Tell us about your ideal brew — we'll build your team</div>
+  <div class="header-sub">Dial in what you want — we'll find your style</div>
 </div>
 
-<div class="layout" id="layout">
+<div class="layout">
 
-  <!-- LEFT: Flavour + Strength -->
+  <!-- LEFT: Sliders -->
   <div class="panel">
-    <div class="panel-title">FLAVOUR PROFILE</div>
+    <div class="panel-title">DIAL IT IN</div>
 
-    <div class="question-block">
-      <div class="question-label"><span>01.</span> What's the dominant character?</div>
-      <div class="options-grid" id="q-flavour">
-        <button class="opt-btn" data-val="bitter">
-          <span class="opt-icon">🌿</span>Bitter
-          <span class="opt-sub">Hops forward, dry finish</span>
-        </button>
-        <button class="opt-btn" data-val="malty">
-          <span class="opt-icon">🌾</span>Malty
-          <span class="opt-sub">Rich, sweet, roasty</span>
-        </button>
-        <button class="opt-btn" data-val="fruity">
-          <span class="opt-icon">🍑</span>Fruity
-          <span class="opt-sub">Esters, stone fruit, citrus</span>
-        </button>
-        <button class="opt-btn" data-val="clean">
-          <span class="opt-icon">💧</span>Clean
-          <span class="opt-sub">Crisp, neutral, refreshing</span>
-        </button>
-        <button class="opt-btn" data-val="dark">
-          <span class="opt-icon">🌑</span>Dark
-          <span class="opt-sub">Roast, coffee, chocolate</span>
-        </button>
-        <button class="opt-btn" data-val="wild">
-          <span class="opt-icon">🦠</span>Wild
-          <span class="opt-sub">Funky, sour, unpredictable</span>
-        </button>
+    <!-- IBU -->
+    <div class="slider-block">
+      <div class="slider-header">
+        <div class="slider-title">Bitterness (IBU)</div>
+        <div class="slider-value" id="val-ibu">25 IBU</div>
       </div>
+      <div class="slider-track ibu-track" id="track-ibu">
+        <div class="slider-thumb" id="thumb-ibu"></div>
+      </div>
+      <div class="slider-endlabels"><span>0 — No bitterness</span><span>100+ — Intensely bitter</span></div>
     </div>
 
-    <div class="question-block">
-      <div class="question-label"><span>02.</span> How strong?</div>
-      <div class="options-grid" id="q-strength">
-        <button class="opt-btn" data-val="session">
-          <span class="opt-icon">🥤</span>Session
-          <span class="opt-sub">Under 4.5% — all day drinking</span>
-        </button>
-        <button class="opt-btn" data-val="regular">
-          <span class="opt-icon">🍺</span>Regular
-          <span class="opt-sub">4.5–7% — the sweet spot</span>
-        </button>
-        <button class="opt-btn" data-val="imperial">
-          <span class="opt-icon">🔥</span>Imperial
-          <span class="opt-sub">7%+ — sip slowly</span>
-        </button>
-        <button class="opt-btn" data-val="any">
-          <span class="opt-icon">🎲</span>Surprise me
-          <span class="opt-sub">Whatever fits best</span>
-        </button>
+    <!-- SRM -->
+    <div class="slider-block">
+      <div class="slider-header">
+        <div class="slider-title">Colour (SRM)</div>
+        <div class="slider-value" id="val-srm">SRM 4</div>
       </div>
+      <div class="slider-track srm-track" id="track-srm">
+        <div class="slider-thumb" id="thumb-srm"></div>
+      </div>
+      <div class="slider-endlabels"><span>2 — Pale straw</span><span>40+ — Pitch black</span></div>
     </div>
+
+    <!-- ABV -->
+    <div class="slider-block">
+      <div class="slider-header">
+        <div class="slider-title">Strength (ABV)</div>
+        <div class="slider-value" id="val-abv">5.0%</div>
+      </div>
+      <div class="slider-track abv-track" id="track-abv">
+        <div class="slider-thumb" id="thumb-abv"></div>
+      </div>
+      <div class="slider-endlabels"><span>2.5% — Session</span><span>14% — Imperial</span></div>
+    </div>
+
+    <!-- Fruity -->
+    <div class="slider-block">
+      <div class="slider-header">
+        <div class="slider-title">Fruitiness</div>
+        <div class="slider-value" id="val-fruity">Low</div>
+      </div>
+      <div class="slider-track fruity-track" id="track-fruity">
+        <div class="slider-thumb" id="thumb-fruity"></div>
+      </div>
+      <div class="slider-endlabels"><span>Clean / neutral</span><span>Fruit-forward</span></div>
+    </div>
+
   </div>
 
-  <!-- RIGHT: Character sliders + Special -->
+  <!-- RIGHT: Special character -->
   <div class="panel">
-    <div class="panel-title">BREWERY CHARACTER</div>
+    <div class="panel-title">SPECIAL CHARACTER</div>
 
-    <div class="question-block">
-      <div class="question-label"><span>03.</span> Dial in your brewery's personality</div>
-
-      <div class="slider-row">
-        <div class="slider-label">Simplicity</div>
-        <div style="flex:1">
-          <div class="slider-track">
-            <div class="slider-fill" id="fill-simple" style="width:50%"></div>
-          </div>
-          <div class="slider-dots" id="dots-simple"></div>
-        </div>
-        <div class="slider-val" id="val-simple">3</div>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:6px;color:var(--dim);font-family:var(--pixel);margin-bottom:14px;padding:0 2px;">
-        <span>Complex</span><span>Crisp</span>
-      </div>
-
-      <div class="slider-row">
-        <div class="slider-label">Tradition</div>
-        <div style="flex:1">
-          <div class="slider-track">
-            <div class="slider-fill" id="fill-trad" style="width:50%"></div>
-          </div>
-          <div class="slider-dots" id="dots-trad"></div>
-        </div>
-        <div class="slider-val" id="val-trad">3</div>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:6px;color:var(--dim);font-family:var(--pixel);margin-bottom:14px;padding:0 2px;">
-        <span>Experimental</span><span>Classic</span>
-      </div>
-
-      <div class="slider-row">
-        <div class="slider-label">Aggression</div>
-        <div style="flex:1">
-          <div class="slider-track">
-            <div class="slider-fill" id="fill-agg" style="width:50%"></div>
-          </div>
-          <div class="slider-dots" id="dots-agg"></div>
-        </div>
-        <div class="slider-val" id="val-agg">3</div>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:6px;color:var(--dim);font-family:var(--pixel);margin-bottom:14px;padding:0 2px;">
-        <span>Subtle</span><span>Aggressive</span>
-      </div>
+    <div style="font-family:var(--pixel);font-size:7px;color:var(--dim);line-height:2;margin-bottom:18px;">
+      Your sliders narrow down the style family. Special character is the finishing touch — pick any that apply, or leave them all off for a clean result.
     </div>
 
     <div class="question-block">
-      <div class="question-label"><span>04.</span> Any special character?</div>
+      <div class="question-label"><span>Select any that apply:</span></div>
       <div class="options-grid" id="q-special">
-        <button class="opt-btn" data-val="none">
-          <span class="opt-icon">⚪</span>None
-          <span class="opt-sub">Pure to style</span>
-        </button>
-        <button class="opt-btn" data-val="sour">
-          <span class="opt-icon">🍋</span>Sour
-          <span class="opt-sub">Tart, acidic edge</span>
-        </button>
-        <button class="opt-btn" data-val="barrel">
-          <span class="opt-icon">🛢️</span>Barrel-aged
-          <span class="opt-sub">Oak, spirit, vanilla</span>
-        </button>
-        <button class="opt-btn" data-val="hazy">
-          <span class="opt-icon">🌫️</span>Hazy
-          <span class="opt-sub">Juicy, unfiltered</span>
-        </button>
+        <button class="opt-btn" data-val="none"><span class="opt-icon">⚪</span>None<span class="opt-sub">Pure to style</span></button>
+        <button class="opt-btn" data-val="sour"><span class="opt-icon">🍋</span>Sour<span class="opt-sub">Tart / acidic</span></button>
+        <button class="opt-btn" data-val="hazy"><span class="opt-icon">🌫️</span>Hazy<span class="opt-sub">Juicy, unfiltered</span></button>
+        <button class="opt-btn" data-val="barrel"><span class="opt-icon">🛢️</span>Barrel-aged<span class="opt-sub">Oak, spirit</span></button>
+        <button class="opt-btn" data-val="pastry"><span class="opt-icon">🍰</span>Pastry<span class="opt-sub">Adjuncts, sweet</span></button>
+        <button class="opt-btn" data-val="smoked"><span class="opt-icon">🔥</span>Smoked<span class="opt-sub">Peat, wood</span></button>
+      </div>
+    </div>
+
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:14px;margin-top:20px;">
+      <div style="font-family:var(--pixel);font-size:6px;color:var(--dim);line-height:2.2;">
+        Styles scored against real BJCP 2021 guidelines. The closer your sliders sit to a style's documented IBU, SRM, and ABV ranges, the higher it scores. The winner and two runner-ups are shown so you can see how close the call was.
       </div>
     </div>
   </div>
 
   <!-- Generate -->
   <div class="generate-wrap">
-    <button class="btn-generate" id="btn-generate" onclick="generateProfile()">
-      ⬟ BUILD MY BREWERY
-    </button>
-    <div class="incomplete-hint" id="hint">Select at least Flavour and Strength to continue</div>
+    <button class="btn-generate" onclick="generateProfile()">⬟ BUILD MY BREWERY</button>
   </div>
 
   <!-- Results -->
   <div class="results" id="results"></div>
-
 </div>
 
 <script src="js/species.js?v=2.7"></script>
 <script>
-// ── Preference state ──────────────────────────────────────────────────────
-const prefs = { flavour: null, strength: null, special: null };
-const sliders = { simple: 3, trad: 3, agg: 3 };
 
-// ── Option buttons ────────────────────────────────────────────────────────
-document.querySelectorAll('.options-grid').forEach(grid => {
-  const key = grid.id.replace('q-', '');
-  grid.querySelectorAll('.opt-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      grid.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+// ── Slider state (all in real units) ─────────────────────────────────────
+const vals = { ibu: 25, srm: 4, abv: 5.0, fruity: 0.1 };
+
+// ── BJCP style data (IBU, SRM, ABV ranges from 2021 guidelines) ──────────
+const BJCP = [
+  { code:'1B',  name:'American Lager',          ibu:[8,12],   srm:[2,3],    abv:[2.8,4.2],  tags:['clean','lager'],           fruity:0.05, special:[] },
+  { code:'1C',  name:'Cream Ale',               ibu:[8,20],   srm:[2,5],    abv:[4.2,5.6],  tags:['clean','pale'],             fruity:0.1,  special:[] },
+  { code:'1D',  name:'American Wheat',          ibu:[8,20],   srm:[2,5],    abv:[4.2,5.6],  tags:['wheat','pale'],             fruity:0.3,  special:['hazy'] },
+  { code:'3B',  name:'Czech Premium Lager',     ibu:[30,45],  srm:[4,6],    abv:[4.2,5.8],  tags:['bitter','lager'],           fruity:0.05, special:[] },
+  { code:'4B',  name:'Festbier',                ibu:[16,22],  srm:[3,5],    abv:[4.7,5.4],  tags:['malty','lager'],            fruity:0.1,  special:[] },
+  { code:'4C',  name:'Helles Bock',             ibu:[23,35],  srm:[6,9],    abv:[6.3,7.4],  tags:['malty','strong'],           fruity:0.1,  special:[] },
+  { code:'5B',  name:'Kölsch',                  ibu:[18,30],  srm:[4,5],    abv:[4.4,5.2],  tags:['clean','pale'],             fruity:0.25, special:[] },
+  { code:'5D',  name:'German Pils',             ibu:[20,30],  srm:[4,6],    abv:[5.0,6.0],  tags:['bitter','lager'],           fruity:0.05, special:[] },
+  { code:'6A',  name:'Märzen',                  ibu:[18,24],  srm:[8,17],   abv:[5.6,6.3],  tags:['malty','amber'],            fruity:0.1,  special:[] },
+  { code:'6B',  name:'Rauchbier',               ibu:[20,30],  srm:[12,22],  abv:[4.8,6.0],  tags:['malty','amber'],            fruity:0.05, special:['smoked'] },
+  { code:'6C',  name:'Dunkles Bock',            ibu:[20,27],  srm:[14,22],  abv:[6.3,7.2],  tags:['malty','dark'],             fruity:0.1,  special:[] },
+  { code:'7A',  name:'Vienna Lager',            ibu:[18,30],  srm:[9,15],   abv:[4.7,5.5],  tags:['malty','amber'],            fruity:0.1,  special:[] },
+  { code:'7B',  name:'Altbier',                 ibu:[25,50],  srm:[9,17],   abv:[4.3,5.5],  tags:['bitter','amber'],           fruity:0.15, special:[] },
+  { code:'8B',  name:'Schwarzbier',             ibu:[18,28],  srm:[17,28],  abv:[4.5,5.6],  tags:['dark','lager'],             fruity:0.05, special:[] },
+  { code:'9A',  name:'Doppelbock',              ibu:[16,26],  srm:[6,25],   abv:[7.0,10.0], tags:['malty','strong'],           fruity:0.15, special:[] },
+  { code:'9B',  name:'Eisbock',                 ibu:[25,35],  srm:[17,30],  abv:[9.0,14.0], tags:['malty','very-strong'],      fruity:0.15, special:[] },
+  { code:'9C',  name:'Baltic Porter',           ibu:[20,40],  srm:[17,30],  abv:[6.5,9.5],  tags:['dark','strong'],            fruity:0.2,  special:['barrel'] },
+  { code:'10A', name:'Weissbier',               ibu:[8,15],   srm:[2,6],    abv:[4.3,5.6],  tags:['wheat','pale'],             fruity:0.65, special:[] },
+  { code:'10B', name:'Dunkles Weissbier',       ibu:[10,18],  srm:[14,23],  abv:[4.3,5.6],  tags:['wheat','dark'],             fruity:0.6,  special:[] },
+  { code:'10C', name:'Weizenbock',              ibu:[15,30],  srm:[6,25],   abv:[6.5,9.0],  tags:['wheat','strong'],           fruity:0.55, special:[] },
+  { code:'11B', name:'Best Bitter',             ibu:[25,35],  srm:[8,14],   abv:[3.2,3.8],  tags:['bitter','session'],         fruity:0.25, special:[] },
+  { code:'11C', name:'Strong Bitter',           ibu:[30,50],  srm:[8,18],   abv:[4.6,6.2],  tags:['bitter','amber'],           fruity:0.2,  special:[] },
+  { code:'12C', name:'English IPA',             ibu:[40,60],  srm:[6,14],   abv:[5.0,7.5],  tags:['bitter','hoppy'],           fruity:0.3,  special:[] },
+  { code:'13A', name:'Dark Mild',               ibu:[10,25],  srm:[14,25],  abv:[3.0,3.8],  tags:['dark','session','malty'],   fruity:0.15, special:[] },
+  { code:'13B', name:'British Brown Ale',       ibu:[20,30],  srm:[12,22],  abv:[4.2,5.9],  tags:['malty','amber'],            fruity:0.2,  special:[] },
+  { code:'13C', name:'English Porter',          ibu:[18,35],  srm:[20,30],  abv:[4.0,5.4],  tags:['dark','malty'],             fruity:0.15, special:[] },
+  { code:'15B', name:'Irish Stout',             ibu:[18,28],  srm:[9,14],   abv:[3.8,5.0],  tags:['roasty','session'],         fruity:0.05, special:[] },
+  { code:'15C', name:'Irish Extra Stout',       ibu:[35,50],  srm:[30,40],  abv:[5.0,6.5],  tags:['dark','roasty'],            fruity:0.05, special:[] },
+  { code:'16A', name:'Sweet Stout',             ibu:[20,40],  srm:[30,40],  abv:[4.0,6.0],  tags:['dark','sweet'],             fruity:0.2,  special:['pastry'] },
+  { code:'16B', name:'Oatmeal Stout',           ibu:[25,40],  srm:[22,40],  abv:[4.2,5.9],  tags:['dark','roasty'],            fruity:0.1,  special:[] },
+  { code:'17B', name:'Old Ale',                 ibu:[30,60],  srm:[10,22],  abv:[5.5,9.0],  tags:['malty','strong'],           fruity:0.3,  special:['barrel'] },
+  { code:'17C', name:'Wee Heavy',               ibu:[17,35],  srm:[14,25],  abv:[6.5,10.0], tags:['malty','strong'],           fruity:0.15, special:[] },
+  { code:'17D', name:'English Barleywine',      ibu:[35,70],  srm:[8,22],   abv:[8.0,12.0], tags:['malty','very-strong'],      fruity:0.35, special:['barrel'] },
+  { code:'18A', name:'Blonde Ale',              ibu:[15,28],  srm:[3,6],    abv:[3.8,5.5],  tags:['clean','pale'],             fruity:0.2,  special:[] },
+  { code:'18B', name:'American Pale Ale',       ibu:[30,50],  srm:[5,10],   abv:[4.5,6.2],  tags:['hoppy','pale'],             fruity:0.25, special:[] },
+  { code:'19A', name:'American Amber Ale',      ibu:[25,40],  srm:[10,17],  abv:[4.5,6.2],  tags:['hoppy','amber'],            fruity:0.2,  special:[] },
+  { code:'19C', name:'American Brown Ale',      ibu:[20,30],  srm:[18,35],  abv:[4.3,6.2],  tags:['malty','dark'],             fruity:0.2,  special:[] },
+  { code:'20B', name:'American Stout',          ibu:[25,50],  srm:[22,40],  abv:[4.8,6.5],  tags:['dark','roasty','hoppy'],    fruity:0.1,  special:[] },
+  { code:'20C', name:'Imperial Stout',          ibu:[50,90],  srm:[30,40],  abv:[8.0,12.0], tags:['dark','very-strong'],       fruity:0.2,  special:['barrel','pastry'] },
+  { code:'21A', name:'American IPA',            ibu:[40,70],  srm:[6,14],   abv:[5.5,7.5],  tags:['hoppy','bitter'],           fruity:0.35, special:['hazy'] },
+  { code:'21C', name:'Hazy IPA',                ibu:[25,60],  srm:[3,7],    abv:[6.0,9.0],  tags:['hoppy','pale'],             fruity:0.75, special:['hazy'] },
+  { code:'22A', name:'Double IPA',              ibu:[60,100], srm:[6,14],   abv:[7.5,10.0], tags:['hoppy','very-strong'],      fruity:0.45, special:['hazy'] },
+  { code:'22C', name:'American Barleywine',     ibu:[50,100], srm:[9,18],   abv:[8.0,12.0], tags:['hoppy','very-strong'],      fruity:0.3,  special:['barrel'] },
+  { code:'23A', name:'Berliner Weisse',         ibu:[3,8],    srm:[2,3],    abv:[2.8,3.8],  tags:['sour','session'],           fruity:0.4,  special:['sour'] },
+  { code:'23B', name:'Flanders Red',            ibu:[10,25],  srm:[10,17],  abv:[4.6,6.5],  tags:['sour','amber'],             fruity:0.55, special:['sour'] },
+  { code:'23C', name:'Oud Bruin',               ibu:[20,25],  srm:[17,22],  abv:[4.0,8.0],  tags:['sour','dark'],              fruity:0.45, special:['sour','barrel'] },
+  { code:'23D', name:'Lambic',                  ibu:[0,10],   srm:[3,6],    abv:[5.0,6.5],  tags:['sour','wild'],              fruity:0.5,  special:['sour'] },
+  { code:'23G', name:'Gose',                    ibu:[5,12],   srm:[3,4],    abv:[4.2,4.8],  tags:['sour','wheat'],             fruity:0.4,  special:['sour'] },
+  { code:'24A', name:'Witbier',                 ibu:[8,20],   srm:[2,4],    abv:[4.5,5.5],  tags:['wheat','spice'],            fruity:0.5,  special:[] },
+  { code:'24C', name:'Bière de Garde',          ibu:[18,28],  srm:[6,19],   abv:[6.0,8.5],  tags:['malty','strong'],           fruity:0.3,  special:['barrel'] },
+  { code:'25B', name:'Saison',                  ibu:[15,30],  srm:[4,6],    abv:[6.0,7.5],  tags:['fruity','pale'],            fruity:0.65, special:['sour'] },
+  { code:'25C', name:'Belgian Golden Strong',   ibu:[22,35],  srm:[3,6],    abv:[7.5,10.5], tags:['strong','pale'],            fruity:0.55, special:[] },
+  { code:'26A', name:'Belgian Single',          ibu:[25,45],  srm:[3,5],    abv:[4.8,6.0],  tags:['hoppy','pale'],             fruity:0.45, special:[] },
+  { code:'26B', name:'Belgian Dubbel',          ibu:[15,25],  srm:[10,17],  abv:[6.0,7.6],  tags:['malty','dark'],             fruity:0.55, special:[] },
+  { code:'26C', name:'Belgian Tripel',          ibu:[20,40],  srm:[5,7],    abv:[7.5,9.5],  tags:['strong','pale'],            fruity:0.6,  special:[] },
+  { code:'26D', name:'Belgian Dark Strong',     ibu:[20,35],  srm:[12,22],  abv:[8.0,12.0], tags:['malty','very-strong'],      fruity:0.65, special:['barrel'] },
+  { code:'28D', name:'Straight Sour Beer',      ibu:[3,8],    srm:[2,3],    abv:[4.5,7.0],  tags:['sour','pale'],              fruity:0.35, special:['sour'] },
+];
+
+// Style descriptions (curated)
+const DESCS = {
+  '1B':  'The most widely consumed beer style in history. Clean, crisp, and built for volume.',
+  '1C':  'A smooth American original — creamy body, mild flavor, refreshingly drinkable.',
+  '1D':  'Hazy, refreshing, and approachable. Wheat character with mild hop and yeast notes.',
+  '3B':  'The gold standard of Bohemian lager. Brilliant golden color, rich malt, pronounced hop bitterness.',
+  '4B':  'The Oktoberfest table beer — a refined, malt-forward lager with elegant hop support.',
+  '4C':  'The lightest of the bock family. Malt-forward strength with a deceptively easy finish.',
+  '5B':  'Cologne\'s beloved ale-lager hybrid. Delicate, balanced, and best drunk fresh in the city it came from.',
+  '5D':  'The benchmark of German brewing precision. Clean, bitter, and built on noble hops.',
+  '6A':  'The original Oktoberfest lager. Rich amber malt, toasty character, smooth finish.',
+  '6B':  'A märzen base with an unmistakable campfire character from beechwood-smoked malt.',
+  '6C':  'A dark, malty bock with roasted grain character and warming strength.',
+  '7A':  'The elegant amber lager of Vienna — toasty malt sweetness balanced by clean bitterness.',
+  '7B':  'Germany\'s most bitter traditional lager. Hop-forward with a clean malt backbone.',
+  '8B':  'The black lager paradox — dark as night but light and crisp on the palate.',
+  '9A':  'The double bock — one of the strongest traditional German lagers. Rich, warming, complex.',
+  '9B':  'A doppelbock taken to extremes — freeze-concentrated for ice-cold intensity.',
+  '9C':  'A cold-fermented porter with Baltic roots. Smooth, roasty, and surprisingly elegant at strength.',
+  '10A': 'Bavaria\'s classic wheat beer. Banana and clove esters from a distinctive yeast strain.',
+  '10B': 'The wheat beer turned dark. Caramel and chocolate malt join the classic banana and clove.',
+  '10C': 'A wheat beer scaled to imperial strength. Rich, fruity, and complex.',
+  '11B': 'England\'s everyday session ale. Low ABV, big personality, and built for the pub.',
+  '11C': 'A step up from Best Bitter — more hop character, more malt, still eminently sessionable.',
+  '12C': 'The original IPA. Earthy English hops, biscuity malt, a dry and bitter finish.',
+  '13A': 'Dark but delicate. A low-gravity English ale that punches well above its ABV.',
+  '13B': 'Nutty, caramel-forward, and approachable. The quintessential British brown.',
+  '13C': 'The original robust dark ale. Roasty, chocolatey, and deeply satisfying.',
+  '15B': 'Ireland\'s classic dry stout. Roasty, bitter, and built for nitrogen.',
+  '15C': 'A stronger, more intense take on the Irish stout. Less fizz, more roast.',
+  '16A': 'A stout with lactose sweetness — coffee and chocolate balanced by residual sugar.',
+  '16B': 'Oats add a silky body to the classic stout character. Smooth and complex.',
+  '17B': 'Aged, complex, and often barrel-influenced. Strong ale that improves with time.',
+  '17C': 'Scotland\'s strongest ale — intensely malty, warming, and surprisingly sweet.',
+  '17D': 'An aged English ale of extraordinary strength. Malt-forward, complex, and built to last decades.',
+  '18A': 'Easy-drinking and approachable. Light malt, soft hops, a welcoming pint.',
+  '18B': 'The American take on pale ale — bolder hops, cleaner fermentation, fruit-forward.',
+  '19A': 'The go-to amber ale. Caramel malt sweetness balanced by American hop character.',
+  '19C': 'American hops meet dark malt in a satisfying and surprisingly complex package.',
+  '20B': 'A robust American stout with assertive hops alongside the roast character.',
+  '20C': 'The ultimate dark beer achievement. Thick, complex, and built for barrel aging.',
+  '21A': 'The definitive modern IPA. Citrus, pine, stone fruit from American hops.',
+  '21C': 'Soft water, late hops, and a hazy pour define this juicy, tropical IPA.',
+  '22A': 'Double the everything. A West Coast double IPA — bitter, resinous, and intense.',
+  '22C': 'An American barleywine with hop aggression to match the massive malt backbone.',
+  '23A': 'Tart, refreshing, and barely alcoholic. Berlin\'s historic wheat beer kissed with lactic acid.',
+  '23B': 'A complex Flemish ale aged in oak. Vinous, sour, fruity — unlike anything else.',
+  '23C': 'A dark, malt-forward Belgian sour. More complex and less tart than the Red.',
+  '23D': 'Spontaneously fermented in Brussels — wild, funky, and years in the making.',
+  '23G': 'A salty, tart German wheat beer with coriander. Refreshing and historically unique.',
+  '24A': 'Belgium\'s iconic spiced wheat beer. Coriander, orange peel, and soft yeast character.',
+  '24C': 'A farmhouse lager from northern France. Malt-forward, slightly spicy, built to age.',
+  '25B': 'The farmhouse classic. Spicy, fruity yeast character, dry finish, built for thirst.',
+  '25C': 'A dangerously strong Belgian pale ale. Deceptively light in color, not in ABV.',
+  '26A': 'A monastery single — hoppy, pale, and drier than its bigger siblings.',
+  '26B': 'The classic Belgian amber. Dark fruit, caramel malt, restrained bitterness.',
+  '26C': 'The Belgian tripel — strong, pale, fruity, and deceptively drinkable.',
+  '26D': 'Belgium\'s strongest dark ale. Plum, raisin, caramel, chocolate. Years in the aging.',
+  '28D': 'A modern straight sour — clean lactic acidity, minimal hop character, wide open for additions.',
+};
+
+// Map BJCP codes to game types
+const CODE_TO_TYPES = {
+  '1B':'Lager','1C':'Blonde','1D':'Wheat','3B':'Lager','4B':'Lager','4C':'Lager',
+  '5B':'Lager','5D':'Lager','6A':'Lager','6B':'Red','6C':'Brown','7A':'Red',
+  '7B':'Red','8B':'Stout','9A':'Brown','9B':'Stout','9C':'Stout','10A':'Wheat',
+  '10B':'Wheat','10C':'Wheat','11B':'Barleywine','11C':'Barleywine','12C':'Ipa',
+  '13A':'Stout','13B':'Brown','13C':'Stout','15B':'Stout','15C':'Stout',
+  '16A':'Pastry','16B':'Stout','17B':'Barrel-aged','17C':'Barleywine','17D':'Barleywine',
+  '18A':'Blonde','18B':'Ipa','19A':'Red','19C':'Brown','20B':'Stout','20C':'Stout',
+  '21A':'Ipa','21C':'Ipa','22A':'Ipa','22C':'Barleywine','23A':'Sour','23B':'Sour',
+  '23C':'Brett','23D':'Brett','23G':'Sour','24A':'Wheat','24C':'Barrel-aged',
+  '25B':'Saison','25C':'Belgian','26A':'Belgian','26B':'Belgian','26C':'Belgian',
+  '26D':'Belgian','28D':'Sour',
+};
+
+// ── Slider setup ──────────────────────────────────────────────────────────
+const SLIDER_CONFIG = {
+  ibu:    { min:0,   max:105, unit:'IBU', fmt: v => `${Math.round(v)} IBU`,
+            labels:['Very low','Low','Moderate','High','Very high','Extreme'] },
+  srm:    { min:2,   max:42,  unit:'SRM', fmt: v => `SRM ${Math.round(v)}`,
+            labels:['Pale straw','Gold','Amber','Copper','Brown','Dark','Black'] },
+  abv:    { min:2.5, max:14,  unit:'%',   fmt: v => `${v.toFixed(1)}%`,
+            labels:['Session','Standard','Strong','Imperial','Very strong'] },
+  fruity: { min:0,   max:1,   unit:'',    fmt: v => ['None','Low','Moderate','High','Very high'][Math.round(v*4)],
+            labels:['Clean / neutral','Fruit-forward'] },
+};
+
+const defaults = { ibu:25, srm:4, abv:5.0, fruity:0.1 };
+
+Object.entries(SLIDER_CONFIG).forEach(([key, cfg]) => {
+  const track = document.getElementById('track-' + key);
+  const thumb = document.getElementById('thumb-' + key);
+  const valEl = document.getElementById('val-' + key);
+
+  function toPct(v) { return (v - cfg.min) / (cfg.max - cfg.min); }
+  function toVal(pct) { return cfg.min + pct * (cfg.max - cfg.min); }
+
+  function update(pct) {
+    pct = Math.min(1, Math.max(0, pct));
+    vals[key] = toVal(pct);
+    thumb.style.left = (pct * 100) + '%';
+    valEl.textContent = cfg.fmt(vals[key]);
+  }
+  update(toPct(defaults[key]));
+
+  let dragging = false;
+  const getPos = e => {
+    const r = track.getBoundingClientRect();
+    return ((e.touches ? e.touches[0].clientX : e.clientX) - r.left) / r.width;
+  };
+  thumb.addEventListener('mousedown',  e => { dragging = true; e.preventDefault(); });
+  thumb.addEventListener('touchstart', () => dragging = true, { passive:true });
+  document.addEventListener('mousemove',  e => { if (dragging) update(getPos(e)); });
+  document.addEventListener('touchmove',  e => { if (dragging) update(getPos(e)); }, { passive:true });
+  document.addEventListener('mouseup',  () => dragging = false);
+  document.addEventListener('touchend', () => dragging = false);
+  track.addEventListener('click', e => { if (!dragging) update(getPos(e)); });
+});
+
+// ── Special character (multi-select, except 'none' clears others) ─────────
+const activeSpecial = new Set();
+document.querySelectorAll('#q-special .opt-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const v = btn.dataset.val;
+    if (v === 'none') {
+      activeSpecial.clear();
+      document.querySelectorAll('#q-special .opt-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
-      prefs[key] = btn.dataset.val;
-    });
+    } else {
+      const noneBtn = document.querySelector('#q-special [data-val="none"]');
+      noneBtn?.classList.remove('selected');
+      activeSpecial.delete('none');
+      if (activeSpecial.has(v)) { activeSpecial.delete(v); btn.classList.remove('selected'); }
+      else { activeSpecial.add(v); btn.classList.add('selected'); }
+    }
   });
 });
 
-// ── Sliders ───────────────────────────────────────────────────────────────
-['simple','trad','agg'].forEach(key => {
-  const dotsEl = document.getElementById('dots-' + key);
-  const fillEl = document.getElementById('fill-' + key);
-  const valEl  = document.getElementById('val-' + key);
-  for (let i = 1; i <= 5; i++) {
-    const dot = document.createElement('div');
-    dot.className = 'slider-dot' + (i === 3 ? ' active' : '');
-    dot.addEventListener('click', () => {
-      sliders[key] = i;
-      dotsEl.querySelectorAll('.slider-dot').forEach((d, idx) => {
-        d.classList.toggle('active', idx + 1 === i);
-      });
-      fillEl.style.width = ((i - 1) / 4 * 100) + '%';
-      valEl.textContent = i;
-    });
-    dotsEl.appendChild(dot);
+// ── Scoring ───────────────────────────────────────────────────────────────
+function rangeScore(val, lo, hi) {
+  // Returns 0-1: 1.0 if val is inside range, falling off outside
+  if (val >= lo && val <= hi) return 1.0;
+  const mid = (lo + hi) / 2;
+  const spread = (hi - lo) / 2 || 1;
+  return Math.max(0, 1 - Math.abs(val - mid) / (spread * 2.5));
+}
+
+function scoreStyle(s) {
+  let score = 0;
+  score += rangeScore(vals.ibu,    s.ibu[0], s.ibu[1]) * 30;
+  score += rangeScore(vals.srm,    s.srm[0], s.srm[1]) * 30;
+  score += rangeScore(vals.abv,    s.abv[0], s.abv[1]) * 25;
+  score += (1 - Math.abs(vals.fruity - s.fruity)) * 15;
+
+  // Special character bonuses
+  let specialBonus = 0;
+  if (activeSpecial.size > 0 && !activeSpecial.has('none')) {
+    const matches = [...activeSpecial].filter(sp => s.special.includes(sp)).length;
+    const mismatches = [...activeSpecial].filter(sp => !s.special.includes(sp)).length;
+    specialBonus = matches * 12 - mismatches * 8;
   }
-});
+  score += specialBonus;
 
-// ── Style determination ───────────────────────────────────────────────────
-const STYLE_MAP = {
-  bitter: {
-    session:  { name: 'Session IPA',        desc: 'All the hop character, none of the regret. A nimble, bitter brew built for repeat pours.',       types: ['Ipa'], abvRange: [3.5, 4.5] },
-    regular:  { name: 'West Coast IPA',      desc: 'Resinous, dry, and unapologetically bitter. The brewery that never compromises on hop clarity.',  types: ['Ipa', 'Cascadian'], abvRange: [6.0, 7.0] },
-    imperial: { name: 'Double IPA',          desc: 'Imperial hop aggression. High gravity, higher standards. Built for those who want more of everything.', types: ['Ipa', 'Barleywine'], abvRange: [8.0, 10.0] },
-    any:      { name: 'IPA Program',         desc: 'A brewery defined by its hop philosophy — whatever the ABV, the bitterness is always the point.', types: ['Ipa', 'Cascadian'], abvRange: [4.5, 8.0] },
-  },
-  malty: {
-    session:  { name: 'English Mild',        desc: 'Low and slow, malt-forward and honest. A brew that respects the grain bill above all else.',       types: ['Brown', 'Blonde'], abvRange: [3.0, 4.0] },
-    regular:  { name: 'Red Ale',             desc: 'Caramel malt richness with just enough bitterness to keep it honest. A classic for good reason.',  types: ['Red', 'Brown'], abvRange: [5.0, 6.5] },
-    imperial: { name: 'Barleywine',          desc: 'A landmark brew. High gravity, complex malt character, demanding patience from brewer and drinker alike.', types: ['Barleywine', 'Barrel-aged'], abvRange: [9.0, 12.0] },
-    any:      { name: 'Malt-Forward Program',desc: 'A brewery that believes the grain bill is the soul of any beer. Hops are supporting cast only.',  types: ['Red', 'Brown', 'Barrel-aged'], abvRange: [4.0, 9.0] },
-  },
-  fruity: {
-    session:  { name: 'Wheat Beer',          desc: 'Soft, cloudy, and expressive. A yeast-driven brew that lets the fermentation character shine.',    types: ['Wheat', 'Belgian'], abvRange: [4.0, 5.0] },
-    regular:  { name: 'Belgian Ale',         desc: 'Esters, phenols, and complexity from a yeast strain that has opinions of its own.',                types: ['Belgian', 'Pastry'], abvRange: [5.5, 7.5] },
-    imperial: { name: 'Belgian Tripel',      desc: 'Dangerously drinkable at high gravity. The yeast does the heavy lifting and never lets you know.', types: ['Belgian', 'Wheat'], abvRange: [8.0, 10.0] },
-    any:      { name: 'Yeast-Forward Program',desc: 'A brewery that treats yeast selection as the most important decision in the recipe.',             types: ['Belgian', 'Wheat', 'Pastry'], abvRange: [4.5, 9.0] },
-  },
-  clean: {
-    session:  { name: 'Czech Lager',         desc: 'Noble hops, soft water, time. The most technically demanding style done perfectly.',              types: ['Lager', 'Blonde'], abvRange: [3.5, 5.0] },
-    regular:  { name: 'American Lager',      desc: 'Clean fermentation, precise attenuation, and the discipline to not add anything unnecessary.',     types: ['Lager', 'Cryo'], abvRange: [4.5, 5.5] },
-    imperial: { name: 'Doppelbock',          desc: 'Lagered to imperial strength. Months of cold conditioning that most breweries lack the patience for.', types: ['Lager', 'Brown'], abvRange: [7.0, 10.0] },
-    any:      { name: 'Lager Program',       desc: 'A brewery that believes fermentation at cold temperatures reveals the truth about your ingredients.', types: ['Lager', 'Blonde', 'Cryo'], abvRange: [3.5, 7.0] },
-  },
-  dark: {
-    session:  { name: 'Dark Mild',           desc: 'Roasty but restrained. A dark beer that proves big colour does not require big alcohol.',          types: ['Stout', 'Brown'], abvRange: [3.0, 4.5] },
-    regular:  { name: 'Stout',               desc: 'Coffee, dark chocolate, and a dry roasty finish. The definitive expression of dark malt.',        types: ['Stout', 'Cascadian'], abvRange: [4.5, 7.0] },
-    imperial: { name: 'Imperial Stout',      desc: 'A landmark dark beer. Viscous, complex, and built to age. The brewery\'s annual showpiece.',       types: ['Stout', 'Barrel-aged'], abvRange: [10.0, 13.0] },
-    any:      { name: 'Dark Beer Program',   desc: 'A brewery where roasted malt is not an afterthought — it\'s the identity.',                       types: ['Stout', 'Brown', 'Cascadian'], abvRange: [3.5, 10.0] },
-  },
-  wild: {
-    session:  { name: 'Berliner Weisse',     desc: 'Tart, refreshing, and unfiltered. A wild fermentation kept light enough to drink by the litre.', types: ['Sour', 'Wheat'], abvRange: [2.5, 4.0] },
-    regular:  { name: 'Saison',              desc: 'Farmhouse and free. A style that rewards brewers who trust the process and resist over-engineering.', types: ['Saison', 'Brett'], abvRange: [5.0, 7.5] },
-    imperial: { name: 'Lambic / Gueuze',     desc: 'Years in the making. Wild fermentation taken to its logical extreme — patience as a brewing ingredient.', types: ['Brett', 'Sour'], abvRange: [6.0, 8.0] },
-    any:      { name: 'Wild Fermentation Program', desc: 'A brewery that invites the environment into every batch. Consistency is the one thing they never promise.', types: ['Brett', 'Sour', 'Saison'], abvRange: [3.0, 8.0] },
-  },
-};
-
-// ── BST → ABV ─────────────────────────────────────────────────────────────
-function calcAbv(bst) {
-  const pct = Math.min(1, Math.max(0, (bst - 200) / 480));
-  return (3.5 + pct * 8).toFixed(1);
+  return Math.max(0, score);
 }
 
-// ── Type colour class ─────────────────────────────────────────────────────
-function typeClass(t) {
-  return 'tc-' + t.toLowerCase().replace(/[^a-z]/g, '');
-}
-
-// Type pill colours matching the game
-const TYPE_COLORS = {
+// ── Pokemon picker ────────────────────────────────────────────────────────
+function calcAbv(bst) { return (3.5 + Math.min(1, Math.max(0,(bst-200)/480))*8).toFixed(1); }
+function tcClass(t)   { return 'tc-' + t.toLowerCase().replace(/[^a-z]/g,''); }
+const TC = {
   Ipa:{bg:'#78c850',c:'#000'}, Brett:{bg:'#a040a0',c:'#fff'}, Red:{bg:'#f08030',c:'#000'},
   Wheat:{bg:'#a890f0',c:'#000'}, Lager:{bg:'#6890f0',c:'#000'}, Saison:{bg:'#a8b820',c:'#000'},
   Blonde:{bg:'#a8a878',c:'#000'}, Sour:{bg:'#f8d030',c:'#000'}, Brown:{bg:'#e0c068',c:'#000'},
@@ -669,203 +486,135 @@ const TYPE_COLORS = {
   'Barrel-aged':{bg:'#b8a038',c:'#000'}, Export:{bg:'#b8b8d0',c:'#000'}, Cryo:{bg:'#98d8d8',c:'#000'},
   Seltzer:{bg:'#705898',c:'#fff'}, Stout:{bg:'#7038f8',c:'#fff'}, Cascadian:{bg:'#705848',c:'#fff'},
 };
-
-function typePill(t) {
-  const col = TYPE_COLORS[t] || { bg:'#888', c:'#fff' };
-  return `<span class="label-type-pill" style="background:${col.bg};color:${col.c};border:0.5px solid ${col.bg};">${t}</span>`;
+function pill(t) {
+  const c = TC[t]||{bg:'#888',c:'#fff'};
+  return `<span class="label-type-pill" style="background:${c.bg};color:${c.c};border:0.5px solid ${c.bg};">${t}</span>`;
 }
 
-// ── Pokemon card renderer ─────────────────────────────────────────────────
-function renderCard(pokemon, selected = false) {
-  const tc = typeClass(pokemon.types[0]);
-  const abv = calcAbv(pokemon.bst);
-  const batchNum = String(pokemon.id).padStart(3, '0');
-  const types = pokemon.types.map(typePill).join('');
-  return `
-    <div class="poke-card ${tc}${selected ? ' selected-card' : ''}" data-id="${pokemon.id}" onclick="toggleSelect(this, ${pokemon.id})">
-      <div class="label-stripe" style="background:var(--stripe)"></div>
-      <div class="label-inner">
-        <div class="label-brewery">${pokemon.brewName || 'Roguebrew Co.'}</div>
-        <div class="label-divider"></div>
-        <div class="label-sprite-wrap">
-          <img class="poke-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png" alt="${pokemon.name}">
-        </div>
-        <div class="label-name">${pokemon.brewName || pokemon.name}</div>
-        <div class="label-style">${pokemon.name}</div>
-        <div class="label-types">${types}</div>
-        <div class="label-footer">
-          <div class="label-abv">
-            <span class="label-abv-val" style="color:var(--stripe)">${abv}%</span>
-            <span class="label-abv-label">ABV</span>
-          </div>
-          <div class="label-batch">
-            <span class="label-batch-val">#${batchNum}</span>
-            <span class="label-batch-label">Batch</span>
-          </div>
-        </div>
-      </div>
-    </div>`;
-}
+function pickPokemon(bjcpStyle) {
+  const primaryType = CODE_TO_TYPES[bjcpStyle.code] || 'Lager';
+  const allTypes = [...new Set([primaryType])];
+  const darkTypes = ['Stout','Brown','Barrel-aged','Cascadian','Red'];
 
-// ── Selection toggle ──────────────────────────────────────────────────────
-const selected = new Set();
-function toggleSelect(el, id) {
-  el.classList.toggle('selected-card');
-  if (selected.has(id)) selected.delete(id);
-  else selected.add(id);
-}
+  // BST range from ABV: session→low BST, imperial→high BST
+  const abvMid = (bjcpStyle.abv[0] + bjcpStyle.abv[1]) / 2;
+  const bstMin = Math.round(200 + ((abvMid - 2.5) / 11.5) * 320) - 60;
+  const bstMax = bstMin + 180;
 
-// ── Main generation ───────────────────────────────────────────────────────
-function generateProfile() {
-  if (!prefs.flavour || !prefs.strength) {
-    document.getElementById('hint').style.display = 'block';
-    return;
-  }
-  document.getElementById('hint').style.display = 'none';
-
-  const style = STYLE_MAP[prefs.flavour][prefs.strength];
-  const special = prefs.special;
-  const { simple, trad, agg } = sliders;
-
-  // Adjust types based on special character
-  let targetTypes = [...style.types];
-  if (special === 'sour')   targetTypes = [...new Set([...targetTypes, 'Sour', 'Brett'])];
-  if (special === 'barrel') targetTypes = [...new Set([...targetTypes, 'Barrel-aged'])];
-  if (special === 'hazy')   targetTypes = [...new Set([...targetTypes, 'Wheat', 'Belgian'])];
-
-  // BST range from strength
-  const bstRanges = { session: [180, 380], regular: [380, 500], imperial: [500, 999], any: [180, 999] };
-  const [bstMin, bstMax] = bstRanges[prefs.strength];
-
-  // Score each pokemon
   const scored = SPECIES_DATA.map(p => {
-    let score = 0;
-    // Type match
-    const typeMatches = p.types.filter(t => targetTypes.includes(t)).length;
-    score += typeMatches * 30;
-    // BST range
-    if (p.bst >= bstMin && p.bst <= bstMax) score += 20;
-    else score -= Math.abs(p.bst - ((bstMin + bstMax) / 2)) / 10;
-    // Aggression slider: high agg → high ATK
-    const atkRatio = p.baseStats.atk / (p.bst || 1);
-    score += (agg / 5) * atkRatio * 20;
-    // Simplicity slider: high simple → lower BST (fewer complex stats)
-    if (simple >= 4 && p.bst < 420) score += 10;
-    if (simple <= 2 && p.bst > 480) score += 10;
-    // Tradition slider: high trad → Gen 1 (id <= 151)
-    if (trad >= 4 && p.id <= 151) score += 15;
-    if (trad <= 2 && p.id > 151) score += 10;
-    return { p, score };
-  }).sort((a, b) => b.score - a.score);
+    let s = 0;
+    const typeMatch = p.types.filter(t => allTypes.includes(t)).length;
+    s += typeMatch * 30;
+    if (p.bst >= bstMin && p.bst <= bstMax) s += 20;
+    else s -= Math.abs(p.bst - (bstMin+bstMax)/2) / 10;
+    // SRM influence: dark styles prefer dark-typed pokemon
+    const hasDark = p.types.some(t => darkTypes.includes(t));
+    if (vals.srm > 20 && hasDark) s += 10;
+    if (vals.srm < 8  && !hasDark) s += 8;
+    // Fruity: high fruity → Belgian/Saison/Wheat types
+    const fruityTypes = ['Belgian','Saison','Wheat','Brett'];
+    const hasFruity = p.types.some(t => fruityTypes.includes(t));
+    if (vals.fruity > 0.5 && hasFruity) s += 8;
+    return {p, s};
+  }).sort((a,b) => b.s - a.s);
 
-  // Pick top 3 distinct types where possible
   const picks = [];
-  const usedTypes = new Set();
-  for (const { p } of scored) {
+  const usedPrimary = new Set();
+  for (const {p} of scored) {
     if (picks.length >= 3) break;
-    const primaryType = p.types[0];
-    if (!usedTypes.has(primaryType) || picks.length === 2) {
-      picks.push(p);
-      usedTypes.add(primaryType);
-    }
+    if (!usedPrimary.has(p.types[0])) { picks.push(p); usedPrimary.add(p.types[0]); }
   }
-  // Fill to 3 if needed
-  if (picks.length < 3) {
-    for (const { p } of scored) {
-      if (picks.length >= 3) break;
-      if (!picks.includes(p)) picks.push(p);
-    }
+  while (picks.length < 3) {
+    const n = scored.find(({p}) => !picks.includes(p));
+    if (!n) break;
+    picks.push(n.p);
   }
+  return picks;
+}
 
-  // Derived profile stats
-  const bitterScore = Math.round(
-    (prefs.flavour === 'bitter' ? 80 : prefs.flavour === 'wild' ? 40 : prefs.flavour === 'clean' ? 30 : 20)
-    + (agg / 5) * 15
-  );
-  const maltScore = Math.round(
-    (prefs.flavour === 'malty' ? 80 : prefs.flavour === 'dark' ? 70 : prefs.flavour === 'fruity' ? 30 : 20)
-    + (5 - simple) / 5 * 15
-  );
-  const sourScore = Math.round(
-    (prefs.flavour === 'wild' ? 75 : special === 'sour' ? 60 : prefs.flavour === 'fruity' ? 30 : 10)
-  );
-  const strengthScore = Math.round(
-    (prefs.strength === 'imperial' ? 85 : prefs.strength === 'regular' ? 55 : prefs.strength === 'session' ? 25 : 50)
-  );
-  const complexScore = Math.round(
-    (5 - simple) / 4 * 70
-    + (special !== 'none' && special ? 20 : 0)
-    + (trad <= 2 ? 15 : 0)
-  );
+function renderCard(p) {
+  return `<div class="poke-card ${tcClass(p.types[0])}" data-id="${p.id}" onclick="this.classList.toggle('selected-card')">
+    <div class="label-stripe" style="background:var(--stripe)"></div>
+    <div class="label-inner">
+      <div class="label-brewery">${p.brewName||'Roguebrew Co.'}</div>
+      <div class="label-divider"></div>
+      <div class="label-sprite-wrap"><img class="poke-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png" alt="${p.name}"></div>
+      <div class="label-name">${p.brewName||p.name}</div>
+      <div class="label-style-sub">${p.name}</div>
+      <div class="label-types">${p.types.map(pill).join('')}</div>
+      <div class="label-footer">
+        <div class="label-abv"><span class="label-abv-val" style="color:var(--stripe)">${calcAbv(p.bst)}%</span><span class="label-abv-label">ABV</span></div>
+        <div class="label-batch"><span class="label-batch-val">#${String(p.id).padStart(3,'0')}</span><span class="label-batch-label">Batch</span></div>
+      </div>
+    </div>
+  </div>`;
+}
 
-  // Tags
-  const tags = [prefs.flavour, prefs.strength === 'any' ? 'flexible ABV' : prefs.strength];
-  if (special && special !== 'none') tags.push(special);
-  if (agg >= 4) tags.push('aggressive');
-  if (simple >= 4) tags.push('approachable');
-  if (trad >= 4) tags.push('traditional');
-  if (trad <= 2) tags.push('experimental');
+function matchBar(label, score, color) {
+  const v = Math.min(100, Math.max(0, Math.round(score * 100)));
+  return `<div class="match-bar-row">
+    <div class="match-bar-label">${label}</div>
+    <div class="match-bar-track"><div class="match-bar-fill" style="width:${v}%;background:${color}"></div></div>
+    <div class="match-bar-val">${v}</div>
+  </div>`;
+}
+
+// ── Generate ──────────────────────────────────────────────────────────────
+let lastWinner = null;
+
+function generateProfile() {
+  const ranked = BJCP.map(s => ({s, score:scoreStyle(s)})).sort((a,b) => b.score - a.score);
+  const winner = ranked[0].s;
+  lastWinner = winner;
+  const picks = pickPokemon(winner);
+  const desc = DESCS[winner.code] || winner.tags.join(', ');
+  const tags = [...winner.tags, ...winner.special];
+  const ibuMid = (winner.ibu[0]+winner.ibu[1])/2;
+  const srmMid = (winner.srm[0]+winner.srm[1])/2;
+  const abvMid = (winner.abv[0]+winner.abv[1])/2;
 
   const results = document.getElementById('results');
   results.className = 'results visible fade-in';
   results.innerHTML = `
     <div class="panel">
-      <div class="panel-title">YOUR BREWERY PROFILE</div>
+      <div class="panel-title">YOUR BREWERY IDENTITY</div>
       <div class="results-header">
-        <div class="results-style">${style.name}</div>
-        <div class="results-desc">${style.desc}</div>
-        <div class="results-tags">
-          ${tags.map(t => `<span class="result-tag">${t}</span>`).join('')}
+        <div class="results-style">${winner.name}</div>
+        <div class="results-code">BJCP ${winner.code}</div>
+        <div class="results-desc">${desc}</div>
+        <div class="results-stats">
+          <span class="result-stat">IBU ${winner.ibu[0]}–${winner.ibu[1]}</span>
+          <span class="result-stat">SRM ${winner.srm[0]}–${winner.srm[1]}</span>
+          <span class="result-stat">ABV ${winner.abv[0]}–${winner.abv[1]}%</span>
         </div>
+        <div class="results-tags">${tags.map(t=>`<span class="result-tag">${t}</span>`).join('')}</div>
       </div>
-
-      <div class="stat-bars">
-        ${statBar('Bitterness', bitterScore, '#78c850')}
-        ${statBar('Malt body', maltScore, '#b8a038')}
-        ${statBar('Sourness', sourScore, '#c8a008')}
-        ${statBar('Strength', strengthScore, '#c03028')}
-        ${statBar('Complexity', complexScore, '#7038f8')}
+      <div class="match-bars">
+        ${matchBar('Bitterness', rangeScore(vals.ibu,winner.ibu[0],winner.ibu[1]), '#78c850')}
+        ${matchBar('Colour',     rangeScore(vals.srm,winner.srm[0],winner.srm[1]), '#8b3a1a')}
+        ${matchBar('Strength',   rangeScore(vals.abv,winner.abv[0],winner.abv[1]), '#6890f0')}
+        ${matchBar('Fruitiness', 1 - Math.abs(vals.fruity - winner.fruity),        '#ee99ac')}
       </div>
+      <div class="runner-up-note">Runner-ups: ${ranked[1].s.name} · ${ranked[2].s.name}</div>
     </div>
-
-    <div class="panel" style="margin-top:20px;">
-      <div class="cards-label">SUGGESTED LINEUP — click to select your starters</div>
-      <div class="cards-grid">
-        ${picks.map(p => renderCard(p)).join('')}
-      </div>
+    <div class="cards-panel">
+      <div class="cards-label">SUGGESTED LINEUP — tap a card to select</div>
+      <div class="cards-grid">${picks.map(renderCard).join('')}</div>
       <div class="result-actions">
         <button class="btn-reroll" onclick="generateProfile()">↺ Reroll lineup</button>
         <button class="btn-confirm" onclick="confirmTeam()">✓ This is my brewery</button>
       </div>
     </div>`;
 
-  results.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function statBar(label, val, color) {
-  const clamped = Math.min(100, Math.max(0, val));
-  return `<div class="stat-row">
-    <div class="stat-name">${label}</div>
-    <div class="stat-track"><div class="stat-fill" style="width:${clamped}%;background:${color}"></div></div>
-    <div class="stat-val">${clamped}</div>
-  </div>`;
+  results.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
 function confirmTeam() {
-  // In the full game this would pass the selected pokemon back
-  // For now show a confirmation
-  const picks = document.querySelectorAll('.poke-card.selected-card');
-  const names = [...picks].map(c => {
-    const id = parseInt(c.dataset.id);
-    const p = SPECIES_DATA.find(s => s.id === id);
-    return p ? (p.brewName || p.name) : '???';
-  });
-  if (names.length === 0) {
-    alert('Select at least one brew from the lineup first!');
-    return;
-  }
-  alert(`Brewery confirmed!\n\nYour starters:\n${names.join('\n')}\n\nReturning to the taproom...`);
-  // window.location.href = 'index.html'; // uncomment to redirect back
+  const sel = [...document.querySelectorAll('.poke-card.selected-card')];
+  const names = sel.map(c => { const p = SPECIES_DATA.find(s=>s.id===parseInt(c.dataset.id)); return p?(p.brewName||p.name):'???'; });
+  if (!names.length) { alert('Tap at least one card to select your starter brew!'); return; }
+  alert(`Brewery confirmed!\n\nStyle: ${lastWinner?.name} (BJCP ${lastWinner?.code})\n\nStarters:\n${names.join('\n')}\n\nTime to open for business.`);
+  // window.location.href = 'index.html';
 }
 </script>
 </body>
