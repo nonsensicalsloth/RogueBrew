@@ -135,8 +135,35 @@
   .result-actions { display:flex; gap:12px; justify-content:center; margin-top:20px; flex-wrap:wrap; }
   .btn-reroll { background:transparent; border:1px solid var(--border); border-radius:5px; color:var(--dim); font-family:var(--pixel); font-size:8px; padding:10px 20px; cursor:pointer; transition:all 0.15s; }
   .btn-reroll:hover { border-color:var(--accent); color:var(--accent); }
-  .btn-confirm { background:var(--green); border:none; border-radius:5px; color:#fff; font-family:var(--pixel); font-size:8px; padding:10px 20px; cursor:pointer; transition:all 0.15s; }
-  .btn-confirm:hover { background:#3aab6e; transform:translateY(-1px); }
+  .btn-select { background:var(--green); border:none; border-radius:5px; color:#fff; font-family:var(--pixel); font-size:8px; padding:10px 20px; cursor:pointer; transition:all 0.15s; display:none; }
+  .btn-select:hover { background:#3aab6e; transform:translateY(-1px); }
+
+  /* Single suggested starter */
+  .starter-wrap { display:flex; justify-content:center; margin-bottom:12px; }
+  .poke-card.starter-glow { box-shadow:0 0 0 2px var(--accent), 0 6px 24px rgba(212,175,55,0.25); }
+  .poke-card.selected-card { box-shadow:0 0 0 3px var(--gold), 0 6px 24px rgba(255,204,0,0.4); transform:translateY(-4px); }
+
+  /* Confirmation overlay */
+  .confirm-overlay {
+    position:fixed; inset:0; z-index:400;
+    background:rgba(0,0,0,0.88);
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .confirm-box {
+    background:var(--bg2); border:2px solid var(--accent);
+    border-radius:10px; padding:28px 24px;
+    max-width:340px; width:100%; text-align:center;
+    display:flex; flex-direction:column; align-items:center; gap:16px;
+  }
+  .confirm-title { font-family:var(--pixel); font-size:10px; color:var(--gold); line-height:1.8; }
+  .confirm-sub { font-family:var(--serif); font-size:14px; color:var(--dim); line-height:1.6; }
+  .confirm-name { font-family:var(--pixel); font-size:9px; color:var(--text); }
+  .confirm-btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; width:100%; }
+  .btn-confirm-yes { background:var(--green); border:none; border-radius:5px; color:#fff; font-family:var(--pixel); font-size:8px; padding:12px 20px; cursor:pointer; flex:1; transition:all 0.15s; }
+  .btn-confirm-yes:hover { background:#3aab6e; }
+  .btn-confirm-no { background:transparent; border:1px solid var(--border); border-radius:5px; color:var(--dim); font-family:var(--pixel); font-size:8px; padding:12px 20px; cursor:pointer; flex:1; transition:all 0.15s; }
+  .btn-confirm-no:hover { border-color:var(--accent); color:var(--accent); }
 
   .fade-in { animation:fadeIn 0.4s ease; }
   @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
@@ -532,8 +559,8 @@ function pickPokemon(bjcpStyle) {
   return picks;
 }
 
-function renderCard(p) {
-  return `<div class="poke-card ${tcClass(p.types[0])}" data-id="${p.id}" onclick="this.classList.toggle('selected-card')">
+function renderCard(p, isStarter = false) {
+  return `<div class="poke-card ${tcClass(p.types[0])}${isStarter ? ' starter-glow' : ''}" data-id="${p.id}">
     <div class="label-stripe" style="background:var(--stripe)"></div>
     <div class="label-inner">
       <div class="label-brewery">${p.brewName||'Roguebrew Co.'}</div>
@@ -561,17 +588,17 @@ function matchBar(label, score, color) {
 
 // ── Generate ──────────────────────────────────────────────────────────────
 let lastWinner = null;
+let currentPicks = [];
+let currentStarterIdx = 0; // which of the 3 candidates is shown
 
 function generateProfile() {
   const ranked = BJCP.map(s => ({s, score:scoreStyle(s)})).sort((a,b) => b.score - a.score);
   const winner = ranked[0].s;
   lastWinner = winner;
-  const picks = pickPokemon(winner);
+  currentPicks = pickPokemon(winner);
+  currentStarterIdx = 0;
   const desc = DESCS[winner.code] || winner.tags.join(', ');
   const tags = [...winner.tags, ...winner.special];
-  const ibuMid = (winner.ibu[0]+winner.ibu[1])/2;
-  const srmMid = (winner.srm[0]+winner.srm[1])/2;
-  const abvMid = (winner.abv[0]+winner.abv[1])/2;
 
   const results = document.getElementById('results');
   results.className = 'results visible fade-in';
@@ -598,23 +625,113 @@ function generateProfile() {
       <div class="runner-up-note">Runner-ups: ${ranked[1].s.name} · ${ranked[2].s.name}</div>
     </div>
     <div class="cards-panel">
-      <div class="cards-label">SUGGESTED LINEUP — tap a card to select</div>
-      <div class="cards-grid">${picks.map(renderCard).join('')}</div>
+      <div class="cards-label">SUGGESTED STARTER</div>
+      <div class="starter-wrap" id="starter-wrap"></div>
       <div class="result-actions">
-        <button class="btn-reroll" onclick="generateProfile()">↺ Reroll lineup</button>
-        <button class="btn-confirm" onclick="confirmTeam()">✓ This is my brewery</button>
+        <button class="btn-reroll" onclick="rerollStarter()">🎲 Not feeling it — reroll</button>
+        <button class="btn-select" id="btn-select" onclick="selectStarter()">✓ This is my brew</button>
       </div>
     </div>`;
 
+  renderStarterCard();
   results.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
-function confirmTeam() {
-  const sel = [...document.querySelectorAll('.poke-card.selected-card')];
-  const names = sel.map(c => { const p = SPECIES_DATA.find(s=>s.id===parseInt(c.dataset.id)); return p?(p.brewName||p.name):'???'; });
-  if (!names.length) { alert('Tap at least one card to select your starter brew!'); return; }
-  alert(`Brewery confirmed!\n\nStyle: ${lastWinner?.name} (BJCP ${lastWinner?.code})\n\nStarters:\n${names.join('\n')}\n\nTime to open for business.`);
-  // window.location.href = 'index.html';
+function renderStarterCard() {
+  const wrap = document.getElementById('starter-wrap');
+  if (!wrap || !currentPicks.length) return;
+  const p = currentPicks[currentStarterIdx % currentPicks.length];
+  wrap.innerHTML = renderCard(p, true);
+  // Show select button
+  const btn = document.getElementById('btn-select');
+  if (btn) btn.style.display = 'inline-block';
+}
+
+function rerollStarter() {
+  // Cycle through the 3 candidates first, then re-run the full picker for variety
+  currentStarterIdx++;
+  if (currentStarterIdx >= currentPicks.length) {
+    // Re-pick with some randomness so it doesn't just loop
+    const ranked = BJCP.map(s => ({s, score:scoreStyle(s)})).sort((a,b) => b.score - a.score);
+    // Pick from top 3 winning styles randomly for variety
+    const pool = ranked.slice(0, 3);
+    const chosen = pool[Math.floor(Math.random() * pool.length)].s;
+    currentPicks = pickPokemon(chosen);
+    currentStarterIdx = 0;
+  }
+  const wrap = document.getElementById('starter-wrap');
+  if (wrap) {
+    wrap.style.opacity = '0';
+    wrap.style.transform = 'translateY(6px)';
+    wrap.style.transition = 'opacity 0.2s, transform 0.2s';
+    setTimeout(() => {
+      renderStarterCard();
+      wrap.style.opacity = '1';
+      wrap.style.transform = 'translateY(0)';
+    }, 200);
+  }
+}
+
+function selectStarter() {
+  const p = currentPicks[currentStarterIdx % currentPicks.length];
+  if (!p) return;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `
+    <div class="confirm-box">
+      <div class="confirm-title">Ready to brew?</div>
+      ${renderCard(p)}
+      <div class="confirm-name">${p.brewName || p.name}</div>
+      <div class="confirm-sub">
+        Your ${lastWinner?.name || 'brewery'} starts here.<br>
+        Guide this brew from grain to glass.
+      </div>
+      <div class="confirm-btns">
+        <button class="btn-confirm-yes" onclick="confirmStarter(${p.id})">Let's brew →</button>
+        <button class="btn-confirm-no" onclick="this.closest('.confirm-overlay').remove()">Not yet</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+function confirmStarter(pokemonId) {
+  const p = SPECIES_DATA.find(s => s.id === pokemonId);
+  // Store the selection for the game to pick up
+  try {
+    localStorage.setItem('roguebrew_tamagotchi_starter', JSON.stringify({
+      pokemonId,
+      name: p?.brewName || p?.name,
+      style: lastWinner?.name,
+      bjcpCode: lastWinner?.code,
+      types: p?.types,
+      bst: p?.bst,
+    }));
+  } catch(e) {}
+  // Navigate to the game when it exists
+  // window.location.href = 'brewery-trail.html';
+
+  // For now — show a teaser
+  document.querySelector('.confirm-overlay')?.remove();
+  const teaser = document.createElement('div');
+  teaser.className = 'confirm-overlay';
+  teaser.innerHTML = `
+    <div class="confirm-box">
+      <div style="font-size:32px">🍺</div>
+      <div class="confirm-title">Starter locked in!</div>
+      <div class="confirm-name">${p?.brewName || p?.name}</div>
+      <div class="confirm-sub">
+        Your ${lastWinner?.name} journey is saved.<br><br>
+        The Brewery Trail is coming soon.<br>
+        Check back at the main menu.
+      </div>
+      <div class="confirm-btns">
+        <button class="btn-confirm-yes" onclick="window.location.href='index.html'">Back to taproom</button>
+        <button class="btn-confirm-no" onclick="this.closest('.confirm-overlay').remove()">Stay here</button>
+      </div>
+    </div>`;
+  document.body.appendChild(teaser);
 }
 </script>
 </body>
