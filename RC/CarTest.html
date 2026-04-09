@@ -33,6 +33,8 @@
     <button id="btn-next" style="background:rgba(127,255,200,0.15);border:1px solid #7fc;color:#7fc;font-family:monospace;font-size:16px;padding:4px 12px;cursor:pointer;border-radius:4px;">▶</button>
 </div>
 <div id="loading" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#7fc;font-size:18px;display:none;">Loading...</div>
+<button id="btn-export" style="position:absolute;bottom:20px;right:20px;display:none;background:rgba(127,255,200,0.15);border:1px solid #7fc;color:#7fc;font-family:monospace;font-size:13px;padding:8px 14px;cursor:pointer;border-radius:4px;">⬇ Export Brewery GLB</button>
+<div id="export-status" style="position:absolute;bottom:56px;right:20px;display:none;color:#7fc;font-family:monospace;font-size:12px;"></div>
 
 <script type="importmap">
     {
@@ -48,6 +50,7 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 
 // ─────────────────────────────────────────────────────────────
 //  TANK LAYOUT  [x, z, radius, bodyHeight, type, label]
@@ -1112,6 +1115,7 @@ scene.add(worldGroup);
 document.getElementById('ui-layer').addEventListener('click', () => {
     document.getElementById('ui-layer').style.display = 'none';
     document.getElementById('car-switcher').style.display = 'flex';
+    document.getElementById('btn-export').style.display = 'block';
 }, { once: true });
 // (octree removed)
 
@@ -2243,6 +2247,59 @@ function update() {
 
     renderer.render(scene, camera);
 }
+
+// ================================================================
+// BREWERY GLB EXPORT
+// ================================================================
+document.getElementById('btn-export').addEventListener('click', () => {
+    const btn    = document.getElementById('btn-export');
+    const status = document.getElementById('export-status');
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Exporting...';
+    status.style.display = 'block';
+    status.textContent   = 'Building scene...';
+
+    // Clone the scene, strip out the car and wheel visuals so the export
+    // is just the static brewery geometry — cleaner to work with in Blender.
+    const exportScene = new THREE.Scene();
+    scene.children.forEach(child => {
+        if (child === carVisual) return;
+        if (carWheels.includes(child)) return;
+        exportScene.add(child.clone());
+    });
+    // Also include worldGroup (collision proxies are invisible but harmless;
+    // they show Blender the collision bounds as reference meshes)
+    exportScene.add(worldGroup.clone());
+
+    status.textContent = 'Serialising geometry...';
+
+    const exporter = new GLTFExporter();
+    exporter.parse(
+        exportScene,
+        (glb) => {
+            const blob = new Blob([glb], { type: 'application/octet-stream' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = 'brewery.glb';
+            a.click();
+            URL.revokeObjectURL(url);
+
+            btn.disabled    = false;
+            btn.textContent = '⬇ Export Brewery GLB';
+            status.textContent = '✓ Saved brewery.glb';
+            setTimeout(() => { status.style.display = 'none'; }, 3000);
+        },
+        (err) => {
+            console.error('GLTFExporter error:', err);
+            btn.disabled    = false;
+            btn.textContent = '⬇ Export Brewery GLB';
+            status.textContent = '✗ Export failed — see console';
+        },
+        { binary: true }
+    );
+});
 
 // ================================================================
 // INIT
