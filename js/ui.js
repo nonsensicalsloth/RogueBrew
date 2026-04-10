@@ -2596,10 +2596,26 @@ function openCloseTaproomModal() {
 
 const PATCH_NOTES = [
   {
-    version: '1.3',
-    title: 'The Brewery Update',
-    date: '2026-03-30',
+    version: '1.4',
+    title: 'More Brewery Update',
+    date: '2026-04-10',
     sections: [
+            {
+        heading: 'More Brewery Events and Rival System😤',
+        entries: [
+          'Added a rival that sticks with you for the run:',
+          '1. High health pool + high healing',
+          '2. Old fossil pokemon. Mix of defence and attack items',
+          '3. The super fast, quick strike team',
+          '4. The hyper defensive wall team',
+          'You can upgrade the move for each brew now',
+          'Brew damage type may change as pokemon evolve. Keep an eye out for that.(Red->wheat->Red for example of a red/wheat beer)',
+          'Fixed a few item bugs. Let enemy pokemon use items to make rivals harder.',
+          'Added some stuff that is hard to find',
+          'New modifiers',
+          'The no item event should now lower the spawn rate of item giving nodes to make it more fair',
+        ],
+      },
       {
         heading: '🍺 Brewery Events',
         entries: [
