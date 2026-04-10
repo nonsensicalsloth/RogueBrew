@@ -609,11 +609,12 @@ function generateProfile() {
         </div>
         <div class="results-tags">${tags.map(t=>`<span class="result-tag">${t}</span>`).join('')}</div>
       </div>
+      <div style="font-family:var(--pixel);font-size:6px;color:var(--dim);margin:14px 0 8px;letter-spacing:0.05em;">HOW WELL YOUR DIALS MATCH THIS STYLE</div>
       <div class="match-bars">
-        ${matchBar('Bitterness', rangeScore(vals.ibu,winner.ibu[0],winner.ibu[1]), '#78c850')}
-        ${matchBar('Colour',     rangeScore(vals.srm,winner.srm[0],winner.srm[1]), '#8b3a1a')}
-        ${matchBar('Strength',   rangeScore(vals.abv,winner.abv[0],winner.abv[1]), '#6890f0')}
-        ${matchBar('Fruitiness', 1 - Math.abs(vals.fruity - winner.fruity),        '#ee99ac')}
+        ${matchBar('IBU match',  rangeScore(vals.ibu,winner.ibu[0],winner.ibu[1]), '#78c850')}
+        ${matchBar('SRM match',  rangeScore(vals.srm,winner.srm[0],winner.srm[1]), '#8b3a1a')}
+        ${matchBar('ABV match',  rangeScore(vals.abv,winner.abv[0],winner.abv[1]), '#6890f0')}
+        ${matchBar('Fruit match',1 - Math.abs(vals.fruity - winner.fruity),        '#ee99ac')}
       </div>
       <div class="runner-up-note">Runner-ups: ${ranked[1].s.name} · ${ranked[2].s.name}</div>
     </div>
