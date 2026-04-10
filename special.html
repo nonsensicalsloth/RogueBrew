@@ -138,24 +138,15 @@
   .btn-select { background:var(--green); border:none; border-radius:5px; color:#fff; font-family:var(--pixel); font-size:8px; padding:10px 20px; cursor:pointer; transition:all 0.15s; display:none; }
   .btn-select:hover { background:#3aab6e; transform:translateY(-1px); }
 
-  /* Single suggested starter */
-  .starter-wrap { display:flex; justify-content:center; margin-bottom:12px; }
-  .poke-card.starter-glow { box-shadow:0 0 0 2px var(--accent), 0 6px 24px rgba(212,175,55,0.25); }
-  .poke-card.selected-card { box-shadow:0 0 0 3px var(--gold), 0 6px 24px rgba(255,204,0,0.4); transform:translateY(-4px); }
+  /* 3-card starter selection */
+  .starter-grid { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .poke-card { cursor:pointer; }
+  .poke-card.starter-selected { box-shadow:0 0 0 3px var(--gold), 0 6px 24px rgba(255,204,0,0.4); transform:translateY(-4px); }
+  .poke-card.starter-dimmed { opacity:0.35; transform:none; }
 
   /* Confirmation overlay */
-  .confirm-overlay {
-    position:fixed; inset:0; z-index:400;
-    background:rgba(0,0,0,0.88);
-    display:flex; align-items:center; justify-content:center;
-    padding:24px;
-  }
-  .confirm-box {
-    background:var(--bg2); border:2px solid var(--accent);
-    border-radius:10px; padding:28px 24px;
-    max-width:340px; width:100%; text-align:center;
-    display:flex; flex-direction:column; align-items:center; gap:16px;
-  }
+  .confirm-overlay { position:fixed; inset:0; z-index:400; background:rgba(0,0,0,0.88); display:flex; align-items:center; justify-content:center; padding:24px; }
+  .confirm-box { background:var(--bg2); border:2px solid var(--accent); border-radius:10px; padding:28px 24px; max-width:340px; width:100%; text-align:center; display:flex; flex-direction:column; align-items:center; gap:16px; }
   .confirm-title { font-family:var(--pixel); font-size:10px; color:var(--gold); line-height:1.8; }
   .confirm-sub { font-family:var(--serif); font-size:14px; color:var(--dim); line-height:1.6; }
   .confirm-name { font-family:var(--pixel); font-size:9px; color:var(--text); }
@@ -503,7 +494,6 @@ function scoreStyle(s) {
 }
 
 // ── Pokemon picker ────────────────────────────────────────────────────────
-function calcAbv(bst) { return (3.5 + Math.min(1, Math.max(0,(bst-200)/480))*8).toFixed(1); }
 function tcClass(t)   { return 'tc-' + t.toLowerCase().replace(/[^a-z]/g,''); }
 const TC = {
   Ipa:{bg:'#78c850',c:'#000'}, Brett:{bg:'#a040a0',c:'#fff'}, Red:{bg:'#f08030',c:'#000'},
@@ -518,49 +508,50 @@ function pill(t) {
   return `<span class="label-type-pill" style="background:${c.bg};color:${c.c};border:0.5px solid ${c.bg};">${t}</span>`;
 }
 
-function pickPokemon(bjcpStyle) {
+function pickPokemon(bjcpStyle, exclude = []) {
   const primaryType = CODE_TO_TYPES[bjcpStyle.code] || 'Lager';
-  const allTypes = [...new Set([primaryType])];
-  const darkTypes = ['Stout','Brown','Barrel-aged','Cascadian','Red'];
+  const darkTypes   = ['Stout','Brown','Barrel-aged','Cascadian','Red'];
+  const fruityTypes = ['Belgian','Saison','Wheat','Brett','Sour'];
 
-  // BST range from ABV: session→low BST, imperial→high BST
-  const abvMid = (bjcpStyle.abv[0] + bjcpStyle.abv[1]) / 2;
-  const bstMin = Math.round(200 + ((abvMid - 2.5) / 11.5) * 320) - 60;
-  const bstMax = bstMin + 180;
+  // Score purely on type match and style character — no BST, no power ranking
+  const scored = SPECIES_DATA
+    .filter(p => !exclude.includes(p.id))
+    .map(p => {
+      let s = Math.random() * 10; // base randomness so rerolls always differ
+      // Primary type match is the main signal
+      if (p.types.includes(primaryType)) s += 40;
+      // Secondary type match
+      const allTypes = [...new Set([primaryType])];
+      s += p.types.filter(t => allTypes.includes(t)).length * 10;
+      // SRM influence: dark styles prefer dark-typed pokemon
+      const hasDark = p.types.some(t => darkTypes.includes(t));
+      if (vals.srm > 20 && hasDark)  s += 15;
+      if (vals.srm < 8  && !hasDark) s += 10;
+      // Fruitiness influence
+      const hasFruity = p.types.some(t => fruityTypes.includes(t));
+      if (vals.fruity > 0.5 && hasFruity) s += 12;
+      if (vals.fruity < 0.2 && !hasFruity) s += 6;
+      return {p, s};
+    })
+    .sort((a,b) => b.s - a.s);
 
-  const scored = SPECIES_DATA.map(p => {
-    let s = 0;
-    const typeMatch = p.types.filter(t => allTypes.includes(t)).length;
-    s += typeMatch * 30;
-    if (p.bst >= bstMin && p.bst <= bstMax) s += 20;
-    else s -= Math.abs(p.bst - (bstMin+bstMax)/2) / 10;
-    // SRM influence: dark styles prefer dark-typed pokemon
-    const hasDark = p.types.some(t => darkTypes.includes(t));
-    if (vals.srm > 20 && hasDark) s += 10;
-    if (vals.srm < 8  && !hasDark) s += 8;
-    // Fruity: high fruity → Belgian/Saison/Wheat types
-    const fruityTypes = ['Belgian','Saison','Wheat','Brett'];
-    const hasFruity = p.types.some(t => fruityTypes.includes(t));
-    if (vals.fruity > 0.5 && hasFruity) s += 8;
-    return {p, s};
-  }).sort((a,b) => b.s - a.s);
-
+  // Pick 3 with different primary types for variety
   const picks = [];
   const usedPrimary = new Set();
   for (const {p} of scored) {
     if (picks.length >= 3) break;
     if (!usedPrimary.has(p.types[0])) { picks.push(p); usedPrimary.add(p.types[0]); }
   }
-  while (picks.length < 3) {
-    const n = scored.find(({p}) => !picks.includes(p));
-    if (!n) break;
-    picks.push(n.p);
+  // Fill to 3 if type variety ran out
+  for (const {p} of scored) {
+    if (picks.length >= 3) break;
+    if (!picks.includes(p)) picks.push(p);
   }
   return picks;
 }
 
-function renderCard(p, isStarter = false) {
-  return `<div class="poke-card ${tcClass(p.types[0])}${isStarter ? ' starter-glow' : ''}" data-id="${p.id}">
+function renderCard(p) {
+  return `<div class="poke-card ${tcClass(p.types[0])}" data-id="${p.id}">
     <div class="label-stripe" style="background:var(--stripe)"></div>
     <div class="label-inner">
       <div class="label-brewery">${p.brewName||'Roguebrew Co.'}</div>
@@ -570,8 +561,10 @@ function renderCard(p, isStarter = false) {
       <div class="label-style-sub">${p.name}</div>
       <div class="label-types">${p.types.map(pill).join('')}</div>
       <div class="label-footer">
-        <div class="label-abv"><span class="label-abv-val" style="color:var(--stripe)">${calcAbv(p.bst)}%</span><span class="label-abv-label">ABV</span></div>
-        <div class="label-batch"><span class="label-batch-val">#${String(p.id).padStart(3,'0')}</span><span class="label-batch-label">Batch</span></div>
+        <div class="label-batch">
+          <span class="label-batch-val">#${String(p.id).padStart(3,'0')}</span>
+          <span class="label-batch-label">Batch</span>
+        </div>
       </div>
     </div>
   </div>`;
@@ -589,14 +582,14 @@ function matchBar(label, score, color) {
 // ── Generate ──────────────────────────────────────────────────────────────
 let lastWinner = null;
 let currentPicks = [];
-let currentStarterIdx = 0; // which of the 3 candidates is shown
+let selectedStarterId = null;
 
 function generateProfile() {
   const ranked = BJCP.map(s => ({s, score:scoreStyle(s)})).sort((a,b) => b.score - a.score);
   const winner = ranked[0].s;
   lastWinner = winner;
   currentPicks = pickPokemon(winner);
-  currentStarterIdx = 0;
+  selectedStarterId = null;
   const desc = DESCS[winner.code] || winner.tags.join(', ');
   const tags = [...winner.tags, ...winner.special];
 
@@ -625,57 +618,58 @@ function generateProfile() {
       <div class="runner-up-note">Runner-ups: ${ranked[1].s.name} · ${ranked[2].s.name}</div>
     </div>
     <div class="cards-panel">
-      <div class="cards-label">SUGGESTED STARTER</div>
-      <div class="starter-wrap" id="starter-wrap"></div>
+      <div class="cards-label">SUGGESTED STARTERS — pick one to begin your journey</div>
+      <div class="starter-grid" id="starter-grid"></div>
       <div class="result-actions">
-        <button class="btn-reroll" onclick="rerollStarter()">🎲 Not feeling it — reroll</button>
+        <button class="btn-reroll" onclick="rerollStarters()">🎲 Shuffle — surprise me</button>
         <button class="btn-select" id="btn-select" onclick="selectStarter()">✓ This is my brew</button>
       </div>
     </div>`;
 
-  renderStarterCard();
+  renderStarterGrid();
   results.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
-function renderStarterCard() {
-  const wrap = document.getElementById('starter-wrap');
-  if (!wrap || !currentPicks.length) return;
-  const p = currentPicks[currentStarterIdx % currentPicks.length];
-  wrap.innerHTML = renderCard(p, true);
-  // Show select button
-  const btn = document.getElementById('btn-select');
-  if (btn) btn.style.display = 'inline-block';
+function renderStarterGrid() {
+  const grid = document.getElementById('starter-grid');
+  if (!grid) return;
+  grid.innerHTML = currentPicks.map(p => renderCard(p)).join('');
+  grid.querySelectorAll('.poke-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const id = parseInt(card.dataset.id);
+      selectedStarterId = id;
+      grid.querySelectorAll('.poke-card').forEach(c => {
+        const isThis = parseInt(c.dataset.id) === id;
+        c.classList.toggle('starter-selected', isThis);
+        c.classList.toggle('starter-dimmed', !isThis);
+      });
+      const btn = document.getElementById('btn-select');
+      if (btn) btn.style.display = 'inline-block';
+    });
+  });
 }
 
-function rerollStarter() {
-  // Cycle through the 3 candidates first, then re-run the full picker for variety
-  currentStarterIdx++;
-  if (currentStarterIdx >= currentPicks.length) {
-    // Re-pick with some randomness so it doesn't just loop
-    const ranked = BJCP.map(s => ({s, score:scoreStyle(s)})).sort((a,b) => b.score - a.score);
-    // Pick from top 3 winning styles randomly for variety
-    const pool = ranked.slice(0, 3);
-    const chosen = pool[Math.floor(Math.random() * pool.length)].s;
-    currentPicks = pickPokemon(chosen);
-    currentStarterIdx = 0;
-  }
-  const wrap = document.getElementById('starter-wrap');
-  if (wrap) {
-    wrap.style.opacity = '0';
-    wrap.style.transform = 'translateY(6px)';
-    wrap.style.transition = 'opacity 0.2s, transform 0.2s';
+function rerollStarters() {
+  // Player is saying "surprise me" — style no longer matters, pick 3 fully random from all 386
+  const shuffled = [...SPECIES_DATA].sort(() => Math.random() - 0.5);
+  currentPicks = shuffled.slice(0, 3);
+  selectedStarterId = null;
+  const btn = document.getElementById('btn-select');
+  if (btn) btn.style.display = 'none';
+  const grid = document.getElementById('starter-grid');
+  if (grid) {
+    grid.style.opacity = '0';
+    grid.style.transition = 'opacity 0.2s';
     setTimeout(() => {
-      renderStarterCard();
-      wrap.style.opacity = '1';
-      wrap.style.transform = 'translateY(0)';
+      renderStarterGrid();
+      grid.style.opacity = '1';
     }, 200);
   }
 }
 
 function selectStarter() {
-  const p = currentPicks[currentStarterIdx % currentPicks.length];
+  const p = currentPicks.find(p => p.id === selectedStarterId);
   if (!p) return;
-
   const overlay = document.createElement('div');
   overlay.className = 'confirm-overlay';
   overlay.innerHTML = `
@@ -698,7 +692,6 @@ function selectStarter() {
 
 function confirmStarter(pokemonId) {
   const p = SPECIES_DATA.find(s => s.id === pokemonId);
-  // Store the selection for the game to pick up
   try {
     localStorage.setItem('roguebrew_tamagotchi_starter', JSON.stringify({
       pokemonId,
@@ -706,13 +699,9 @@ function confirmStarter(pokemonId) {
       style: lastWinner?.name,
       bjcpCode: lastWinner?.code,
       types: p?.types,
-      bst: p?.bst,
     }));
   } catch(e) {}
-  // Navigate to the game when it exists
   // window.location.href = 'brewery-trail.html';
-
-  // For now — show a teaser
   document.querySelector('.confirm-overlay')?.remove();
   const teaser = document.createElement('div');
   teaser.className = 'confirm-overlay';
