@@ -700,28 +700,10 @@ function confirmStarter(pokemonId) {
       style: lastWinner?.name,
       bjcpCode: lastWinner?.code,
       types: p?.types,
+      abv: lastWinner?.abv?.[0] || 4.5,
     }));
   } catch(e) {}
-  // window.location.href = 'brewery-trail.html';
-  document.querySelector('.confirm-overlay')?.remove();
-  const teaser = document.createElement('div');
-  teaser.className = 'confirm-overlay';
-  teaser.innerHTML = `
-    <div class="confirm-box">
-      <div style="font-size:32px">🍺</div>
-      <div class="confirm-title">Starter locked in!</div>
-      <div class="confirm-name">${p?.brewName || p?.name}</div>
-      <div class="confirm-sub">
-        Your ${lastWinner?.name} journey is saved.<br><br>
-        The Brewery Trail is coming soon.<br>
-        Check back at the main menu.
-      </div>
-      <div class="confirm-btns">
-        <button class="btn-confirm-yes" onclick="window.location.href='index.html'">Back to taproom</button>
-        <button class="btn-confirm-no" onclick="this.closest('.confirm-overlay').remove()">Stay here</button>
-      </div>
-    </div>`;
-  document.body.appendChild(teaser);
+  window.location.href = 'trail/';
 }
 </script>
 </body>
