@@ -75,7 +75,7 @@ const ROLES={
   cellarman:{label:'Cellarman',home:'Bywater',supplies:{food:250,coin:120,parts:2,ponies:3,athelas:1},mult:1.3,desc:'Fewest supplies. Score ×1.3.'},
 };
 const CROLES=[
-  {rk:'hop_farmer',role:'Forager',def:'Sam'},
+  {rk:'hop_farmer',role:'Hop Farmer',def:'Sam'},
   {rk:'maltster',role:'Maltster',def:'Merry'},
   {rk:'taproom_hand',role:'Salesperson',def:'Pippin'},
   {rk:'cellarman_c',role:'Cellarman',def:'Fatty'},
@@ -87,8 +87,30 @@ const CROLES=[
 function R(html){const el=document.getElementById('game');el.innerHTML=`<div class="screen active fade-in">${html}</div>`;window.scrollTo(0,0);}
 function frame(title,sub,body,footer=''){return `<div class="frame">${title?`<div class="frame-title">${title}</div>`:''}${sub?`<div class="frame-sub">${sub}</div>`:''}${body}${footer?`<div class="frame-bottom">${footer}</div>`:''}</div>`;}
 function hc(v){return v>60?'#5aaa3a':v>30?'#d4a830':'#c04a2a';}
-function statusBar(){const alive=G.companions.filter(c=>c.health>0).length;const pm=PACE[G.pace];const dailyFood=Math.round(7*pm.foodMult);const daysLeft=dailyFood>0?Math.floor(G.supplies.food/dailyFood):999;const grainColor=daysLeft<=3?'#c04a2a':daysLeft<=7?'#d4a830':'var(--text)';return '<div class="status-bar"><div><span>Location: </span><strong>'+G.location+'</strong></div><div><span>Day: </span><strong>'+G.day+'</strong></div><div><span>Food: </span><strong style="color:'+grainColor+'">'+G.supplies.food+' lbs</strong></div><div><span>Food left: </span><strong style="color:'+grainColor+'">~'+daysLeft+' days</strong></div><div><span>Coin: </span><strong>'+G.supplies.coin+'</strong></div><div><span>Parts: </span><strong>'+G.supplies.parts+'</strong></div><div><span>Ponies: </span><strong>'+G.supplies.ponies+'</strong></div><div><span>Athelas: </span><strong>'+G.supplies.athelas+'</strong></div><div><span>Party: </span><strong>'+alive+'/6 alive</strong></div><div><span>Pace: </span><strong style="color:'+(G.pace==='grueling'?'#c04a2a':G.pace==='resting'?'#5aaa3a':'var(--text)')+'">'+pm.label+'</strong></div></div>';}
-function beerBar(){return `<div class="beer-row"><div class="beer-label">🍺 THE BREW</div><div class="beer-track"><div class="beer-fill" style="width:${G.beer}%"></div></div><div class="beer-pct">${Math.round(G.beer)}%</div></div>`;}
+function statusBar(){
+  const alive=G.companions.filter(c=>c.health>0).length;
+  const pm=PACE[G.pace];
+  const dailyFood=Math.round(7*pm.foodMult);
+  const daysLeft=dailyFood>0?Math.floor(G.supplies.food/dailyFood):999;
+  const fc=daysLeft<=3?'#c04a2a':daysLeft<=7?'#d4a830':'var(--text)';
+  const pc=G.pace==='grueling'?'#c04a2a':G.pace==='resting'?'#5aaa3a':'var(--text)';
+  return '<div class="status-bar">'
+    +'<div style="grid-column:1/-1;border-bottom:1px solid var(--border);padding-bottom:5px;margin-bottom:4px;display:flex;justify-content:space-between">'
+    +'<span style="color:var(--gold);font-family:var(--pixel);font-size:7px">'+gameDate()+'</span>'
+    +'<span style="color:var(--dim);font-size:10px">Day '+G.day+' &nbsp;·&nbsp; '+(G.miles||0)+' miles</span>'
+    +'</div>'
+    +'<div><span>Location: </span><strong>'+G.location+'</strong></div>'
+    +'<div><span>Pace: </span><strong style="color:'+pc+'">'+pm.label+'</strong></div>'
+    +'<div><span>Food: </span><strong style="color:'+fc+'">'+G.supplies.food+' lbs</strong></div>'
+    +'<div><span>Days left: </span><strong style="color:'+fc+'">~'+daysLeft+'</strong></div>'
+    +'<div><span>Coin: </span><strong>'+G.supplies.coin+'</strong></div>'
+    +'<div><span>Parts: </span><strong>'+G.supplies.parts+'</strong></div>'
+    +'<div><span>Ponies: </span><strong>'+G.supplies.ponies+'</strong></div>'
+    +'<div><span>Athelas: </span><strong>'+G.supplies.athelas+'</strong></div>'
+    +'<div><span>Party: </span><strong>'+alive+'/6 alive</strong></div>'
+    +'</div>';
+}
+// beerBar() defined below in BREW SETUP section
 function partyHealth(){const all=[{name:G.playerName||'You',health:G.health,maxHealth:G.maxHealth,status:''},...G.companions];return `<div class="health-section">${all.map(c=>{const pct=c.maxHealth>0?Math.max(0,c.health/c.maxHealth):0;const dead=c.health<=0;const statusLabel=c.status&&c.status!=='dead'?` <span style="font-size:8px;color:#c04a2a">[${c.status}]</span>`:'';return `<div class="health-row"><div class="health-name"${dead?' style="color:var(--dim);text-decoration:line-through"':''}>${c.name}${c.role?` <span style="font-size:9px;color:var(--dim)">(${c.role.split(' ')[0]})</span>`:''}${statusLabel}</div><div class="health-track"><div class="health-fill" style="width:${pct*100}%;background:${hc(pct*100)}"></div></div><div class="health-val">${dead?'✝':Math.round(c.health)}</div></div>`;}).join('')}</div>`;}
 function choices(items){return `<ul class="choices">${items.map((it,i)=>`<li><button class="choice-btn" onclick="${it.fn}"><span class="num">${i+1}.</span>${it.label}${it.note?`<span class="note">${it.note}</span>`:''}</button></li>`).join('')}</ul>`;}
 function paceControl(){const btns=Object.entries(PACE).map(([k,v])=>{const active=G.pace===k;return `<button onclick="setPace('${k}')" style="background:${active?'var(--border)':'none'};border:1px solid ${active?'var(--gold)':'var(--border)'};color:${active?'var(--gold)':'var(--dim)'};font-family:var(--mono);font-size:10px;padding:2px 8px;margin:0 3px;cursor:pointer">${v.label}</button>`;}).join('');return `<div style="margin:8px 0 14px;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);font-size:11px;font-family:var(--mono)"><span style="color:var(--dim)">Travel pace: </span>${btns}</div>`;}
@@ -119,7 +141,7 @@ window._continue=function(){if(_nextFn){const f=_nextFn;_nextFn=null;f();}};
 function showEvent(title,text,isGood,suffix,nextFn){
   _nextFn=nextFn;
   R(frame(title,G.location+' — Day '+G.day,
-    statusBar()+beerBar()+moraleBar()+milesBar()+weatherBar()+partyHealth()+illnessBar()+
+    statusBar()+nextLandmark()+beerBar()+moraleBar()+milesBar()+weatherBar()+partyHealth()+illnessBar()+
     '<div class="event-box"><div class="'+(isGood?'outcome-good':'outcome-bad')+'">'+text+'</div>'+(suffix?'<div class="outcome-suffix">'+suffix+'</div>':'')+'</div>',
     '<button class="btn-primary" onclick="_continue()">Continue →</button>'
   ));
@@ -129,6 +151,41 @@ function getStarter(){
   return G.brew||null;
 }
 function rand(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+
+// ═══════════════════════════════════════════ CALENDAR + LANDMARKS
+// Start: 23 September, Year 3018 (day Frodo left Bag End)
+const START_MONTH=9,START_DAY=23,START_YEAR=3018;
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTH_DAYS=[31,28,31,30,31,30,31,31,30,31,30,31];
+function gameDate(){
+  let d=(G.day||1)-1,mo=START_MONTH-1,dy=START_DAY,yr=START_YEAR;
+  dy+=d;
+  while(dy>MONTH_DAYS[mo]){dy-=MONTH_DAYS[mo];mo++;if(mo>11){mo=0;yr++;}}
+  return dy+' '+MONTHS[mo]+' '+yr+' S.R.';
+}
+// Landmark sequence with mile markers
+const LANDMARKS=[
+  {name:'Brandywine River',miles:80},
+  {name:'Bree',miles:210},
+  {name:'Weathertop',miles:490},
+  {name:'Rivendell',miles:670},
+  {name:'Misty Mountains',miles:870},
+  {name:'Lothlórien',miles:1390},
+  {name:'Edoras',miles:1770},
+  {name:'Minas Tirith',miles:1990},
+  {name:'Mount Doom',miles:2900},
+];
+function nextLandmark(){
+  const m=G.miles||0;
+  const next=LANDMARKS.find(l=>l.miles>m);
+  if(!next)return '';
+  const dist=next.miles-m;
+  const daysEst=Math.ceil(dist/(25*(PACE[G.pace]?.dayMult||1)*Math.max(1,G.supplies.ponies)));
+  return '<div style="font-family:var(--mono);font-size:10px;color:var(--dim);padding:3px 12px;margin-bottom:4px">'
+    +'Next: <strong style="color:var(--text)">'+next.name+'</strong>'
+    +' — ~'+dist+' miles (~'+daysEst+' days at current pace)</div>';
+}
+
 
 // ═══════════════════════════════════════════ BREW SETUP
 // Called from showTitle if no external brew data exists
@@ -288,7 +345,7 @@ function showCampScreen(nextFn){
   const weatherWarn=weatherBar();
   const illWarn=illnessBar();
   R(frame('MAKE CAMP','Day '+G.day+' · '+G.location,
-    statusBar()+beerBar()+moraleBar()+milesBar()+weatherWarn+illWarn+partyHealth()+starvWarn
+    statusBar()+nextLandmark()+beerBar()+moraleBar()+milesBar()+weatherWarn+illWarn+partyHealth()+starvWarn
     +choices([
       {label:'Continue on the road',note:'Press on toward the next waypoint',fn:'_continue()'},
       {label:'Hunt for food',note:'Uses half a day · Forager helps',fn:'doCampHunt()'},
@@ -338,15 +395,15 @@ window.doCampRest=function(){
   showEvent('REST DAY','The party sleeps properly. Wounds are cleaned. Sprains eased.'+treatMsg,true,'All +15 health.'+treatMsg,function(){showCampScreen(_nextFn);});
 };
 window.showPaceChange=function(){
-  _nextFn=_nextFn;
+  const _savedNext=_nextFn;
   R(frame('CHANGE PACE','Day '+G.day,
     statusBar()+moraleBar()
     +'<p>Current pace: <strong>'+PACE[G.pace].label+'</strong></p>'
     +'<p style="font-size:12px;color:var(--dim)">Grueling: travel faster, eat ~10 lbs food/day, higher illness and breakdown risk.<br>Steady: balanced, ~7 lbs food/day.<br>Resting: slow, ~5 lbs food/day, passive illness recovery, +morale.</p>'
     +choices([
-      {label:'Grueling pace',note:'Faster · More food · More risk',fn:"setPace('grueling');showCampScreen(_nextFn)"},
-      {label:'Steady pace',note:'Balanced',fn:"setPace('steady');showCampScreen(_nextFn)"},
-      {label:'Resting pace',note:'Slower · Less food · Heals exhaustion',fn:"setPace('resting');showCampScreen(_nextFn)"},
+      {label:'Grueling pace',note:'Faster · More food · More risk',fn:"setPace('grueling');showCampScreen(_savedNext)"},
+      {label:'Steady pace',note:'Balanced',fn:"setPace('steady');showCampScreen(_savedNext)"},
+      {label:'Resting pace',note:'Slower · Less food · Heals exhaustion',fn:"setPace('resting');showCampScreen(_savedNext)"},
     ])
   ));
 };
@@ -486,7 +543,7 @@ function rollEquipmentFailure(nextFn){
   } else if(roll<0.28&&G.supplies.parts>0){
     // Pack frame breaks — parts fixes it
     G.supplies.parts--;
-    showEvent('PACK FRAME BREAKS','The wooden frame on one pony\'s pack cracks. Your Cooper lashes it back together with spare parts.',true,'−1 part. Cooper saved the load.',nextFn);
+    showEvent('PACK FRAME BREAKS','The wooden frame on one pony\'s pack cracks. Your Bartender lashes it back together with spare parts.',true,'−1 part. Cooper saved the load.',nextFn);
   } else if(roll<0.28){
     // Pack frame breaks — no parts
     const lost=rand(30,70);G.supplies.food=Math.max(0,G.supplies.food-lost);
@@ -497,12 +554,12 @@ function rollEquipmentFailure(nextFn){
 }
 
 // ═══════════════════════════════════════════ HUNTING / FORAGING
-function showHuntingOption(nextFn){
+function showCampScreen(nextFn){
   _nextFn=nextFn;
   const daysLeft=G.supplies.food>0?Math.floor(G.supplies.food/7):0;
   const urgency=daysLeft<=4?'<p style="color:#c04a2a;font-size:12px">⚠ Only ~'+daysLeft+' days of food remaining.</p>':'';
   R(frame('MAKE CAMP','Day '+G.day+' · The party rests for the night.',
-    statusBar()+beerBar()+moraleBar()+milesBar()+weatherBar()+partyHealth()+illnessBar()+urgency
+    statusBar()+nextLandmark()+beerBar()+moraleBar()+milesBar()+weatherBar()+partyHealth()+illnessBar()+urgency
     +'<p>You have time before dark. The land around you may offer food.</p>'
     +choices([
       {label:'Hunt for game',note:'Uses 0.5 day · Hop Farmer helps · Variable return',fn:'doHunt()'},
@@ -574,7 +631,7 @@ const TRAVEL_EVENTS=[
   {id:'smoke',w:4,title:'SMOKE ON THE HORIZON',text:'Fire, far off. You give it a wide berth and lose a little time.',bad:true,fn:()=>{G.day++;}},
   {id:'wolf',w:6,title:'WOLVES IN THE NIGHT',text:'Howling close. They test the camp perimeter but the fire holds them.',bad:true,fn:()=>{damageAll(3);}},
   {id:'eagle',w:2,title:'GREAT EAGLE OVERHEAD',text:'A vast shadow crosses the sun. A great eagle, watching from above. It turns north.',bad:false,fn:()=>{healAll(5);addNote('a hint of altitude and open sky');}},
-  {id:'merchant',w:4,title:'TRAVELLING MERCHANT',text:'A lone trader heading the other way. He has supplies — at a price.',bad:false,fn:()=>{if(G.supplies.coin>=15){G.supplies.food+=rand(30,60);G.supplies.coin-=15;window._lastEventExtra='Bought grain. −15 coin.';}else window._lastEventExtra='Not enough coin to trade.';}},
+  {id:'merchant',w:4,title:'TRAVELLING MERCHANT',text:'A lone trader heading the other way. He has supplies — at a price.',bad:false,fn:()=>{if(G.supplies.coin>=15){G.supplies.food+=rand(30,60);G.supplies.coin-=15;window._lastEventExtra='Bought food. −15 coin.';}else window._lastEventExtra='Not enough coin to trade.';}},
   {id:'lost_briefly',w:5,title:'WRONG TURN',text:'An hour of backtracking before you find the right path again.',bad:true,fn:()=>{G.day++;}},
 ];
 function pickTravelEvent(){
@@ -601,6 +658,8 @@ function travelStretch(numEvents,nextFn){
   }
   function runNext(){
     if(events.length===0){
+      // Roll equipment failure before camp screen
+      rollEquipmentFailure(function(){
       tickIllnesses();
       // Check illness deaths
       const newDead=G.companions.filter(x=>x.health<=0&&x.status!=='dead');
@@ -614,6 +673,7 @@ function travelStretch(numEvents,nextFn){
       }
       // Show camp screen before arriving at destination
       showCampScreen(nextFn);
+      });  // end rollEquipmentFailure
       return;
     }
     const ev=events.shift();
@@ -634,7 +694,7 @@ function travelStretch(numEvents,nextFn){
     if(extra)sfxParts.push(extra);
     _nextFn=runNext;
     R(frame(ev.title,G.location+' — Day '+G.day,
-      statusBar()+beerBar()+moraleBar()+milesBar()+weatherBar()+partyHealth()+illnessBar()+
+      statusBar()+nextLandmark()+beerBar()+moraleBar()+milesBar()+weatherBar()+partyHealth()+illnessBar()+
       '<div class="event-box"><div class="'+(ev.bad?'outcome-bad':'outcome-good')+'">'+ev.text+'</div>'+(sfxParts.length?'<div class="outcome-suffix">'+sfxParts.join(' · ')+'</div>':'')+'</div>',
       '<button class="btn-primary" onclick="_continue()">Continue →</button>'
     ));
@@ -642,6 +702,52 @@ function travelStretch(numEvents,nextFn){
   runNext();
 }
 
+
+// ═══════════════════════════════════════════ MERCHANT SHOP
+window._merchantPending=false;
+const _origContinue=window._continue;
+window._continue=function(){
+  if(window._merchantPending){
+    window._merchantPending=false;
+    showMerchantShop();
+    return;
+  }
+  if(_nextFn){const f=_nextFn;_nextFn=null;f();}
+};
+function showMerchantShop(){
+  const items=[
+    {label:'Food (50 lbs)',key:'food',amt:50,cost:15},
+    {label:'Spare Part',key:'parts',amt:1,cost:20},
+    {label:'Athelas (1)',key:'athelas',amt:1,cost:25},
+  ];
+  const rows=items.map((it,i)=>{
+    const canAfford=G.supplies.coin>=it.cost;
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="font-family:var(--serif);font-size:14px">'+it.label+'</div>'
+      +'<div style="display:flex;align-items:center;gap:12px">'
+      +'<span style="font-family:var(--pixel);font-size:8px;color:var(--gold)">'+it.cost+' coin</span>'
+      +(canAfford
+        ?'<button class="btn-primary" style="padding:6px 14px" onclick="merchantBuy('+i+')">Buy</button>'
+        :'<span style="font-family:var(--pixel);font-size:7px;color:var(--dim)">Cannot afford</span>')
+      +'</div></div>';
+  }).join('');
+  window._merchantItems=items;
+  R(frame('TRAVELLING MERCHANT','Day '+G.day+' · '+G.location,
+    statusBar()
+    +'<p>He eyes your barrel with interest but says nothing about it. His pack holds a few useful things.</p>'
+    +'<p style="font-family:var(--pixel);font-size:8px;color:var(--gold)">You have: '+G.supplies.coin+' coin</p>'
+    +'<div style="margin:12px 0">'+rows+'</div>',
+    '<button class="btn-primary" onclick="_merchantDone()">Move on</button>'
+  ));
+}
+window.merchantBuy=function(i){
+  const it=window._merchantItems[i];
+  if(!it||G.supplies.coin<it.cost)return;
+  G.supplies.coin-=it.cost;
+  G.supplies[it.key]=(G.supplies[it.key]||0)+it.amt;
+  showMerchantShop();
+};
+window._merchantDone=function(){if(_nextFn){const f=_nextFn;_nextFn=null;f();}};
 // ═══════════════════════════════════════════ TREAT SICK SCREEN
 function showTreatSick(nextFn){
   if(!G.illnesses||Object.keys(G.illnesses).length===0){nextFn();return;}
@@ -867,7 +973,7 @@ function chooseD3(c){
       // Tom Bombadil — great outcome
       G.pathFlags.metTom=true;addAch('tom','Met Tom Bombadil in the Old Forest');
       healAll(20);morale(20,'tom bombadil');
-      showEvent('TOM BOMBADIL','"Hey dol! merry dol! ring a dong dillo!" He appears from nowhere, hat yellow as butter, boots bright blue. He leads you safely through the Withywindle, singing all the way. Everyone arrives fed and rested.',true,'All party members +20 health. Tom Bombadil remembered.',function(){showHuntingOption(function(){travelStretch(2,reachBree);});});
+      showEvent('TOM BOMBADIL','"Hey dol! merry dol! ring a dong dillo!" He appears from nowhere, hat yellow as butter, boots bright blue. He leads you safely through the Withywindle, singing all the way. Everyone arrives fed and rested.',true,'All party members +20 health. Tom Bombadil remembered.',function(){travelStretch(2,reachBree);});
     } else if(roll<0.7){
       // Lost, possible Barrow Downs
       advance(2);const v=damageRandom(20);
@@ -875,29 +981,29 @@ function chooseD3(c){
         // Barrow Downs — rescued by Tom if met, severe damage if not
         if(G.pathFlags.metTom){
           healAll(10);
-          showEvent('THE BARROW DOWNS',`You stumble out of the forest into cold fog. The Barrow-wights circle you — but Tom Bombadil's voice rings out from somewhere. "Tom Bombadil is Master!" The cold lifts. He pulls you free.`,true,'Tom saved you from the Barrow Downs.',function(){showHuntingOption(function(){travelStretch(2,reachBree);});});
+          showEvent('THE BARROW DOWNS',`You stumble out of the forest into cold fog. The Barrow-wights circle you — but Tom Bombadil's voice rings out from somewhere. "Tom Bombadil is Master!" The cold lifts. He pulls you free.`,true,'Tom saved you from the Barrow Downs.',function(){travelStretch(2,reachBree);});
         } else {
           damageAll(30);morale(-15,'barrow downs');const v2=damageRandom(40);
-          showEvent('THE BARROW DOWNS',`Cold mist swallows the path. You wake in a barrow, ancient swords pressed to your throats. Somehow — barely — you break free. ${v2&&v2.health<=0?v2.name+' did not make it out.':'Everyone survives, barely.'}`,false,'Very dangerous. Much health lost.',function(){showHuntingOption(function(){travelStretch(2,reachBree);});});
+          showEvent('THE BARROW DOWNS',`Cold mist swallows the path. You wake in a barrow, ancient swords pressed to your throats. Somehow — barely — you break free. ${v2&&v2.health<=0?v2.name+' did not make it out.':'Everyone survives, barely.'}`,false,'Very dangerous. Much health lost.',function(){travelStretch(2,reachBree);});
         }
       } else {
-        showEvent('LOST IN THE OLD FOREST',`The trees lean in. Paths twist back on themselves. ${v?.name||'A companion'} is caught by a willow root and dragged partway into the mud before you pull them free.`,false,`${v?.name||'They'} is shaken and injured. +2 days.`,function(){showHuntingOption(function(){travelStretch(2,reachBree);});});
+        showEvent('LOST IN THE OLD FOREST',`The trees lean in. Paths twist back on themselves. ${v?.name||'A companion'} is caught by a willow root and dragged partway into the mud before you pull them free.`,false,`${v?.name||'They'} is shaken and injured. +2 days.`,function(){travelStretch(2,reachBree);});
       }
     } else {
       // Weird but fine
-      showEvent('THE OLD FOREST','The trees murmur. Something watches you the whole way through. But the path never quite closes. You emerge at Bree, unsettled but unharmed.',true,'',function(){showHuntingOption(function(){travelStretch(2,reachBree);});});
+      showEvent('THE OLD FOREST','The trees murmur. Something watches you the whole way through. But the path never quite closes. You emerge at Bree, unsettled but unharmed.',true,'',function(){travelStretch(2,reachBree);});
     }
   } else {
     advance(2);
     const roll=Math.random();
     if(roll<0.25){
       const lost=rand(20,50);G.supplies.food=Math.max(0,G.supplies.food-lost);
-      showEvent('BRIGANDS ON THE CHETWOOD ROAD',`A group of rough men steps out from the trees. You surrender ${lost} lbs of food before they disappear back into the wood.`,false,`−${lost} lbs food.`,function(){showHuntingOption(function(){travelStretch(2,reachBree);});});
+      showEvent('BRIGANDS ON THE CHETWOOD ROAD',`A group of rough men steps out from the trees. You surrender ${lost} lbs of food before they disappear back into the wood.`,false,`−${lost} lbs food.`,function(){travelStretch(2,reachBree);});
     } else if(roll<0.5){
       G.supplies.food+=rand(30,60);G.supplies.coin+=rand(10,25);
-      showEvent('MERCHANTS ON THE ROAD','A cheerful wagon train heading west. They trade fairly — food and coin change hands to everyone\'s satisfaction.',true,'+food, +coin.',function(){showHuntingOption(function(){travelStretch(2,reachBree);});});
+      showEvent('MERCHANTS ON THE ROAD','A cheerful wagon train heading west. They trade fairly — food and coin change hands to everyone\'s satisfaction.',true,'+food, +coin.',function(){travelStretch(2,reachBree);});
     } else {
-      showEvent('THE CHETWOOD ROAD','The long road through the Chetwood is grey and uneventful. You arrive at Bree without incident.',true,'',function(){showHuntingOption(function(){travelStretch(2,reachBree);});});
+      showEvent('THE CHETWOOD ROAD','The long road through the Chetwood is grey and uneventful. You arrive at Bree without incident.',true,'',function(){travelStretch(2,reachBree);});
     }
   }
 }
@@ -949,12 +1055,12 @@ function chooseD4(c){
     const roll=Math.random();
     if(roll<0.3){
       const lost=rand(20,60);G.supplies.food=Math.max(0,G.supplies.food-lost);
-      showEvent('BRIGANDS ON THE EAST ROAD',`Armed men appear from the gorse. They take ${lost} lbs of food and make off before you can respond.`,false,`−${lost} lbs food.`,function(){showHuntingOption(function(){travelStretch(2,weathertop);});});
+      showEvent('BRIGANDS ON THE EAST ROAD',`Armed men appear from the gorse. They take ${lost} lbs of food and make off before you can respond.`,false,`−${lost} lbs food.`,function(){travelStretch(2,weathertop);});
     } else if(roll<0.45){
       G.supplies.food+=rand(40,80);G.supplies.coin+=rand(15,30);
-      showEvent('TRADERS ON THE ROAD','A merchants\' convoy heading west. They have food and coin to spare and are glad of company on the empty road.',true,'+food, +coin.',function(){showHuntingOption(function(){travelStretch(2,weathertop);});});
+      showEvent('TRADERS ON THE ROAD','A merchants\' convoy heading west. They have food and coin to spare and are glad of company on the empty road.',true,'+food, +coin.',function(){travelStretch(2,weathertop);});
     } else {
-      showEvent('THE LONE-LANDS ROAD','Three days of grey sky and empty road. You arrive at Weathertop on schedule.',true,'',function(){showHuntingOption(function(){travelStretch(2,weathertop);});});
+      showEvent('THE LONE-LANDS ROAD','Three days of grey sky and empty road. You arrive at Weathertop on schedule.',true,'',function(){travelStretch(2,weathertop);});
     }
   } else {
     // Two-leg journey: marshes then hills
@@ -988,12 +1094,12 @@ function weatherHills(){
   if(roll<0.55){
     G.pathFlags.metStrider=true;
     healAll(12);G.supplies.food+=60;
-    showEvent('STRIDER IN THE WEATHER HILLS','A tall hooded figure stands on the ridge above you, watching. He waits until you nearly pass, then speaks. Strider. He scouts ahead and leads you safely to Weathertop. He knows these hills.',true,'+60 food. +12 health. Strider remembered.',function(){showHuntingOption(function(){travelStretch(2,weathertop);});});
+    showEvent('STRIDER IN THE WEATHER HILLS','A tall hooded figure stands on the ridge above you, watching. He waits until you nearly pass, then speaks. Strider. He scouts ahead and leads you safely to Weathertop. He knows these hills.',true,'+60 food. +12 health. Strider remembered.',function(){travelStretch(2,weathertop);});
   } else if(roll<0.8){
     const v=damageRandom(18);
-    showEvent('WARGS IN THE WEATHER HILLS',`Camp is hit at midnight. You fight them off with torches — but ${v?.name||'a companion'} takes a gash before you can.`,false,'',function(){showHuntingOption(function(){travelStretch(2,weathertop);});});
+    showEvent('WARGS IN THE WEATHER HILLS',`Camp is hit at midnight. You fight them off with torches — but ${v?.name||'a companion'} takes a gash before you can.`,false,'',function(){travelStretch(2,weathertop);});
   } else {
-    showEvent('THE WEATHER HILLS','Steep going but clear. The hills offer a good view back over the marshes. Nobody is following. You descend to Weathertop before nightfall.',true,'',function(){showHuntingOption(function(){travelStretch(2,weathertop);});});
+    showEvent('THE WEATHER HILLS','Steep going but clear. The hills offer a good view back over the marshes. Nobody is following. You descend to Weathertop before nightfall.',true,'',function(){travelStretch(2,weathertop);});
   }
 }
 
@@ -1087,8 +1193,8 @@ function trollshaws(){
     {title:'ROCKFALL',text:hasRole('maintenance')?`A section of old road crumbles. ${G.companions.find(c=>c.rk==='maintenance'&&c.health>0)?.name||'Your maintenance hand'} secures the barrel before it rolls. Nothing lost.`:'A section of old road crumbles. The barrel rolls and takes a knock.',good:hasRole('maintenance'),sfx:hasRole('maintenance')?'':'-10% brew.',fn:()=>{if(!hasRole('maintenance'))G.beer=Math.max(0,G.beer-10);}},
     {title:'SHELTERED CAMP',text:'A deep dell with a cold spring and dry wood. A full night of uninterrupted rest. Everyone wakes with colour in their cheeks.',good:true,sfx:'+12 health.',fn:()=>healAll(12)},
     {title:'ORC SCOUTS',text:'A small band of orc scouts finds your camp at dusk. You drive them off after a brief, brutal skirmish.',good:false,sfx:'Companion injured.',fn:()=>{damageRandom(15);}},
-    {title:'RANGER STASH',text:'A flat stone with three carvings on it. You know what it means — a ranger cache. Beneath it: wrapped food, a skin of oil, a note in Elvish.',good:true,sfx:'+60 grain, +1 parts.',fn:()=>{G.supplies.food+=60;G.supplies.parts+=1;}},
-    {title:'BEAR IN THE SUPPLIES',text:'You wake to chaos. A bear has found your food sacks. By the time you drive it off with torches and noise, real damage is done.',good:false,sfx:'Grain and supplies damaged.',fn:()=>{G.supplies.food=Math.max(0,G.supplies.food-rand(40,80));G.beer=Math.max(0,G.beer-rand(5,15));}},
+    {title:'RANGER STASH',text:'A flat stone with three carvings on it. You know what it means — a ranger cache. Beneath it: wrapped food, a skin of oil, a note in Elvish.',good:true,sfx:'+60 food, +1 parts.',fn:()=>{G.supplies.food+=60;G.supplies.parts+=1;}},
+    {title:'BEAR IN THE SUPPLIES',text:'You wake to chaos. A bear has found your food sacks. By the time you drive it off with torches and noise, real damage is done.',good:false,sfx:'Food and brew damaged.',fn:()=>{G.supplies.food=Math.max(0,G.supplies.food-rand(40,80));G.beer=Math.max(0,G.beer-rand(5,15));}},
     {title:'ROUGH TRAIL',text:'The old road crumbles to almost nothing. The ponies struggle. Everyone pushes, pulls, and curses their way through.',good:false,sfx:'-1 day extra, all -5 health.',fn:()=>{advance(1);damageAll(5);}},
   ];
   // Pick two distinct events
@@ -1229,7 +1335,7 @@ function reachLothlorien(){
     <p>"I see your road ahead," she says. "Take lembas for the journey. Two roads lie south."</p>`+
     choices([
       {label:'Buy supplies at the Lothlórien stores',fn:'lothShop()'},
-      {label:'Talk to the Galadhrim',note:'Hear about the roads south',fn:"showTownTalk('lothlorien',function(){R(document.getElementById('game').innerHTML);})"},
+      {label:'Talk to the Galadhrim',note:'Hear about the roads south',fn:"showTownTalk('lothlorien',function(){chooseD7Prompt();})"},
       {label:'Continue down the Anduin by boat',fn:"chooseD7('anduin')"},
       {label:'Strike east through Fangorn Forest',fn:"chooseD7('fangorn')"},
     ])
@@ -1252,18 +1358,18 @@ function chooseD7(c){
   if(c==='anduin'){
     if(Math.random()<0.45){
       const lost=Math.floor(G.supplies.food*0.15);G.supplies.food-=lost;damageAll(12);
-      showEvent('AMBUSH ON THE ANDUIN','Arrows from the eastern bank. Uruk-hai. You beach the boats and run. Grain and wounds.',false,`−${lost} food. All −12 health.`,function(){showHuntingOption(function(){travelStretch(2,reachEdoras);});});
+      showEvent('AMBUSH ON THE ANDUIN','Arrows from the eastern bank. Uruk-hai. You beach the boats and run. Food and wounds.',false,`−${lost} food. All −12 health.`,function(){travelStretch(2,reachEdoras);});
     } else {
-      showEvent('DOWN THE ANDUIN','Three days on the river. Current is kind, weather holds. You beach at the Emyn Muil and march for Rohan.',true,'',function(){showHuntingOption(function(){travelStretch(2,reachEdoras);});});
+      showEvent('DOWN THE ANDUIN','Three days on the river. Current is kind, weather holds. You beach at the Emyn Muil and march for Rohan.',true,'',function(){travelStretch(2,reachEdoras);});
     }
   } else {
     addNote('wild, untamed, notes of ancient wood and something that predates memory');
     if(Math.random()<0.5){
       healAll(15);G.supplies.food+=80;
-      showEvent('TREEBEARD','He decides you are not Orcs. Ent-draughts and a sack of food. "Do not be hasty," he says, then watches you leave.',true,'+80 food. +15 health to all.',function(){showHuntingOption(function(){travelStretch(2,reachEdoras);});});
+      showEvent('TREEBEARD','He decides you are not Orcs. Ent-draughts and a sack of food. "Do not be hasty," he says, then watches you leave.',true,'+80 food. +15 health to all.',function(){travelStretch(2,reachEdoras);});
     } else {
       damageAll(10);advance(2);
-      showEvent('LOST IN FANGORN','The trees whisper. Nothing attacks but nothing helps. You emerge from the southern edge two days behind.',false,'All −10 health. +2 days.',function(){showHuntingOption(function(){travelStretch(2,reachEdoras);});});
+      showEvent('LOST IN FANGORN','The trees whisper. Nothing attacks but nothing helps. You emerge from the southern edge two days behind.',false,'All −10 health. +2 days.',function(){travelStretch(2,reachEdoras);});
     }
   }
 }
@@ -1307,20 +1413,20 @@ window.isenCrossChoice=function(){
 window.isenCross=function(){
   if(G.pathFlags.crebainSeen&&Math.random()<0.35){
     damageAll(12);G.supplies.food=Math.max(0,G.supplies.food-rand(30,60));
-    showEvent('SARUMAN\'S INTERFERENCE','A Dunlending patrol meets you at the ford — no accident. Someone was watching. You fight them off but pay for it.',false,'All −12 health. Food lost.',function(){showHuntingOption(function(){travelStretch(2,reachEdoras);});});
+    showEvent('SARUMAN\'S INTERFERENCE','A Dunlending patrol meets you at the ford — no accident. Someone was watching. You fight them off but pay for it.',false,'All −12 health. Food lost.',function(){travelStretch(2,reachEdoras);});
   } else {
     isenCrossChoice();
   }
 };
 function chooseIsen(c){
   if(c==='ford'){
-    if(Math.random()<0.4){const v=damageRandom(20);showEvent('FORDING THE ISEN',`The current takes ${v?.name||'a companion'} off their feet. Bruised and soaked on the far bank.`,false,'',function(){showHuntingOption(function(){travelStretch(2,reachEdoras);});});}
-    else showEvent('FORDING THE ISEN','Cold and fast but everyone across intact.',true,'',function(){showHuntingOption(function(){travelStretch(2,reachEdoras);});});
+    if(Math.random()<0.4){const v=damageRandom(20);showEvent('FORDING THE ISEN',`The current takes ${v?.name||'a companion'} off their feet. Bruised and soaked on the far bank.`,false,'',function(){travelStretch(2,reachEdoras);});}
+    else showEvent('FORDING THE ISEN','Cold and fast but everyone across intact.',true,'',function(){travelStretch(2,reachEdoras);});
   } else if(c==='wait'){
-    advance(2);showEvent('WAITING AT THE ISEN','Two days camped at the bank. The water drops. You cross safely.',true,'',function(){showHuntingOption(function(){travelStretch(2,reachEdoras);});});
+    advance(2);showEvent('WAITING AT THE ISEN','Two days camped at the bank. The water drops. You cross safely.',true,'',function(){travelStretch(2,reachEdoras);});
   } else {
-    if(Math.random()<0.45){G.beer=Math.max(0,G.beer-15);showEvent('THE RAFT','The raft tips in the current. You save the barrel — barely.',false,'−15% brew.',function(){showHuntingOption(function(){travelStretch(2,reachEdoras);});});}
-    else showEvent('THE RAFT','The barrel crosses dry. Everyone swims. Cold but successful.',true,'',function(){showHuntingOption(function(){travelStretch(2,reachEdoras);});});
+    if(Math.random()<0.45){G.beer=Math.max(0,G.beer-15);showEvent('THE RAFT','The raft tips in the current. You save the barrel — barely.',false,'−15% brew.',function(){travelStretch(2,reachEdoras);});}
+    else showEvent('THE RAFT','The barrel crosses dry. Everyone swims. Cold but successful.',true,'',function(){travelStretch(2,reachEdoras);});
   }
 }
 
@@ -1586,7 +1692,6 @@ function showEnding(){
       ${[
         ['Party health average',avgHealth+' / 100'],
         ['Brew condition ('+Math.round(G.beer)+'% · '+brewCondition().label+')','+'+brewScore],
-        ['Beer remaining',Math.round(G.beer)+'%'],
         ['Role multiplier ('+r.label+')','×'+r.mult],
         ['Survivor bonus','+'+survBonus],
         ['Achievements ('+G.achievements.length+')'+' ×8','+'+achBonus],
