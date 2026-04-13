@@ -349,7 +349,7 @@ const SPECIES_DATA = [
 
   { id:173, name:'Cleffa'          , types:['Pastry'], baseStats:{hp: 50,atk: 25,def: 28,speed: 15,special: 45,spdef: 55}, bst:218 , brewName:'Clef Ah Session Pastry' },
 
-  { id:174, name:'Igglybuff'       , types:['Blonde'], baseStats:{hp: 90,atk: 30,def: 15,speed: 15,special: 40,spdef: 20}, bst:210 , brewName:'Igg Lee Buff Pastry Blonde' },
+  { id:174, name:'Igglybuff'       , types:['Blonde', 'Pastry'], baseStats:{hp: 90,atk: 30,def: 15,speed: 15,special: 40,spdef: 20}, bst:210 , brewName:'Igg Lee Buff Pastry Blonde' },
 
   { id:175, name:'Togepi'          , types:['Pastry'], baseStats:{hp: 35,atk: 20,def: 65,speed: 20,special: 40,spdef: 65}, bst:245 , brewName:'Toe Guh Pee Session Blonde' },
 
