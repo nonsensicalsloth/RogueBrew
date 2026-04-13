@@ -70,17 +70,17 @@ h2{font-family:var(--pixel);font-size:clamp(9px,2vw,12px);color:var(--gold);marg
 const G={role:null,playerName:'',companions:[],supplies:{food:400,coin:200,parts:3,ponies:4,athelas:2},beer:100,health:100,maxHealth:100,day:1,location:'The Shire',pathFlags:{},tastingNotes:[],achievements:[],shopDoneFn:null,pace:'steady',illnesses:{}};
 const PACE={steady:{label:'Steady',dayMult:1,foodMult:1},grueling:{label:'Grueling',dayMult:0.75,foodMult:1.4},resting:{label:'Resting',dayMult:1.5,foodMult:0.8}};
 const ROLES={
-  head_brewer:{label:'Head Brewer',home:'Michel Delving',supplies:{food:600,coin:350,parts:4,ponies:6,athelas:4},mult:0.8,desc:'Most supplies. Score ×0.8.'},
-  assistant:{label:'Assistant Brewer',home:'Hobbiton',supplies:{food:400,coin:200,parts:3,ponies:4,athelas:2},mult:1.0,desc:'Balanced. Score ×1.0.'},
-  cellarman:{label:'Cellarman',home:'Bywater',supplies:{food:250,coin:120,parts:2,ponies:3,athelas:1},mult:1.3,desc:'Fewest supplies. Score ×1.3.'},
+  head_brewer:{label:'Head Brewer',home:'Michel Delving',supplies:{food:0,coin:350,parts:0,ponies:0,athelas:0},mult:0.8,desc:'Most supplies. Score ×0.8.'},
+  assistant:{label:'Assistant Brewer',home:'Hobbiton',supplies:{food:0,coin:200,parts:0,ponies:0,athelas:0},mult:1.0,desc:'Balanced. Score ×1.0.'},
+  cellarman:{label:'Cellarman',home:'Bywater',supplies:{food:0,coin:120,parts:0,ponies:0,athelas:0},mult:1.3,desc:'Fewest supplies. Score ×1.3.'},
 };
 const CROLES=[
   {rk:'hop_farmer',role:'Hop Farmer',def:'Sam'},
   {rk:'maltster',role:'Maltster',def:'Merry'},
   {rk:'taproom_hand',role:'Salesperson',def:'Pippin'},
-  {rk:'cellarman_c',role:'Cellarman',def:'Fatty'},
+  {rk:'cellarman_c',role:'Cellarman',def:'Fedegar'},
   {rk:'cooper',role:'Bartender',def:'Folco'},
-  {rk:'maintenance',role:'Maintenance Technician',def:'Lobelia'},
+  {rk:'maintenance',role:'Maintenance Technician',def:'Bilbo'},
 ];
 
 // ═══════════════════════════════════════════ HELPERS
@@ -348,7 +348,7 @@ function showCampScreen(nextFn){
     statusBar()+nextLandmark()+beerBar()+moraleBar()+milesBar()+weatherWarn+illWarn+partyHealth()+starvWarn
     +choices([
       {label:'Continue on the road',note:'Press on toward the next waypoint',fn:'_continue()'},
-      {label:'Hunt for food',note:'Uses half a day · Forager helps',fn:'doCampHunt()'},
+      {label:'Hunt for food',note:'Uses half a day · Hop Farmer helps',fn:'doCampHunt()'},
       {label:'Forage for plants and roots',note:'Uses half a day · Safe but modest',fn:'doCampForage()'},
       {label:'Rest and treat the sick',note:'Uses 1 day · Athelas cures illness · Recovers health',fn:'doCampRest()'},
       {label:'Change travel pace',note:'Steady · Grueling · Resting',fn:'showPaceChange()'},
@@ -512,9 +512,9 @@ function checkDeathsFromIllness(){
 // ═══════════════════════════════════════════ DEATH SCREEN
 function showDeath(name,cause,nextFn){
   _nextFn=nextFn;
-  R(frame('✝ '+name.toUpperCase()+' HAS DIED','Day '+G.day,
+  R(frame('🪦 '+name.toUpperCase()+' HAS DIED','Day '+G.day,
     '<div style="text-align:center;padding:30px 0 20px">'
-    +'<div style="font-size:48px;margin-bottom:16px">✝</div>'
+    +'<div style="font-size:48px;margin-bottom:16px">🪦</div>'
     +'<p style="font-family:var(--pixel);font-size:10px;color:#c04a2a;line-height:2">'+name+'</p>'
     +'<p style="font-family:var(--serif);font-size:15px;color:var(--dim);margin-top:12px">'+cause+'</p>'
     +'</div>',
@@ -533,9 +533,9 @@ function rollEquipmentFailure(nextFn){
     G.supplies.food=Math.max(0,G.supplies.food-grainLost);
     showEvent('PONY GONE LAME','One of the pack ponies pulls up lame on the trail. You cannot carry everything it was bearing.',false,'−1 pony · −'+grainLost+' lbs food.',nextFn);
   } else if(roll<0.22&&G.supplies.parts>0){
-    // Barrel fitting loose — parts saves it
+    // Part Pump Breaks — parts saves it
     G.supplies.parts--;
-    showEvent('BARREL FITTING LOOSE','A metal hoop on the barrel shifts. You catch it before the brew spills.',true,'Spare part used to resecure it. −1 part.',nextFn);
+    showEvent('PARTY PUMP BREAKS','Your paty pump breaks, you manage to fix it using some spare parts.',true,'Spare part used to fix it. −1 part.',nextFn);
   } else if(roll<0.22){
     // Barrel fitting loose — no parts
     G.beer=Math.max(0,G.beer-rand(8,18));
@@ -543,7 +543,7 @@ function rollEquipmentFailure(nextFn){
   } else if(roll<0.28&&G.supplies.parts>0){
     // Pack frame breaks — parts fixes it
     G.supplies.parts--;
-    showEvent('PACK FRAME BREAKS','The wooden frame on one pony\'s pack cracks. Your Bartender lashes it back together with spare parts.',true,'−1 part. Cooper saved the load.',nextFn);
+    showEvent('PACK FRAME BREAKS','The wooden frame on one pony\'s pack cracks. Your Bartender lashes it back together with spare parts.',true,'−1 part. Maintenance saved the load.',nextFn);
   } else if(roll<0.28){
     // Pack frame breaks — no parts
     const lost=rand(30,70);G.supplies.food=Math.max(0,G.supplies.food-lost);
@@ -620,7 +620,7 @@ const TRAVEL_EVENTS=[
   {id:'exhaustion_sick',w:6,title:'EXHAUSTION',text:'The pace is taking its toll. Muscles ache. Eyes are hollow.',bad:true,fn:()=>{const n=infectRandom('exhaustion');if(n)window._lastEventExtra=n+' is suffering from Exhaustion.';}},
   // Equipment
   {id:'loose_shoe',w:7,title:'PONY LOSES A SHOE',text:'A pony throws a shoe on rocky ground. You lose time sorting it out.',bad:true,fn:()=>{if(G.supplies.parts>0){G.supplies.parts--;window._lastEventExtra='Spare part used.';}else{G.supplies.ponies=Math.max(0,G.supplies.ponies-1);G.day++;window._lastEventExtra='No parts. Pony abandoned. +1 day.'}}},
-  {id:'barrel_check',w:5,title:'BARREL INSPECTION',text:'You stop to check the brew. Everything looks sound. The seal holds.',bad:false,fn:()=>{addNote('carefully tended, inspected at every opportunity');}},
+  {id:'barrel_check',w:5,title:'SAFETY MEETING',text:'You stop to do a little sensory. Everything tastes sound.',bad:false,fn:()=>{addNote('carefully tended, inspected at every opportunity');}},
   // Good
   {id:'abandoned',w:5,title:'ABANDONED CAMP',text:'A cold fire and scattered packs. Someone left in a hurry. Their loss, your gain.',bad:false,fn:()=>{G.supplies.food+=rand(20,50);G.supplies.coin+=rand(5,15);}},
   {id:'stream',w:7,title:'CLEAR STREAM',text:'Cold clean water. Everyone drinks deep and refills every skin.',bad:false,fn:()=>{healAll(6);}},
@@ -734,7 +734,7 @@ function showMerchantShop(){
   window._merchantItems=items;
   R(frame('TRAVELLING MERCHANT','Day '+G.day+' · '+G.location,
     statusBar()
-    +'<p>He eyes your barrel with interest but says nothing about it. His pack holds a few useful things.</p>'
+    +'<p>He eyes your keg with interest but says nothing about it. His pack holds a few useful things.</p>'
     +'<p style="font-family:var(--pixel);font-size:8px;color:var(--gold)">You have: '+G.supplies.coin+' coin</p>'
     +'<div style="margin:12px 0">'+rows+'</div>',
     '<button class="btn-primary" onclick="_merchantDone()">Move on</button>'
@@ -782,9 +782,9 @@ function showTitle(){
   const s=getStarter();
   const brewName=s?.name||'Your Brew';
   R(frame('THE BREWERY TRAIL','From the Shire to Mount Doom',
-    `<p>The barrel is packed. <strong style="color:var(--gold)">${brewName}</strong> — ${s?.style||'a fine ale'} — waits to make the journey.</p>
+    `<p>The keg is packed. <strong style="color:var(--gold)">${brewName}</strong> — ${s?.style||'a fine ale'} — waits to make the journey.</p>
     <p>Seven of you will set out from the Shire and carry it across Middle Earth to the fires of Orodruin. The road is long. Not everyone may return.</p>
-    <p style="color:var(--dim);font-size:12px;font-style:italic">"It's a dangerous business, going out your door."</p>`,
+    <p style="color:var(--dim);font-size:12px;font-style:italic">"It's a dangerous business, going out your door. You step onto the road, and if you don't keep your feet, there's no knowing where you'll be swept off to."</p>`,
     '<button class="btn-primary" onclick="(getStarter()?showRoleSelect:showBrewSetup)()">Begin →</button>'
   ));
 }
@@ -793,9 +793,9 @@ function showTitle(){
 function showRoleSelect(){
   R(frame('WHO ARE YOU?','Your role affects starting supplies and final score',
     choices([
-      {label:'Head Brewer of Michel Delving',note:'Most supplies · Score ×0.8 · Easier start',fn:"selectRole('head_brewer')"},
-      {label:'Assistant Brewer of Hobbiton',note:'Balanced · Score ×1.0 · The middle path',fn:"selectRole('assistant')"},
-      {label:'Cellarman of Bywater',note:'Fewest supplies · Score ×1.3 · Greatest reward',fn:"selectRole('cellarman')"},
+      {label:'Head Brewer from Michel Delving',note:'Has the most coins · Score ×0.8 · Easier start',fn:"selectRole('head_brewer')"},
+      {label:'Assistant Brewer from Hobbiton',note:'Balanced · Score ×1.0 · The middle path',fn:"selectRole('assistant')"},
+      {label:'Cellarman from Bywater',note:'Fewest coin · Score ×1.3 · Greatest reward',fn:"selectRole('cellarman')"},
     ])
   ));
 }
@@ -843,8 +843,8 @@ function showShireIntro(){
   const s=getStarter();
   R(frame('THE SHIRE — SETTING OUT','A clear morning. The road stretches east.',
     `${statusBar()}${beerBar()}${partyHealth()}${paceControl()}
-    <p>The barrel is loaded onto the lead pony. ${G.companions.map(c=>c.name).join(', ')} — your companions — shoulder their packs.</p>
-    <p>The East Road runs through comfortable hobbit country to Buckland. The fields and hills offer a shorter path, if you can navigate them. You can adjust your travel pace at any time.</p>`,
+    <p>The keg is loaded onto the lead pony. ${G.companions.map(c=>c.name).join(', ')} — your companions — shoulder their packs.</p>
+    <p>The East Road runs through comfortable hobbit country to the Brandywine Bridge. Cutting through the fields and hills offer a shorter path, if you can navigate them. You can adjust your travel pace at any time.</p>`,
     `<button class="btn-primary" onclick="decision1()">Choose your road →</button>`
   ));
 }
@@ -852,12 +852,12 @@ function showShireIntro(){
 // ═══ DECISION 1: MAIN ROAD vs CROSS-COUNTRY ═══════════════════════════
 function decision1(){
   G.location='East of Hobbiton';
-  R(frame('THE SHIRE — DAY '+G.day,'Road to Buckland',
+  R(frame('THE SHIRE — DAY '+G.day,'Road to the Brandywine Bridge',
     statusBar()+beerBar()+partyHealth()+paceControl()+
-    `<p>The East Road passes through Hobbiton, Bywater, Woodhall, and Stock before reaching Buckland. Comfortable, perhaps too comfortable — the Shire's finest pubs line the way. Or you could cut across the fields and bogs of the Marish.</p>`+
+    `<p>The East Road passes through Hobbiton, Bywater, Frogmorton, and Stock before reaching the Brandywine Bridge. Comfortable, perhaps too comfortable — the Shire's finest pubs line the way. Or you could cut across the fields and hills of the Shire.</p>`+
     choices([
-      {label:'Take the East Road to Buckland',note:'Safe · +3 days · Risk of pub delays · Green Dragon, Ivy Bush, Golden Perch, Floating Log',fn:"chooseD1('road')"},
-      {label:'Cut cross-country through the Marish',note:'+1 day · Risk of getting lost or chased off · No pub stops',fn:"chooseD1('country')"},
+      {label:'Take the East Road to the Brandywine Bridge',note:'Safe · +3 days · Risk of pub delays · Green Dragon, Ivy Bush, Golden Perch, Floating Log',fn:"chooseD1('road')"},
+      {label:'Cut cross-country through the Shire',note:'+1 day · Risk of getting lost or chased off · No pub stops',fn:"chooseD1('country')"},
     ])
   ));
 }
@@ -883,7 +883,7 @@ function chooseD1(c){
         `The East Road is well-travelled — perhaps too well. You stop at ${pubMessages.length} pub${pubMessages.length>1?'s':''} along the way.<br><br>${pubMessages.join('<br>')}`,
         false,`+${pubDays} extra day${pubDays>1?'s':''} lost to the finest hospitality in the Shire.`,function(){travelStretch(1,decision2);});
     } else {
-      showEvent('THE EAST ROAD','A determined march. The ponies keep good time and the party manages to walk straight past every inn. You reach Buckland ahead of schedule.',true,'',function(){travelStretch(1,decision2);});
+      showEvent('THE EAST ROAD','A determined march. The ponies keep good time and the party manages to walk straight past every inn. You reach the Brandywine Bridge ahead of schedule.',true,'',function(){travelStretch(1,decision2);});
     }
   } else {
     advance(1);
@@ -895,9 +895,9 @@ function chooseD1(c){
     } else if(roll<0.5){
       // Got lost
       advance(2);const v=damageRandom(8);
-      showEvent('LOST IN THE MARISH',`The bogs near the Marish swallow two extra days. Every path looks the same. ${v?.name||'A companion'} is exhausted from the detour.`,false,'Travel time +2 days.',function(){travelStretch(1,decision2);});
+      showEvent('LOST IN THE SHIRE',`The forest north of woodhall swallow two extra days. Every path looks the same. ${v?.name||'A companion'} is exhausted from the detour.`,false,'Travel time +2 days.',function(){travelStretch(1,decision2);});
     } else {
-      showEvent('CROSS-COUNTRY','The fields are clear. You reach Buckland a full day ahead of the road route, bypassing every inn.',true,'',function(){travelStretch(1,decision2);});
+      showEvent('CROSS-COUNTRY','The fields are clear. You reach the Brandywine a full day ahead of the road route, bypassing every inn.',true,'',function(){travelStretch(1,decision2);});
     }
   }
 }
@@ -934,7 +934,7 @@ function chooseD2(c){
     if(G.supplies.coin<20){showEvent('BUCKLEBURY FERRY','The ferryman shakes his head. Not enough coin.',false,'',decision2);return;}
     // Ferry on road path costs no extra time; cross-country adds no time either (already factored)
     G.location='Bucklebury Ferry';
-    R(frame('BUCKLEBURY FERRY — DAY '+G.day,'Old Gorgo the ferryman eyes your barrel.',
+    R(frame('BUCKLEBURY FERRY — DAY '+G.day,'Old Gorgo the ferryman eyes your keg.',
       statusBar()+beerBar()+
       `<p>"That's a fine smell off that keg," he says. "I'd take a taste of that over coin, I would."</p>`+
       choices([
@@ -957,10 +957,10 @@ function decision3(){
   G.location='Buckland Gate';addMiles(30);
   R(frame('BUCKLAND GATE — DAY '+G.day,'The Old Forest or the long road?',
     statusBar()+beerBar()+partyHealth()+
-    `<p>The Old Forest lies directly ahead — a shortcut, if you trust it. Something old and wilful lives among those trees. The main road swings south through Chetwood to Bree — safer, two days longer, but with occasional company on the road.</p>`+
+    `<p>The Old Forest lies directly ahead — a shortcut, if you trust it. Something old and wilful lives among those trees. The main road swings north and then east through the grasslands to Bree — two days longer, but with occasional company on the road.</p>`+
     choices([
-      {label:'Enter the Old Forest',note:'Shorter · Tom Bombadil event possible · Dangerous if lost',fn:"chooseD3('forest')"},
-      {label:'Take the main road south to Bree',note:'+2 days · Chance of brigands or traders',fn:"chooseD3('road')"},
+      {label:'Enter the Old Forest',note:'Shorter · Dangerous if lost',fn:"chooseD3('forest')"},
+      {label:'Take the main road east to Bree',note:'+2 days · Chance of brigands or traders',fn:"chooseD3('road')"},
     ])
   ));
 }
@@ -972,16 +972,16 @@ function chooseD3(c){
     if(roll<0.4){
       // Tom Bombadil — great outcome
       G.pathFlags.metTom=true;addAch('tom','Met Tom Bombadil in the Old Forest');
-      healAll(20);morale(20,'tom bombadil');
-      showEvent('TOM BOMBADIL','"Hey dol! merry dol! ring a dong dillo!" He appears from nowhere, hat yellow as butter, boots bright blue. He leads you safely through the Withywindle, singing all the way. Everyone arrives fed and rested.',true,'All party members +20 health. Tom Bombadil remembered.',function(){travelStretch(2,reachBree);});
+      healAll(5);morale(20,'tom bombadil');
+      showEvent('TOM BOMBADIL','"Hey dol! merry dol! ring a dong dillo!" He appears from nowhere, his boots yellow as butter, jacket bright blue. He leads you safely through the Withywindle, singing all the way. Everyone arrives fed and rested.',true,'All party members +5 health. Tom Bombadil remembered.',function(){travelStretch(2,reachBree);});
     } else if(roll<0.7){
       // Lost, possible Barrow Downs
       advance(2);const v=damageRandom(20);
       if(Math.random()<0.3){
         // Barrow Downs — rescued by Tom if met, severe damage if not
         if(G.pathFlags.metTom){
-          healAll(10);
-          showEvent('THE BARROW DOWNS',`You stumble out of the forest into cold fog. The Barrow-wights circle you — but Tom Bombadil's voice rings out from somewhere. "Tom Bombadil is Master!" The cold lifts. He pulls you free.`,true,'Tom saved you from the Barrow Downs.',function(){travelStretch(2,reachBree);});
+          healAll(5);
+          showEvent('THE BARROW DOWNS',`You stumble out of the forest into dense cold fog. The Barrow-wights circle you — but Tom Bombadil's voice rings out from somewhere. "Tom Bombadil is Master!" The cold lifts. He pulls you free.`,true,'Tom saved you from the Barrow Downs.',function(){travelStretch(2,reachBree);});
         } else {
           damageAll(30);morale(-15,'barrow downs');const v2=damageRandom(40);
           showEvent('THE BARROW DOWNS',`Cold mist swallows the path. You wake in a barrow, ancient swords pressed to your throats. Somehow — barely — you break free. ${v2&&v2.health<=0?v2.name+' did not make it out.':'Everyone survives, barely.'}`,false,'Very dangerous. Much health lost.',function(){travelStretch(2,reachBree);});
@@ -998,12 +998,12 @@ function chooseD3(c){
     const roll=Math.random();
     if(roll<0.25){
       const lost=rand(20,50);G.supplies.food=Math.max(0,G.supplies.food-lost);
-      showEvent('BRIGANDS ON THE CHETWOOD ROAD',`A group of rough men steps out from the trees. You surrender ${lost} lbs of food before they disappear back into the wood.`,false,`−${lost} lbs food.`,function(){travelStretch(2,reachBree);});
+      showEvent('BRIGANDS ON THE ROAD',`A group of rough men step out from the trees. You surrender ${lost} lbs of food before they disappear back into the wood.`,false,`−${lost} lbs food.`,function(){travelStretch(2,reachBree);});
     } else if(roll<0.5){
       G.supplies.food+=rand(30,60);G.supplies.coin+=rand(10,25);
       showEvent('MERCHANTS ON THE ROAD','A cheerful wagon train heading west. They trade fairly — food and coin change hands to everyone\'s satisfaction.',true,'+food, +coin.',function(){travelStretch(2,reachBree);});
     } else {
-      showEvent('THE CHETWOOD ROAD','The long road through the Chetwood is grey and uneventful. You arrive at Bree without incident.',true,'',function(){travelStretch(2,reachBree);});
+      showEvent('THE LONG ROAD','The long road to Bree is grey and uneventful. You arrive at Bree without incident.',true,'',function(){travelStretch(2,reachBree);});
     }
   }
 }
