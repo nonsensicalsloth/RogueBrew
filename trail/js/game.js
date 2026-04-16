@@ -544,6 +544,7 @@ const Game = (() => {
 
   // ── ACTION BAR (right) ─────────────────────────────────────────────
   function actTrade() {
+    if (_afterFork) { UI.log('Finish the current decision first.', 'dim'); return; }
     // Only allow trading at towns (or if a trader event has set tradeAvailableUntil)
     const here = LANDMARKS.find(l => l.name === G.location);
     const atTown = here && here.town;
@@ -581,6 +582,7 @@ const Game = (() => {
   }
 
   function actRest() {
+    if (_afterFork) { UI.log('Finish the current decision first.', 'dim'); return; }
     stopTravel();
     _currentChoices = [
       { label: 'Rest 1 day',  note: 'Heal +10 · eat food',     _handler: () => { restDay(); UI.hideDecision(); promptContinue(); } },
@@ -634,17 +636,26 @@ const Game = (() => {
       UI.log('Nothing lives here that you would want to eat.', 'dim');
       return;
     }
+    // Block during active decision
+    if (_afterFork || (_currentChoices && _currentChoices.length)) {
+      UI.log('Finish the current decision first.', 'dim');
+      return;
+    }
     if (G.pathFlags._lastHuntDay === G.day) {
       UI.log('Already hunted today. Try again tomorrow.', 'dim');
       return;
     }
     stopTravel();
     G.pathFlags._lastHuntDay = G.day;
+    G.day += 1; // hunting takes a day
+    const eat = Math.round(RATIONS[G.rations].lbs * partySize());
+    G.supplies.food = Math.max(0, G.supplies.food - eat);
     const lbs = doHunt();
-    if (lbs === 0) UI.log('Hunting: found nothing today.', 'bad');
-    else if (lbs < 50)  UI.log('Hunting: rabbits and birds. +' + lbs + ' lbs.', 'good');
-    else if (lbs < 120) UI.log('Hunting: a good deer. +' + lbs + ' lbs.', 'good');
-    else                UI.log('Hunting: a fat stag. +' + lbs + ' lbs.', 'good');
+    G.supplies.food += lbs;
+    if (lbs === 0) UI.log('Hunting: found nothing. Lost a day. −' + eat + ' lbs food eaten.', 'bad');
+    else if (lbs < 50)  UI.log('Hunting: rabbits and birds. +' + lbs + ' lbs (−' + eat + ' lbs eaten). 1 day.', 'good');
+    else if (lbs < 120) UI.log('Hunting: a good deer. +' + lbs + ' lbs (−' + eat + ' lbs eaten). 1 day.', 'good');
+    else                UI.log('Hunting: a fat stag. +' + lbs + ' lbs (−' + eat + ' lbs eaten). 1 day.', 'good');
     UI.updateConditions();
     promptContinue();
   }
