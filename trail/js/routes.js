@@ -1009,14 +1009,25 @@ const FORKS = {
               };
             }
 
+            // Barrow Downs fires the day AFTER the warning
+            if (G.pathFlags._barrowDownsPending) {
+              G.pathFlags._barrowDownsPending = false;
+              return barrowDownsEvent(G);
+            }
+
             // Getting lost — 35% per day
             if (Math.random() < 0.35) {
-              G.pathFlags._forestLostCount = (G.pathFlags._forestLostCount || 0) + 1;
               G.day += 1;
               // Sub-roll: 30% chance of wandering into the Barrow Downs
               if (!G.pathFlags._sentToBarrowDowns && Math.random() < 0.30) {
                 G.pathFlags._sentToBarrowDowns = true;
-                return barrowDownsEvent(G);
+                G.pathFlags._barrowDownsPending = true;
+                return {
+                  title: 'Lost deep — the Barrow Downs',
+                  text:  'Paths closed. The trees thinned. Mist rolled in. Standing stones rose from the grass ahead. You have wandered into the Barrow Downs.',
+                  aftermath: '+1 day. Something stirs in the mist...',
+                  bad:   true,
+                };
               }
               return {
                 title: 'Lost in the Old Forest',
