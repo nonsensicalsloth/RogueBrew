@@ -59,19 +59,52 @@ function rollRoadDangers(G, region) {
     return buildAmbushDecision();
   }
 
-  // Brigands — passive event, steal food, flip spyFlag (they're scouts/working with spies)
+  // Brigands — decision encounter. Smaller than a full ambush.
+  // Sets spyFlag (they're working with spies). Player gets fight/run/bribe.
   if (rates.bandit > 0 && Math.random() < rates.bandit) {
-    const lost = rand(15, 40);
-    G.supplies.food = Math.max(0, G.supplies.food - lost);
-    const wasAlreadyTracked = G.spyFlag;
-    G.spyFlag = true;
     const hidden = G.totalAmbushes < 2;
     return {
-      title: 'Brigands on the road',
-      text:  'A small band of men blocked the path and demanded a toll. They took what they could carry and slipped into the brush. ' +
-             (hidden ? '' : 'They did not act like common thieves — more like scouts.'),
-      aftermath: '−' + lost + ' lbs food.' + (wasAlreadyTracked || hidden ? '' : ' You feel watched.'),
-      bad:   true,
+      decision: {
+        title: 'Brigands on the road',
+        body:  'A small band of men step out and demand a toll. They are armed but few.' +
+               (hidden ? '' : ' They do not act like common thieves — more like scouts.'),
+        choices: [
+          {
+            label: 'Fight them off',
+            note:  'Small risk of injury',
+            handler: () => {
+              G.spyFlag = true;
+              if (Math.random() < 0.35) {
+                const v = damageRandom(rand(5, 12));
+                UI.log('Drove the brigands off — ' + (v ? v.name : 'someone') + ' took a nick.', 'bad');
+              } else {
+                UI.log('Drove them off easily. They scattered.', 'good');
+              }
+            },
+          },
+          {
+            label: 'Hand over some food',
+            note:  'Lose food · no fight',
+            handler: () => {
+              G.spyFlag = true;
+              const lost = rand(15, 40);
+              G.supplies.food = Math.max(0, G.supplies.food - lost);
+              UI.log('Gave them what they asked. −' + lost + ' lbs food.', 'bad');
+            },
+          },
+          {
+            label: 'Bribe them with coin',
+            note:  '15 coin · they leave happy',
+            disabled: G.supplies.coin < 15,
+            disabledNote: 'Not enough coin (need 15)',
+            handler: () => {
+              G.spyFlag = true;
+              G.supplies.coin -= 15;
+              UI.log('Tossed them a small purse. They touched their caps and left.', 'dim');
+            },
+          },
+        ],
+      },
     };
   }
 
