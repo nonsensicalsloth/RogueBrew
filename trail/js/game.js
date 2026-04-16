@@ -9,6 +9,7 @@ const Game = (() => {
   let _afterFork = null;       // callback to resume travel after a fork decision
   let _currentChoices = null;  // for decision panel
   let _onContinue = null;      // what Continue button does (besides start travel)
+  let _decisionActive = false; // true when a fork/decision panel is showing
 
   // ── BOOT ──────────────────────────────────────────────────────────
   function start() {
@@ -188,6 +189,7 @@ const Game = (() => {
       _handler: () => {
         if (c.disabled) return;
         UI.hideDecision();
+        _decisionActive = false;
         c.handler();
         UI.updateConditions();
         checkDeaths();
@@ -199,6 +201,7 @@ const Game = (() => {
       },
     }));
     _currentChoices = choices;
+    _decisionActive = true;
     UI.showDecision(dec.title, dec.body, choices);
   }
 
@@ -328,6 +331,7 @@ const Game = (() => {
       const route = choices[idx]._route;
       if (choices[idx].disabled) return;
       UI.hideDecision();
+      _decisionActive = false;
 
       // Special: "wait a day" pseudo-route re-rolls river depth
       if (route._wait) {
@@ -434,6 +438,7 @@ const Game = (() => {
       promptContinue();
     };
 
+    _decisionActive = true;
     UI.showDecision(fork.title, body, choices);
   }
 
@@ -544,7 +549,7 @@ const Game = (() => {
 
   // ── ACTION BAR (right) ─────────────────────────────────────────────
   function actTrade() {
-    if (_afterFork) { UI.log('Finish the current decision first.', 'dim'); return; }
+    if (_decisionActive) { UI.log('Finish the current decision first.', 'dim'); return; }
     // Only allow trading at towns (or if a trader event has set tradeAvailableUntil)
     const here = LANDMARKS.find(l => l.name === G.location);
     const atTown = here && here.town;
@@ -582,7 +587,7 @@ const Game = (() => {
   }
 
   function actRest() {
-    if (_afterFork) { UI.log('Finish the current decision first.', 'dim'); return; }
+    if (_decisionActive) { UI.log('Finish the current decision first.', 'dim'); return; }
     stopTravel();
     _currentChoices = [
       { label: 'Rest 1 day',  note: 'Heal +10 · eat food',     _handler: () => { restDay(); UI.hideDecision(); promptContinue(); } },
@@ -637,7 +642,7 @@ const Game = (() => {
       return;
     }
     // Block during active decision
-    if (_afterFork || (_currentChoices && _currentChoices.length)) {
+    if (_decisionActive) {
       UI.log('Finish the current decision first.', 'dim');
       return;
     }
