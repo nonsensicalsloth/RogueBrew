@@ -492,7 +492,7 @@ const Game = (() => {
       '<div class="map-progress"><div class="map-bar" style="width:' + pct + '%"></div></div>' +
       '<div class="map-pct">' + G.location + ' · ' + G.miles + ' of ' + TOTAL_MILES + ' miles (' + pct + '%)</div>' +
       '<div class="map-container" style="position:relative;width:100%;overflow:auto;max-height:70vh;border:2px solid #2b1810;border-radius:4px;">' +
-        '<img src="img/map.jpg" style="width:100%;display:block;" onerror="this.style.display=\'none\'">' +
+        '<img src="img/map.jpeg" style="width:100%;display:block;" onerror="this.style.display=\'none\'">' +
         '<svg viewBox="0 0 ' + mapData.mapW + ' ' + mapData.mapH + '" ' +
           'style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;">' +
           mapData.svg +
