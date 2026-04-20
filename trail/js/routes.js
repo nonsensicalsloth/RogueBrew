@@ -913,8 +913,8 @@ const FORKS = {
             const road = rollRoadDangers(G, 'eriador');
             if (road) return road;
 
-            // Snake bite — 5% per day, OT-Deluxe style
-            if (Math.random() < 0.05) {
+            // Snake bite — 8% per day
+            if (Math.random() < 0.08) {
               const v = damageRandom(rand(8, 18));
               return {
                 title: 'Snake bite',
@@ -924,8 +924,8 @@ const FORKS = {
               };
             }
 
-            // Wagon wheel / pony shoe — 4% per day
-            if (Math.random() < 0.04) {
+            // Wagon wheel / pony shoe — 6% per day
+            if (Math.random() < 0.06) {
               if (G.supplies.parts > 0) {
                 G.supplies.parts--;
                 return {
@@ -1191,8 +1191,8 @@ const FORKS = {
           const road = rollRoadDangers(G, 'eriador');
           if (road) return road;
 
-          // Snake bite — 5%
-          if (Math.random() < 0.05) {
+          // Snake bite — 8%
+          if (Math.random() < 0.08) {
             const v = damageRandom(rand(8, 18));
             return {
               title: 'Snake bite',
@@ -1201,8 +1201,8 @@ const FORKS = {
               bad:   true,
             };
           }
-          // Wagon wheel / pony shoe — 4%
-          if (Math.random() < 0.04) {
+          // Wagon wheel / pony shoe — 6%
+          if (Math.random() < 0.06) {
             if (G.supplies.parts > 0) {
               G.supplies.parts--;
               return {
@@ -1302,8 +1302,8 @@ const FORKS = {
 
           if (!inHills) {
             // ── MARSH PHASE ──
-            // Marsh fever (mosquito) — 2%
-            if (Math.random() < 0.02) {
+            // Marsh fever (mosquito) — 4%
+            if (Math.random() < 0.04) {
               const n = infectRandom('fever');
               if (n) {
                 return {
@@ -1314,8 +1314,8 @@ const FORKS = {
                 };
               }
             }
-            // Trench foot — 2%
-            if (Math.random() < 0.02) {
+            // Trench foot — 4%
+            if (Math.random() < 0.04) {
               const alive = livingMembers();
               const unhealthy = alive.filter(p => !G.illnesses[p.name]);
               if (unhealthy.length > 0) {
@@ -1329,8 +1329,8 @@ const FORKS = {
                 };
               }
             }
-            // Sleepless (neekerbreekers) — 3%
-            if (Math.random() < 0.03) {
+            // Sleepless (neekerbreekers) — 5%
+            if (Math.random() < 0.05) {
               const alive = livingMembers();
               const unhealthy = alive.filter(p => !G.illnesses[p.name]);
               if (unhealthy.length > 0) {
@@ -1345,8 +1345,8 @@ const FORKS = {
                 };
               }
             }
-            // Stuck wagon / pony — 2%
-            if (Math.random() < 0.02) {
+            // Stuck wagon / pony — 4%
+            if (Math.random() < 0.04) {
               G.day += 1;
               const lost = rand(10, 25);
               G.supplies.food = Math.max(0, G.supplies.food - lost);
@@ -1357,8 +1357,8 @@ const FORKS = {
                 bad:   true,
               };
             }
-            // Lost in fog — 3%
-            if (Math.random() < 0.03) {
+            // Lost in fog — 5%
+            if (Math.random() < 0.05) {
               G.day += 1;
               return {
                 title: 'Lost in the fog',
@@ -2211,7 +2211,7 @@ const FORKS = {
             const lame = rollPonyLame(G); if (lame) return lame;
             const bite = rollPonyBite(G); if (bite) return bite;
             // Crebain — Saruman's spies (variant on spy event)
-            if (Math.random() < 0.02) {
+            if (Math.random() < 0.04) {
               G.spyFlag = true;
               G.sarumanCounter = (G.sarumanCounter || 0) + 1;
               return {
@@ -2382,12 +2382,12 @@ const FORKS = {
           },
           modifier: { eventRate: 0.16, goodBias: 0.45, flavor: 'river' },
           dailyRoll: (G) => {
-            // Orc-arrow ambush — 2%/day, full decision encounter
-            if (Math.random() < 0.02) {
+            // Orc-arrow ambush — 6%/day, full decision encounter
+            if (Math.random() < 0.04) {
               return buildAnduinOrcAmbush();
             }
-            // Supplies dropped overboard — 2%/day
-            if (Math.random() < 0.02) {
+            // Supplies dropped overboard — 5%/day
+            if (Math.random() < 0.05) {
               const lost = rand(20, 50);
               G.supplies.food = Math.max(0, G.supplies.food - lost);
               return {
@@ -2397,8 +2397,8 @@ const FORKS = {
                 bad:   true,
               };
             }
-            // Calm water — 3%/day positive
-            if (Math.random() < 0.03) {
+            // Calm water — 5%/day positive
+            if (Math.random() < 0.05) {
               healAll(3);
               return {
                 title: 'A still stretch of river',
@@ -3057,8 +3057,8 @@ const FORKS = {
           },
           modifier: { eventRate: 0.15, goodBias: 0.3, flavor: 'dark' },
           dailyRoll: (G) => {
-            // Wraith-light — 4%, low damage but unsettling
-            if (Math.random() < 0.04) {
+            // Wraith-light — 6%
+            if (Math.random() < 0.06) {
               damageAll(rand(2, 6));
               return {
                 title: 'Wraith-light from the city',
@@ -3067,8 +3067,8 @@ const FORKS = {
                 bad:   true,
               };
             }
-            // Falling rocks on the stair — 4%
-            if (Math.random() < 0.04) {
+            // Falling rocks on the stair — 6%
+            if (Math.random() < 0.06) {
               const v = damageRandom(rand(6, 12));
               return {
                 title: 'Loose stone on the stair',
@@ -3077,8 +3077,8 @@ const FORKS = {
                 bad:   true,
               };
             }
-            // Frostbite from the cold mountain air — 3%
-            if (Math.random() < 0.03) {
+            // Frostbite from the cold mountain air — 5%
+            if (Math.random() < 0.05) {
               const alive = livingMembers();
               const unhealthy = alive.filter(p => !G.illnesses[p.name]);
               if (unhealthy.length > 0) {
