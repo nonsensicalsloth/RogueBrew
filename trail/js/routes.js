@@ -901,6 +901,7 @@ const FORKS = {
                                        'Safe · normal length',
           to:    'Bree',
           apply: (G) => {
+            G.pathFlags._roadToBree = true;
             if (roadModifier !== 0) {
               G.day += roadModifier;
               const word = roadModifier > 0 ? 'longer' : 'shorter';
@@ -982,6 +983,7 @@ const FORKS = {
                                          'Shorter on paper · trees and worse',
           to:    'Bree',
           apply: (G) => {
+            G.pathFlags._forestToBree = true;
             if (forestModifier !== 0) {
               G.day += forestModifier;
               const word = forestModifier > 0 ? 'longer' : 'shorter';
@@ -1183,6 +1185,7 @@ const FORKS = {
         note:  'Safe · 1 day shorter · the direct road',
         to:    'Weathertop',
         apply: (G) => {
+          G.pathFlags._roadToWT = true;
           G.day -= 1;
           UI.log('The Great East Road runs straight east. About a day quicker than cutting through the wild.', 'dim');
         },
@@ -1253,6 +1256,7 @@ const FORKS = {
         note:  'Wilder · marsh first, then climb · same length',
         to:    'Weathertop',
         apply: (G) => {
+          G.pathFlags._marshToWT = true;
           UI.log('Left the road for the marshes. Wet, dark, and full of small pests.', 'dim');
         },
         modifier: { eventRate: 0.10, goodBias: 0.35, flavor: 'marsh' },

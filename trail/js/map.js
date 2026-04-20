@@ -246,47 +246,55 @@ const MAP_LANDMARK_PX = {
 };
 
 // ── DETERMINE WHICH SEGMENTS TO DRAW ────────────────────────────────
-// Returns an array of { points, traveled, active } objects.
-// 'traveled' = fully completed segment (solid line).
-// 'active' = currently traveling this segment (partial line + dot).
+// Only draws segments that were ACTUALLY traveled based on game state.
+// Uses pathFlags and arrivalPoints to determine which fork was taken.
 function getVisibleSegments() {
   const segs = [];
-  const visited = []; // landmark names we've passed through
 
-  // Build the ordered list of segments the player has traveled or is traveling.
-  // Walk through MAP_PATHS and match against game state.
   for (const [key, seg] of Object.entries(MAP_PATHS)) {
-    // Skip route-specific segments that don't match the player's chosen route
+    // --- ROUTE GATE: skip segments for routes the player didn't take ---
     if (seg.route && G.pathFlags.route !== seg.route) continue;
 
-    // Skip arrival-point segments that don't match
-    if (seg.arrivalPoint) {
-      if (seg.from === 'The Shire') {
-        const usedRoad = G.arrivalPoint === 'bridge' || G.pathFlags.brandywineCrossingPoint === 'bridge';
-        const usedXC = G.arrivalPoint === 'ferry_landing' || G.pathFlags.brandywineCrossingPoint === 'ferry';
-        if (seg.arrivalPoint === 'bridge' && !usedRoad) continue;
-        if (seg.arrivalPoint === 'ferry_landing' && !usedXC) continue;
-      }
-      if (seg.from === 'Weathertop' || seg.from === 'Weathertop East') {
-        if (seg.arrivalPoint === 'last_bridge' && G.pathFlags.hoarwellCrossingPoint !== 'bridge' && G.arrivalPoint !== 'last_bridge') continue;
-        if (seg.arrivalPoint === 'upstream' && G.pathFlags.hoarwellCrossingPoint !== 'ford' && G.arrivalPoint !== 'upstream') continue;
-      }
-    }
-
-    // Skip detour-style paths (Barrow Downs) unless the flag is set
+    // --- DETOUR GATE: Barrow Downs only if visited ---
     if (seg.style === 'detour') {
       if (!G.pathFlags._sentToBarrowDowns) continue;
     }
 
-    // Skip pathFlag-gated segments
-    if (seg.pathFlag) {
-      // These are for road-vs-forest choices at Brandywine East Bank / Bree East
-      // We determine which was taken by checking which route the player walked
-      // Simple approach: check if the 'to' landmark has been reached
-      // and the path's geographic feel matches
+    // --- ARRIVAL POINT GATE: Shire paths ---
+    if (seg.arrivalPoint === 'bridge' && seg.from === 'The Shire') {
+      // Only show bridge path if player took the East Road
+      if (G.arrivalPoint === 'ferry_landing' || G.pathFlags.brandywineCrossingPoint === 'ferry' || G.pathFlags.brandywineCrossingPoint === 'ford') continue;
+      // If we haven't arrived at Brandywine yet, check which Shire route we're on
+      if (G.miles < 80 && G.currentRoute && G.currentRoute.label && /cross-country|Cross-country/i.test(G.currentRoute.label)) continue;
+    }
+    if (seg.arrivalPoint === 'ferry_landing' && seg.from === 'The Shire') {
+      if (G.arrivalPoint === 'bridge' || G.pathFlags.brandywineCrossingPoint === 'bridge') continue;
+      if (G.miles < 80 && G.currentRoute && G.currentRoute.label && /East Road/i.test(G.currentRoute.label)) continue;
     }
 
-    // Determine if this segment has been traveled, is active, or is future
+    // --- ARRIVAL POINT GATE: Weathertop → Hoarwell paths ---
+    if (seg.arrivalPoint === 'last_bridge') {
+      if (G.pathFlags.hoarwellCrossingPoint === 'ford' || G.arrivalPoint === 'upstream') continue;
+    }
+    if (seg.arrivalPoint === 'upstream') {
+      if (G.pathFlags.hoarwellCrossingPoint === 'bridge' || G.arrivalPoint === 'last_bridge') continue;
+    }
+
+    // --- PATH FLAG GATE: Brandywine→Bree and Bree→Weathertop splits ---
+    if (seg.pathFlag) {
+      // Only show if the matching flag is set (set by route apply)
+      if (!G.pathFlags[seg.pathFlag]) continue;
+    }
+
+    // --- HOARWELL convergence: two entry paths to Trollshaws ---
+    if (key === 'hoarwell_bridge_to_trollshaws') {
+      if (G.pathFlags.hoarwellCrossingPoint === 'ford' || G.arrivalPoint === 'upstream') continue;
+    }
+    if (key === 'hoarwell_upstream_to_trollshaws') {
+      if (G.pathFlags.hoarwellCrossingPoint !== 'ford' && G.arrivalPoint !== 'upstream') continue;
+    }
+
+    // --- Determine segment status based on miles ---
     const fromLm = LANDMARKS.find(l => l.name === seg.from);
     const toLm = LANDMARKS.find(l => l.name === seg.to);
     if (!fromLm || !toLm) continue;
@@ -295,14 +303,16 @@ function getVisibleSegments() {
     const toMile = toLm.miles;
 
     if (G.miles >= toMile) {
-      // Fully traveled
+      // Fully traveled — draw solid
       segs.push({ points: seg.points, status: 'traveled' });
-    } else if (G.miles >= fromMile && G.miles < toMile) {
-      // Currently on this segment
+    } else if (G.miles > fromMile && G.miles < toMile) {
+      // Currently traveling — draw solid up to dot, NO dashed future line
+      // (only show partial progress, not the path ahead)
       const progress = (G.miles - fromMile) / (toMile - fromMile);
       segs.push({ points: seg.points, status: 'active', progress });
     }
-    // else: future segment — don't draw
+    // At exactly fromMile (standing at a landmark/decision): don't draw this segment at all.
+    // The player hasn't started traveling yet.
   }
 
   return segs;
@@ -373,13 +383,11 @@ function renderMap() {
 
   let svg = '';
 
-  // --- PASS 1: Heavy dark outlines (creates strong contrast on parchment) ---
+  // --- PASS 1: Heavy dark outlines for traveled segments ---
   for (const seg of segments) {
-    const d = 'M ' + seg.points.map(p => p[0] + ' ' + p[1]).join(' L ');
     if (seg.status === 'traveled') {
+      const d = 'M ' + seg.points.map(p => p[0] + ' ' + p[1]).join(' L ');
       svg += '<path d="' + d + '" stroke="#000" stroke-width="' + outlineWidth + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>';
-    } else if (seg.status === 'active') {
-      svg += '<path d="' + d + '" stroke="#000" stroke-width="' + (outlineWidth - 4) + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.35" stroke-dasharray="40 25"/>';
     }
   }
 
@@ -391,13 +399,9 @@ function renderMap() {
     }
   }
 
-  // --- PASS 3: Active segment (dashed ahead, solid behind) ---
+  // --- PASS 3: Active segment (solid line up to the dot only — no future preview) ---
   if (activeSeg) {
-    // Dashed line showing full remaining path
-    const dFull = 'M ' + activeSeg.points.map(p => p[0] + ' ' + p[1]).join(' L ');
-    svg += '<path d="' + dFull + '" stroke="#cc2200" stroke-width="' + (lineWidth - 6) + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.45" stroke-dasharray="40 25"/>';
-
-    // Solid line for traveled portion
+    // Solid line for traveled portion only
     const traveledPts = [];
     const progress = activeSeg.progress;
     let totalLen = 0;
@@ -424,6 +428,9 @@ function renderMap() {
     }
     if (traveledPts.length >= 2) {
       const dT = 'M ' + traveledPts.map(p => p[0] + ' ' + p[1]).join(' L ');
+      // Dark outline
+      svg += '<path d="' + dT + '" stroke="#000" stroke-width="' + outlineWidth + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>';
+      // Red line
       svg += '<path d="' + dT + '" stroke="#cc2200" stroke-width="' + lineWidth + '" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
     }
   }
