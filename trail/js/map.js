@@ -345,35 +345,49 @@ function renderMap() {
   // Find the player dot position
   let dotPos = MAP_LANDMARK_PX[G.location] || MAP_LANDMARK_PX['The Shire'];
 
+  // Special case: Brandywine dot should show at ferry if that's where you crossed
+  if (G.location === 'Brandywine River') {
+    if (G.pathFlags.brandywineCrossingPoint === 'ferry' || G.arrivalPoint === 'ferry_landing') {
+      dotPos = [591, 969]; // Bucklebury Ferry position
+    }
+  }
+
+  // Special case: Hoarwell dot should show upstream if that's where you arrived
+  if (G.location === 'Hoarwell River') {
+    if (G.pathFlags.hoarwellCrossingPoint === 'ford' || G.arrivalPoint === 'upstream') {
+      dotPos = [1750, 653]; // upstream position
+    }
+  }
+
   // If on an active segment, interpolate the dot
   const activeSeg = segments.find(s => s.status === 'active');
   if (activeSeg) {
     dotPos = interpolatePolyline(activeSeg.points, activeSeg.progress);
   }
 
-  // Bold styling for visibility on parchment
-  const lineWidth = 22;
-  const outlineWidth = lineWidth + 12;
-  const dotRadius = 28;
-  const lmRadius = 14;
+  // VERY bold styling — must be visible on parchment
+  const lineWidth = 30;
+  const outlineWidth = lineWidth + 16;
+  const dotRadius = 36;
+  const lmRadius = 18;
 
   let svg = '';
 
-  // --- PASS 1: Dark outlines behind everything (creates contrast) ---
+  // --- PASS 1: Heavy dark outlines (creates strong contrast on parchment) ---
   for (const seg of segments) {
     const d = 'M ' + seg.points.map(p => p[0] + ' ' + p[1]).join(' L ');
     if (seg.status === 'traveled') {
-      svg += '<path d="' + d + '" stroke="#1a0f08" stroke-width="' + outlineWidth + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>';
+      svg += '<path d="' + d + '" stroke="#000" stroke-width="' + outlineWidth + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>';
     } else if (seg.status === 'active') {
-      svg += '<path d="' + d + '" stroke="#1a0f08" stroke-width="' + (outlineWidth - 4) + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.3" stroke-dasharray="30 20"/>';
+      svg += '<path d="' + d + '" stroke="#000" stroke-width="' + (outlineWidth - 4) + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.35" stroke-dasharray="40 25"/>';
     }
   }
 
-  // --- PASS 2: Gold traveled lines ---
+  // --- PASS 2: Bright red traveled lines (high contrast on parchment) ---
   for (const seg of segments) {
     if (seg.status === 'traveled') {
       const d = 'M ' + seg.points.map(p => p[0] + ' ' + p[1]).join(' L ');
-      svg += '<path d="' + d + '" stroke="#d4a030" stroke-width="' + lineWidth + '" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+      svg += '<path d="' + d + '" stroke="#cc2200" stroke-width="' + lineWidth + '" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
     }
   }
 
@@ -381,7 +395,7 @@ function renderMap() {
   if (activeSeg) {
     // Dashed line showing full remaining path
     const dFull = 'M ' + activeSeg.points.map(p => p[0] + ' ' + p[1]).join(' L ');
-    svg += '<path d="' + dFull + '" stroke="#d4a030" stroke-width="' + (lineWidth - 4) + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.4" stroke-dasharray="30 20"/>';
+    svg += '<path d="' + dFull + '" stroke="#cc2200" stroke-width="' + (lineWidth - 6) + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.45" stroke-dasharray="40 25"/>';
 
     // Solid line for traveled portion
     const traveledPts = [];
@@ -410,7 +424,7 @@ function renderMap() {
     }
     if (traveledPts.length >= 2) {
       const dT = 'M ' + traveledPts.map(p => p[0] + ' ' + p[1]).join(' L ');
-      svg += '<path d="' + dT + '" stroke="#d4a030" stroke-width="' + lineWidth + '" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+      svg += '<path d="' + dT + '" stroke="#cc2200" stroke-width="' + lineWidth + '" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
     }
   }
 
@@ -418,21 +432,15 @@ function renderMap() {
   for (const [name, pos] of Object.entries(MAP_LANDMARK_PX)) {
     const lm = LANDMARKS.find(l => l.name === name);
     if (!lm || G.miles < lm.miles) continue;
-    // Dark outline circle
-    svg += '<circle cx="' + pos[0] + '" cy="' + pos[1] + '" r="' + (lmRadius + 4) + '" fill="#1a0f08" opacity="0.7"/>';
-    // Gold fill
-    svg += '<circle cx="' + pos[0] + '" cy="' + pos[1] + '" r="' + lmRadius + '" fill="#d4a030" stroke="#1a0f08" stroke-width="4"/>';
+    svg += '<circle cx="' + pos[0] + '" cy="' + pos[1] + '" r="' + (lmRadius + 5) + '" fill="#000" opacity="0.7"/>';
+    svg += '<circle cx="' + pos[0] + '" cy="' + pos[1] + '" r="' + lmRadius + '" fill="#fff" stroke="#cc2200" stroke-width="5"/>';
   }
 
   // --- PASS 5: Player dot (on top of everything) ---
-  // Outer glow
-  svg += '<circle cx="' + dotPos[0] + '" cy="' + dotPos[1] + '" r="' + (dotRadius + 14) + '" fill="none" stroke="#e63946" stroke-width="4" opacity="0.4"/>';
-  // Dark outline
-  svg += '<circle cx="' + dotPos[0] + '" cy="' + dotPos[1] + '" r="' + (dotRadius + 4) + '" fill="#1a0f08" opacity="0.8"/>';
-  // Red dot
-  svg += '<circle cx="' + dotPos[0] + '" cy="' + dotPos[1] + '" r="' + dotRadius + '" fill="#e63946" stroke="#fff" stroke-width="5"/>';
-  // White center pip
-  svg += '<circle cx="' + dotPos[0] + '" cy="' + dotPos[1] + '" r="8" fill="#fff" opacity="0.9"/>';
+  svg += '<circle cx="' + dotPos[0] + '" cy="' + dotPos[1] + '" r="' + (dotRadius + 16) + '" fill="none" stroke="#22cc44" stroke-width="5" opacity="0.5"/>';
+  svg += '<circle cx="' + dotPos[0] + '" cy="' + dotPos[1] + '" r="' + (dotRadius + 5) + '" fill="#000" opacity="0.8"/>';
+  svg += '<circle cx="' + dotPos[0] + '" cy="' + dotPos[1] + '" r="' + dotRadius + '" fill="#22cc44" stroke="#fff" stroke-width="6"/>';
+  svg += '<circle cx="' + dotPos[0] + '" cy="' + dotPos[1] + '" r="10" fill="#fff" opacity="0.9"/>';
 
   return {
     svg: svg,
