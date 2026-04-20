@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════ MAP SYSTEM
 // Renders the Middle-earth map with path lines and a moving position dot.
-// Coordinates are pixel positions on map.jpg (5517×4384).
+// Coordinates are pixel positions on map.jpeg (5517×4384).
 
 const MAP_W = 5517;
 const MAP_H = 4384;
@@ -351,27 +351,39 @@ function renderMap() {
     dotPos = interpolatePolyline(activeSeg.points, activeSeg.progress);
   }
 
-  // Build SVG overlay — coordinates match the map image
-  const lineWidth = 12;
-  const dotRadius = 18;
+  // Bold styling for visibility on parchment
+  const lineWidth = 22;
+  const outlineWidth = lineWidth + 12;
+  const dotRadius = 28;
+  const lmRadius = 14;
 
   let svg = '';
 
-  // Draw traveled segments (solid gold line)
+  // --- PASS 1: Dark outlines behind everything (creates contrast) ---
   for (const seg of segments) {
+    const d = 'M ' + seg.points.map(p => p[0] + ' ' + p[1]).join(' L ');
     if (seg.status === 'traveled') {
-      const d = 'M ' + seg.points.map(p => p[0] + ' ' + p[1]).join(' L ');
-      svg += '<path d="' + d + '" stroke="#c4922a" stroke-width="' + lineWidth + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>';
+      svg += '<path d="' + d + '" stroke="#1a0f08" stroke-width="' + outlineWidth + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>';
+    } else if (seg.status === 'active') {
+      svg += '<path d="' + d + '" stroke="#1a0f08" stroke-width="' + (outlineWidth - 4) + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.3" stroke-dasharray="30 20"/>';
     }
   }
 
-  // Draw active segment (partial — up to the dot)
-  if (activeSeg) {
-    // Draw full segment faintly
-    const dFull = 'M ' + activeSeg.points.map(p => p[0] + ' ' + p[1]).join(' L ');
-    svg += '<path d="' + dFull + '" stroke="#c4922a" stroke-width="' + (lineWidth - 2) + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.3" stroke-dasharray="20 15"/>';
+  // --- PASS 2: Gold traveled lines ---
+  for (const seg of segments) {
+    if (seg.status === 'traveled') {
+      const d = 'M ' + seg.points.map(p => p[0] + ' ' + p[1]).join(' L ');
+      svg += '<path d="' + d + '" stroke="#d4a030" stroke-width="' + lineWidth + '" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+    }
+  }
 
-    // Draw traveled portion solid
+  // --- PASS 3: Active segment (dashed ahead, solid behind) ---
+  if (activeSeg) {
+    // Dashed line showing full remaining path
+    const dFull = 'M ' + activeSeg.points.map(p => p[0] + ' ' + p[1]).join(' L ');
+    svg += '<path d="' + dFull + '" stroke="#d4a030" stroke-width="' + (lineWidth - 4) + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.4" stroke-dasharray="30 20"/>';
+
+    // Solid line for traveled portion
     const traveledPts = [];
     const progress = activeSeg.progress;
     let totalLen = 0;
@@ -398,21 +410,29 @@ function renderMap() {
     }
     if (traveledPts.length >= 2) {
       const dT = 'M ' + traveledPts.map(p => p[0] + ' ' + p[1]).join(' L ');
-      svg += '<path d="' + dT + '" stroke="#c4922a" stroke-width="' + lineWidth + '" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>';
+      svg += '<path d="' + dT + '" stroke="#d4a030" stroke-width="' + lineWidth + '" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
     }
   }
 
-  // Draw player dot
-  svg += '<circle cx="' + dotPos[0] + '" cy="' + dotPos[1] + '" r="' + dotRadius + '" fill="#e63946" stroke="#2b1810" stroke-width="5"/>';
-  svg += '<circle cx="' + dotPos[0] + '" cy="' + dotPos[1] + '" r="' + (dotRadius + 8) + '" fill="none" stroke="#e63946" stroke-width="3" opacity="0.5"/>';
-
-  // Draw landmark labels for visited places
+  // --- PASS 4: Visited landmark markers ---
   for (const [name, pos] of Object.entries(MAP_LANDMARK_PX)) {
     const lm = LANDMARKS.find(l => l.name === name);
     if (!lm || G.miles < lm.miles) continue;
-    // Small circle at visited landmarks
-    svg += '<circle cx="' + pos[0] + '" cy="' + pos[1] + '" r="8" fill="#2b1810" stroke="#c4922a" stroke-width="3" opacity="0.7"/>';
+    // Dark outline circle
+    svg += '<circle cx="' + pos[0] + '" cy="' + pos[1] + '" r="' + (lmRadius + 4) + '" fill="#1a0f08" opacity="0.7"/>';
+    // Gold fill
+    svg += '<circle cx="' + pos[0] + '" cy="' + pos[1] + '" r="' + lmRadius + '" fill="#d4a030" stroke="#1a0f08" stroke-width="4"/>';
   }
+
+  // --- PASS 5: Player dot (on top of everything) ---
+  // Outer glow
+  svg += '<circle cx="' + dotPos[0] + '" cy="' + dotPos[1] + '" r="' + (dotRadius + 14) + '" fill="none" stroke="#e63946" stroke-width="4" opacity="0.4"/>';
+  // Dark outline
+  svg += '<circle cx="' + dotPos[0] + '" cy="' + dotPos[1] + '" r="' + (dotRadius + 4) + '" fill="#1a0f08" opacity="0.8"/>';
+  // Red dot
+  svg += '<circle cx="' + dotPos[0] + '" cy="' + dotPos[1] + '" r="' + dotRadius + '" fill="#e63946" stroke="#fff" stroke-width="5"/>';
+  // White center pip
+  svg += '<circle cx="' + dotPos[0] + '" cy="' + dotPos[1] + '" r="8" fill="#fff" opacity="0.9"/>';
 
   return {
     svg: svg,
