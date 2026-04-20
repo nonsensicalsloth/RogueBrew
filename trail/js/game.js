@@ -483,16 +483,35 @@ const Game = (() => {
   // ── NAV BAR (left) ─────────────────────────────────────────────────
   function navMap() {
     const pct = Math.round((G.miles / TOTAL_MILES) * 100);
-    UI.showModal('Map of Middle-earth',
+    const mapData = renderMap();
+
+    // Scale: display the map at a reasonable size in the modal.
+    // The modal will use CSS to size it; the SVG viewBox handles the rest.
+    const html =
       '<div class="map-wrap">' +
       '<div class="map-progress"><div class="map-bar" style="width:' + pct + '%"></div></div>' +
-      '<div class="map-pct">' + G.miles + ' of ' + TOTAL_MILES + ' miles (' + pct + '%)</div>' +
-      '<img src="img/map.jpg" onerror="this.style.display=\'none\'">' +
-      '<ul class="landmark-list">' +
-      LANDMARKS.map(l => '<li class="' + (G.miles >= l.miles ? 'visited' : '') + '">' +
-        l.name + ' <span>(mile ' + l.miles + ')</span></li>').join('') +
-      '</ul>' +
-      '</div>', '', false);
+      '<div class="map-pct">' + G.location + ' · ' + G.miles + ' of ' + TOTAL_MILES + ' miles (' + pct + '%)</div>' +
+      '<div class="map-container" style="position:relative;width:100%;overflow:auto;max-height:70vh;border:2px solid #2b1810;border-radius:4px;">' +
+        '<img src="img/map.jpg" style="width:100%;display:block;" onerror="this.style.display=\'none\'">' +
+        '<svg viewBox="0 0 ' + mapData.mapW + ' ' + mapData.mapH + '" ' +
+          'style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;">' +
+          mapData.svg +
+        '</svg>' +
+      '</div>' +
+      '</div>';
+
+    UI.showModal('Map of Middle-earth', html, '', false);
+
+    // Scroll to center the dot in the viewport
+    setTimeout(() => {
+      const container = document.querySelector('.map-container');
+      if (container) {
+        const dotX = mapData.dotPos[0] / mapData.mapW;
+        const dotY = mapData.dotPos[1] / mapData.mapH;
+        container.scrollLeft = (dotX * container.scrollWidth) - (container.clientWidth / 2);
+        container.scrollTop = (dotY * container.scrollHeight) - (container.clientHeight / 2);
+      }
+    }, 100);
   }
 
   function navGuide() {
