@@ -2463,7 +2463,9 @@ function openPokedexModal(initialTab = 'normal') {
   if (existing) { existing.remove(); return; }
 
   const BASE = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/';
-
+	const getSprite = (id, shiny=false) => CUSTOM_IDS.has(id)
+		? (shiny ? `sprites/${id}s.png` : `sprites/${id}.png`)
+		: (shiny ? BASE.replace('pokemon/','pokemon/shiny/') : BASE) + id + '.png';
   function buildNormalGrid() {
     const dex = getPokedex();
     const caughtCount = [...ALL_CATCHABLE_IDS].filter(id => dex[id]?.caught).length;
@@ -2474,7 +2476,7 @@ function openPokedexModal(initialTab = 'normal') {
           `<span class="type-badge type-${t.toLowerCase()}">${t}</span>`).join('');
         return `<div class="dex-card dex-caught">
           <div class="dex-num">#${String(id).padStart(3,'0')}</div>
-          <img src="${BASE + id + '.png'}" alt="${e.name}" class="dex-sprite"
+          <img src="${getSprite(id)}" alt="${e.name}" class="dex-sprite"
                onerror="this.src='';this.style.display='none'">
           <div class="dex-name">${e.brewName || e.name}</div>
           <div class="dex-types">${types}</div>
@@ -2482,7 +2484,7 @@ function openPokedexModal(initialTab = 'normal') {
       }
       return `<div class="dex-card dex-unknown">
         <div class="dex-num">#${String(id).padStart(3,'0')}</div>
-        <img src="${BASE + id + '.png'}" alt="???" class="dex-sprite dex-silhouette"
+        <img src="${getSprite(id)}" alt="???" class="dex-sprite dex-silhouette"
              onerror="this.src='';this.style.display='none'">
         <div class="dex-name dex-unknown-name">???</div>
       </div>`;
@@ -2501,7 +2503,7 @@ function openPokedexModal(initialTab = 'normal') {
           `<span class="type-badge type-${t.toLowerCase()}">${t}</span>`).join('');
         return `<div class="dex-card shiny-dex-card">
           <div class="dex-num">#${String(id).padStart(3,'0')}</div>
-          <img src="${e.shinySpriteUrl || BASE_SHINY + id + '.png'}" alt="${e.name}" class="dex-sprite"
+          <img src="${e.shinySpriteUrl || getSprite(id, true)}" alt="${e.name}" class="dex-sprite"
                onerror="this.src='';this.style.display='none'">
           <div class="dex-name">${e.brewName || e.name}</div>
           <div class="dex-types">${types}</div>
@@ -2510,7 +2512,7 @@ function openPokedexModal(initialTab = 'normal') {
       }
       return `<div class="dex-card dex-unknown">
         <div class="dex-num">#${String(id).padStart(3,'0')}</div>
-        <img src="${BASE_SHINY + id + '.png'}" alt="???" class="dex-sprite dex-silhouette"
+        <img src="${getSprite(id, true)}" alt="???" class="dex-sprite dex-silhouette"
              onerror="this.src='';this.style.display='none'">
         <div class="dex-name dex-unknown-name">???</div>
       </div>`;
