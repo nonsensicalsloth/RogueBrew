@@ -500,14 +500,14 @@ function calcHp(baseHp, level) {
   return Math.floor(baseHp * level / 50) + level + 10;
 }
 
-  const CUSTOM_IDS = new Set([387]);
+  const CUSTOM_IDS = new Set([6666]);
 
 function createInstance(species, level, isShiny = false, moveTier = 1) {
   const lvl = level || 5;
   const maxHp = calcHp(species.baseStats.hp, lvl);
   const id = species.id ?? species.speciesId;
 const spriteUrl = CUSTOM_IDS.has(id)
-  ? (isShiny ? `sprites/387s.png` : `sprites/387.png`)
+  ? (isShiny ? `sprites/6666s.png` : `sprites/6666.png`)
   : isShiny
     ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${id}.png`
     : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
