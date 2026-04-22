@@ -1,4 +1,4 @@
-// species.js — static Gen 1–3 species data (IDs 1–386)
+// species.js — static Gen 1–3 species data (IDs 1–386,6666)
 // Replaces PokeAPI runtime fetches. Types use brew names via TYPE_MAPPING.
 // Each entry: { id, name, types[], baseStats{hp,atk,def,speed,special,spdef}, bst }
 
