@@ -775,6 +775,8 @@ const SPECIES_DATA = [
 
   { id:386, name:'Deoxys'          , types:['Belgian'], baseStats:{hp: 50,atk:150,def: 50,speed:150,special:150,spdef: 50}, bst:600 , brewName:'Dee Ox Is Imperial Belgian' }
 
+  { id:387, name:'Charlie'         , types:['Stout', 'Cryo'], baseStats:{hp: 125,atk:170,def: 100,speed:95,special:120,spdef: 90}, bst:700 , brewName:'Frosted Whiskers' }
+
 ];
 
 // ---- Drop-in replacements for PokeAPI fetch functions ----
@@ -821,5 +823,5 @@ async function getSpeciesForMap(mapIndex) {
   return shuffled.slice(0, 3).map(id => getSpeciesById(id)).filter(Boolean);
 }
 
-// All catchable IDs (1-386)
+// All catchable IDs (1-387)
 const ALL_CATCHABLE_IDS = new Set(SPECIES_DATA.map(s => s.id));
