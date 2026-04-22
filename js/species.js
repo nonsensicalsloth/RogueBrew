@@ -773,7 +773,7 @@ const SPECIES_DATA = [
 
   { id:385, name:'Jirachi'         , types:['Export', 'Belgian'], baseStats:{hp:100,atk:100,def:100,speed:100,special:100,spdef:100}, bst:600 , brewName:'Jee Rachi Imperial Export Belgian' },
 
-  { id:386, name:'Deoxys'          , types:['Belgian'], baseStats:{hp: 50,atk:150,def: 50,speed:150,special:150,spdef: 50}, bst:600 , brewName:'Dee Ox Is Imperial Belgian' }
+  { id:386, name:'Deoxys'          , types:['Belgian'], baseStats:{hp: 50,atk:150,def: 50,speed:150,special:150,spdef: 50}, bst:600 , brewName:'Dee Ox Is Imperial Belgian' },
 
   { id:387, name:'Charlie'         , types:['Stout', 'Cryo'], baseStats:{hp: 125,atk:170,def: 100,speed:95,special:120,spdef: 90}, bst:700 , brewName:'Frosted Whiskers' }
 
