@@ -657,7 +657,7 @@ function getRivalBrewery() {
 }
 
 // Starters
-const STARTER_IDS = [1, 4, 7];
+const STARTER_IDS = [1, 6666, 6666s];
 
 // Trainer sprites from Pokemon Showdown CDN
 const TRAINER_SVG = {
