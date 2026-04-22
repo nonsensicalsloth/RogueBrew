@@ -775,7 +775,7 @@ const SPECIES_DATA = [
 
   { id:386, name:'Deoxys'          , types:['Belgian'], baseStats:{hp: 50,atk:150,def: 50,speed:150,special:150,spdef: 50}, bst:600 , brewName:'Dee Ox Is Imperial Belgian' },
 
-  { id:387, name:'Charlie'         , types:['Stout', 'Cryo'], baseStats:{hp: 125,atk:170,def: 100,speed:95,special:120,spdef: 90}, bst:700 , brewName:'Frosted Whiskers' }
+  { id:6666, name:'Charlie'         , types:['Stout', 'Cryo'], baseStats:{hp: 125,atk:170,def: 100,speed:95,special:120,spdef: 90}, bst:700 , brewName:'Frosted Whiskers' }
 
 ];
 
