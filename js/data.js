@@ -206,6 +206,15 @@ function getMoveTierForMap(mapIndex) {
 function getBestMove(types, baseStats, speciesId, moveTier = 1) {
   if (speciesId === 129) return { name: 'Splash',   power: 0, type: 'Blonde', isSpecial: false, noDamage: true };
   if (speciesId === 63)  return { name: 'Run Away', power: 0, type: 'Blonde', isSpecial: false, noDamage: true };
+  if (speciesId === 6667) {
+  const tier = Math.max(0, Math.min(2, moveTier ?? 1));
+  const trogdorMoves = [
+    { name: 'Burninate',     power: 45, desc: 'Burninate the peasants.', type: 'Red', isSpecial: true },
+    { name: 'Burninate',  power: 90, desc: 'Burninate the village.', type: 'Red', isSpecial: true },
+    { name: 'Burninate', power: 120, desc: 'Burninate the countryside.', type: 'Red', isSpecial: true },
+  ];
+  return trogdorMoves[tier];
+}
   const isSpecial = (baseStats?.special || 0) >= (baseStats?.atk || 0);
   const tier = Math.max(0, Math.min(2, moveTier ?? 1));
   // Check all types and pick the highest-power move at this tier (preserves dual-type best-pick logic)
