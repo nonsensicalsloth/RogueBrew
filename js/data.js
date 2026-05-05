@@ -509,7 +509,7 @@ function calcHp(baseHp, level) {
   return Math.floor(baseHp * level / 50) + level + 10;
 }
 
-  const CUSTOM_IDS = new Set([6666,6667]);
+  const CUSTOM_IDS = new Set([6666,6667,6668]);
 
 function createInstance(species, level, isShiny = false, moveTier = 1) {
   const lvl = level || 5;
