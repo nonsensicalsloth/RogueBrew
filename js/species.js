@@ -777,7 +777,10 @@ const SPECIES_DATA = [
 
   { id:6666, name:'Charlie'         , types:['Stout', 'Cryo'], baseStats:{hp: 125,atk:170,def: 100,speed:95,special:120,spdef: 90}, bst:700 , brewName:'Frosted Whiskers' },
 
-  { id:6667, name:'Trogdor'         , types:['Stout', 'Red'], baseStats:{hp: 125,atk:120,def: 100,speed:95,special:160,spdef: 90}, bst:690 , brewName:'Trogdor' }
+  { id:6667, name:'Trogdor'         , types:['Stout', 'Red'], baseStats:{hp: 125,atk:120,def: 100,speed:95,special:160,spdef: 90}, bst:690 , brewName:'Trogdor' },
+
+  { id:6668, name:'Jacques'         , types:['Blonde', 'Brown'], baseStats:{hp: 250,atk:90,def: 100,speed:70,special:80,spdef: 110}, bst:700 , brewName:'Jacques' }
+
 
 ];
 
