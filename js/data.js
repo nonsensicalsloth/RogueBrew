@@ -209,8 +209,8 @@ function getBestMove(types, baseStats, speciesId, moveTier = 1) {
   if (speciesId === 6667) {
   const tier = Math.max(0, Math.min(2, moveTier ?? 1));
   const trogdorMoves = [
-    { name: 'Burninate',     power: 45, desc: 'Burninate the peasants.', type: 'Red', isSpecial: true },
-    { name: 'Burninate',  power: 90, desc: 'Burninate the village.', type: 'Red', isSpecial: true },
+    { name: 'Burninate', power: 45, desc: 'Burninate the peasants.', type: 'Red', isSpecial: true },
+    { name: 'Burninate', power: 90, desc: 'Burninate the village.', type: 'Red', isSpecial: true },
     { name: 'Burninate', power: 120, desc: 'Burninate the countryside.', type: 'Red', isSpecial: true },
   ];
   return trogdorMoves[tier];
