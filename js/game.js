@@ -884,7 +884,9 @@ const BREWERY_EVENTS = [
         pokemon.maxHp = newMax;
         if (!pokemon.isShiny) {
           pokemon.isShiny = true;
-          pokemon.spriteUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.speciesId}.png`;
+          pokemon.spriteUrl = CUSTOM_IDS.has(pokemon.speciesId)
+          ? `sprites/${pokemon.speciesId}s.png`
+          : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.speciesId}.png`;
           markShinyDexCaught(pokemon.speciesId, pokemon.name, pokemon.types, pokemon.spriteUrl, pokemon.brewName);
           checkDexAchievements();
         }
