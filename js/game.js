@@ -2274,7 +2274,7 @@ async function doMiniBossNode(node) {
   const level = MAP_LEVEL_RANGES[state.currentMap][1]; // top of map range
   const roster = rival.roster.slice(0, teamSize);
   const enemyTeam = roster.map(p => {
-    const inst = createInstance(p, level, false, getMoveTierForMap(state.currentMap));
+    const inst = createInstance(p, level, p.isShiny || false, getMoveTierForMap(state.currentMap));
     // Carry the designed held items onto the instance
     inst.heldItems = p.heldItems ? [...p.heldItems] : [];
     return inst;
