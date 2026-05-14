@@ -667,7 +667,7 @@ const RIVAL_BREWERIES = [
     roster: [
       // introduced first → last
       { speciesId:6668, name:'Jack 1 nickname:Black',   brewName:'Jack 1-nickname:Black',         types:['Blonde', 'Pastry'],
-        baseStats:{hp: 250,atk:40,def: 100,speed:30,special:70,spdef: 110},
+        baseStats:{hp: 200,atk:40,def: 100,speed:30,special:70,spdef: 110},
         heldItems:[{ id: 'late_lunch',name: 'Late Lunch', desc: 'Always goes last; +50% damage', icon: '🍱'}] },
       { speciesId:6668, name:'Jack 2-nickname:Chan',   brewName:'Jack 2-nickname:Chan',         types:['Blonde', 'Pastry'],
         baseStats:{hp: 250,atk:50,def: 100,speed:30,special:70,spdef: 110},
@@ -676,13 +676,13 @@ const RIVAL_BREWERIES = [
 			{ id: 'assault_vest',name: 'Thermal Insulation',desc: '+40% DEF & Sp.Def',icon: '🧊' },
 		] },
       { speciesId:6668, name:'Jack 3-nickname:Cousteau',   brewName:'Jack 3-nickname:Cousteau',         types:['Blonde', 'Pastry'],
-        baseStats:{hp: 250,atk:60,def: 100,speed:30,special:70,spdef: 110},
+        baseStats:{hp: 210,atk:60,def: 100,speed:30,special:70,spdef: 110},
         heldItems:[
 			{ id: 'scope_lens',name: 'Centrifuge',desc: 'Double crit chance (12.5%); normal 1.5x crit damage',icon: '🔬' },
 			{ id: 'razor_claw',name: 'C-Box',desc: 'Normal crit chance; crits deal 3x damage instead of 1.5x',icon: '📦' },
 		] },
       { speciesId:6668, name:'Jack 4-nickname:Kerouac',   brewName:'Jack 4-nickname:Kerouac',         types:['Blonde', 'Pastry'],
-        baseStats:{hp: 250,atk:70,def: 100,speed:30,special:60,spdef: 110},
+        baseStats:{hp: 225,atk:70,def: 100,speed:30,special:60,spdef: 110},
         heldItems:[
 			{ id: 'leftovers',name: 'Yeast Nutrient',desc: 'Restore 6% max HP per turn',icon: '🧫' },
 			{ id: 'shell_bell',name: 'Closed Transfer Loop', desc: 'Heal 20% of damage dealt',icon: '🔄' },
