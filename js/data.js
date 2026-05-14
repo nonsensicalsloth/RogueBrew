@@ -695,6 +695,7 @@ const RIVAL_BREWERIES = [
 			{ id: 'life_orb',name: 'Banquet Beer Stash',desc: '+30% damage; holder loses 10% max HP per hit',icon: '🍻' },
 		] },
       { speciesId:6668, name:'Jack 6-nickname:Jack B',   brewName:'Jack 6-nickname:Jack B',         types:['Blonde', 'Pastry'],
+	    isShiny: true,
         baseStats:{hp: 250,atk:90,def: 100,speed:30,special:70,spdef: 110},
         heldItems:[
 			{ id: 'muscle_band',name: 'Grain Mill',desc: '+20% flavor damage',icon: '⚙️' },
