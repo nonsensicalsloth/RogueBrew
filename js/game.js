@@ -378,17 +378,21 @@ function renderRivalBanner() {
   const wrap = document.createElement('div');
   wrap.id = 'rival-banner-wrap';
 
-  const miniSlots = rival.roster.map((p, i) => {
+const miniSlots = rival.roster.map((p, i) => {
     const seen = i < seenCount;
-    const url = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.speciesId}.png`;
+    const url = CUSTOM_IDS.has(p.speciesId)
+      ? `sprites/${p.speciesId}.png`
+      : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.speciesId}.png`;
     return `<div class="rival-slot-mini ${seen ? 'seen' : 'unknown'}">
       <img src="${url}" alt="${seen ? p.name : '???'}">
     </div>`;
   }).join('');
 
-  const rosterSlots = rival.roster.map((p, i) => {
+const rosterSlots = rival.roster.map((p, i) => {
     const seen = i < seenCount;
-    const url = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.speciesId}.png`;
+    const url = CUSTOM_IDS.has(p.speciesId)
+      ? `sprites/${p.speciesId}.png`
+      : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.speciesId}.png`;
     return `<div class="rival-roster-slot ${seen ? '' : 'unknown'}">
       <div class="rival-roster-img"><img src="${url}" alt="${seen ? p.name : '???'}"></div>
       <div class="rival-roster-name">${seen ? p.name : '???'}</div>
