@@ -672,7 +672,6 @@ const RIVAL_BREWERIES = [
       { speciesId:6668, name:'Jack 2-nickname:Chan',   brewName:'Jack 2-nickname:Chan',         types:['Blonde', 'Pastry'],
         baseStats:{hp: 250,atk:50,def: 100,speed:30,special:70,spdef: 110},
         heldItems:[
-			{ id: 'oak_barrel',name: 'Oak Barrel',desc: '-20% damage taken; -20% speed',icon: '🛢️' },
 			{ id: 'assault_vest',name: 'Thermal Insulation',desc: '+40% DEF & Sp.Def',icon: '🧊' },
 		] },
       { speciesId:6668, name:'Jack 3-nickname:Cousteau',   brewName:'Jack 3-nickname:Cousteau',         types:['Blonde', 'Pastry'],
