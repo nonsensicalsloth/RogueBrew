@@ -10,7 +10,8 @@ function initGame() {
   document.getElementById('overlay').classList.add('hidden');
   selectedCard = null;
 
-  const pDeck = shuffle(buildDefaultDeck());
+  // Use the player's drafted deck; enemy always uses default for now
+  const pDeck = shuffle(draftState.deck.map(c => ({ ...c })));
   const eDeck = shuffle(buildDefaultDeck());
 
   state = {

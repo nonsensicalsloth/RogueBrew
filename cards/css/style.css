@@ -244,3 +244,144 @@ body::after {
 .overlay-title { font-size: 14px; text-shadow: 0 0 10px var(--gold); margin-bottom: 10px; line-height: 1.8; }
 .overlay-sub   { font-size: 8px; color: var(--dim); margin-bottom: 12px; line-height: 2; }
 .overlay-wins  { font-size: 8px; color: var(--text); margin-bottom: 16px; line-height: 2; }
+
+/* ── Screens ── */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ── Title Screen ── */
+#title-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  text-align: center;
+  gap: 16px;
+}
+#title-screen.active { display: flex; }
+
+.wortcraft-title {
+  font-size: clamp(18px, 5vw, 32px);
+  color: var(--gold);
+  text-shadow: 0 0 20px var(--gold), 0 0 40px rgba(255,215,0,0.4);
+  letter-spacing: 2px;
+  line-height: 1.6;
+}
+.wortcraft-sub {
+  font-size: 9px;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+.wortcraft-version {
+  font-size: 7px;
+  color: var(--dim);
+}
+.title-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* ── Brewery Select ── */
+#brewery-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+  gap: 16px;
+}
+#brewery-screen.active { display: flex; }
+.brewery-screen-title { font-size: 11px; color: var(--gold); margin-bottom: 4px; }
+.brewery-screen-sub   { font-size: 8px;  color: var(--dim); margin-bottom: 12px; }
+#brewery-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  max-width: 640px;
+}
+.brewery-card {
+  background: var(--bg2);
+  border: 2px solid var(--border);
+  padding: 16px 14px;
+  width: 180px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.brewery-card:hover:not(.locked) {
+  border-color: var(--gold);
+  transform: translateY(-3px);
+}
+.brewery-card.locked { opacity: 0.4; cursor: not-allowed; }
+.brewery-icon   { font-size: 28px; margin-bottom: 8px; }
+.brewery-name   { font-size: 8px;  color: var(--text);    margin-bottom: 4px; line-height: 1.8; }
+.brewery-sub    { font-size: 7px;  color: var(--dim);     margin-bottom: 8px; line-height: 1.8; }
+.brewery-bonus  { font-size: 6px;  color: var(--accent);  line-height: 1.8; }
+
+/* ── Draft Screen ── */
+#draft-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 10px;
+  min-height: 100vh;
+}
+#draft-screen.active { display: flex; }
+.draft-header { text-align: center; margin-bottom: 14px; }
+.draft-title  { font-size: 10px; color: var(--gold); margin-bottom: 6px; }
+#draft-progress { font-size: 8px; color: var(--accent); margin-bottom: 4px; }
+#draft-tally    { font-size: 7px; color: var(--dim); min-height: 14px; }
+#draft-offer {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  max-width: 640px;
+}
+.draft-card {
+  background: var(--bg2);
+  border: 2px solid var(--border);
+  padding: 12px 10px;
+  width: 160px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.1s, transform 0.1s;
+}
+.draft-card:hover  { transform: translateY(-4px); }
+.draft-card-icon   { font-size: 20px; margin-bottom: 6px; }
+.draft-card-desc   { font-size: 6px; color: var(--dim); margin-top: 6px; line-height: 1.8; min-height: 20px; }
+
+/* ── Deck Review Screen ── */
+#review-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 10px;
+}
+#review-screen.active { display: flex; }
+.review-title { font-size: 11px; color: var(--gold); margin-bottom: 6px; }
+.review-sub   { font-size: 8px;  color: var(--dim);  margin-bottom: 16px; }
+#review-cards { width: 100%; max-width: 640px; margin-bottom: 20px; }
+.review-group { margin-bottom: 14px; }
+.review-group-label { font-size: 8px; margin-bottom: 6px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+.review-group-cards { display: flex; flex-wrap: wrap; gap: 6px; }
+.review-card {
+  background: var(--bg2);
+  border: 2px solid var(--border);
+  padding: 6px 8px;
+  width: 90px;
+  text-align: center;
+}
+.review-card .card-pts  { font-size: 12px; margin-bottom: 2px; }
+.review-card .card-cost { font-size: 7px; }
+.review-card .card-name { font-size: 6px; margin-bottom: 3px; min-height: 0; }
+
+/* ── Game Screen ── */
+#game-screen {
+  display: none;
+}
+#game-screen.active { display: block; }
