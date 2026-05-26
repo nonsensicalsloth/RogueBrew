@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RogueBrew — Judging Day</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/cards.css">
+</head>
+<body>
+
+<div id="app">
+  <div class="game-header">
+    <div class="game-title">⬟ JUDGING DAY</div>
+    <div class="phase-label" id="phase-label">MULLIGAN</div>
+  </div>
+
+  <div class="scoreboard">
+    <div class="pip-col" id="enemy-pips"></div>
+    <div class="score-box enemy" id="score-enemy">
+      <div class="score-lbl">RIVAL</div>
+      <div class="score-lead-tag" id="enemy-lead-tag"></div>
+      <div class="score-val" id="enemy-score">0</div>
+    </div>
+    <div class="vs-badge">VS</div>
+    <div class="score-box player" id="score-player">
+      <div class="score-lbl">YOU</div>
+      <div class="score-lead-tag" id="player-lead-tag"></div>
+      <div class="score-val" id="player-score">0</div>
+    </div>
+    <div class="pip-col" id="player-pips"></div>
+  </div>
+
+  <div class="info-bar">
+    <div class="info-pill">ROUND <span id="round-num">1</span>/3</div>
+    <div class="info-pill">TURN <span id="turn-num">—</span>/10</div>
+    <div class="info-pill">BUDGET <span id="budget-rem">—</span></div>
+  </div>
+
+  <div class="board">
+    <div class="board-side-label enemy">
+      RIVAL BREWERY
+      <span style="color:var(--dim);font-size:6px;margin-left:8px">
+        DECK: <span id="e-deck-count">0</span> &nbsp; HAND: <span id="e-hand-count">0</span>
+      </span>
+    </div>
+    <div class="lane enemy-lane">
+      <div class="lane-header">
+        <span class="lane-name">HOT SIDE</span>
+        <span class="lane-score" id="hs-e">0 pts</span>
+      </div>
+      <div class="lane-cards" id="elane-hot"><span class="empty-msg">— empty —</span></div>
+    </div>
+    <div class="lane enemy-lane">
+      <div class="lane-header">
+        <span class="lane-name">COLD SIDE</span>
+        <span class="lane-score" id="cs-e">0 pts</span>
+      </div>
+      <div class="lane-cards" id="elane-cold"><span class="empty-msg">— empty —</span></div>
+    </div>
+
+    <hr class="board-divider">
+
+    <div class="board-side-label player">YOUR BREWERY</div>
+    <div class="lane player-lane">
+      <div class="lane-header">
+        <span class="lane-name">HOT SIDE</span>
+        <span class="lane-score" id="hs-p">0 pts</span>
+      </div>
+      <div class="lane-cards" id="plane-hot"><span class="empty-msg">— empty —</span></div>
+    </div>
+    <div class="lane player-lane">
+      <div class="lane-header">
+        <span class="lane-name">COLD SIDE</span>
+        <span class="lane-score" id="cs-p">0 pts</span>
+      </div>
+      <div class="lane-cards" id="plane-cold"><span class="empty-msg">— empty —</span></div>
+    </div>
+  </div>
+
+  <div class="hand-area">
+    <div class="piles">
+      <div class="pile">
+        <span class="pile-icon">🂠</span>
+        <div class="pile-num" id="deck-count">0</div>
+        <div class="pile-lbl">DECK</div>
+      </div>
+      <div class="pile">
+        <span class="pile-icon">🗃</span>
+        <div class="pile-num" id="discard-count">0</div>
+        <div class="pile-lbl">DISCRD</div>
+      </div>
+    </div>
+    <div class="hand-col">
+      <div class="hand-lbl" id="hand-lbl">YOUR HAND — SELECT UP TO 2 TO MULLIGAN</div>
+      <div class="hand-cards" id="hand"></div>
+    </div>
+  </div>
+
+  <div class="actions" id="actions"></div>
+  <div class="log-box" id="log"></div>
+</div>
+
+<div class="overlay hidden" id="overlay">
+  <div class="overlay-box">
+    <div class="overlay-title" id="ov-title">YOU WIN!</div>
+    <div class="overlay-sub"   id="ov-sub"></div>
+    <div class="overlay-wins"  id="ov-wins"></div>
+    <button class="btn btn-gold" onclick="initGame()">PLAY AGAIN</button>
+  </div>
+</div>
+
+<!-- Scripts — order matters -->
+<script src="js/cards.js"></script>
+<script src="js/deck.js"></script>
+<script src="js/game.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/ui.js"></script>
+<script>
+  initGame();
+</script>
+
+</body>
+</html>

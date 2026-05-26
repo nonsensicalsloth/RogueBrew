@@ -1,0 +1,73 @@
+/* cards.css — card visuals, category colors, tags, field cards */
+
+/* ── Hand cards ── */
+.card {
+  background: var(--bg2);
+  border: 2px solid var(--border);
+  padding: 6px 5px;
+  cursor: pointer;
+  width: 82px;
+  text-align: center;
+  transition: border-color 0.1s, transform 0.1s;
+  position: relative;
+}
+.card:hover:not(.card-disabled) { transform: translateY(-3px); }
+.card.card-disabled { opacity: 0.4; cursor: not-allowed; }
+.card.mulligan-on   { border-color: var(--orange) !important; }
+.card.selected-card { outline: 2px solid var(--gold); }
+
+.card-name     { font-size: 6px; color: var(--text); margin-bottom: 4px; line-height: 1.6; min-height: 18px; }
+.card-pts      { font-size: 14px; margin-bottom: 3px; }
+.card-cost     { font-size: 7px; color: var(--dim); margin-bottom: 3px; }
+.card-tag      { font-size: 6px; padding: 1px 3px; border: 1px solid; display: inline-block; margin: 1px; }
+.card-restrict { font-size: 6px; color: var(--dim); margin-top: 3px; }
+
+/* ── Category colors ── */
+.cat-malt { border-color: #d4af37 !important; }
+.cat-malt .card-pts { color: #d4af37; }
+.cat-malt:hover:not(.card-disabled) { box-shadow: 0 0 8px rgba(212,175,55,0.4); }
+
+.cat-hop { border-color: #4caf50 !important; }
+.cat-hop .card-pts { color: #4caf50; }
+.cat-hop:hover:not(.card-disabled) { box-shadow: 0 0 8px rgba(76,175,80,0.4); }
+
+.cat-yeast { border-color: #9c27b0 !important; }
+.cat-yeast .card-pts { color: #9c27b0; }
+.cat-yeast:hover:not(.card-disabled) { box-shadow: 0 0 8px rgba(156,39,176,0.4); }
+
+.cat-adjunct { border-color: #4fc3f7 !important; }
+.cat-adjunct .card-pts { color: #4fc3f7; }
+.cat-adjunct:hover:not(.card-disabled) { box-shadow: 0 0 8px rgba(79,195,247,0.4); }
+
+/* ── Tags ── */
+.tag-sweet  { color: #ff9eb5; border-color: #ff9eb5; }
+.tag-toasty { color: #d4af37; border-color: #d4af37; }
+.tag-bitter { color: #4caf50; border-color: #4caf50; }
+.tag-crisp  { color: #4fc3f7; border-color: #4fc3f7; }
+.tag-funky  { color: #9c27b0; border-color: #9c27b0; }
+.tag-smooth { color: #80cbc4; border-color: #80cbc4; }
+.tag-roasty { color: #bf360c; border-color: #bf360c; }
+.tag-hazy   { color: #ffe082; border-color: #ffe082; }
+.tag-dry    { color: #a5d6a7; border-color: #a5d6a7; }
+
+/* ── Field cards (played onto the board) ── */
+.field-card {
+  padding: 3px 5px;
+  font-size: 7px;
+  border: 1px solid;
+  background: var(--bg3);
+  max-width: 100px;
+}
+.field-card.p { border-color: var(--player); }
+.field-card.e { border-color: var(--enemy); }
+.field-card-name {
+  font-size: 6px;
+  color: var(--dim);
+  margin-bottom: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.field-card-pts { font-size: 9px; }
+.field-card.p .field-card-pts { color: var(--player); }
+.field-card.e .field-card-pts { color: var(--enemy); }
