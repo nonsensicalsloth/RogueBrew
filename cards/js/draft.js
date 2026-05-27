@@ -140,13 +140,13 @@ function renderDraft() {
 
   el.innerHTML = draftState.offer.map((c, i) => `
     <div class="draft-card cat-${c.cat}" onclick="pickCard(${i})">
-      <div class="draft-card-icon">${catIcon(c.cat)}</div>
-      <div class="card-name">${c.name}</div>
-      <div class="card-pts">+${c.points}</div>
-      <div class="card-cost">cost ${c.cost}</div>
-      <div>${tagHtml(c.tags)}</div>
+      <div class="card-cost-gem">${c.cost}</div>
+      <div class="card-pts-gem">${c.points >= 0 ? '+' : ''}${c.points}</div>
+      <div class="card-art" style="height:56px;font-size:28px;">${catIcon(c.cat)}</div>
+      <div class="card-name-banner">${c.name}</div>
+      <div class="card-tags-row">${tagHtml(c.tags)}</div>
+      <div class="card-effect-text">${c.desc || ''}</div>
       <div class="card-restrict">${c.lane === 'both' ? 'HOT/COLD' : c.lane === 'hot' ? 'HOT SIDE' : 'COLD SIDE'}</div>
-      <div class="draft-card-desc">${c.desc || ''}</div>
     </div>
   `).join('');
 

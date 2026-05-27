@@ -336,24 +336,27 @@ body::after {
 #draft-tally    { font-size: 7px; color: var(--dim); min-height: 14px; }
 #draft-offer {
   display: flex;
-  gap: 12px;
+  gap: 20px;
   justify-content: center;
   flex-wrap: wrap;
   margin-bottom: 16px;
   max-width: 640px;
+  padding: 16px 0;
 }
 .draft-card {
   background: var(--bg2);
   border: 2px solid var(--border);
-  padding: 12px 10px;
-  width: 160px;
+  border-radius: 6px;
+  width: 140px;
   text-align: center;
   cursor: pointer;
-  transition: border-color 0.1s, transform 0.1s;
+  transition: border-color 0.1s, transform 0.15s, box-shadow 0.15s;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
 }
-.draft-card:hover  { transform: translateY(-4px); }
-.draft-card-icon   { font-size: 20px; margin-bottom: 6px; }
-.draft-card-desc   { font-size: 6px; color: var(--dim); margin-top: 6px; line-height: 1.8; min-height: 20px; }
+.draft-card:hover { transform: translateY(-8px) scale(1.05); z-index: 10; }
 
 /* ── Deck Review Screen ── */
 #review-screen {
