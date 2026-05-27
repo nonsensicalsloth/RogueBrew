@@ -39,6 +39,10 @@
 .cat-adjunct .card-pts { color: #4fc3f7; }
 .cat-adjunct:hover:not(.card-disabled) { box-shadow: 0 0 8px rgba(79,195,247,0.4); }
 
+.cat-process { border-color: #b0bec5 !important; }
+.cat-process .card-pts { color: #b0bec5; }
+.cat-process:hover:not(.card-disabled) { box-shadow: 0 0 8px rgba(176,190,197,0.4); }
+
 /* ── Tags ── */
 .cat-token { border-color: #f44336 !important; }
 .cat-token .card-pts { color: #f44336; }

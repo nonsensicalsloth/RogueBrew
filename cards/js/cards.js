@@ -98,7 +98,38 @@ const CARD_POOL = [
   { id:'chili',      name:'Chili Pepper',    cat:'adjunct', lane:'hot', points:8,  cost:2, tags:['spicy','dry'],          desc:'Removes a Sugar Clot from your board if present.' },
   { id:'cinnamon',   name:'Cinnamon',        cat:'adjunct', lane:'hot', points:8,  cost:2, tags:['spicy','sweet'],        desc:'+3 pts for each sweet card on hot side.' },
 
-  // ── Hops ──
+  // ── Process Cards ──
+
+  // Cleaning/Removal (your side)
+  { id:'cip',          name:'CIP Cycle',        cat:'process', lane:'both', points:0,  cost:2, tags:['clean'],           desc:'Remove any one card from your hot or cold side.' },
+  { id:'sip',          name:'SIP Rinse',         cat:'process', lane:'hot',  points:0,  cost:1, tags:['clean'],           desc:'Remove a token card from your hot side.' },
+  { id:'heatkill',     name:'Heat Kill',         cat:'process', lane:'cold', points:0,  cost:2, tags:['clean'],           desc:'Remove all Contamination cards from your cold side.' },
+  { id:'filtration',   name:'Filtration',        cat:'process', lane:'cold', points:0,  cost:3, tags:['clean'],           desc:'Remove any one card from your cold side and draw 1.' },
+  { id:'fining',       name:'Fining Agent',      cat:'process', lane:'hot',  points:0,  cost:1, tags:['clean','smooth'],  desc:'Remove a negative token from your board. Draw 1 if nothing to remove.' },
+  { id:'coldcrash',    name:'Cold Crash',        cat:'process', lane:'cold', points:8,  cost:2, tags:['crisp','clean'],   desc:'Scores points AND removes one token from cold side.' },
+
+  // Disruption (enemy side)
+  { id:'drunkcellar',  name:'Drunk Cellarman',   cat:'process', lane:'cold', points:0,  cost:1, tags:['funky'],           desc:'Play on ENEMY cold side. Adds +8 to their score but you draw 2 cards.' },
+  { id:'drunkbrewer',  name:'Drunk Brewer',      cat:'process', lane:'hot',  points:0,  cost:1, tags:['funky'],           desc:'Play on ENEMY hot side. Adds +8 to their score but you draw 2 cards.' },
+  { id:'crosscontam',  name:'Cross Contamination',cat:'process',lane:'cold', points:0,  cost:2, tags:['funky','sour'],    desc:'Shuffle 2 Contamination cards into enemy deck.' },
+  { id:'hopthief',     name:'Hop Thief',         cat:'process', lane:'both', points:0,  cost:2, tags:['bitter'],          desc:'Copy the highest scoring hop on enemy board and add it to your hand.' },
+  { id:'badbatch',     name:'Bad Batch',         cat:'process', lane:'hot',  points:0,  cost:3, tags:['funky'],           desc:'Remove the highest scoring card from enemy hot side.' },
+  { id:'inspector',    name:'Health Inspector',  cat:'process', lane:'both', points:0,  cost:3, tags:['clean'],           desc:'Remove any one card from enemy board.' },
+
+  // Row manipulation (your side)
+  { id:'dryhop',       name:'Dry Hop Addition',  cat:'process', lane:'cold', points:10, cost:2, tags:['bitter','hazy'],   desc:'Move a hop from your hot side to cold side. It keeps its points.' },
+  { id:'kettletrans',  name:'Kettle Transfer',   cat:'process', lane:'hot',  points:0,  cost:1, tags:['clean'],           desc:'Move any card from cold side to hot side if lane allows.' },
+  { id:'doublebatch',  name:'Double Batch',      cat:'process', lane:'both', points:0,  cost:3, tags:['malty'],           desc:'Copy the last card you played and add a second instance to the same lane.' },
+  { id:'barreltrans',  name:'Barrel Transfer',   cat:'process', lane:'cold', points:12, cost:3, tags:['smooth','malty'],  desc:'The highest scoring card on your cold side gets +50% pts this round.' },
+  { id:'recipetweak',  name:'Recipe Tweak',      cat:'process', lane:'both', points:0,  cost:2, tags:['nuanced'],         desc:'Swap one card in your hand with one on your hot side.' },
+
+  // Scoring/multiplier process cards
+  { id:'qc',           name:'Quality Control',   cat:'process', lane:'both', points:0,  cost:2, tags:['clean','crisp'],   desc:'If your total score is higher than rival, +10 pts.' },
+  { id:'tasting',      name:'Tasting Notes',     cat:'process', lane:'both', points:0,  cost:1, tags:['nuanced'],         desc:"Reveal rival's hand for this turn." },
+  { id:'award',        name:'Award Entry',       cat:'process', lane:'both', points:20, cost:4, tags:['nuanced','clean'],  desc:'If you win this round, draw 3 cards.' },
+  { id:'pilotbatch',   name:'Pilot Batch',       cat:'process', lane:'hot',  points:8,  cost:1, tags:['neutral'],         desc:'Draw 2 cards when played.' },
+  { id:'grainreview',  name:'Grain Bill Review', cat:'process', lane:'hot',  points:0,  cost:1, tags:['malty'],           desc:'Look at top 3 cards of your deck, put them back in any order.' },
+  { id:'fermlog',      name:'Fermentation Log',  cat:'process', lane:'cold', points:0,  cost:1, tags:['clean'],           desc:'+2 pts to every card currently on your cold side.' },
 
   // C-Family power team
   { id:'cascade',    name:'Cascade',          cat:'hop', lane:'both', points:10, cost:1, tags:['bitter','citrus','c-hop'],        desc:'If another c-hop on same lane, all c-hops on that lane score double.' },
