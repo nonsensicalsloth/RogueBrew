@@ -98,18 +98,87 @@ const CARD_POOL = [
   { id:'chili',      name:'Chili Pepper',    cat:'adjunct', lane:'hot', points:8,  cost:2, tags:['spicy','dry'],          desc:'Removes a Sugar Clot from your board if present.' },
   { id:'cinnamon',   name:'Cinnamon',        cat:'adjunct', lane:'hot', points:8,  cost:2, tags:['spicy','sweet'],        desc:'+3 pts for each sweet card on hot side.' },
 
-  // ── Hops (can go hot or cold side) ──
-  { id:'cascade',  name:'Cascade Hops',    cat:'hop',     lane:'both', points:10, cost:1, tags:['bitter'],          desc:'C-family synergy.' },
-  { id:'citra',    name:'Citra Hops',      cat:'hop',     lane:'both', points:14, cost:2, tags:['bitter','crisp'],  desc:'Draw a card on play.' },
-  { id:'mosaic',   name:'Mosaic Hops',     cat:'hop',     lane:'both', points:12, cost:2, tags:['bitter','hazy'],   desc:'Counts as two tags.' },
-  { id:'magnum',   name:'Magnum Hops',     cat:'hop',     lane:'both', points:16, cost:3, tags:['bitter'],          desc:'Flat high score, no frills.' },
+  // ── Hops ──
+
+  // C-Family power team
+  { id:'cascade',    name:'Cascade',          cat:'hop', lane:'both', points:10, cost:1, tags:['bitter','citrus','c-hop'],        desc:'If another c-hop on same lane, all c-hops on that lane score double.' },
+  { id:'centennial', name:'Centennial',       cat:'hop', lane:'both', points:12, cost:2, tags:['bitter','citrus','c-hop'],        desc:'If another c-hop on same lane, all c-hops on that lane score double.' },
+  { id:'chinook',    name:'Chinook',          cat:'hop', lane:'both', points:12, cost:2, tags:['bitter','piney','spicy','c-hop'], desc:'If another c-hop on same lane, all c-hops score double. Removes a Sugar Clot.' },
+  { id:'columbus',   name:'Columbus',         cat:'hop', lane:'both', points:14, cost:2, tags:['bitter','piney','c-hop'],         desc:'If another c-hop on same lane, all c-hops score double. Adds 1 roast token to rival.' },
+
+  // Other C hops (no c-hop tag)
+  { id:'citra',      name:'Citra',            cat:'hop', lane:'both', points:14, cost:2, tags:['bitter','citrus','hazy'],         desc:'Draw a card when played.' },
+  { id:'cluster',    name:'Cluster',          cat:'hop', lane:'both', points:8,  cost:1, tags:['bitter','fruity'],               desc:'If 3+ hops on board, +6 pts.' },
+
+  // Aroma/New World
+  { id:'mosaic',     name:'Mosaic',           cat:'hop', lane:'both', points:12, cost:2, tags:['bitter','hazy'],                 desc:'Counts as two different tags for synergy purposes.' },
+  { id:'simcoe',     name:'Simcoe',           cat:'hop', lane:'both', points:14, cost:2, tags:['bitter','piney','citrus'],       desc:'If played on cold side, draw 1 card.' },
+  { id:'amarillo',   name:'Amarillo',         cat:'hop', lane:'both', points:12, cost:2, tags:['citrus','fruity'],               desc:'Each fruity adjunct on hot side gets +2 pts.' },
+  { id:'galaxy',     name:'Galaxy',           cat:'hop', lane:'both', points:14, cost:2, tags:['fruity','hazy','citrus'],        desc:'If 2+ hazy tagged cards on board, +8 pts.' },
+  { id:'eldorado',   name:'El Dorado',        cat:'hop', lane:'both', points:12, cost:2, tags:['fruity','sweet'],               desc:'Each sweet adjunct on hot side gets +2 pts.' },
+  { id:'azacca',     name:'Azacca',           cat:'hop', lane:'both', points:10, cost:2, tags:['fruity','citrus'],              desc:'When played on cold side, give a fruity adjunct on hot side +4 pts.' },
+  { id:'strata',     name:'Strata',           cat:'hop', lane:'both', points:14, cost:3, tags:['fruity','hazy','citrus'],        desc:'Generates a Haze token when played.' },
+  { id:'sabro',      name:'Sabro',            cat:'hop', lane:'both', points:12, cost:2, tags:['fruity','smooth','citrus'],      desc:'All smooth tagged cards get +2 pts.' },
+
+  // Noble/European
+  { id:'hallertau',  name:'Hallertau',        cat:'hop', lane:'both', points:10, cost:1, tags:['crisp','spicy'],                desc:'If no roast tokens on board, +6 pts.' },
+  { id:'saaz',       name:'Saaz',             cat:'hop', lane:'both', points:10, cost:1, tags:['crisp','spicy'],                desc:'If Pilsner Malt on hot side, +8 pts.' },
+  { id:'tettnang',   name:'Tettnang',         cat:'hop', lane:'both', points:10, cost:1, tags:['crisp','spicy'],                desc:'+2 pts for each crisp tagged card on board.' },
+  { id:'styrianG',   name:'Styrian Goldings', cat:'hop', lane:'both', points:12, cost:2, tags:['spicy','smooth','earthy'],      desc:'+3 pts for each yeast card on cold side.' },
+  { id:'ekg',        name:'East Kent Goldings',cat:'hop',lane:'both', points:12, cost:2, tags:['earthy','biscuity','smooth'],   desc:'If biscuity malt on hot side, +8 pts.' },
+
+  // High Alpha/Bittering
+  { id:'magnum',     name:'Magnum',           cat:'hop', lane:'both', points:16, cost:3, tags:['bitter'],                       desc:'Flat high score, no frills.' },
+  { id:'nugget',     name:'Nugget',           cat:'hop', lane:'both', points:12, cost:2, tags:['bitter','smooth'],              desc:'Removes a Sugar Clot if present.' },
+  { id:'ctz',        name:'CTZ',              cat:'hop', lane:'both', points:14, cost:2, tags:['bitter','piney'],               desc:'+2 pts for each bitter tagged card on same lane.' },
+  { id:'warrior',    name:'Warrior',          cat:'hop', lane:'both', points:16, cost:3, tags:['bitter','dry'],                 desc:'If played on hot side, +4 pts to all cost-3 malts.' },
+
+  // Wild/Experimental
+  { id:'nelson',     name:'Nelson Sauvin',    cat:'hop', lane:'both', points:14, cost:3, tags:['fruity','crisp','nuanced'],     desc:'Nuanced cards multiply each other.' },
+  { id:'waiiti',     name:'Wai-iti',          cat:'hop', lane:'both', points:10, cost:2, tags:['fruity','crisp'],              desc:'If played cold side, each crisp yeast gets +3 pts.' },
+  { id:'motueka',    name:'Motueka',          cat:'hop', lane:'both', points:10, cost:2, tags:['citrus','crisp'],              desc:'+2 pts for each citrus tagged card on board.' },
+  { id:'idaho7',     name:'Idaho 7',          cat:'hop', lane:'both', points:12, cost:2, tags:['fruity','bitter','citrus'],    desc:'If both fruity and bitter on board, +6 pts.' },
+  { id:'cryo',       name:'Cryo Hops',        cat:'hop', lane:'both', points:16, cost:3, tags:['bitter','hazy'],              desc:'Removes a Sugar Clot AND adds a Haze token to hand.' },
 
   // ── Yeast ──
-  { id:'brett',    name:'Brett Yeast',     cat:'yeast',   lane:'cold', points:6,  cost:2, tags:['funky'],           desc:'+3 pts per turn on field.' },
-  { id:'lacto',    name:'Lacto',           cat:'yeast',   lane:'cold', points:10, cost:1, tags:['crisp'],           desc:'+5 pts next turn only.' },
-  { id:'belgian',  name:'Belgian Yeast',   cat:'yeast',   lane:'cold', points:12, cost:3, tags:['sweet','funky'],   desc:'Rich ester profile.' },
-  { id:'saison',   name:'Saison Yeast',    cat:'yeast',   lane:'cold', points:10, cost:2, tags:['crisp','funky'],   desc:'Dry spicy finish.' },
-  { id:'kveik',    name:'Kveik Yeast',     cat:'yeast',   lane:'cold', points:14, cost:3, tags:['dry','crisp'],     desc:'Fast clean fermentation.' },
+
+  // Ale Yeasts
+  { id:'americanale', name:'American Ale',    cat:'yeast', lane:'cold', points:12, cost:2, tags:['crisp','clean'],           desc:'If no funky cards on cold side, +6 pts.' },
+  { id:'englishale',  name:'English Ale',     cat:'yeast', lane:'cold', points:12, cost:2, tags:['biscuity','smooth'],        desc:'+2 pts for each biscuity card on hot side.' },
+  { id:'irishale',    name:'Irish Ale',       cat:'yeast', lane:'cold', points:10, cost:1, tags:['smooth','clean'],           desc:'Cheap reliable cold side anchor.' },
+  { id:'calale',      name:'California Ale',  cat:'yeast', lane:'cold', points:14, cost:2, tags:['crisp','clean'],            desc:'If 3+ hop cards on board, +8 pts.' },
+  { id:'kolsch',      name:'Kolsch Yeast',    cat:'yeast', lane:'cold', points:12, cost:2, tags:['crisp','clean'],            desc:'If no roast tokens on board, +8 pts.' },
+  { id:'creamale',    name:'Cream Ale',       cat:'yeast', lane:'cold', points:10, cost:1, tags:['smooth','crisp'],           desc:'+2 pts for each neutral tagged card on board.' },
+
+  // Belgian Yeasts
+  { id:'belgian',     name:'Belgian Ale',     cat:'yeast', lane:'cold', points:12, cost:3, tags:['sweet','funky'],            desc:'Rich ester profile.' },
+  { id:'belgianstr',  name:'Belgian Strong',  cat:'yeast', lane:'cold', points:16, cost:3, tags:['sweet','funky'],            desc:'If 2+ sweet cards on hot side, score double.' },
+  { id:'tripel',      name:'Tripel Yeast',    cat:'yeast', lane:'cold', points:14, cost:3, tags:['sweet','crisp','funky'],    desc:'+4 pts for each sweet tagged card on board.' },
+  { id:'witbier',     name:'Witbier Yeast',   cat:'yeast', lane:'cold', points:10, cost:2, tags:['sweet','spicy','smooth'],   desc:'+3 pts for each spicy card on board.' },
+  { id:'saison',      name:'Saison Yeast',    cat:'yeast', lane:'cold', points:10, cost:2, tags:['crisp','funky'],            desc:'Dry spicy finish.' },
+  { id:'abbey',       name:'Abbey Yeast',     cat:'yeast', lane:'cold', points:14, cost:3, tags:['sweet','funky','malty'],    desc:'+4 pts for each malty card on hot side.' },
+
+  // Wild/Sour Yeasts (all generate Contamination cards)
+  { id:'brett',       name:'Brett Brux',      cat:'yeast', lane:'cold', points:6,  cost:2, tags:['funky','dry'],              desc:'+3 pts per turn on field. Each turn shuffles 1 Contamination into YOUR deck.' },
+  { id:'brettcl',     name:'Brett Claussenii',cat:'yeast', lane:'cold', points:8,  cost:2, tags:['funky','crisp'],            desc:'+2 pts per turn. Draw 1 on play. Each turn 50/50 Contamination to your deck or enemy deck.' },
+  { id:'brettano',    name:'Brett Anomalus',  cat:'yeast', lane:'cold', points:10, cost:3, tags:['funky','fruity'],           desc:'+3 pts per turn (+2 extra if fruity adjunct on hot side). Contamination always goes to ENEMY deck.' },
+  { id:'lacto',       name:'Lacto',           cat:'yeast', lane:'cold', points:10, cost:1, tags:['crisp','sour'],             desc:'+5 pts next turn only. On play, shuffle 1 Contamination into your deck.' },
+  { id:'pedio',       name:'Pediococcus',     cat:'yeast', lane:'cold', points:6,  cost:1, tags:['funky','dry','sour'],       desc:'Each turn 50/50 Contamination to your deck or enemy deck. Contaminations stack on cold side.' },
+  { id:'lachancea',   name:'Lachancea',       cat:'yeast', lane:'cold', points:10, cost:2, tags:['crisp','dry'],              desc:'Draw 1 on play. Each turn 50/50 Contamination — yours cost -5 instead of -10.' },
+
+  // Lager Yeasts
+  { id:'germanlager', name:'German Lager',    cat:'yeast', lane:'cold', points:14, cost:2, tags:['crisp','clean'],            desc:'If all hot side cards cost 1 or 2, +10 pts.' },
+  { id:'czechlager',  name:'Czech Lager',     cat:'yeast', lane:'cold', points:14, cost:2, tags:['crisp','clean'],            desc:'If Pilsner Malt or Saaz on board, +8 pts.' },
+  { id:'munichlager', name:'Munich Lager',    cat:'yeast', lane:'cold', points:12, cost:2, tags:['malty','clean'],            desc:'+3 pts for each malty tagged card on board.' },
+  { id:'americanlag', name:'American Lager',  cat:'yeast', lane:'cold', points:10, cost:1, tags:['crisp','neutral','clean'],  desc:'If 3+ neutral cards on board, +8 pts.' },
+
+  // Specialty Yeasts
+  { id:'kveik',       name:'Kveik',           cat:'yeast', lane:'cold', points:14, cost:3, tags:['dry','crisp'],              desc:'Fast clean fermentation. High flat score.' },
+  { id:'hefeweizen',  name:'Hefeweizen',      cat:'yeast', lane:'cold', points:12, cost:2, tags:['sweet','bready','smooth'],  desc:'+3 pts for each bready card on hot side.' },
+  { id:'gose',        name:'Gose Yeast',      cat:'yeast', lane:'cold', points:10, cost:2, tags:['crisp','dry','spicy'],      desc:'If wheat or rye adjunct on hot side, +8 pts.' },
+  { id:'kvass',       name:'Kvass Yeast',     cat:'yeast', lane:'cold', points:8,  cost:1, tags:['bready','neutral'],         desc:'+2 pts for each bready card on board.' },
+  { id:'champagne',   name:'Champagne Yeast', cat:'yeast', lane:'cold', points:16, cost:3, tags:['dry','crisp'],              desc:'Removes all funky tags from your cold side. High score but wipes funk synergies.' },
+  { id:'mixedferm',   name:'Mixed Ferm',      cat:'yeast', lane:'cold', points:12, cost:2, tags:['funky','sweet','crisp'],    desc:'Counts as ale, lager, and wild for all synergy purposes.' },
 ];
 
 // ── Default deck composition (30 cards) ──
@@ -137,7 +206,9 @@ const TOKEN_CARDS = [
   { id:'sugar_clot8', name:'Sugar Clot',   cat:'token', lane:'hot',  points:-8,  cost:0, tags:['roasty'], desc:'Negative points. Removed when a hop card is played on hot side.' },
   { id:'body',        name:'Body',         cat:'token', lane:'hot',  points:5,   cost:0, tags:['smooth'], desc:'Simple +5 pts. Generated by White Wheat Malt.' },
   { id:'haze',        name:'Haze',         cat:'token', lane:'both', points:0,   cost:1, tags:['hazy'],   desc:'Attach to a hop on the field to add a score multiplier to that hop.' },
-  { id:'roast_token', name:'Roast',        cat:'token', lane:'hot',  points:0,   cost:0, tags:['roasty'], desc:'Roast counter. At 5 roast, total hot side score is halved.' },
+  { id:'roast_token',   name:'Roast',          cat:'token', lane:'hot',  points:0,   cost:0, tags:['roasty'], desc:'Roast counter. At 5 roast, total hot side score is halved.' },
+  { id:'contamination', name:'Contamination',  cat:'token', lane:'cold', points:-10, cost:0, tags:['funky'],  desc:'Auto-plays to cold side when drawn. Interrupts your turn but costs 0.' },
+  { id:'contam_soft',   name:'Contamination',  cat:'token', lane:'cold', points:-5,  cost:0, tags:['funky'],  desc:'Softer contamination from Lachancea. Auto-plays to cold side when drawn.' },
 ];
 
 function getTokenDef(id) {
