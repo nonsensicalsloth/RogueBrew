@@ -249,6 +249,8 @@ function getTokenDef(id) {
 function createToken(id) {
   return { ...getTokenDef(id) };
 }
+
+function getCardDef(id) {
   return CARD_POOL.find(c => c.id === id);
 }
 
