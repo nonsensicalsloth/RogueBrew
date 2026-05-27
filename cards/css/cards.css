@@ -40,15 +40,25 @@
 .cat-adjunct:hover:not(.card-disabled) { box-shadow: 0 0 8px rgba(79,195,247,0.4); }
 
 /* ── Tags ── */
-.tag-sweet  { color: #ff9eb5; border-color: #ff9eb5; }
-.tag-toasty { color: #d4af37; border-color: #d4af37; }
-.tag-bitter { color: #4caf50; border-color: #4caf50; }
-.tag-crisp  { color: #4fc3f7; border-color: #4fc3f7; }
-.tag-funky  { color: #9c27b0; border-color: #9c27b0; }
-.tag-smooth { color: #80cbc4; border-color: #80cbc4; }
-.tag-roasty { color: #bf360c; border-color: #bf360c; }
-.tag-hazy   { color: #ffe082; border-color: #ffe082; }
-.tag-dry    { color: #a5d6a7; border-color: #a5d6a7; }
+.cat-token { border-color: #f44336 !important; }
+.cat-token .card-pts { color: #f44336; }
+.cat-token:hover:not(.card-disabled) { box-shadow: 0 0 8px rgba(244,67,54,0.4); }
+.tag-toasty   { color: #d4af37; border-color: #d4af37; }
+.tag-bitter   { color: #4caf50; border-color: #4caf50; }
+.tag-crisp    { color: #4fc3f7; border-color: #4fc3f7; }
+.tag-funky    { color: #9c27b0; border-color: #9c27b0; }
+.tag-smooth   { color: #80cbc4; border-color: #80cbc4; }
+.tag-roasty   { color: #bf360c; border-color: #bf360c; }
+.tag-hazy     { color: #ffe082; border-color: #ffe082; }
+.tag-dry      { color: #a5d6a7; border-color: #a5d6a7; }
+.tag-neutral  { color: #9e9e9e; border-color: #9e9e9e; }
+.tag-grainy   { color: #a1887f; border-color: #a1887f; }
+.tag-biscuity { color: #ffcc80; border-color: #ffcc80; }
+.tag-malty    { color: #d4af37; border-color: #d4af37; }
+.tag-bready   { color: #bcaaa4; border-color: #bcaaa4; }
+.tag-nuanced  { color: #ce93d8; border-color: #ce93d8; }
+.tag-spicy    { color: #ff7043; border-color: #ff7043; }
+.tag-fruity   { color: #f48fb1; border-color: #f48fb1; }
 
 /* ── Field cards (played onto the board) ── */
 .field-card {
