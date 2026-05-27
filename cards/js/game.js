@@ -31,9 +31,13 @@ function initGame() {
       hot:  { p: [], e: [] },
       cold: { p: [], e: [] },
     },
-    roundWins:  [],
-    mulSel:     [],
-    logs:       [],
+    roundWins:        [],
+    mulSel:           [],
+    logs:             [],
+    nextCardDiscount: 0,
+    roastTokens:      0,
+    lastPlayedCard:   null,
+    lastPlayedLane:   null,
   };
 
   drawCards(5, state.pDeck, state.pHand);
@@ -60,12 +64,15 @@ function addLog(msg, type = 'sys') {
 
 // ── Round management ──
 function startRound() {
-  state.phase      = 'play';
-  state.turn       = 1;
-  state.budgetUsed = 0;
-  state.budget     = getBudget(1);
-  state.playerTurn = true;
-  state.field      = { hot: { p: [], e: [] }, cold: { p: [], e: [] } };
+  state.phase           = 'play';
+  state.turn            = 1;
+  state.budgetUsed      = 0;
+  state.budget          = getBudget(1);
+  state.playerTurn      = true;
+  state.nextCardDiscount = 0;
+  state.lastPlayedCard  = null;
+  state.lastPlayedLane  = null;
+  state.field           = { hot: { p: [], e: [] }, cold: { p: [], e: [] } };
   addLog(`▶ Round ${state.round} begins! Budget: ${state.budget}`);
   drawCards(1, state.pDeck, state.pHand);
   drawCards(1, state.eDeck, state.eHand);
@@ -99,10 +106,16 @@ function advanceTurn() {
   state.budgetUsed = 0;
   state.budget     = getBudget(state.turn);
   state.playerTurn = true;
+  state.nextCardDiscount = 0;
   if (state.turn > 10) { endRound(); return; }
   addLog(`▸ Turn ${state.turn} — Budget: ${state.budget}`);
   drawCards(1, state.pDeck, state.pHand);
   drawCards(1, state.eDeck, state.eHand);
+  // Apply persistent effects (brett, lacto, contamination etc)
+  applyTurnEffects('p');
+  applyTurnEffects('e');
+  // Auto-play any contamination drawn this turn
+  checkContaminationInHand();
   render();
 }
 

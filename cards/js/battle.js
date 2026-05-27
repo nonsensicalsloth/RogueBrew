@@ -7,9 +7,18 @@ let selectedCard = null;
 function selectCard(idx) {
   if (!state.playerTurn || state.phase !== 'play') return;
   const c = state.pHand[idx];
-  if (!c || c.cost > state.budget - state.budgetUsed) return;
+  if (!c) return;
+  // Apply next-card discount
+  const discount = state.nextCardDiscount || 0;
+  const effectiveCost = Math.max(0, c.cost - discount);
+  if (effectiveCost > state.budget - state.budgetUsed) return;
   selectedCard = (selectedCard === idx) ? null : idx;
   render();
+}
+
+function getEffectiveCost(c) {
+  const discount = state.nextCardDiscount || 0;
+  return Math.max(0, c.cost - discount);
 }
 
 function playToLane(lane) {
@@ -23,15 +32,38 @@ function playToLane(lane) {
     addLog(`Cannot play ${c.name} on ${LANE_NAMES[lane]}!`, 'warn');
     return;
   }
-  if (c.cost > state.budget - state.budgetUsed) {
+
+  const effectiveCost = getEffectiveCost(c);
+  if (effectiveCost > state.budget - state.budgetUsed) {
     addLog('Not enough budget!', 'warn');
     return;
   }
 
+  // Remove from hand, place on field
   state.pHand.splice(selectedCard, 1);
   state.field[lane].p.push(c);
-  state.budgetUsed += c.cost;
+  state.budgetUsed += effectiveCost;
+
+  // Consume discount if used
+  if (state.nextCardDiscount > 0) state.nextCardDiscount = 0;
+
+  // Track last played card for Double Batch etc
+  state.lastPlayedCard = { ...c };
+  state.lastPlayedLane = lane;
+
   addLog(`You play ${c.name} (+${c.points}) → ${LANE_NAMES[lane]}`, 'player');
+
+  // Apply on-play effects
+  applyCardEffect(c, lane, 'p');
+
+  // Check c-hop synergy if it's a hop
+  if (c.tags && c.tags.includes('c-hop')) {
+    applyCHopSynergy(lane, 'p');
+  }
+
+  // Check for contamination in hand (auto-plays immediately)
+  checkContaminationInHand();
+
   selectedCard = null;
   render();
 }
@@ -66,6 +98,9 @@ function enemyTurn() {
       state.field[lane].e.push(c);
       remaining -= c.cost;
       addLog(`Rival plays ${c.name} → ${LANE_NAMES[lane]}`, 'enemy');
+      // Apply effects for enemy too
+      applyCardEffect(c, lane, 'e');
+      if (c.tags && c.tags.includes('c-hop')) applyCHopSynergy(lane, 'e');
       played = true;
       break;
     }
