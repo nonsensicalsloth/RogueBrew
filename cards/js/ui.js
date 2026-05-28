@@ -1,32 +1,10 @@
 // ui.js — all render functions and DOM updates
 
-function tagHtml(tags) {
-  return (tags || []).map(t => `<span class="card-tag tag-${t}">${t}</span>`).join('');
-}
 
-function catIcon(cat) {
-  const icons = { malt:'🌾', hop:'🌿', yeast:'🧫', adjunct:'✦', process:'⚙️', token:'⚠️' };
-  return icons[cat] || '?';
-}
 
-function cardHtml(c, i, mode, extra='') {
-  // mode: 'mulligan', 'play', 'disabled', 'draft', 'review'
-  const isMulligan = mode === 'mulligan';
-  const isDisabled = mode === 'disabled';
-  const pts = c.points >= 0 ? \`+${c.points}\` : \`${c.points}\`;
-  const laneLabel = c.lane === 'both' ? 'HOT/COLD' : c.lane === 'hot' ? 'HOT SIDE' : 'COLD SIDE';
-  const clickFn = isMulligan ? \`toggleMulligan(${i})\` : isDisabled ? 'void(0)' : \`selectCard(${i})\`;
-  const extraClass = extra;
-  return \`<div class="card cat-${c.cat} ${extraClass}" onclick="${clickFn}">
-    <div class="card-cost-gem">${c.cost}</div>
-    <div class="card-pts-gem">${pts}</div>
-    <div class="card-art">${catIcon(c.cat)}</div>
-    <div class="card-name-banner">${c.name}</div>
-    <div class="card-tags-row">${tagHtml(c.tags)}</div>
-    <div class="card-effect-text">${c.desc || ''}</div>
-    <div class="card-restrict">${laneLabel}</div>
-  </div>\`;
-}
+
+
+
 
 function renderField() {
   LANES.forEach(l => {

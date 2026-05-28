@@ -15,8 +15,58 @@
   <div class="wortcraft-sub">A Deck Building Brewery Roguelike</div>
   <div class="wortcraft-version">v0.1 — prototype</div>
   <div class="title-buttons">
-    <button class="btn btn-gold" onclick="showBrewerySelect()">NEW RUN</button>
+    <button class="btn btn-gold"    onclick="showDeckManager()">▶ START GAME</button>
+    <button class="btn btn-primary" onclick="showDeckManager()">🃏 BUILD DECK</button>
     <button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;">🔒 RELICS</button>
+  </div>
+</div>
+
+<!-- ===== DECK MANAGER ===== -->
+<div id="deck-manager-screen" class="screen">
+  <div style="text-align:center;margin-bottom:16px;">
+    <div class="wortcraft-title" style="font-size:14px;margin-bottom:6px;">YOUR DECKS</div>
+    <div style="font-size:8px;color:var(--dim);">Build up to 3 decks. Pick one to start a run.</div>
+  </div>
+  <div id="deck-slots" style="display:flex;flex-direction:column;gap:12px;max-width:480px;margin:0 auto;width:100%;"></div>
+  <div style="text-align:center;margin-top:16px;">
+    <button class="btn btn-primary" onclick="showTitleScreen()">← BACK</button>
+  </div>
+</div>
+
+<!-- ===== DECK BUILDER ===== -->
+<div id="builder-screen" class="screen">
+  <div class="builder-header">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <input id="deck-name-input" type="text" maxlength="24" placeholder="Deck name..."
+        style="background:var(--bg2);border:2px solid var(--border);color:var(--text);
+               font-family:'Press Start 2P',monospace;font-size:8px;padding:6px 10px;width:160px;">
+      <span style="font-size:8px;color:var(--dim)">Cards: <span id="builder-count">0/30</span></span>
+      <span id="builder-msg" style="font-size:7px;"></span>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="btn btn-gold"    onclick="saveBuilderDeck()">SAVE</button>
+      <button class="btn btn-primary" onclick="showDeckManager()">← BACK</button>
+    </div>
+  </div>
+
+  <div class="builder-tabs">
+    <button class="btn builder-tab active-tab" data-tab="malt"    onclick="builderSetTab('malt')">🌾 MALT</button>
+    <button class="btn builder-tab"            data-tab="adjunct" onclick="builderSetTab('adjunct')">✦ ADJUNCT</button>
+    <button class="btn builder-tab"            data-tab="hop"     onclick="builderSetTab('hop')">🌿 HOP</button>
+    <button class="btn builder-tab"            data-tab="yeast"   onclick="builderSetTab('yeast')">🧫 YEAST</button>
+    <button class="btn builder-tab"            data-tab="process" onclick="builderSetTab('process')">⚙️ PROCESS</button>
+  </div>
+
+  <div class="builder-body">
+    <div class="builder-pool-wrap">
+      <div id="builder-card-pool" class="builder-card-pool"></div>
+    </div>
+    <div class="builder-deck-wrap">
+      <div style="font-size:8px;color:var(--gold);margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:6px;">
+        CURRENT DECK
+      </div>
+      <div id="builder-deck-list" class="builder-deck-list"></div>
+    </div>
   </div>
 </div>
 
@@ -25,27 +75,20 @@
   <div class="brewery-screen-title">CHOOSE YOUR BREWERY</div>
   <div class="brewery-screen-sub">Your brewery type shapes your entire run.</div>
   <div id="brewery-choices"></div>
-  <div style="margin-top:16px;">
-    <button class="btn btn-primary" onclick="showTitleScreen()">← BACK</button>
+  <div style="margin-top:16px;text-align:center;">
+    <button class="btn btn-primary" onclick="showDeckManager()">← BACK</button>
   </div>
 </div>
 
-<!-- ===== CARD DRAFT ===== -->
-<div id="draft-screen" class="screen">
-  <div class="draft-header">
-    <div class="draft-title">⬟ DRAFT YOUR RECIPE</div>
-    <div id="draft-progress">PICK 1 / 30</div>
-    <div id="draft-tally"></div>
-  </div>
-  <div id="draft-offer"></div>
-</div>
-
-<!-- ===== DECK REVIEW ===== -->
+<!-- ===== DECK PREVIEW ===== -->
 <div id="review-screen" class="screen">
   <div class="review-title">YOUR RECIPE</div>
-  <div class="review-sub">30 cards drafted. Ready to brew?</div>
+  <div class="review-sub">Ready to brew?</div>
   <div id="review-cards"></div>
-  <button class="btn btn-gold" onclick="startGame()">▶ START JUDGING</button>
+  <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
+    <button class="btn btn-gold"    onclick="startGame()">▶ START RUN</button>
+    <button class="btn btn-primary" onclick="showDeckManager()">← BACK</button>
+  </div>
 </div>
 
 <!-- ===== GAME SCREEN ===== -->
@@ -83,48 +126,28 @@
         </span>
       </div>
       <div class="lane enemy-lane">
-        <div class="lane-header">
-          <span class="lane-name">HOT SIDE</span>
-          <span class="lane-score" id="hs-e">0 pts</span>
-        </div>
+        <div class="lane-header"><span class="lane-name">HOT SIDE</span><span class="lane-score" id="hs-e">0 pts</span></div>
         <div class="lane-cards" id="elane-hot"><span class="empty-msg">— empty —</span></div>
       </div>
       <div class="lane enemy-lane">
-        <div class="lane-header">
-          <span class="lane-name">COLD SIDE</span>
-          <span class="lane-score" id="cs-e">0 pts</span>
-        </div>
+        <div class="lane-header"><span class="lane-name">COLD SIDE</span><span class="lane-score" id="cs-e">0 pts</span></div>
         <div class="lane-cards" id="elane-cold"><span class="empty-msg">— empty —</span></div>
       </div>
       <hr class="board-divider">
       <div class="board-side-label player">YOUR BREWERY</div>
       <div class="lane player-lane">
-        <div class="lane-header">
-          <span class="lane-name">HOT SIDE</span>
-          <span class="lane-score" id="hs-p">0 pts</span>
-        </div>
+        <div class="lane-header"><span class="lane-name">HOT SIDE</span><span class="lane-score" id="hs-p">0 pts</span></div>
         <div class="lane-cards" id="plane-hot"><span class="empty-msg">— empty —</span></div>
       </div>
       <div class="lane player-lane">
-        <div class="lane-header">
-          <span class="lane-name">COLD SIDE</span>
-          <span class="lane-score" id="cs-p">0 pts</span>
-        </div>
+        <div class="lane-header"><span class="lane-name">COLD SIDE</span><span class="lane-score" id="cs-p">0 pts</span></div>
         <div class="lane-cards" id="plane-cold"><span class="empty-msg">— empty —</span></div>
       </div>
     </div>
     <div class="hand-area">
       <div class="piles">
-        <div class="pile">
-          <span class="pile-icon">🂠</span>
-          <div class="pile-num" id="deck-count">0</div>
-          <div class="pile-lbl">DECK</div>
-        </div>
-        <div class="pile">
-          <span class="pile-icon">🗃</span>
-          <div class="pile-num" id="discard-count">0</div>
-          <div class="pile-lbl">DISCRD</div>
-        </div>
+        <div class="pile"><span class="pile-icon">🂠</span><div class="pile-num" id="deck-count">0</div><div class="pile-lbl">DECK</div></div>
+        <div class="pile"><span class="pile-icon">🗃</span><div class="pile-num" id="discard-count">0</div><div class="pile-lbl">DISCRD</div></div>
       </div>
       <div class="hand-col">
         <div class="hand-lbl" id="hand-lbl">YOUR HAND</div>
@@ -136,13 +159,13 @@
   </div>
 </div>
 
-<!-- ===== GAME OVER OVERLAY ===== -->
+<!-- ===== OVERLAY ===== -->
 <div class="overlay hidden" id="overlay">
   <div class="overlay-box">
     <div class="overlay-title" id="ov-title">YOU WIN!</div>
     <div class="overlay-sub"   id="ov-sub"></div>
     <div class="overlay-wins"  id="ov-wins"></div>
-    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px;">
       <button class="btn btn-gold"    onclick="initGame()">PLAY AGAIN</button>
       <button class="btn btn-primary" onclick="showTitleScreen()">MAIN MENU</button>
     </div>
@@ -160,6 +183,5 @@
 <script>
   showTitleScreen();
 </script>
-
 </body>
 </html>
