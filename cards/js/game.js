@@ -36,6 +36,7 @@ function initGame() {
     roundWins:        [],
     mulSel:           [],
     logs:             [],
+    victoryCards:     [],
     nextCardDiscount: 0,
     roastTokens:      0,
     roastSafe:        0,
@@ -96,7 +97,8 @@ function startRound() {
   state.eRoastTokens      = 0;
   state.nextYeastDiscount = 0;
   state.nextHopDiscount   = 0;
-  state.field           = { hot: { p: [], e: [] }, cold: { p: [], e: [] } };
+  state.field           = { hot: { p: [...(state.victoryCards || [])], e: [] }, cold: { p: [], e: [] } };
+  state.victoryCards    = [];
   addLog(`▶ Round ${state.round} begins! Budget: ${state.budget}`);
   drawCards(1, state.pDeck, state.pHand);
   drawCards(1, state.eDeck, state.eHand);
@@ -127,10 +129,12 @@ function endRound() {
     addLog('Award Entry: you won the round — drew 3 cards!', 'player');
   }
 
-  // Victory Malt — stays on hot side next round
+  // Victory Malt — store for next round start
   if (ps > es && victoryCards.length > 0) {
-    state.field.hot.p.push(...victoryCards);
-    addLog(`Victory Malt: stays on the board for next round!`, 'player');
+    state.victoryCards = victoryCards;
+    addLog(`Victory Malt: carries over to next round!`, 'player');
+  } else {
+    state.victoryCards = [];
   }
 
   const pw = state.roundWins.filter(x => x === 'player').length;
