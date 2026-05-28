@@ -38,6 +38,10 @@ function initGame() {
     logs:             [],
     nextCardDiscount: 0,
     roastTokens:      0,
+    roastSafe:        0,
+    roastThreshold:   5,
+    nextYeastDiscount:0,
+    nextHopDiscount:  0,
     lastPlayedCard:   null,
     lastPlayedLane:   null,
   };
@@ -52,7 +56,15 @@ function getBudget(turn) { return Math.min(turn, 5); }
 
 // ── Scoring ──
 function laneScore(lane, who) {
-  return state.field[lane][who].reduce((s, c) => s + c.points, 0);
+  const raw = state.field[lane][who].reduce((s, c) => s + c.points, 0);
+  // Apply roast penalty to player's hot side only
+  if (lane === 'hot' && who === 'p') {
+    const roast     = state.roastTokens || 0;
+    const threshold = state.roastThreshold || 5;
+    const safe      = state.roastSafe || 0;
+    if (roast - safe >= threshold) return Math.floor(raw / 2);
+  }
+  return raw;
 }
 function totalScore(who) {
   return LANES.reduce((s, l) => s + laneScore(l, who), 0);
@@ -71,9 +83,14 @@ function startRound() {
   state.budgetUsed      = 0;
   state.budget          = getBudget(1);
   state.playerTurn      = true;
-  state.nextCardDiscount = 0;
-  state.lastPlayedCard  = null;
-  state.lastPlayedLane  = null;
+  state.nextCardDiscount  = 0;
+  state.lastPlayedCard    = null;
+  state.lastPlayedLane    = null;
+  state.roastTokens       = 0;
+  state.roastSafe         = 0;
+  state.roastThreshold    = 5;
+  state.nextYeastDiscount = 0;
+  state.nextHopDiscount   = 0;
   state.field           = { hot: { p: [], e: [] }, cold: { p: [], e: [] } };
   addLog(`▶ Round ${state.round} begins! Budget: ${state.budget}`);
   drawCards(1, state.pDeck, state.pHand);
@@ -87,7 +104,29 @@ function endRound() {
   else if (es > ps) { state.roundWins.push('enemy');  addLog(`✗ Rival wins round ${state.round}.`, 'enemy'); }
   else              { state.roundWins.push('draw');   addLog('— Draw!'); }
 
-  clearField(state.field, state.pDiscard, state.eDiscard);
+  // Handle Victory Malt — keep on board if player won this round
+  const victoryCards = state.field.hot.p.filter(c => c._victory);
+  const awardCards   = state.field.hot.p.filter(c => c._award)
+    .concat(state.field.cold.p.filter(c => c._award));
+
+  LANES.forEach(l => {
+    state.pDiscard.push(...state.field[l].p.filter(c => !c._victory));
+    state.eDiscard.push(...state.field[l].e);
+    state.field[l].p = [];
+    state.field[l].e = [];
+  });
+
+  // Award Entry — draw 3 if player won
+  if (ps > es && awardCards.length > 0) {
+    drawCards(3, state.pDeck, state.pHand);
+    addLog('Award Entry: you won the round — drew 3 cards!', 'player');
+  }
+
+  // Victory Malt — stays on hot side next round
+  if (ps > es && victoryCards.length > 0) {
+    state.field.hot.p.push(...victoryCards);
+    addLog(`Victory Malt: stays on the board for next round!`, 'player');
+  }
 
   const pw = state.roundWins.filter(x => x === 'player').length;
   const ew = state.roundWins.filter(x => x === 'enemy').length;

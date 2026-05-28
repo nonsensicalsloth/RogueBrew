@@ -150,7 +150,16 @@ function render() {
     state.phase === 'play'      ? (state.playerTurn ? 'YOUR TURN' : 'RIVAL TURN') :
     state.phase === 'between'   ? 'BETWEEN ROUNDS' : 'GAME OVER';
 
-  const discountMsg = (state.nextCardDiscount || 0) > 0 ? ` ★-${state.nextCardDiscount} DISCOUNT` : '';
+  // Roast tracker
+  const roast     = state.roastTokens || 0;
+  const threshold = state.roastThreshold || 5;
+  const roastEl   = document.getElementById('roast-tracker');
+  const roastCnt  = document.getElementById('roast-count');
+  if (roastEl && roastCnt) {
+    roastCnt.textContent = `${roast}/${threshold}`;
+    roastEl.style.color  = roast >= threshold ? 'var(--red)' : roast >= threshold - 1 ? 'var(--orange)' : 'var(--dim)';
+    roastEl.style.borderColor = roast >= threshold ? 'var(--red)' : '';
+  }
   document.getElementById('hand-lbl').textContent =
     state.phase === 'mulligan'
       ? 'YOUR HAND — SELECT UP TO 2 TO SEND BACK'

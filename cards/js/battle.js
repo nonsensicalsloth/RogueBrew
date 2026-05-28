@@ -13,7 +13,9 @@ function selectCard(idx) {
 }
 
 function getEffectiveCost(c) {
-  const discount = state.nextCardDiscount || 0;
+  let discount = state.nextCardDiscount || 0;
+  if (c.cat === 'yeast') discount += (state.nextYeastDiscount || 0);
+  if (c.cat === 'hop')   discount += (state.nextHopDiscount   || 0);
   return Math.max(0, c.cost - discount);
 }
 
@@ -41,7 +43,9 @@ function playToLane(lane) {
   state.budgetUsed += effectiveCost;
 
   // Consume discount if used
-  if (state.nextCardDiscount > 0) state.nextCardDiscount = 0;
+  if (state.nextCardDiscount > 0)   state.nextCardDiscount  = 0;
+  if (c.cat === 'yeast' && state.nextYeastDiscount > 0) state.nextYeastDiscount = 0;
+  if (c.cat === 'hop'   && state.nextHopDiscount   > 0) state.nextHopDiscount   = 0;
 
   // Track last played card for Double Batch etc
   state.lastPlayedCard = { ...c };
@@ -55,6 +59,11 @@ function playToLane(lane) {
   // Check c-hop synergy if it's a hop
   if (c.tags && c.tags.includes('c-hop')) {
     applyCHopSynergy(lane, 'p');
+  }
+
+  // Check nuanced synergy
+  if (c.tags && c.tags.includes('nuanced')) {
+    applyNuancedSynergy('p');
   }
 
   // Check for contamination in hand (auto-plays immediately)
@@ -97,6 +106,7 @@ function enemyTurn() {
       // Apply effects for enemy too
       applyCardEffect(c, lane, 'e');
       if (c.tags && c.tags.includes('c-hop')) applyCHopSynergy(lane, 'e');
+      if (c.tags && c.tags.includes('nuanced')) applyNuancedSynergy('e');
       played = true;
       break;
     }
