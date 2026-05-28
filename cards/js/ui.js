@@ -160,6 +160,7 @@ function render() {
     roastCnt.textContent = `${roast}/${threshold}${eRoast > 0 ? ` | rival:${eRoast}/5` : ''}`;
     roastEl.style.color  = roast >= threshold ? 'var(--red)' : roast >= threshold - 1 ? 'var(--orange)' : 'var(--dim)';
   }
+  const discountMsg = (state.nextCardDiscount || 0) > 0 ? ` ★-${state.nextCardDiscount}` : '';
   document.getElementById('hand-lbl').textContent =
     state.phase === 'mulligan'
       ? 'YOUR HAND — SELECT UP TO 2 TO SEND BACK'
