@@ -534,11 +534,17 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'drunkcellar':
-      // Played on enemy cold side — handled specially in battle.js
+      // Plays on enemy cold side, adds +8 to their score, you draw 2
+      state.field.cold.e.push({ id:'drunk_bonus', name:'Drunk Cellarman', cat:'token', lane:'cold', points:8, cost:0, tags:[] });
+      if (isPlayer) drawForPlayer(2);
+      addLog('Drunk Cellarman: +8 to rival cold side, you draw 2!', 'player');
       break;
 
     case 'drunkbrewer':
-      // Played on enemy hot side — handled specially in battle.js
+      // Plays on enemy hot side, adds +8 to their score, you draw 2
+      state.field.hot.e.push({ id:'drunk_bonus', name:'Drunk Brewer', cat:'token', lane:'hot', points:8, cost:0, tags:[] });
+      if (isPlayer) drawForPlayer(2);
+      addLog('Drunk Brewer: +8 to rival hot side, you draw 2!', 'player');
       break;
 
     case 'crosscontam':
@@ -997,8 +1003,13 @@ function applyCardEffect(card, lane, who) {
 
     case 'cascade':
     case 'centennial':
-    case 'columbus':
       // C-hop synergy handled by applyCHopSynergy in battle.js
+      break;
+
+    case 'columbus':
+      // C-hop synergy + adds roast token to rival
+      state.eRoastTokens = (state.eRoastTokens || 0) + 1;
+      addLog('Columbus: +1 roast token added to rival!', 'player');
       break;
 
     case 'cluster': {

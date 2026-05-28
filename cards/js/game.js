@@ -40,6 +40,7 @@ function initGame() {
     roastTokens:      0,
     roastSafe:        0,
     roastThreshold:   5,
+    eRoastTokens:     0,
     nextYeastDiscount:0,
     nextHopDiscount:  0,
     lastPlayedCard:   null,
@@ -57,12 +58,15 @@ function getBudget(turn) { return Math.min(turn, 5); }
 // ── Scoring ──
 function laneScore(lane, who) {
   const raw = state.field[lane][who].reduce((s, c) => s + c.points, 0);
-  // Apply roast penalty to player's hot side only
   if (lane === 'hot' && who === 'p') {
     const roast     = state.roastTokens || 0;
     const threshold = state.roastThreshold || 5;
     const safe      = state.roastSafe || 0;
     if (roast - safe >= threshold) return Math.floor(raw / 2);
+  }
+  if (lane === 'hot' && who === 'e') {
+    const eRoast = state.eRoastTokens || 0;
+    if (eRoast >= 5) return Math.floor(raw / 2);
   }
   return raw;
 }
@@ -89,6 +93,7 @@ function startRound() {
   state.roastTokens       = 0;
   state.roastSafe         = 0;
   state.roastThreshold    = 5;
+  state.eRoastTokens      = 0;
   state.nextYeastDiscount = 0;
   state.nextHopDiscount   = 0;
   state.field           = { hot: { p: [], e: [] }, cold: { p: [], e: [] } };
