@@ -14,7 +14,7 @@ function initGame() {
   const pDeck = shuffle(draftState.deck.length > 0
     ? draftState.deck.map(c => ({ ...c }))
     : buildDefaultDeck());
-  const eDeck = shuffle(buildDefaultDeck());
+  const eDeck = shuffle(buildEnemyDeck());
 
   state = {
     phase:      'mulligan',

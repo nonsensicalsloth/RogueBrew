@@ -217,7 +217,7 @@ const CARD_POOL = [
 const DEFAULT_DECK_IDS = [
   '2row','2row','2row',
   'pilsner','pilsner','pilsner',
-  'crystal','crystal',
+  'crystal40','crystal40',
   'caramun','caramun',
   'choc','patent',
   'oats','oats',
@@ -230,6 +230,30 @@ const DEFAULT_DECK_IDS = [
   'belgian',
   'saison','saison',
 ];
+
+const ENEMY_DECK_IDS = [
+  '2row','2row','2row',
+  'pilsner','pilsner',
+  'crystal40','crystal40',
+  'caramun',
+  'choc','patent',
+  'oats','oats',
+  'cascade','cascade',
+  'citra','citra',
+  'mosaic','magnum',
+  'lacto','lacto',
+  'saison','saison',
+  'belgian',
+  'badbatch','badbatch',
+  'crosscontam',
+  'drunkbrewer','drunkcellar',
+  'inspector',
+  'coldcrash',
+];
+
+function buildEnemyDeck() {
+  return ENEMY_DECK_IDS.map(id => ({ ...getCardDef(id) }));
+}
 
 // ── Token Cards (generated during play, not draftable) ──
 const TOKEN_CARDS = [

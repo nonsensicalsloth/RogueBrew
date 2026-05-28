@@ -536,17 +536,29 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'drunkcellar':
-      // Plays on enemy cold side, adds +8 to their score, you draw 2
-      state.field.cold.e.push({ id:'drunk_bonus', name:'Drunk Cellarman', cat:'token', lane:'cold', points:8, cost:0, tags:[] });
-      if (isPlayer) drawForPlayer(2);
-      addLog('Drunk Cellarman: +8 to rival cold side, you draw 2!', 'player');
+      // Adds +8 to OPPONENT's cold side, caster draws 2
+      if (isPlayer) {
+        state.field.cold.e.push({ id:'drunk_bonus', name:'Drunk Bonus', cat:'token', lane:'cold', points:8, cost:0, tags:[] });
+        drawForPlayer(2);
+        addLog('Drunk Cellarman: +8 to rival cold side, you draw 2!', 'player');
+      } else {
+        state.field.cold.p.push({ id:'drunk_bonus', name:'Drunk Bonus', cat:'token', lane:'cold', points:8, cost:0, tags:[] });
+        drawCards(2, state.eDeck, state.eHand);
+        addLog('Rival plays Drunk Cellarman: +8 to YOUR cold side, rival draws 2!', 'enemy');
+      }
       break;
 
     case 'drunkbrewer':
-      // Plays on enemy hot side, adds +8 to their score, you draw 2
-      state.field.hot.e.push({ id:'drunk_bonus', name:'Drunk Brewer', cat:'token', lane:'hot', points:8, cost:0, tags:[] });
-      if (isPlayer) drawForPlayer(2);
-      addLog('Drunk Brewer: +8 to rival hot side, you draw 2!', 'player');
+      // Adds +8 to OPPONENT's hot side, caster draws 2
+      if (isPlayer) {
+        state.field.hot.e.push({ id:'drunk_bonus', name:'Drunk Bonus', cat:'token', lane:'hot', points:8, cost:0, tags:[] });
+        drawForPlayer(2);
+        addLog('Drunk Brewer: +8 to rival hot side, you draw 2!', 'player');
+      } else {
+        state.field.hot.p.push({ id:'drunk_bonus', name:'Drunk Bonus', cat:'token', lane:'hot', points:8, cost:0, tags:[] });
+        drawCards(2, state.eDeck, state.eHand);
+        addLog('Rival plays Drunk Brewer: +8 to YOUR hot side, rival draws 2!', 'enemy');
+      }
       break;
 
     case 'crosscontam':

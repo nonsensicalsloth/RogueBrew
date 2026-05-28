@@ -81,8 +81,32 @@ function endTurn() {
 }
 
 // ── Enemy AI ──
-// Simple: plays highest cost card it can afford.
-// Stops early if already 50+ pts ahead.
+// Prioritizes disruptive process cards when behind,
+// otherwise plays highest scoring card it can afford.
+
+const ENEMY_DISRUPT_CARDS = new Set([
+  'badbatch','inspector','crosscontam','drunkcellar','drunkbrewer','hopthief'
+]);
+const ENEMY_PROCESS_CARDS = new Set([
+  'badbatch','inspector','crosscontam','drunkcellar','drunkbrewer','hopthief',
+  'doublebatch','barreltrans','fermlog','coldcrash','heatkill','cip','sip','filtration'
+]);
+
+function enemyPlayCard(c) {
+  const lane = c.lane === 'both' ? 'hot' : c.lane;
+
+  if (ENEMY_PROCESS_CARDS.has(c.id)) {
+    // Process cards trigger effect but don't go on the field
+    addLog(`Rival uses ${c.name}!`, 'enemy');
+    applyCardEffect(c, lane, 'e');
+  } else {
+    state.field[lane].e.push(c);
+    addLog(`Rival plays ${c.name} (+${c.points}) → ${LANE_NAMES[lane]}`, 'enemy');
+    applyCardEffect(c, lane, 'e');
+    if (c.tags && c.tags.includes('c-hop'))  applyCHopSynergy(lane, 'e');
+    if (c.tags && c.tags.includes('nuanced')) applyNuancedSynergy('e');
+  }
+}
 
 function enemyTurn() {
   const lead = totalScore('e') - totalScore('p');
@@ -93,25 +117,36 @@ function enemyTurn() {
   }
 
   let remaining = state.budget;
-  const hand = [...state.eHand].sort((a, b) => b.cost - a.cost);
-  let played = false;
+  let playedAny = false;
 
-  for (const c of hand) {
-    if (c.cost <= remaining) {
-      const lane = c.lane === 'both' ? 'hot' : c.lane;
+  // If behind, try a disruptive card first
+  if (lead < 0) {
+    const disrupt = state.eHand.filter(c => ENEMY_DISRUPT_CARDS.has(c.id) && c.cost <= remaining);
+    if (disrupt.length > 0) {
+      const c = disrupt[0];
       state.eHand.splice(state.eHand.indexOf(c), 1);
-      state.field[lane].e.push(c);
       remaining -= c.cost;
-      addLog(`Rival plays ${c.name} → ${LANE_NAMES[lane]}`, 'enemy');
-      // Apply effects for enemy too
-      applyCardEffect(c, lane, 'e');
-      if (c.tags && c.tags.includes('c-hop')) applyCHopSynergy(lane, 'e');
-      if (c.tags && c.tags.includes('nuanced')) applyNuancedSynergy('e');
-      played = true;
-      break;
+      enemyPlayCard(c);
+      playedAny = true;
     }
   }
 
-  if (!played) addLog('Rival has nothing to play.', 'enemy');
+  // Keep playing highest scoring affordable cards until budget runs out
+  let keepGoing = true;
+  while (keepGoing && remaining > 0) {
+    const sorted = state.eHand
+      .filter(c => !ENEMY_DISRUPT_CARDS.has(c.id) && c.cost <= remaining)
+      .sort((a, b) => b.points - a.points);
+
+    if (sorted.length === 0) { keepGoing = false; break; }
+
+    const c = sorted[0];
+    state.eHand.splice(state.eHand.indexOf(c), 1);
+    remaining -= c.cost;
+    enemyPlayCard(c);
+    playedAny = true;
+  }
+
+  if (!playedAny) addLog('Rival has nothing to play.', 'enemy');
   setTimeout(() => advanceTurn(), 300);
 }
