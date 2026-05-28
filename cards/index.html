@@ -91,6 +91,100 @@
   </div>
 </div>
 
+
+<!-- ===== MAP SCREEN ===== -->
+<div id="map-screen" class="screen">
+  <div class="map-header">
+    <div class="map-header-title" id="map-act-name">The Mash</div>
+    <div class="map-header-info">
+      <span id="map-gold">💰 100</span>
+      <span id="map-deck-count">🃏 15 cards</span>
+    </div>
+  </div>
+  <div id="map-container"></div>
+</div>
+
+<!-- ===== MAP DRAFT ===== -->
+<div id="map-draft-screen" class="screen">
+  <div style="text-align:center;margin-bottom:12px;">
+    <div class="wortcraft-title" style="font-size:11px;margin-bottom:6px;">🃏 DRAFT A CARD</div>
+    <div style="font-size:8px;color:var(--dim);" id="map-draft-count">0/30 cards</div>
+    <div style="font-size:7px;color:var(--red);margin-top:4px;" id="map-draft-msg"></div>
+  </div>
+  <div id="map-draft-offer"></div>
+  <div style="text-align:center;margin-top:16px;">
+    <button class="btn btn-primary" onclick="skipMapDraft()">Skip</button>
+  </div>
+</div>
+
+<!-- ===== MAP SHOP ===== -->
+<div id="map-shop-screen" class="screen">
+  <div style="text-align:center;margin-bottom:12px;">
+    <div class="wortcraft-title" style="font-size:11px;margin-bottom:6px;">🛒 SHOP</div>
+    <div id="shop-gold" style="font-size:9px;color:var(--gold);margin-bottom:4px;">💰 100 gold</div>
+    <div style="font-size:7px;color:var(--dim);">Click a card to buy it</div>
+  </div>
+  <div id="map-shop-items"></div>
+  <div style="text-align:center;margin-top:16px;">
+    <button class="btn btn-primary" onclick="leaveShop()">Leave Shop</button>
+  </div>
+</div>
+
+<!-- ===== MAP EVENT ===== -->
+<div id="map-event-screen" class="screen">
+  <div class="event-title" id="event-title"></div>
+  <div class="event-desc" id="event-desc"></div>
+  <div class="event-options" id="event-options"></div>
+  <div class="event-result" id="event-result"></div>
+</div>
+
+<!-- ===== REST SCREEN ===== -->
+<div id="map-rest-screen" class="screen">
+  <div class="rest-title">🛌 REST STOP</div>
+  <div class="rest-sub">Choose a card to upgrade (+5 pts for this run)</div>
+  <div id="rest-card-list"></div>
+  <div class="rest-result" id="rest-result"></div>
+  <div id="rest-confirm">
+    <button class="btn btn-primary" onclick="showMapScreen()">Skip upgrade</button>
+  </div>
+</div>
+
+<!-- ===== BATTLE REWARD ===== -->
+<div id="battle-reward-screen" class="screen">
+  <div class="reward-title">⚔ VICTORY!</div>
+  <div id="reward-gold"></div>
+  <div style="font-size:8px;color:var(--dim);margin-bottom:8px;">Pick a card to add to your deck</div>
+  <div id="reward-card-offer"></div>
+  <div style="text-align:center;margin-top:16px;">
+    <button class="btn btn-primary" onclick="skipReward()">Skip card</button>
+  </div>
+</div>
+
+<!-- ===== ACT TRANSITION ===== -->
+<div id="act-transition-screen" class="screen">
+  <div class="wortcraft-title" id="act-transition-title">Act Complete!</div>
+  <div style="font-size:9px;color:var(--accent);" id="act-transition-next"></div>
+  <div style="font-size:8px;color:var(--dim);" id="act-transition-deck"></div>
+  <div style="font-size:8px;color:var(--gold);" id="act-transition-gold"></div>
+  <button class="btn btn-gold" style="margin-top:16px;" onclick="advanceAct()">▶ CONTINUE</button>
+</div>
+
+<!-- ===== RUN WIN ===== -->
+<div id="run-win-screen" class="screen">
+  <div class="run-win-title">YOU ARE THE<br>CHAMPION!</div>
+  <div style="font-size:8px;color:var(--dim);" id="run-win-deck"></div>
+  <div style="font-size:8px;color:var(--gold);" id="run-win-gold"></div>
+  <button class="btn btn-gold" style="margin-top:16px;" onclick="showTitleScreen()">MAIN MENU</button>
+</div>
+
+<!-- ===== RUN LOSS ===== -->
+<div id="run-loss-screen" class="screen">
+  <div class="run-loss-title">BATCH FAILED.</div>
+  <div style="font-size:8px;color:var(--dim);" id="run-loss-deck"></div>
+  <div style="font-size:8px;color:var(--dim);" id="run-loss-act"></div>
+  <button class="btn btn-primary" style="margin-top:16px;" onclick="showTitleScreen()">MAIN MENU</button>
+</div>
+
 <!-- ===== GAME SCREEN ===== -->
 <div id="game-screen" class="screen">
   <div id="app">
@@ -175,6 +269,7 @@
 
 <!-- Scripts — order matters -->
 <script src="js/cards.js"></script>
+  <script src="js/map.js"></script>
 <script src="js/deck.js"></script>
 <script src="js/draft.js"></script>
 <script src="js/effects.js"></script>

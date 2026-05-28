@@ -512,3 +512,56 @@ body::after {
   flex-shrink: 0;
 }
 .deck-list-remove:hover { background: var(--red); color: var(--bg); }
+
+/* ── Map Screen ── */
+#map-screen { display:none; flex-direction:column; padding:10px; min-height:100vh; }
+#map-screen.active { display:flex; }
+.map-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:2px solid var(--border); padding-bottom:8px; flex-wrap:wrap; gap:6px; }
+.map-header-title { font-size:10px; color:var(--gold); }
+.map-header-info { display:flex; gap:10px; font-size:8px; color:var(--dim); }
+#map-container { flex:1; min-height:400px; overflow-y:auto; }
+
+/* ── Map Draft ── */
+#map-draft-screen { display:none; flex-direction:column; align-items:center; padding:16px 10px; }
+#map-draft-screen.active { display:flex; }
+#map-draft-offer { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; padding:12px 0; }
+
+/* ── Map Shop ── */
+#map-shop-screen { display:none; flex-direction:column; align-items:center; padding:16px 10px; }
+#map-shop-screen.active { display:flex; }
+#map-shop-items { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; padding:12px 0; }
+.shop-price { font-size:8px; padding:3px 0 4px; border-top:1px solid var(--border); color:var(--gold); }
+.shop-price.cant-afford { color:var(--red); }
+
+/* ── Map Event ── */
+#map-event-screen { display:none; flex-direction:column; align-items:center; padding:24px 16px; max-width:400px; margin:0 auto; }
+#map-event-screen.active { display:flex; }
+.event-title { font-size:12px; color:var(--gold); margin-bottom:10px; text-align:center; line-height:1.8; }
+.event-desc { font-size:8px; color:var(--dim); margin-bottom:16px; text-align:center; line-height:2; }
+.event-options { display:flex; flex-direction:column; gap:8px; width:100%; }
+.event-result { font-size:8px; color:var(--green); margin:10px 0; text-align:center; min-height:20px; }
+
+/* ── Rest Screen ── */
+#map-rest-screen { display:none; flex-direction:column; align-items:center; padding:16px 10px; }
+#map-rest-screen.active { display:flex; }
+.rest-title { font-size:11px; color:var(--gold); margin-bottom:6px; }
+.rest-sub { font-size:8px; color:var(--dim); margin-bottom:12px; }
+#rest-card-list { width:100%; max-width:400px; background:var(--bg2); border:1px solid var(--border); padding:8px; max-height:320px; overflow-y:auto; margin-bottom:10px; }
+.rest-result { font-size:8px; color:var(--green); min-height:20px; margin-bottom:8px; text-align:center; }
+
+/* ── Battle Reward ── */
+#battle-reward-screen { display:none; flex-direction:column; align-items:center; padding:16px 10px; }
+#battle-reward-screen.active { display:flex; }
+.reward-title { font-size:11px; color:var(--gold); margin-bottom:6px; }
+#reward-gold { font-size:9px; color:var(--gold); margin-bottom:12px; }
+#reward-card-offer { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; padding:12px 0; }
+
+/* ── Act Transition ── */
+#act-transition-screen { display:none; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; text-align:center; gap:12px; }
+#act-transition-screen.active { display:flex; }
+
+/* ── Run Win/Loss ── */
+#run-win-screen, #run-loss-screen { display:none; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; text-align:center; gap:12px; }
+#run-win-screen.active, #run-loss-screen.active { display:flex; }
+.run-win-title { font-size:20px; color:var(--gold); text-shadow:0 0 20px var(--gold); line-height:1.6; }
+.run-loss-title { font-size:16px; color:var(--red); line-height:1.6; }

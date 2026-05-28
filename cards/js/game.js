@@ -37,6 +37,9 @@ function initGame() {
     mulSel:           [],
     logs:             [],
     victoryCards:     [],
+    maxRounds:        3,
+    currentNode:      null,
+    isBoss:           false,
     nextCardDiscount: 0,
     roastTokens:      0,
     roastSafe:        0,
@@ -140,9 +143,15 @@ function endRound() {
   const pw = state.roundWins.filter(x => x === 'player').length;
   const ew = state.roundWins.filter(x => x === 'enemy').length;
 
-  if (pw >= 2 || ew >= 2 || state.round >= 3) {
+  if (pw >= 2 || ew >= 2 || state.round >= state.maxRounds) {
     state.phase = 'end';
-    showOverlay(pw, ew);
+    if (pw > ew) {
+      if (typeof onBattleWin === 'function') onBattleWin(state.currentNode);
+      else showOverlay(pw, ew);
+    } else {
+      if (typeof onBattleLoss === 'function') onBattleLoss();
+      else showOverlay(pw, ew);
+    }
   } else {
     state.round++;
     state.phase = 'between';
