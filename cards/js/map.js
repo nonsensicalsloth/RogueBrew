@@ -125,7 +125,7 @@ function markVisited(node) {
 
 function showMapScreen() {
   setScreen('map-screen');
-  renderMap();
+  setTimeout(() => renderMap(), 50);
 }
 
 function renderMap() {
@@ -134,16 +134,14 @@ function renderMap() {
   const el       = document.getElementById('map-container');
   if (!el || !actNodes) return;
 
-  // Update gold display
-  document.getElementById('map-gold').textContent = `💰 ${mapState.gold}`;
-  document.getElementById('map-act-name').textContent = ACT_NAMES[act];
-  document.getElementById('map-deck-count').textContent = `🃏 ${draftState.deck.length} cards`;
+  document.getElementById('map-gold').textContent      = `💰 ${mapState.gold}`;
+  document.getElementById('map-act-name').textContent  = ACT_NAMES[act];
+  document.getElementById('map-deck-count').textContent= `🃏 ${draftState.deck.length} cards`;
 
-  // Draw SVG map
-  const W      = el.offsetWidth || 500;
+  const W      = Math.max(el.offsetWidth, 320);
   const layers = actNodes.length;
-  const layerH = 80;
-  const H      = layers * layerH + 40;
+  const layerH = 90;
+  const H      = layers * layerH + 60;
 
   let svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">`;
 
@@ -654,24 +652,4 @@ function showRunLoss() {
 
 // ── Start a run ──
 
-function startRun(deckSlotIndex) {
-  const decks = loadSavedDecks();
-  const deck  = decks[deckSlotIndex];
-  if (!deck || deck.cards.length < 1) { alert('Build a deck first!'); return; }
-
-  draftState.deck      = deck.cards.map(id => ({ ...getCardDef(id) }));
-  draftState.deckIndex = deckSlotIndex;
-
-  mapState = {
-    act:         0,
-    currentNode: null,
-    nodes:       [],
-    gold:        100,
-    visited:     {},
-    edges:       [],
-  };
-
-  generateMap();
-  setScreen('brewery-screen');
-  renderBreweryChoices();
-}
+// startRun is defined in draft.js as startRunWithDeck

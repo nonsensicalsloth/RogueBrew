@@ -4,7 +4,7 @@ const BREWERIES = [
   { id:'test', name:'Test Brewery', subtitle:'A blank slate. Good for learning.', icon:'🧪', bonus:'No special bonus yet.', unlocked:true },
 ];
 
-const DECK_SIZE  = 30;
+const DECK_SIZE  = 15;
 const MAX_COPIES = 3;
 const MAX_DECKS  = 3;
 const SAVE_KEY   = 'wortcraft_decks';
@@ -276,13 +276,26 @@ function startRunWithDeck(slotIndex) {
   }
   draftState.deckIndex = slotIndex;
   draftState.deck = deck.cards.map(id => ({ ...getCardDef(id) }));
+
+  // Init map state
+  mapState = {
+    act:         0,
+    currentNode: null,
+    nodes:       [],
+    gold:        100,
+    visited:     {},
+    edges:       [],
+  };
+  generateMap();
+
+  // Go to brewery select first
   setScreen('brewery-screen');
   renderBreweryChoices();
 }
 
 function selectBrewery(id) {
   draftState.brewery = BREWERIES.find(b => b.id === id);
-  showDeckPreview();
+  showMapScreen();
 }
 
 function showDeckPreview() {
