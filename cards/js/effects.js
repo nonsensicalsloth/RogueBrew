@@ -42,6 +42,7 @@ function addRoastToken(who, amount = 1) {
     if (state.roastTokens >= 5) {
       addLog('⚠ ROAST OVERLOAD! Hot side score halved!', 'warn');
     }
+  }
 }
 
 function addToHand(who, tokenId) {
