@@ -7,11 +7,7 @@ let selectedCard = null;
 function selectCard(idx) {
   if (!state.playerTurn || state.phase !== 'play') return;
   const c = state.pHand[idx];
-  if (!c) return;
-  // Apply next-card discount
-  const discount = state.nextCardDiscount || 0;
-  const effectiveCost = Math.max(0, c.cost - discount);
-  if (effectiveCost > state.budget - state.budgetUsed) return;
+  if (!c || getEffectiveCost(c) > state.budget - state.budgetUsed) return;
   selectedCard = (selectedCard === idx) ? null : idx;
   render();
 }

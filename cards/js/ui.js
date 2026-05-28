@@ -60,7 +60,7 @@ function renderHand() {
   } else {
     const canAct = state.playerTurn && state.phase === 'play';
     el.innerHTML = state.pHand.map((c, i) => {
-      const ok    = canAct && c.cost <= rem;
+      const ok    = canAct && getEffectiveCost(c) <= rem;
       const isSel = selectedCard === i;
       let extra = '';
       if (!ok) extra = 'card-disabled';
@@ -150,10 +150,11 @@ function render() {
     state.phase === 'play'      ? (state.playerTurn ? 'YOUR TURN' : 'RIVAL TURN') :
     state.phase === 'between'   ? 'BETWEEN ROUNDS' : 'GAME OVER';
 
+  const discountMsg = (state.nextCardDiscount || 0) > 0 ? ` ★-${state.nextCardDiscount} DISCOUNT` : '';
   document.getElementById('hand-lbl').textContent =
     state.phase === 'mulligan'
       ? 'YOUR HAND — SELECT UP TO 2 TO SEND BACK'
-      : `YOUR HAND (${state.pHand.length}) — BUDGET: ${state.budget - state.budgetUsed}/${state.budget}`;
+      : `YOUR HAND (${state.pHand.length}) — BUDGET: ${state.budget - state.budgetUsed}/${state.budget}${discountMsg}`;
 
   renderField();
   renderHand();

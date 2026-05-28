@@ -171,7 +171,7 @@ body::after {
 .pile-icon { font-size: 14px; margin-bottom: 3px; display: block; }
 .pile-num  { font-size: 10px; color: var(--text); margin-bottom: 2px; }
 .pile-lbl  { font-size: 6px; color: var(--dim); }
-.hand-col  { flex: 1; }
+.hand-col  { flex: 1; overflow: visible; }
 .hand-lbl  {
   font-size: 7px;
   color: var(--dim);
@@ -179,7 +179,7 @@ body::after {
   border-bottom: 1px solid var(--border);
   padding-bottom: 4px;
 }
-.hand-cards { display: flex; flex-wrap: wrap; gap: 5px; }
+.hand-cards { display: flex; flex-wrap: wrap; gap: 16px; padding: 12px 10px; }
 
 /* ── Buttons & actions ── */
 .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; align-items: center; }
@@ -462,8 +462,8 @@ body::after {
 .builder-card-pool {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
-  padding: 10px 4px;
+  gap: 18px;
+  padding: 14px 10px;
   align-content: flex-start;
 }
 
