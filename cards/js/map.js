@@ -109,11 +109,23 @@ function isVisited(node) {
 }
 
 function isAccessible(node) {
+  // First layer of current act is always accessible
   if (node.layer === 0 && node.act === mapState.act) return true;
-  // Accessible if any visited node connects to this one
+  // Must be reachable via a forward edge from a visited node
   return mapState.edges.some(e =>
-    e.to === node.id && mapState.visited[e.from]
+    e.to === node.id &&
+    mapState.visited[e.from]
   );
+}
+
+function canVisit(node) {
+  // Can only visit if accessible and not already visited
+  // Also enforce forward-only: layer must be > current node's layer
+  if (isVisited(node)) return false;
+  if (!isAccessible(node)) return false;
+  // Enforce forward movement — can't go to a lower or equal layer
+  if (mapState.currentNode && node.layer <= mapState.currentNode.layer) return false;
+  return true;
 }
 
 function markVisited(node) {
@@ -176,6 +188,7 @@ function renderMap() {
       const y       = nodeY(layer, H, layers);
       const visited = isVisited(node);
       const access  = isAccessible(node);
+      const canClick = canVisit(node);
       const color   = NODE_COLORS[node.type] || '#555';
       const icon    = NODE_ICONS[node.type]  || '?';
 
@@ -185,7 +198,7 @@ function renderMap() {
       const opacity = access || visited ? 1 : 0.4;
 
       svg += `<g transform="translate(${x},${y})" opacity="${opacity}"
-        ${access && !visited ? `onclick="clickMapNode('${node.id}')" style="cursor:pointer"` : ''}>
+        ${canClick ? `onclick="clickMapNode('${node.id}')" style="cursor:pointer"` : ''}>
         <circle r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${visited ? 2.5 : 1.5}"/>
         <text text-anchor="middle" dominant-baseline="central"
           font-size="${node.type === 'boss' ? 14 : 12}"
@@ -215,7 +228,7 @@ function nodeY(layer, H, totalLayers) {
 function clickMapNode(nodeId) {
   const [act, layer, index] = nodeId.split('-').map(Number);
   const node = getNode(act, layer, index);
-  if (!node || !isAccessible(node) || isVisited(node)) return;
+  if (!node || !canVisit(node)) return;
   markVisited(node);
   handleNode(node);
 }

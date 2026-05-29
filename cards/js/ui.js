@@ -140,7 +140,9 @@ function render() {
   pt.textContent = (ps > es && diff > 0) ? `▲ +${diff}` : '';
   et.textContent = (es > ps && diff > 0) ? `▲ +${diff}` : '';
 
-  document.getElementById('round-num').textContent  = state.round;
+  document.getElementById('round-num').textContent   = state.round;
+  const maxRoundsEl = document.getElementById('max-rounds');
+  if (maxRoundsEl) maxRoundsEl.textContent = state.maxRounds || 3;
   document.getElementById('turn-num').textContent   = state.phase === 'play' ? state.turn : '—';
   document.getElementById('budget-rem').textContent = state.phase === 'play'
     ? `${state.budget - state.budgetUsed}/${state.budget}` : '—';
