@@ -60,6 +60,12 @@ function playToLane(lane) {
     state.pendingHopBuff = 0;
   }
 
+  // Auto-remove sugar clot when any hop lands on hot side
+  if (c.cat === 'hop' && lane === 'hot') {
+    removeFirstToken('p', 'sugar_clot');
+    removeFirstToken('p', 'sugar_clot8');
+  }
+
   // Apply on-play effects
   applyCardEffect(c, lane, 'p');
 

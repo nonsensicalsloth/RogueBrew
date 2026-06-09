@@ -66,6 +66,9 @@ function buffLaneCards(lane, who, amount, filterFn = null) {
   const cards = getLaneCards(lane, who);
   let count = 0;
   cards.forEach(c => {
+    // Respect protection flags
+    if (amount < 0 && c._locked) return;
+    if (amount !== 0 && Math.abs(amount) !== amount && c._noMultiplier) return; // debuffs skip noMultiplier too
     if (!filterFn || filterFn(c)) {
       c.points += amount;
       count++;
@@ -148,10 +151,16 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'citra':
-    case 'simcoe':
       if (isPlayer) {
         drawForPlayer(1);
         addLog(`${card.name}: drew 1 card.`, 'player');
+      }
+      break;
+
+    case 'simcoe':
+      if (isPlayer && lane === 'cold') {
+        drawForPlayer(1);
+        addLog('Simcoe: played on cold side — drew 1 card.', 'player');
       }
       break;
 
@@ -211,7 +220,7 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'fermlog':
-      coldCards.forEach(c => { if (c.cat !== 'token') c.points += 2; });
+      coldCards.forEach(c => { if (c.cat !== 'token' && !c._locked) c.points += 2; });
       addLog('Fermentation Log: +2 pts to all cold side cards.', 'player');
       break;
 
@@ -246,10 +255,9 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'crystal50': {
-      // Find last base malt played (second to last card on hot side)
       const baseMaltsOnHot = hotCards.filter(c => c.cat === 'malt' && !c.id.startsWith('crystal'));
       if (baseMaltsOnHot.length >= 1) {
-        const target = baseMaltsOnHot[baseMaltsOnHot.length - 2] || baseMaltsOnHot[0];
+        const target = baseMaltsOnHot[baseMaltsOnHot.length - 1];
         if (target) {
           target.points *= 2;
           addLog(`Crystal 50: ${target.name} now scores double!`, 'player');
@@ -568,11 +576,6 @@ function applyCardEffect(card, lane, who) {
       addLog('Cross Contamination: 2 Contamination cards into enemy deck!', 'player');
       break;
 
-    case 'fermlog':
-      coldCards.forEach(c => { if (c.cat !== 'token') c.points += 2; });
-      addLog('Fermentation Log: +2 to all cold side cards.', 'player');
-      break;
-
     case 'qc': {
       if (totalScore('p') > totalScore('e')) {
         card.points += 10;
@@ -608,12 +611,16 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'gose': {
+      const sourCrispCount = getAllOnField(who).filter(c => c.tags && (c.tags.includes('sour') || c.tags.includes('crisp'))).length;
+      card.points += sourCrispCount * 2;
       const hasWheatRye = hotCards.some(c =>
         c.id === 'wheatwhite' || c.id === 'flakedwheat' || c.id === 'flakedrye' || c.id === 'rye' || c.id === '6row'
       );
       if (hasWheatRye) {
         card.points += 8;
-        addLog('Gose Yeast: wheat/rye on hot side — +8 pts!', 'player');
+        addLog(`Gose Yeast: +${sourCrispCount * 2} sour/crisp pts + wheat/rye bonus +8!`, 'player');
+      } else {
+        addLog(`Gose Yeast: +${sourCrispCount * 2} pts from sour/crisp cards.`, 'player');
       }
       break;
     }
@@ -654,9 +661,10 @@ function applyCardEffect(card, lane, who) {
       break;
     }
     case 'cardamom': {
-      const sweetSpicyCount = getAllOnField(who).filter(c => c.tags && (c.tags.includes('sweet') || c.tags.includes('spicy'))).length;
-      card.points += sweetSpicyCount * 3;
-      addLog(`Cardamom: +${sweetSpicyCount * 3} pts (${sweetSpicyCount} sweet/spicy cards).`, 'player');
+      const sweetCount  = getAllOnField(who).filter(c => c.tags && c.tags.includes('sweet')).length;
+      const spicyCount  = getAllOnField(who).filter(c => c.tags && c.tags.includes('spicy')).length;
+      card.points += (sweetCount + spicyCount) * 3;
+      addLog(`Cardamom: +${sweetCount} sweet, +${spicyCount} spicy cards × 3 = +${(sweetCount + spicyCount) * 3} pts.`, 'player');
       break;
     }
     case 'choc':      addRoastToken(who, 1); break;
@@ -692,7 +700,7 @@ function applyCardEffect(card, lane, who) {
 
     case 'blackmalt': {
       addRoastToken(who, 2);
-      const adjCrystal = getLaneCards('hot', who).filter(c => c.id && c.id.startsWith('crystal'));
+      const adjCrystal = getLaneCards('hot', who).filter(c => c.id && c.id.startsWith('crystal') && !c._noMultiplier);
       adjCrystal.forEach(c => { c.points *= 2; });
       if (adjCrystal.length) addLog(`Black Malt: ${adjCrystal.length} crystal malt(s) doubled!`, 'player');
       break;
@@ -752,7 +760,7 @@ function applyCardEffect(card, lane, who) {
       const hotList = getLaneCards('hot', who);
       const idx = hotList.indexOf(card);
       const neighbors = [hotList[idx-1], hotList[idx+1]].filter(Boolean);
-      neighbors.forEach(n => { if (n.cat !== 'token') n.points += 3; });
+      neighbors.forEach(n => { if (n.cat !== 'token' && !n._locked) n.points += 3; });
       if (neighbors.length) addLog(`Carapils: +3 to ${neighbors.length} adjacent card(s).`, 'player');
       break;
     }
@@ -809,19 +817,17 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'oats': {
-      // Double adjacent dark malt
       const oatHot = getLaneCards('hot', who);
       const oatIdx = oatHot.indexOf(card);
       const darkNeighbors = [oatHot[oatIdx-1], oatHot[oatIdx+1]]
-        .filter(n => n && n.tags && n.tags.includes('roasty'));
+        .filter(n => n && n.tags && n.tags.includes('roasty') && !n._noMultiplier);
       darkNeighbors.forEach(n => { n.points *= 2; });
       if (darkNeighbors.length) addLog(`Flaked Oats: doubled adjacent dark malt!`, 'player');
       break;
     }
 
     case 'coffee': {
-      // Double all dark malt values on hot side
-      const darkMalts = getLaneCards('hot', who).filter(c => c.tags && c.tags.includes('roasty') && c.cat === 'malt');
+      const darkMalts = getLaneCards('hot', who).filter(c => c.tags && c.tags.includes('roasty') && c.cat === 'malt' && !c._noMultiplier);
       darkMalts.forEach(c => { c.points *= 2; });
       addLog(`Coffee Beans: doubled ${darkMalts.length} dark malt(s)!`, 'player');
       break;
@@ -1213,6 +1219,17 @@ function applyCardEffect(card, lane, who) {
     case 'oatflakes':
       // Flat score cards — no effect needed
       break;
+
+    // ── Tokens: on-play effects ──
+
+    case 'haze': {
+      // Buff all hops currently on the board
+      const allHops = [...getLaneCards('hot', who), ...getLaneCards('cold', who)]
+        .filter(c => c.cat === 'hop');
+      allHops.forEach(h => { h.points += 4; });
+      addLog(`Haze: +4 pts to ${allHops.length} hop(s) on board!`, 'player');
+      break;
+    }
 
     default:
       break;
