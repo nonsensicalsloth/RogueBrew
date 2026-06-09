@@ -2,8 +2,14 @@
 
 const ACT_NAMES = ['The Mash', 'Fermentation', 'Conditioning'];
 
-// Rival deck sizes per layer (7 layers + boss)
-const RIVAL_SIZES = [8, 12, 16, 20, 24, 28, 30];
+// Rival deck sizes per layer per act
+const RIVAL_SIZES_BY_ACT = [15, 20, 30];
+
+// Boss is always 30
+function getRivalSize(act, layer) {
+  if (layer === 6) return 30; // boss
+  return RIVAL_SIZES_BY_ACT[act];
+}
 
 // Node type distribution per layer (0-indexed)
 const LAYER_TEMPLATES = [
@@ -59,7 +65,7 @@ function generateMap() {
       const layerNodes = template.map((type, idx) => ({
         act, layer, index: idx,
         type,
-        rivalSize: RIVAL_SIZES[layer],
+        rivalSize: getRivalSize(act, layer),
         id: `${act}-${layer}-${idx}`,
         accessible: layer === 0 && act === mapState.act,
       }));

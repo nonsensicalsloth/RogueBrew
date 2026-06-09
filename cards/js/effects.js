@@ -162,11 +162,13 @@ function applyCardEffect(card, lane, who) {
       }
       break;
 
-    case 'lacto':
-      // Mark for +5 next turn
-      card._lactoTurn = state.turn + 1;
-      addLog('Lacto: will gain +5 pts next turn.', 'player');
+    case 'lacto': {
+      const hasHotsideHops = getLaneCards('hot', who).some(c => c.cat === 'hop');
+      if (hasHotsideHops) { card.points -= 2; addLog('Lacto: hops on hot side — -2 pts penalty!', 'warn'); }
+      else { card.points += 4; addLog('Lacto: no hops on hot side — +4 pts bonus!', 'player'); }
+      shuffleIntoRemainingDeck(who, 'contamination');
       break;
+    }
 
     case 'brettcl':
     case 'lachancea':
@@ -336,69 +338,68 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'calale': {
-      const hopCount = [...hotCards, ...coldCards].filter(c => c.cat === 'hop').length;
-      if (hopCount >= 3) {
-        card.points += 8;
-        addLog('California Ale: 3+ hops on board — +8 pts!', 'player');
-      }
+      const allHopsCA = [...getLaneCards('hot',who),...getLaneCards('cold',who)].filter(c => c.cat === 'hop').length;
+      card.points += allHopsCA;
+      if (allHopsCA >= 3) { card.points += 8; addLog(`California Ale: +${allHopsCA} hop pts +8 bonus!`, 'player'); }
+      else addLog(`California Ale: +${allHopsCA} pts from hops.`, 'player');
       break;
     }
 
     case 'kolsch': {
-      const roastCount = (state.roastTokens || 0);
-      if (roastCount === 0) {
-        card.points += 8;
-        addLog('Kolsch Yeast: no roast — +8 pts!', 'player');
-      }
+      const allHopsKO = [...getLaneCards('hot',who),...getLaneCards('cold',who)].filter(c => c.cat === 'hop').length;
+      card.points += allHopsKO;
+      if ((state.roastTokens||0) === 0) { card.points += 8; addLog(`Kolsch: +${allHopsKO} hop pts +8 no-roast bonus!`, 'player'); }
+      else addLog(`Kolsch: +${allHopsKO} pts from hops.`, 'player');
       break;
     }
 
     case 'germanlager': {
-      const allHot = hotCards.filter(c => c.cat !== 'token');
-      const allCheap = allHot.every(c => c.cost <= 2);
-      if (allHot.length > 0 && allCheap) {
-        card.points += 10;
-        addLog('German Lager: all hot side cards cost ≤2 — +10 pts!', 'player');
-      }
+      const hopsGL = [...getLaneCards('hot',who),...getLaneCards('cold',who)].filter(c => c.cat === 'hop').length;
+      card.points += hopsGL;
+      const allHotGL = getLaneCards('hot', who).filter(c => c.cat !== 'token');
+      if (allHotGL.length > 0 && allHotGL.every(c => c.cost <= 2)) { card.points += 10; addLog(`German Lager: +${hopsGL} hop pts +10 clean board bonus!`, 'player'); }
+      else addLog(`German Lager: +${hopsGL} pts from hops.`, 'player');
       break;
     }
 
     case 'czechlager': {
-      const hasPilsnerOrSaaz = [...hotCards, ...coldCards].some(c => c.id === 'pilsner' || c.id === 'saaz');
-      if (hasPilsnerOrSaaz) {
-        card.points += 8;
-        addLog('Czech Lager: Pilsner or Saaz on board — +8 pts!', 'player');
-      }
+      const hopsCZ = [...getLaneCards('hot',who),...getLaneCards('cold',who)].filter(c => c.cat === 'hop').length;
+      card.points += hopsCZ;
+      const hasPilsnerOrSaazCZ = [...getLaneCards('hot',who),...getLaneCards('cold',who)].some(c => c.id === 'pilsner' || c.id === 'saaz');
+      if (hasPilsnerOrSaazCZ) { card.points += 8; addLog(`Czech Lager: +${hopsCZ} hop pts +8 Pilsner/Saaz bonus!`, 'player'); }
+      else addLog(`Czech Lager: +${hopsCZ} pts from hops.`, 'player');
       break;
     }
 
     case 'belgianstr': {
-      const sweetCount = countTag('sweet', who, 'hot');
-      if (sweetCount >= 2) {
-        card.points *= 2;
-        addLog('Belgian Strong: 2+ sweet cards on hot side — score doubled!', 'player');
-      }
+      const belgAdjBS = getLaneCards('hot', who).filter(c => c.tags && c.tags.includes('belgian')).length;
+      card.points += belgAdjBS * 3;
+      const sweetBS = countTag('sweet', who, 'hot');
+      if (sweetBS >= 2) { card.points *= 2; addLog(`Belgian Strong: +${belgAdjBS*3} belgian adj, score doubled!`, 'player'); }
+      else addLog(`Belgian Strong: +${belgAdjBS*3} pts from belgian adjuncts.`, 'player');
       break;
     }
 
     case 'tripel': {
-      const sweetCount = countTag('sweet', who);
-      card.points += sweetCount * 4;
-      addLog(`Tripel Yeast: +${sweetCount * 4} pts (${sweetCount} sweet cards).`, 'player');
+      const belgAdjTR = getLaneCards('hot', who).filter(c => c.tags && c.tags.includes('belgian')).length;
+      const sweetTR = countTag('sweet', who);
+      card.points += belgAdjTR * 2 + sweetTR * 3;
+      addLog(`Tripel: +${belgAdjTR*2} belgian adj, +${sweetTR*3} sweet pts.`, 'player');
       break;
     }
 
     case 'abbey': {
-      const maltyCount = countTag('malty', who, 'hot');
-      card.points += maltyCount * 4;
-      addLog(`Abbey Yeast: +${maltyCount * 4} pts (${maltyCount} malty cards).`, 'player');
+      const belgAdjAB = getLaneCards('hot', who).filter(c => c.tags && c.tags.includes('belgian')).length;
+      const maltyAB = countTag('malty', who, 'hot');
+      card.points += belgAdjAB * 2 + maltyAB * 3;
+      addLog(`Abbey: +${belgAdjAB*2} belgian adj, +${maltyAB*3} malty pts.`, 'player');
       break;
     }
 
     case 'hefeweizen': {
-      const breadyCount = countTag('bready', who, 'hot');
-      card.points += breadyCount * 3;
-      addLog(`Hefeweizen: +${breadyCount * 3} pts (${breadyCount} bready cards).`, 'player');
+      const breadyHW = countTag('bready', who, 'hot');
+      card.points += breadyHW * 2;
+      addLog(`Hefeweizen: +${breadyHW * 2} pts (${breadyHW} bready cards).`, 'player');
       break;
     }
 
@@ -581,25 +582,28 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'witbier': {
-      const spicyCount = countTag('spicy', who);
-      card.points += spicyCount * 3;
-      addLog(`Witbier Yeast: +${spicyCount * 3} pts (${spicyCount} spicy cards).`, 'player');
+      const spicyWB = countTag('spicy', who);
+      card.points += spicyWB * 3;
+      const hasCoriander = getLaneCards('hot', who).some(c => c.id === 'coriander');
+      if (hasCoriander) { card.points += 6; addLog(`Witbier: +${spicyWB*3} spicy pts + Coriander bonus +6!`, 'player'); }
+      else addLog(`Witbier: +${spicyWB*3} pts from spicy cards.`, 'player');
       break;
     }
 
     case 'creamale': {
-      const neutralCount = countTag('neutral', who);
-      card.points += neutralCount * 2;
-      addLog(`Cream Ale: +${neutralCount * 2} pts (${neutralCount} neutral cards).`, 'player');
+      const baseMaltsCR = getLaneCards('hot', who).filter(c => ['2row','pilsner','6row','marisotter','goldenprom','vienna','munich','wheatwhite','expilsner','floorpilsner','darkmunich','expwheat','paleale','heritage'].includes(c.id)).length;
+      const neutralCR = countTag('neutral', who);
+      card.points += baseMaltsCR + neutralCR * 2;
+      addLog(`Cream Ale: +${baseMaltsCR} base malts, +${neutralCR*2} neutral pts.`, 'player');
       break;
     }
 
     case 'americanlag': {
-      const neutralCount = countTag('neutral', who);
-      if (neutralCount >= 3) {
-        card.points += 8;
-        addLog('American Lager: 3+ neutral cards — +8 pts!', 'player');
-      }
+      const baseMaltsAL = getLaneCards('hot', who).filter(c => ['2row','pilsner','6row','marisotter','goldenprom','vienna','munich','wheatwhite','expilsner','floorpilsner','darkmunich','expwheat','paleale','heritage'].includes(c.id)).length;
+      card.points += baseMaltsAL;
+      const neutralAL = countTag('neutral', who);
+      if (neutralAL >= 3) { card.points += 8; addLog(`American Lager: +${baseMaltsAL} base malts +8 neutral bonus!`, 'player'); }
+      else addLog(`American Lager: +${baseMaltsAL} pts from base malts.`, 'player');
       break;
     }
 
@@ -614,7 +618,47 @@ function applyCardEffect(card, lane, who) {
       break;
     }
 
-    // ── Dark Malts — roast token generation ──
+    // ── Belgian adjuncts ──
+    case 'candisugarcl': {
+      const belgYeasts = getLaneCards('cold', who).filter(c => c.tags && c.tags.includes('belgian')).length;
+      card.points += belgYeasts * 3;
+      addLog(`Clear Candi Sugar: +${belgYeasts * 3} pts (${belgYeasts} belgian yeasts).`, 'player');
+      break;
+    }
+    case 'candisugarab': {
+      const belgYeastsAB = getLaneCards('cold', who).filter(c => c.tags && c.tags.includes('belgian')).length;
+      card.points += belgYeastsAB * 4;
+      addLog(`Amber Candi Sugar: +${belgYeastsAB * 4} pts.`, 'player');
+      break;
+    }
+    case 'candisugardk': {
+      const belgYeastsDK = getLaneCards('cold', who).filter(c => c.tags && c.tags.includes('belgian')).length;
+      card.points += belgYeastsDK * 5;
+      addLog(`Dark Candi Sugar: +${belgYeastsDK * 5} pts.`, 'player');
+      break;
+    }
+    case 'coriander': {
+      const hasWitSaison = getLaneCards('cold', who).some(c => c.id === 'witbier' || c.id === 'saison');
+      if (hasWitSaison) { card.points += 8; addLog('Coriander: Witbier/Saison present — +8 pts!', 'player'); }
+      break;
+    }
+    case 'orangepeel': {
+      const citrusBelg = getAllOnField(who).filter(c => c.tags && (c.tags.includes('citrus') || c.tags.includes('belgian'))).length;
+      card.points += citrusBelg * 2;
+      addLog(`Orange Peel: +${citrusBelg * 2} pts (${citrusBelg} citrus/belgian cards).`, 'player');
+      break;
+    }
+    case 'grainspara': {
+      const belgCount = getAllOnField(who).filter(c => c.tags && c.tags.includes('belgian')).length;
+      if (belgCount >= 3) { card.points += 12; addLog('Grains of Paradise: 3+ belgian cards — +12 pts!', 'player'); }
+      break;
+    }
+    case 'cardamom': {
+      const sweetSpicyCount = getAllOnField(who).filter(c => c.tags && (c.tags.includes('sweet') || c.tags.includes('spicy'))).length;
+      card.points += sweetSpicyCount * 3;
+      addLog(`Cardamom: +${sweetSpicyCount * 3} pts (${sweetSpicyCount} sweet/spicy cards).`, 'player');
+      break;
+    }
     case 'choc':      addRoastToken(who, 1); break;
     case 'patent':    addRoastToken(who, 2); break;
     case 'palechoc':  addRoastToken(who, 1); break;
@@ -1087,48 +1131,61 @@ function applyCardEffect(card, lane, who) {
     // ── Yeasts: remaining ──
 
     case 'americanale': {
-      const hasFunky = countTag('funky', who, 'cold') > 0;
-      if (!hasFunky) {
-        card.points += 6;
-        addLog('American Ale: no funky cards — +6 pts!', 'player');
-      }
+      const baseMaltsAA = getLaneCards('hot', who).filter(c => ['2row','pilsner','6row','marisotter','goldenprom','vienna','munich','wheatwhite','expilsner','floorpilsner','darkmunich','expwheat','paleale','heritage'].includes(c.id)).length;
+      card.points += baseMaltsAA;
+      const hasFunkyAA = countTag('funky', who, 'cold') > 0;
+      if (!hasFunkyAA) { card.points += 6; addLog(`American Ale: +${baseMaltsAA} base malts, no funky — +6 bonus!`, 'player'); }
+      else addLog(`American Ale: +${baseMaltsAA} pts from base malts.`, 'player');
       break;
     }
 
     case 'englishale': {
-      const biscCount = countTag('biscuity', who, 'hot');
-      card.points += biscCount * 2;
-      addLog(`English Ale: +${biscCount * 2} pts (${biscCount} biscuity cards).`, 'player');
+      const biscMaltyCount = getLaneCards('hot', who).filter(c => (c.tags && (c.tags.includes('biscuity') || c.tags.includes('malty')))).length;
+      card.points += biscMaltyCount;
+      addLog(`English Ale: +${biscMaltyCount} pts (${biscMaltyCount} biscuity/malty cards).`, 'player');
       break;
     }
 
-    case 'irishale':
-      // Reliable anchor, no special effect
+    case 'irishale': {
+      const baseMaltsIA = getLaneCards('hot', who).filter(c => ['2row','pilsner','6row','marisotter','goldenprom','vienna','munich','wheatwhite','expilsner','floorpilsner','darkmunich','expwheat','paleale','heritage'].includes(c.id)).length;
+      card.points += baseMaltsIA;
+      addLog(`Irish Ale: +${baseMaltsIA} pts from base malts.`, 'player');
       break;
+    }
 
-    case 'belgian':
-      // Base score only
+    case 'belgian': {
+      const belgAdj = getLaneCards('hot', who).filter(c => c.tags && c.tags.includes('belgian')).length;
+      card.points += belgAdj * 2;
+      addLog(`Belgian Ale: +${belgAdj * 2} pts (${belgAdj} belgian adjuncts).`, 'player');
       break;
+    }
 
-    case 'saison':
-      // Base score only
+    case 'saison': {
+      const belgAdjSA = getLaneCards('hot', who).filter(c => c.tags && c.tags.includes('belgian')).length;
+      card.points += belgAdjSA * 2;
+      addLog(`Saison: +${belgAdjSA * 2} pts from belgian adjuncts.`, 'player');
       break;
+    }
 
     case 'munichlager': {
-      const maltyCount2 = countTag('malty', who);
-      card.points += maltyCount2 * 3;
-      addLog(`Munich Lager: +${maltyCount2 * 3} pts (${maltyCount2} malty cards).`, 'player');
+      const baseMaltsML = getLaneCards('hot', who).filter(c => ['2row','pilsner','6row','marisotter','goldenprom','vienna','munich','wheatwhite','expilsner','floorpilsner','darkmunich','expwheat','paleale','heritage'].includes(c.id)).length;
+      const maltyML = countTag('malty', who);
+      card.points += baseMaltsML + maltyML * 2;
+      addLog(`Munich Lager: +${baseMaltsML} base malts, +${maltyML*2} malty pts.`, 'player');
       break;
     }
 
-    case 'kveik':
-      // High flat score, no special effect
+    case 'kveik': {
+      const hopsKV = [...getLaneCards('hot',who),...getLaneCards('cold',who)].filter(c => c.cat === 'hop').length;
+      card.points += hopsKV;
+      addLog(`Kveik: +${hopsKV} pts from hops.`, 'player');
       break;
+    }
 
     case 'kvass': {
-      const breadyCount2 = countTag('bready', who);
-      card.points += breadyCount2 * 2;
-      addLog(`Kvass: +${breadyCount2 * 2} pts (${breadyCount2} bready cards).`, 'player');
+      const breadyKV = countTag('bready', who);
+      card.points += breadyKV * 2;
+      addLog(`Kvass: +${breadyKV * 2} pts (${breadyKV} bready cards).`, 'player');
       break;
     }
 
@@ -1201,28 +1258,33 @@ function applyTurnEffects(who) {
   const isPlayer = who === 'p';
 
   coldCards.forEach(c => {
+    // Universal +2 per turn for all yeast except kveik and champagne
+    if (c.cat === 'yeast' && c.id !== 'kveik' && c.id !== 'champagne') {
+      const extraTurn = (c.id === 'brettano' && getLaneCards('hot', who).some(h => h.tags && h.tags.includes('fruity'))) ? 1 : 0;
+      c.points += 2 + extraTurn;
+      if (isPlayer && (c.id === 'brett' || c.id === 'brettcl' || c.id === 'brettano' || c.id === 'pedio' || c.id === 'lachancea')) {
+        // wild yeasts log their own message below
+      } else if (isPlayer) {
+        addLog(`${c.name}: +${2 + extraTurn} pts (accumulating).`, 'player');
+      }
+    }
+
     switch (c.id) {
       case 'brett':
-        c.points += 3;
-        if (isPlayer) addLog('Brett Brux: +3 pts this turn.', 'player');
+        if (isPlayer) addLog('Brett Brux: +2 pts, shuffling Contamination into your deck...', 'player');
         shuffleIntoRemainingDeck('p', 'contamination');
         break;
 
       case 'brettcl':
-        c.points += 2;
-        if (isPlayer) addLog('Brett Claussenii: +2 pts this turn.', 'player');
-        // 50/50 contamination
+        if (isPlayer) addLog('Brett Claussenii: +2 pts, 50/50 contamination...', 'player');
         if (Math.random() < 0.5) shuffleIntoRemainingDeck('p', 'contamination');
         else shuffleIntoRemainingDeck('e', 'contamination');
         break;
 
-      case 'brettano': {
-        const hasFruity = getLaneCards('hot', who).some(c => c.tags && c.tags.includes('fruity'));
-        c.points += hasFruity ? 5 : 3;
-        if (isPlayer) addLog(`Brett Anomalus: +${hasFruity ? 5 : 3} pts this turn.`, 'player');
+      case 'brettano':
+        if (isPlayer) addLog(`Brett Anomalus: +2 pts, contamination to enemy...`, 'player');
         shuffleIntoRemainingDeck('e', 'contamination');
         break;
-      }
 
       case 'pedio':
         if (isPlayer) addLog('Pediococcus: 50/50 contamination...', 'player');
