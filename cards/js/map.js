@@ -543,6 +543,13 @@ function renderMapRest() {
   const el = document.getElementById('rest-card-list');
   el.innerHTML = draftState.deck.map((c, i) => {
     const pts = c.points >= 0 ? `+${c.points}` : `${c.points}`;
+    if (c._upgraded) {
+      return `<div class="deck-list-row" style="padding:6px 8px;opacity:0.4;cursor:default;">
+        <span class="deck-list-count" style="color:${catColor(c.cat)}">${catIcon(c.cat)}</span>
+        <span class="deck-list-name">${c.name}</span>
+        <span style="font-size:7px;color:var(--dim);">${pts} (already upgraded)</span>
+      </div>`;
+    }
     return `<div class="deck-list-row" onclick="upgradeCard(${i})" style="cursor:pointer;padding:6px 8px;">
       <span class="deck-list-count" style="color:${catColor(c.cat)}">${catIcon(c.cat)}</span>
       <span class="deck-list-name">${c.name}</span>

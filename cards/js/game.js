@@ -11,8 +11,9 @@ function initGame() {
   selectedCard = null;
 
   // Use the player's built deck; enemy always uses default for now
+  // Deep-copy and strip run-specific flags so retries start clean
   const pDeck = shuffle(draftState.deck.length > 0
-    ? draftState.deck.map(c => ({ ...c }))
+    ? draftState.deck.map(c => { const copy = { ...c }; delete copy._upgraded; return copy; })
     : buildDefaultDeck());
   const eDeck = shuffle(buildEnemyDeck());
 

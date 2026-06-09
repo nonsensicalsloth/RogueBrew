@@ -570,16 +570,19 @@ function applyCardEffect(card, lane, who) {
       }
       break;
 
-    case 'crosscontam':
-      shuffleIntoRemainingDeck('e', 'contamination');
-      shuffleIntoRemainingDeck('e', 'contamination');
-      addLog('Cross Contamination: 2 Contamination cards into enemy deck!', 'player');
+    case 'crosscontam': {
+      const opp = who === 'p' ? 'e' : 'p';
+      shuffleIntoRemainingDeck(opp, 'contamination');
+      shuffleIntoRemainingDeck(opp, 'contamination');
+      addLog(`Cross Contamination: 2 Contamination cards into ${isPlayer ? "rival's" : "your"} deck!`, isPlayer ? 'player' : 'enemy');
       break;
+    }
 
     case 'qc': {
-      if (totalScore('p') > totalScore('e')) {
+      const opp = who === 'p' ? 'e' : 'p';
+      if (totalScore(who) > totalScore(opp)) {
         card.points += 10;
-        addLog('Quality Control: you\'re ahead — +10 pts!', 'player');
+        addLog(`Quality Control: ${isPlayer ? "you're" : "rival is"} ahead — +10 pts!`, isPlayer ? 'player' : 'enemy');
       }
       break;
     }
@@ -777,11 +780,15 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'aromatic': {
-      // Copy effect of last malt played this round
-      if (state.lastPlayedCard && state.lastPlayedCard.cat === 'malt' && state.lastPlayedCard.id !== 'aromatic') {
+      // Copy the on-play effect of the last malt played this round.
+      // Block effects that are destructive, self-referential, or nonsensical to copy.
+      const AROMATIC_BLOCKED = new Set(['aromatic','crystal80','crystal120','specialb','melanoidin']);
+      if (state.lastPlayedCard && state.lastPlayedCard.cat === 'malt' && !AROMATIC_BLOCKED.has(state.lastPlayedCard.id)) {
         const prev = state.lastPlayedCard;
         addLog(`Aromatic Malt: copying effect of ${prev.name}...`, 'player');
         applyCardEffect(prev, lane, who);
+      } else if (state.lastPlayedCard) {
+        addLog(`Aromatic Malt: ${state.lastPlayedCard.name}'s effect can't be copied.`, 'sys');
       }
       break;
     }
@@ -919,19 +926,18 @@ function applyCardEffect(card, lane, who) {
 
     // ── Process: Disruption ──
 
-    case 'filtration':
-      if (isPlayer) {
-        // Remove last card on cold side
-        const coldList = getLaneCards('cold', who);
-        if (coldList.length > 0) {
-          const removed = coldList.splice(coldList.length - 1, 1)[0];
-          addLog(`Filtration: removed ${removed.name} from cold side.`, 'player');
-          drawForPlayer(1);
-        } else {
-          addLog('Filtration: nothing to remove.', 'player');
-        }
+    case 'filtration': {
+      const coldList = getLaneCards('cold', who);
+      if (coldList.length > 0) {
+        const removed = coldList.splice(coldList.length - 1, 1)[0];
+        addLog(`Filtration: removed ${removed.name} from cold side.`, isPlayer ? 'player' : 'enemy');
+        if (isPlayer) drawForPlayer(1);
+        else drawCards(1, state.eDeck, state.eHand);
+      } else {
+        addLog('Filtration: nothing to remove.', 'sys');
       }
       break;
+    }
 
     case 'hopthief': {
       // Copy highest scoring hop from enemy board
@@ -948,28 +954,28 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'badbatch': {
-      // Remove highest scoring card from enemy hot side
-      const enemyHot = getLaneCards('hot', 'e');
-      if (enemyHot.length > 0) {
-        const bestIdx = enemyHot.reduce((bi, c, i) => c.points > enemyHot[bi].points ? i : bi, 0);
-        const removed = enemyHot.splice(bestIdx, 1)[0];
-        addLog(`Bad Batch: removed rival's ${removed.name} (+${removed.points})!`, 'player');
+      const opp = who === 'p' ? 'e' : 'p';
+      const oppHot = getLaneCards('hot', opp);
+      if (oppHot.length > 0) {
+        const bestIdx = oppHot.reduce((bi, c, i) => c.points > oppHot[bi].points ? i : bi, 0);
+        const removed = oppHot.splice(bestIdx, 1)[0];
+        addLog(`Bad Batch: removed ${isPlayer ? "rival's" : "your"} ${removed.name} (+${removed.points})!`, isPlayer ? 'player' : 'enemy');
       } else {
-        addLog('Bad Batch: rival hot side is empty.', 'player');
+        addLog(`Bad Batch: ${isPlayer ? 'rival' : 'your'} hot side is empty.`, 'sys');
       }
       break;
     }
 
     case 'inspector': {
-      // Remove highest scoring card from any enemy lane
-      const allEnemy = [...getLaneCards('hot','e'), ...getLaneCards('cold','e')];
-      if (allEnemy.length > 0) {
-        const best = allEnemy.reduce((a, b) => a.points > b.points ? a : b);
-        ['hot','cold'].forEach(l => {
-          const idx = state.field[l].e.indexOf(best);
-          if (idx >= 0) state.field[l].e.splice(idx, 1);
+      const opp = who === 'p' ? 'e' : 'p';
+      const allOpp = [...getLaneCards('hot', opp), ...getLaneCards('cold', opp)];
+      if (allOpp.length > 0) {
+        const best = allOpp.reduce((a, b) => a.points > b.points ? a : b);
+        ['hot', 'cold'].forEach(l => {
+          const idx = state.field[l][opp].indexOf(best);
+          if (idx >= 0) state.field[l][opp].splice(idx, 1);
         });
-        addLog(`Health Inspector: removed rival's ${best.name} (+${best.points})!`, 'player');
+        addLog(`Health Inspector: removed ${isPlayer ? "rival's" : "your"} ${best.name} (+${best.points})!`, isPlayer ? 'player' : 'enemy');
       }
       break;
     }
@@ -1030,9 +1036,15 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'recipetweak': {
-      // Swap last hand card with last hot side card
       if (isPlayer && state.pHand.length > 0 && getLaneCards('hot', who).length > 0) {
-        const handCard  = state.pHand.splice(state.pHand.length - 1, 1)[0];
+        const handCard = state.pHand[state.pHand.length - 1];
+        // Only allow the swap if the hand card can legally go on hot side
+        const canGoHot = handCard.lane === 'hot' || handCard.lane === 'both';
+        if (!canGoHot) {
+          addLog(`Recipe Tweak: ${handCard.name} can't go on hot side — swap cancelled.`, 'warn');
+          break;
+        }
+        state.pHand.splice(state.pHand.length - 1, 1);
         const hotList2  = getLaneCards('hot', who);
         const fieldCard = hotList2.splice(hotList2.length - 1, 1)[0];
         hotList2.push(handCard);
@@ -1244,13 +1256,13 @@ function applyNuancedSynergy(who) {
   const allCards = getAllOnField(who);
   const nuanced  = allCards.filter(c => c.tags && c.tags.includes('nuanced') && c.cat !== 'token');
   if (nuanced.length < 2) return;
-  // Each nuanced card's score gets multiplied by the count of OTHER nuanced cards
+  // Snapshot the buffed value the first time this card enters a synergy,
+  // so pre-play buffs (Vienna, pendingHopBuff, etc.) are preserved.
   nuanced.forEach(c => {
-    const baseDef = getCardDef(c.id);
-    const base    = baseDef ? baseDef.points : c.points;
-    c.points = base * nuanced.length;
+    if (c._basePoints === undefined) c._basePoints = c.points;
+    c.points = c._basePoints * nuanced.length;
   });
-  addLog(`Nuanced synergy! ${nuanced.length} nuanced cards — all scores x${nuanced.length}!`, 'player');
+  addLog(`Nuanced synergy! ${nuanced.length} nuanced cards — all scores x${nuanced.length}!`, who === 'p' ? 'player' : 'enemy');
 }
 // Called after any hop is placed to check if c-hop doubling applies
 
@@ -1258,12 +1270,13 @@ function applyCHopSynergy(lane, who) {
   const laneCards = getLaneCards(lane, who);
   const cHops = laneCards.filter(c => c.tags && c.tags.includes('c-hop'));
   if (cHops.length >= 2) {
-    // Reset to base then double all c-hops on this lane
+    // Snapshot the buffed value the first time this card enters a synergy,
+    // so pre-play buffs (pendingHopBuff, etc.) are preserved.
     cHops.forEach(c => {
-      const baseDef = getCardDef(c.id);
-      if (baseDef) c.points = baseDef.points * 2;
+      if (c._basePoints === undefined) c._basePoints = c.points;
+      c.points = c._basePoints * 2;
     });
-    addLog(`C-Hop synergy! ${cHops.length} c-hops on ${LANE_NAMES[lane]} — all doubled!`, 'player');
+    addLog(`C-Hop synergy! ${cHops.length} c-hops on ${LANE_NAMES[lane]} — all doubled!`, who === 'p' ? 'player' : 'enemy');
   }
 }
 
