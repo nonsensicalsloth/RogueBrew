@@ -13,10 +13,10 @@ const CARD_POOL = [
   { id:'vienna',      name:'Vienna Malt',           cat:'malt', lane:'hot', points:8,  cost:2, tags:['smooth'],          desc:'Increases base score of all other malts on your hot side by +2.' },
   { id:'munich',      name:'Munich Malt',           cat:'malt', lane:'hot', points:10, cost:3, tags:['malty'],           desc:'Rich bready character.' },
   { id:'wheatwhite',  name:'White Wheat Malt',      cat:'malt', lane:'hot', points:8,  cost:1, tags:['bready'],          desc:'Add a Body card (0 cost, +5 pts) to your hand when played.' },
-  { id:'expilsner',   name:'Extra Pale Pilsner',    cat:'malt', lane:'hot', points:10, cost:2, tags:['crisp'],           desc:'Each hop card on your field gets +2 pts when played.' },
+  { id:'expilsner',   name:'Extra Pale Pilsner',    cat:'malt', lane:'hot', points:10, cost:2, tags:['crisp'],           desc:'The next hop card you play this round gets +2 pts.' },
   { id:'floorpilsner',name:'Floor Malted Pilsner',  cat:'malt', lane:'hot', points:14, cost:3, tags:['crisp'],           desc:'If no crystal or dark malts on hot side, +10 bonus pts.' },
-  { id:'darkmunich',  name:'Dark Munich',           cat:'malt', lane:'hot', points:14, cost:3, tags:['bready','toasty'], desc:'Each crystal malt on your hot side gets +4 pts when played.' },
-  { id:'expwheat',    name:'Extra Pale Wheat',      cat:'malt', lane:'hot', points:10, cost:3, tags:['neutral','crisp'], desc:'Each hop card on your field gets +3 pts when played.' },
+  { id:'darkmunich',  name:'Dark Munich',           cat:'malt', lane:'hot', points:14, cost:3, tags:['bready','toasty'], desc:'Each crystal malt already on your hot side gets +4 pts.' },
+  { id:'expwheat',    name:'Extra Pale Wheat',      cat:'malt', lane:'hot', points:10, cost:3, tags:['neutral','crisp'], desc:'The next hop card you play this round gets +3 pts.' },
   { id:'paleale',     name:'Pale Ale Malt',         cat:'malt', lane:'hot', points:10, cost:1, tags:['biscuity'],        desc:'Simple reliable base malt.' },
   { id:'heritage',    name:'Local Grown Heritage',  cat:'malt', lane:'hot', points:10, cost:3, tags:['nuanced'],         desc:'Nuanced cards multiply each other.' },
 

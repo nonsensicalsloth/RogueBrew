@@ -53,6 +53,13 @@ function playToLane(lane) {
 
   addLog(`You play ${c.name} (+${c.points}) → ${LANE_NAMES[lane]}`, 'player');
 
+  // Apply pending hop buff from Extra Pale Pilsner/Wheat
+  if (c.cat === 'hop' && (state.pendingHopBuff || 0) > 0) {
+    c.points += state.pendingHopBuff;
+    addLog(`Hop buff applied: +${state.pendingHopBuff} to ${c.name}!`, 'player');
+    state.pendingHopBuff = 0;
+  }
+
   // Apply on-play effects
   applyCardEffect(c, lane, 'p');
 

@@ -47,6 +47,7 @@ function initGame() {
     eRoastTokens:     0,
     nextYeastDiscount:0,
     nextHopDiscount:  0,
+    pendingHopBuff:   0,
     lastPlayedCard:   null,
     lastPlayedLane:   null,
   };
@@ -100,6 +101,7 @@ function startRound() {
   state.eRoastTokens      = 0;
   state.nextYeastDiscount = 0;
   state.nextHopDiscount   = 0;
+  state.pendingHopBuff    = 0;
   state.field           = { hot: { p: [...(state.victoryCards || [])], e: [] }, cold: { p: [], e: [] } };
   state.victoryCards    = [];
   addLog(`▶ Round ${state.round} begins! Budget: ${state.budget}`);

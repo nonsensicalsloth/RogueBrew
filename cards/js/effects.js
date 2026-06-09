@@ -301,15 +301,15 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'expilsner':
-      buffLaneCards('hot', who, 2, c => c.cat === 'hop');
-      buffLaneCards('cold', who, 2, c => c.cat === 'hop');
-      addLog('Extra Pale Pilsner: +2 to all hops on board.', 'player');
+      // Buff hops played AFTER this card
+      state.pendingHopBuff = (state.pendingHopBuff || 0) + 2;
+      addLog('Extra Pale Pilsner: next hops played this round get +2 pts each.', 'player');
       break;
 
     case 'expwheat':
-      buffLaneCards('hot', who, 3, c => c.cat === 'hop');
-      buffLaneCards('cold', who, 3, c => c.cat === 'hop');
-      addLog('Extra Pale Wheat: +3 to all hops on board.', 'player');
+      // Buff hops played AFTER this card
+      state.pendingHopBuff = (state.pendingHopBuff || 0) + 3;
+      addLog('Extra Pale Wheat: next hops played this round get +3 pts each.', 'player');
       break;
 
     case 'hallertau': {
