@@ -565,3 +565,6 @@ body::after {
 #run-win-screen.active, #run-loss-screen.active { display:flex; }
 .run-win-title { font-size:20px; color:var(--gold); text-shadow:0 0 20px var(--gold); line-height:1.6; }
 .run-loss-title { font-size:16px; color:var(--red); line-height:1.6; }
+
+/* ── Card removal list (shop) ── */
+.removal-list { background:var(--bg2); border:1px solid var(--border); padding:8px; max-height:240px; overflow-y:auto; text-align:left; }
