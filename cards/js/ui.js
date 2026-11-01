@@ -171,6 +171,9 @@ function render() {
       ? `YOUR HAND — SELECT UP TO ${mulliganLimit()} TO SEND BACK`
       : `YOUR HAND (${state.pHand.length}) — BUDGET: ${state.budget - state.budgetUsed}/${state.budget}${discountMsg}`;
 
+  const rivalNameEl = document.getElementById('rival-name');
+  if (rivalNameEl) rivalNameEl.textContent = (state.rivalName || 'Rival Brewery').toUpperCase();
+
   const relicBar = document.getElementById('relic-bar');
   if (relicBar) relicBar.innerHTML = state.currentNode ? relicIconsHtml() : '';
 

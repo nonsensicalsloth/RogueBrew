@@ -56,6 +56,9 @@ function initGame(opts = {}) {
     isBoss,
     pPassed:          false,
     rivalBonus:       opts.rivalBonus || 0,
+    rivalBonusName:   opts.rivalBonusName || 'Crowd Favorite',
+    rivalName:        opts.rival ? opts.rival.name : 'Rival Brewery',
+    rivalTrait:       opts.rival ? opts.rival.trait || null : null,
     hopBackUsed:      false,
     ePassed:          false,
     nextCardDiscount: 0,
@@ -76,6 +79,9 @@ function initGame(opts = {}) {
     lastPlayedLane:   null,
   };
 
+  if (opts.rival) {
+    addLog(`⚔ ${opts.rival.name} (${opts.rival.style})${opts.rival.traitName ? ` — ${opts.rival.traitName}: ${opts.rival.traitDesc}` : ''}`, 'enemy');
+  }
   drawCards(5, state.pDeck, state.pHand);
   drawCards(5, state.eDeck, state.eHand);
   render();
@@ -139,9 +145,11 @@ function startRound() {
   if (state.rivalBonus) {
     const fav = createToken('crowd_fav');
     fav.points = state.rivalBonus;
+    fav.name   = state.rivalBonusName;
     state.field.hot.e.push(fav);
-    addLog(`🎪 The crowd loves the rival: +${state.rivalBonus} to start.`, 'enemy');
+    addLog(`${state.rivalBonusName}: rival starts with +${state.rivalBonus}.`, 'enemy');
   }
+  if (state.rivalTrait === 'roastmaster') state.eRoastThreshold = 10;
   drawCards(hasRelic('grainmill') ? 2 : 1, state.pDeck, state.pHand);
   drawCards(1, state.eDeck, state.eHand);
 }
@@ -214,7 +222,11 @@ function advanceTurn() {
 
   // Passed brewers stop drawing — that's the price of saving cards
   if (!state.pPassed) drawCards(1, state.pDeck, state.pHand);
-  if (!state.ePassed) drawCards(1, state.eDeck, state.eHand);
+  if (!state.ePassed) drawCards(state.rivalTrait === 'massprod' ? 2 : 1, state.eDeck, state.eHand);
+  if (state.rivalTrait === 'spontaneous' && state.turn % 3 === 0) {
+    addLog('Spontaneous Fermentation: wild microbes drift into your deck...', 'enemy');
+    shuffleIntoRemainingDeck('p', 'contamination');
+  }
 
   // Persistent effects keep working whether or not you've passed (yeast keeps fermenting)
   applyTurnEffects('p');

@@ -76,6 +76,9 @@ function resolvePlay(c, lane, who) {
     addLog(`Hop Cannon: ${c.name} +2!`, 'player');
   }
 
+  // Haze Lord boss: its hops get +3
+  if (who === 'e' && c.cat === 'hop' && state.rivalTrait === 'juicebomb') c.points += 3;
+
   // Any hop in the boil clears one Sugar Clot
   if (c.cat === 'hop' && lane === 'hot') removeSugarClot(who);
 
@@ -138,7 +141,7 @@ const ENEMY_DISRUPT_CARDS = new Set([
   'badbatch','inspector','crosscontam','drunkcellar','drunkbrewer','hopthief'
 ]);
 function enemyPlayCard(c) {
-  const lane = c.lane === 'both' ? 'hot' : c.lane;
+  const lane = rivalLaneFor(c);
   addLog(c.cat === 'process' ? `Rival uses ${c.name}!` : `Rival plays ${c.name} (+${c.points}) → ${LANE_NAMES[lane]}`, 'enemy');
   resolvePlay(c, lane, 'e');
 }
@@ -177,7 +180,7 @@ function enemyTurn() {
   // Keep playing highest scoring affordable cards until budget runs out
   while (remaining > 0) {
     const sorted = state.eHand
-      .filter(c => !ENEMY_DISRUPT_CARDS.has(c.id) && c.cost <= remaining && c.points >= 0)
+      .filter(c => !ENEMY_DISRUPT_CARDS.has(c.id) && c.cost <= remaining && c.points >= 0 && !rivalWouldOverload(c))
       .sort((a, b) => b.points - a.points);
     if (sorted.length === 0) break;
     const c = sorted[0];

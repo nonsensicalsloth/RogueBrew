@@ -40,7 +40,7 @@ const CARD_POOL = [
   { id:'specialb',   name:'Special B',     cat:'malt', lane:'hot', points:14, cost:3, tags:['sweet','roasty'],          desc:'Score = roast tokens x6. Adds a Sugar Clot (-8 pts) to hot side.' },
   { id:'melanoidin', name:'Melanoidin',    cat:'malt', lane:'hot', points:12, cost:2, tags:['malty','toasty'],          desc:'Scores double for each copy in discard pile. Its value cannot be reduced by other cards.' },
   { id:'aromatic',   name:'Aromatic Malt', cat:'malt', lane:'hot', points:12, cost:2, tags:['malty','bready'],          desc:'Copies the on-play effect of the last malt you played this round.' },
-  { id:'biscuit',    name:'Biscuit Malt',  cat:'malt', lane:'hot', points:4,  cost:1, tags:['biscuity','toasty'],       desc:'Cannot benefit from multipliers. Multiplies base score by number of cards in your hot side row.' },
+  { id:'biscuit',    name:'Biscuit Malt',  cat:'malt', lane:'hot', points:3,  cost:2, tags:['biscuity','toasty'],       desc:'Cannot benefit from multipliers. Multiplies base score by number of cards in your hot side row.' },
   { id:'victory',    name:'Victory Malt',  cat:'malt', lane:'hot', points:14, cost:3, tags:['biscuity','toasty'],       desc:'If you win the round this was played in, it stays on the board next round instead of discarding.' },
   { id:'caramun',    name:'Caramunich',    cat:'malt', lane:'hot', points:12, cost:2, tags:['sweet','toasty'],          desc:'Rich caramel and bread character.' },
 

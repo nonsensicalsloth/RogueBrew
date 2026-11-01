@@ -699,7 +699,7 @@ function applyCardEffect(card, lane, who) {
       // Immune to multipliers, scores base × row count
       const rowCount = getLaneCards('hot', who).filter(c => c.cat !== 'token').length;
       const baseDef  = getCardDef('biscuit');
-      card.points    = (baseDef ? baseDef.points : 4) * rowCount;
+      card.points    = (baseDef ? baseDef.points : 3) * rowCount;
       card._noMultiplier = true;
       addLog(`Biscuit Malt: ${rowCount} cards in hot side row — ${card.points} pts!`, 'player');
       break;
@@ -1358,7 +1358,8 @@ function applyTurnEffects(who) {
       return;
     }
 
-    const chill = isPlayer && hasRelic('glycol') ? 1 : 0;
+    const chill = isPlayer ? (hasRelic('glycol') ? 1 : 0)
+                           : (state.rivalTrait === 'patience' ? 2 : 0);
     c.points += 2 + chill;
     if (isPlayer) addLog(`${c.name}: +${2 + chill} pts (accumulating).`, 'player');
   });

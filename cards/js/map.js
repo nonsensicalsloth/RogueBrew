@@ -80,13 +80,17 @@ function generateMap() {
       const template = [...LAYER_TEMPLATES[layer]];
       // Shuffle non-boss layers
       if (layer < 6) shuffleArray(template);
-      const layerNodes = template.map((type, idx) => ({
-        act, layer, index: idx,
-        type,
-        rivalSize: getRivalSize(act, layer, type),
-        id: `${act}-${layer}-${idx}`,
-        accessible: layer === 0 && act === mapState.act,
-      }));
+      const layerNodes = template.map((type, idx) => {
+        const node = {
+          act, layer, index: idx,
+          type,
+          id: `${act}-${layer}-${idx}`,
+          accessible: layer === 0 && act === mapState.act,
+        };
+        node.rival     = assignRival(node);
+        node.rivalSize = rivalSizeFor(node);
+        return node;
+      });
       actNodes.push(layerNodes);
     }
     mapState.nodes.push(actNodes);
@@ -171,7 +175,9 @@ function renderMap() {
   if (!el || !actNodes) return;
 
   document.getElementById('map-gold').textContent      = `💰 ${mapState.gold}`;
-  document.getElementById('map-act-name').textContent  = ACT_NAMES[act];
+  const bossNode = actNodes[actNodes.length - 1][0];
+  const boss     = bossNode && getRivalDef(bossNode.rival);
+  document.getElementById('map-act-name').textContent  = ACT_NAMES[act] + (boss ? ` — 💀 ${boss.name}` : '');
   document.getElementById('map-deck-count').textContent= `🃏 ${draftState.deck.length} cards`;
   const extras = [];
   if (mapState.barrel && mapState.barrel.length) extras.push(`🛢 ${mapState.barrel.length} aging`);
@@ -230,12 +236,14 @@ function renderMap() {
 
       svg += `<g transform="translate(${x},${y})" opacity="${opacity}"
         ${canClick ? `onclick="clickMapNode('${node.id}')" style="cursor:pointer"` : ''}>
-        <title>${NODE_NAMES[node.type] || node.type}</title>
+        <title>${nodeTooltip(node)}</title>
         <circle r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${visited ? 2.5 : 1.5}"/>
         <text text-anchor="middle" dominant-baseline="central"
           font-size="${node.type === 'boss' ? 14 : 12}"
           fill="${visited ? '#ffd700' : access ? color : '#444'}">${icon}</text>
-        ${node.type === 'battle' || node.type === 'boss' || node.type === 'festival'
+        ${node.type === 'boss'
+          ? `<text text-anchor="middle" y="${r + 12}" font-size="7" fill="#e74c3c" font-family="monospace">${(getRivalDef(node.rival) || {}).short || ''}</text>`
+          : node.type === 'battle' || node.type === 'festival'
           ? `<text text-anchor="middle" y="${r + 12}" font-size="7" fill="#666" font-family="monospace">${node.rivalSize}🃏</text>`
           : ''}
       </g>`;
@@ -244,6 +252,14 @@ function renderMap() {
 
   svg += '</svg>';
   el.innerHTML = svg;
+}
+
+function nodeTooltip(node) {
+  const base = NODE_NAMES[node.type] || node.type;
+  const r = node.rival && getRivalDef(node.rival);
+  if (!r) return base;
+  const trait = r.traitName ? ` | ${r.traitName}: ${r.traitDesc}` : '';
+  return `${base}: ${r.name} (${r.style}, ${node.rivalSize} cards)${trait}`;
 }
 
 function nodeX(idx, total, W) {
@@ -300,12 +316,15 @@ function handleNode(node) {
 
 function startMapBattle(node) {
   // Build rival deck scaled to node.rivalSize
-  const rivalIds = shuffle(ENEMY_DECK_IDS).slice(0, node.rivalSize);
-  const rivalDeck = rivalIds.map(id => ({ ...getCardDef(id) }));
+  const rivalDeck = buildRivalDeck(node.rival, node.rivalSize, node.act, node.type === 'boss');
+  const rival     = getRivalDef(node.rival);
 
   setScreen('game-screen');
-  // Festival rivals are crowd favorites: they start each round with a +10 token
-  initGame({ rivalDeck, node, rivalBonus: node.type === 'festival' ? 10 : 0 });
+  // Festival rivals are crowd favorites; Old Town Brewpub has its regulars
+  let rivalBonus = 0, rivalBonusName = '';
+  if (node.type === 'festival')            { rivalBonus = 10; rivalBonusName = 'Crowd Favorite'; }
+  if (rival && rival.trait === 'regulars') { rivalBonus = 15; rivalBonusName = 'The Regulars'; }
+  initGame({ rivalDeck, node, rival, rivalBonus, rivalBonusName });
 }
 
 function initGameWithRival(rivalDeck, node) {
@@ -748,8 +767,10 @@ function showActTransition(goldReward) {
   setScreen('act-transition-screen');
   document.getElementById('act-transition-title').textContent =
     `Act ${mapState.act + 1} Complete!`;
+  const nextBossNode = mapState.nodes[mapState.act + 1] && mapState.nodes[mapState.act + 1][6][0];
+  const nextBoss = nextBossNode && getRivalDef(nextBossNode.rival);
   document.getElementById('act-transition-next').textContent =
-    `Next: ${ACT_NAMES[mapState.act + 1]}`;
+    `Next: ${ACT_NAMES[mapState.act + 1]}${nextBoss ? ` — boss: ${nextBoss.name}` : ''}`;
   document.getElementById('act-transition-deck').textContent =
     `Your deck: ${draftState.deck.length} cards`;
   document.getElementById('act-transition-gold').textContent =
