@@ -96,6 +96,7 @@ function startRound() {
   state.nextCardDiscount  = 0;
   state.lastPlayedCard    = null;
   state.lastPlayedLane    = null;
+  state.lastHop           = {};
   state.roastTokens       = 0;
   state.roastSafe         = 0;
   state.roastThreshold    = 5;

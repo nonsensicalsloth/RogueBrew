@@ -132,6 +132,27 @@ function applyThiolOnPlay(card, who) {
   if (card.tags && card.tags.includes('thiol') && hasThiolYeast(who)) releaseThiol(card);
 }
 
+// Hop products (Cryo, Hop Oil) take on the flavor of the last real hop variety played this round.
+const HOP_PRODUCTS = ['cryo','hopoil'];
+
+function copyLastHopFlavor(card, who) {
+  const last = state.lastHop && state.lastHop[who];
+  if (!last) {
+    addLog(`${card.name}: no hop played yet this round — no flavor to carry.`, who === 'p' ? 'player' : 'enemy');
+    return;
+  }
+  card.tags = [...(last.tags || [])];
+  card.name = `${card.name.split(' (')[0]} (${last.name})`;
+  addLog(`${card.name}: carries ${last.name}'s flavor — ${card.tags.join(', ')}.`, who === 'p' ? 'player' : 'enemy');
+}
+
+// Remember the last real hop variety each side played.
+function trackLastHop(card, who) {
+  if (card.cat !== 'hop' || HOP_PRODUCTS.includes(card.id)) return;
+  state.lastHop = state.lastHop || {};
+  state.lastHop[who] = { name: card.name, tags: [...(card.tags || [])] };
+}
+
 // ── On-play effects (Tier 1 & 2) ──
 
 function applyCardEffect(card, lane, who) {
@@ -166,7 +187,6 @@ function applyCardEffect(card, lane, who) {
 
     case 'mango':
     case 'flakedwheat':
-    case 'strata':
       addToHand(who, 'haze');
       addLog(`${card.name}: Haze token added to hand.`, 'player');
       break;
@@ -937,11 +957,11 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'hallblanc': {
-      const otherNoble = countTag('noble', who) - 1;
-      let bonus = otherNoble * 3;
+      const noble = countTag('noble', who);
+      let bonus = noble * 3;
       if (lane === 'cold') bonus += 4;
       card.points += bonus;
-      addLog(`Hallertau Blanc: +${bonus} pts (${otherNoble} other noble hops${lane === 'cold' ? ', dry hopped' : ''}).`, 'player');
+      addLog(`Hallertau Blanc: +${bonus} pts (${noble} noble hops${lane === 'cold' ? ', dry hopped' : ''}).`, 'player');
       break;
     }
 
@@ -992,12 +1012,23 @@ function applyCardEffect(card, lane, who) {
       break;
     }
 
-    case 'idaho7':
-      if (countTag('fruity', who) > 0 && countTag('bitter', who) > 0) {
+    case 'idaho7': {
+      const others = allMine.filter(c => c !== card);
+      const hasTropical = others.some(c => c.tags && c.tags.includes('tropical'));
+      const hasPiney    = others.some(c => c.tags && c.tags.includes('piney'));
+      if (hasTropical && hasPiney) {
         card.points += 6;
-        addLog('Idaho 7: fruity + bitter on board — +6 pts!', 'player');
+        addLog('Idaho 7: tropical + piney on board — +6 pts!', 'player');
       }
       break;
+    }
+
+    case 'strata': {
+      const n = allMine.filter(c => c !== card && c.tags && (c.tags.includes('dank') || c.tags.includes('tropical'))).length;
+      card.points += n * 3;
+      addLog(`Strata: +${n * 3} pts (${n} dank/tropical cards).`, 'player');
+      break;
+    }
 
     case 'talus':
       if (lane === 'cold') {
@@ -1056,12 +1087,13 @@ function applyCardEffect(card, lane, who) {
 
     // Hop products
     case 'cryo':
-      addToHand(who, 'haze');
+      copyLastHopFlavor(card, who);
       if (isPlayer) state.nextHopDiscount = (state.nextHopDiscount || 0) + 1;
-      addLog('Cryo Hops: Haze added to hand, next hop costs 1 less.', 'player');
+      addLog('Cryo Hops: next hop costs 1 less.', 'player');
       break;
 
     case 'hopoil': {
+      copyLastHopFlavor(card, who);
       const n = buffLaneCards('cold', who, 3, c => c.cat === 'hop' && c !== card);
       addLog(`Hop Oil: +3 to ${n} hop(s) on cold side.`, 'player');
       break;
@@ -1182,7 +1214,7 @@ function applyCardEffect(card, lane, who) {
 
     // Engineered strains
     case 'sourvisiae': {
-      const fruity = countTag('fruity', who);
+      const fruity = allMine.filter(c => c.tags && (c.tags.includes('fruity') || c.tags.includes('tropical'))).length;
       const hops   = countCat('hop', who);
       card.points += fruity * 2 + hops * 2;
       addLog(`Sourvisiae: +${fruity * 2} fruity, +${hops * 2} hops — clean sour.`, 'player');

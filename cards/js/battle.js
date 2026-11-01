@@ -69,6 +69,7 @@ function playToLane(lane) {
   // Apply on-play effects
   applyCardEffect(c, lane, 'p');
   applyThiolOnPlay(c, 'p');
+  trackLastHop(c, 'p');
 
   // Check c-hop synergy if it's a hop
   if (c.tags && c.tags.includes('c-hop')) {
@@ -118,6 +119,7 @@ function enemyPlayCard(c) {
     addLog(`Rival plays ${c.name} (+${c.points}) → ${LANE_NAMES[lane]}`, 'enemy');
     applyCardEffect(c, lane, 'e');
     applyThiolOnPlay(c, 'e');
+    trackLastHop(c, 'e');
     if (c.tags && c.tags.includes('c-hop'))  applyCHopSynergy(lane, 'e');
     if (c.tags && c.tags.includes('nuanced')) applyNuancedSynergy('e');
   }
