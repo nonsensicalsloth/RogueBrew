@@ -568,3 +568,27 @@ body::after {
 
 /* ── Card removal list (shop) ── */
 .removal-list { background:var(--bg2); border:1px solid var(--border); padding:8px; max-height:240px; overflow-y:auto; text-align:left; }
+
+/* ── Special nodes ── */
+#map-special-screen { display:none; flex-direction:column; align-items:center; padding:24px 16px; max-width:520px; margin:0 auto; }
+#map-special-screen.active { display:flex; }
+#special-body { width:100%; display:flex; flex-direction:column; align-items:center; margin-bottom:10px; }
+#special-body .removal-list { width:100%; max-width:400px; }
+.special-cards { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; padding:10px 0; }
+.taproom-breakdown { width:100%; max-width:360px; background:var(--bg2); border:1px solid var(--border); padding:10px; font-size:7px; line-height:2.2; color:var(--dim); }
+.taproom-breakdown span { color:var(--gold); float:right; }
+.taproom-total { border-top:1px solid var(--border); margin-top:4px; padding-top:4px; color:var(--text); font-size:8px; }
+#map-notice { font-size:8px; color:var(--gold); text-align:center; min-height:12px; margin-bottom:6px; }
+#map-extras { display:flex; gap:6px; align-items:center; }
+
+/* ── Relics ── */
+#relic-screen { display:none; flex-direction:column; align-items:center; padding:24px 16px; }
+#relic-screen.active { display:flex; }
+#relic-choices { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+.relic-card { width:130px; background:var(--bg2); border:2px solid var(--gold); border-radius:6px; padding:12px 8px; text-align:center; cursor:pointer; transition:transform 0.15s, box-shadow 0.15s; }
+.relic-card:hover { transform:translateY(-4px); box-shadow:0 4px 16px rgba(212,175,55,0.4); }
+.relic-card-icon { font-size:28px; margin-bottom:8px; }
+.relic-card-name { font-size:7px; color:var(--gold); margin-bottom:6px; line-height:1.5; }
+.relic-card-desc { font-size:6px; color:var(--dim); line-height:1.8; }
+.relic-icon { font-size:12px; cursor:help; }
+#relic-bar { display:flex; gap:4px; }
