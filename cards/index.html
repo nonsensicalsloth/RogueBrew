@@ -99,8 +99,10 @@
     <div class="map-header-info">
       <span id="map-gold">💰 100</span>
       <span id="map-deck-count">🃏 15 cards</span>
+      <span id="map-extras"></span>
     </div>
   </div>
+  <div id="map-notice"></div>
   <div id="map-container"></div>
 </div>
 
@@ -137,6 +139,23 @@
   <div class="event-desc" id="event-desc"></div>
   <div class="event-options" id="event-options"></div>
   <div class="event-result" id="event-result"></div>
+</div>
+
+<!-- ===== SPECIAL NODES (barrel, collab, lab, taproom, contract) ===== -->
+<div id="map-special-screen" class="screen">
+  <div class="event-title" id="special-title"></div>
+  <div class="event-desc"  id="special-desc"></div>
+  <div id="special-body"></div>
+  <div class="rest-result" id="special-result"></div>
+  <div id="special-footer"></div>
+</div>
+
+<!-- ===== RELIC REWARD ===== -->
+<div id="relic-screen" class="screen">
+  <div class="reward-title">💀 BOSS DEFEATED!</div>
+  <div id="relic-gold" style="font-size:8px;color:var(--gold);margin-bottom:6px;"></div>
+  <div style="font-size:8px;color:var(--dim);margin-bottom:12px;">Choose a piece of brewing equipment. It stays with you for the rest of the run.</div>
+  <div id="relic-choices"></div>
 </div>
 
 <!-- ===== REST SCREEN ===== -->
@@ -192,6 +211,7 @@
   <div id="app">
     <div class="game-header">
       <div class="game-title">⬟ JUDGING DAY</div>
+      <div id="relic-bar"></div>
       <div class="phase-label" id="phase-label">MULLIGAN</div>
     </div>
     <div class="scoreboard">
@@ -271,7 +291,9 @@
 
 <!-- Scripts — order matters -->
 <script src="js/cards.js"></script>
-  <script src="js/map.js"></script>
+<script src="js/map.js"></script>
+<script src="js/relics.js"></script>
+<script src="js/nodes.js"></script>
 <script src="js/deck.js"></script>
 <script src="js/draft.js"></script>
 <script src="js/effects.js"></script>
