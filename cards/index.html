@@ -217,7 +217,7 @@
     <div class="scoreboard">
       <div class="pip-col" id="enemy-pips"></div>
       <div class="score-box enemy" id="score-enemy">
-        <div class="score-lbl">RIVAL</div>
+        <div class="score-lbl" id="rival-score-lbl">RIVAL</div>
         <div class="score-lead-tag" id="enemy-lead-tag"></div>
         <div class="score-val" id="enemy-score">0</div>
       </div>
@@ -237,7 +237,7 @@
     </div>
     <div class="board">
       <div class="board-side-label enemy">
-        RIVAL BREWERY
+        <span id="rival-name">RIVAL BREWERY</span>
         <span style="color:var(--dim);font-size:6px;margin-left:8px">
           DECK: <span id="e-deck-count">0</span> &nbsp; HAND: <span id="e-hand-count">0</span>
         </span>
@@ -294,6 +294,7 @@
 <script src="js/map.js"></script>
 <script src="js/relics.js"></script>
 <script src="js/nodes.js"></script>
+<script src="js/rivals.js"></script>
 <script src="js/deck.js"></script>
 <script src="js/draft.js"></script>
 <script src="js/effects.js"></script>
