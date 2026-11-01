@@ -125,6 +125,7 @@
     <div style="font-size:7px;color:var(--dim);">Click a card to buy it</div>
   </div>
   <div id="map-shop-items"></div>
+  <div id="shop-removal" style="text-align:center;margin-top:8px;width:100%;max-width:400px;"></div>
   <div style="text-align:center;margin-top:16px;">
     <button class="btn btn-primary" onclick="leaveShop()">Leave Shop</button>
   </div>
@@ -141,7 +142,8 @@
 <!-- ===== REST SCREEN ===== -->
 <div id="map-rest-screen" class="screen">
   <div class="rest-title">🛌 REST STOP</div>
-  <div class="rest-sub">Choose a card to upgrade (+5 pts for this run)</div>
+  <div class="rest-sub" id="rest-sub">Take a breather. Choose one:</div>
+  <div id="rest-choices" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:12px;"></div>
   <div id="rest-card-list"></div>
   <div class="rest-result" id="rest-result"></div>
   <div id="rest-confirm">
