@@ -541,8 +541,10 @@ const MAP_EVENTS = [
     desc: 'A shipment arrives with no label. Could be amazing, could be terrible.',
     options: [
       { label: 'Accept it (add random card)', action: () => {
-        const card = CARD_POOL[Math.floor(Math.random() * CARD_POOL.length)];
-        if (draftState.deck.length < MAX_DECK_SIZE) draftState.deck.push({ ...card });
+        const pool = CARD_POOL.filter(c => copiesInDeck(c.id) < MAX_COPIES);
+        const card = pool[Math.floor(Math.random() * pool.length)];
+        if (!card || draftState.deck.length >= MAX_DECK_SIZE) return 'The shipment was empty. Odd.';
+        draftState.deck.push({ ...card });
         return `Added ${card.name} to your deck!`;
       }},
       { label: 'Decline', action: () => 'You turned it down. Safe choice.' },
@@ -552,7 +554,9 @@ const MAP_EVENTS = [
     title: 'Hop Shortage',
     desc: 'Your hop supplier is out of stock. Sell a hop card for gold?',
     options: [
-      { label: 'Sell a hop (+30 gold)', action: () => {
+      { label: 'Sell a hop (+30 gold)',
+        can: () => canRemoveCard() && draftState.deck.some(c => c.cat === 'hop'),
+        action: () => {
         const idx = draftState.deck.findIndex(c => c.cat === 'hop');
         if (idx >= 0) { draftState.deck.splice(idx, 1); mapState.gold += 30; return 'Sold a hop for 30 gold!'; }
         return 'No hops to sell.';
@@ -564,17 +568,16 @@ const MAP_EVENTS = [
     title: 'Brewery Inspection',
     desc: 'A health inspector arrives unexpectedly. Pay them off or risk losing a card.',
     options: [
-      { label: 'Pay 25 gold', action: () => {
-        if (mapState.gold >= 25) { mapState.gold -= 25; return 'Paid 25 gold. Inspector satisfied.'; }
-        return 'Not enough gold!';
+      { label: 'Pay 25 gold', can: () => mapState.gold >= 25, action: () => {
+        mapState.gold -= 25;
+        return 'Paid 25 gold. Inspector satisfied.';
       }},
-      { label: 'Risk it (lose random card)', action: () => {
-        if (draftState.deck.length > 0) {
-          const idx = Math.floor(Math.random() * draftState.deck.length);
-          const lost = draftState.deck.splice(idx, 1)[0];
-          return `Lost ${lost.name} from your deck!`;
-        }
-        return 'Nothing to lose!';
+      { label: 'Risk it (50%: lose a random card)', action: () => {
+        if (Math.random() < 0.5) return 'The inspector found nothing. Lucky!';
+        if (!canRemoveCard()) return 'The inspector took pity on your tiny brewery.';
+        const idx = Math.floor(Math.random() * draftState.deck.length);
+        const lost = draftState.deck.splice(idx, 1)[0];
+        return `The inspector confiscated ${lost.name}!`;
       }},
     ]
   },
@@ -584,8 +587,11 @@ const MAP_EVENTS = [
     options: [
       { label: 'Enter (+20 gold, add wild yeast)', action: () => {
         mapState.gold += 20;
-        if (draftState.deck.length < MAX_DECK_SIZE) draftState.deck.push({ ...getCardDef('brett') });
-        return 'Won 20 gold and a Brett Yeast card!';
+        if (draftState.deck.length < MAX_DECK_SIZE && copiesInDeck('brett') < MAX_COPIES) {
+          draftState.deck.push({ ...getCardDef('brett') });
+          return 'Won 20 gold and a Brettanomyces card!';
+        }
+        return 'Won 20 gold!';
       }},
       { label: 'Skip the festival', action: () => 'You stayed home and brewed quietly.' },
     ]
@@ -594,14 +600,11 @@ const MAP_EVENTS = [
     title: 'Bulk Grain Deal',
     desc: 'A supplier offers you a deal on base malts.',
     options: [
-      { label: 'Buy 3 base malts (30 gold)', action: () => {
-        if (mapState.gold >= 30) {
-          mapState.gold -= 30;
-          const malts = ['2row','pilsner','munich'];
-          malts.forEach(id => { if (draftState.deck.length < MAX_DECK_SIZE) draftState.deck.push({ ...getCardDef(id) }); });
-          return 'Added 2-Row, Pilsner, and Munich Malt!';
-        }
-        return 'Not enough gold!';
+      { label: 'Buy 3 base malts (30 gold)', can: () => mapState.gold >= 30, action: () => {
+        mapState.gold -= 30;
+        const added = ['2row','pilsner','munich'].filter(id =>
+          draftState.deck.length < MAX_DECK_SIZE && copiesInDeck(id) < MAX_COPIES && draftState.deck.push({ ...getCardDef(id) }));
+        return added.length ? `Added ${added.map(id => getCardDef(id).name).join(', ')}!` : 'You already had all the malt you could store.';
       }},
       { label: 'Pass', action: () => 'You passed on the deal.' },
     ]
@@ -621,13 +624,17 @@ function renderMapEvent() {
   document.getElementById('event-desc').textContent   = currentEvent.desc;
   document.getElementById('event-result').textContent = '';
   const el = document.getElementById('event-options');
-  el.innerHTML = currentEvent.options.map((opt, i) =>
-    `<button class="btn btn-primary" onclick="chooseEvent(${i})">${opt.label}</button>`
+  // Options you can't take (not enough gold, deck too small) are shown greyed out
+  el.innerHTML = currentEvent.options.map((opt, i) => (!opt.can || opt.can())
+    ? `<button class="btn btn-primary" onclick="chooseEvent(${i})">${opt.label}</button>`
+    : `<button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;">${opt.label}</button>`
   ).join('');
 }
 
 function chooseEvent(idx) {
-  const result = currentEvent.options[idx].action();
+  const opt = currentEvent.options[idx];
+  if (!opt || (opt.can && !opt.can())) return;
+  const result = opt.action();
   document.getElementById('event-result').textContent = result;
   document.getElementById('event-options').innerHTML =
     `<button class="btn btn-gold" onclick="showMapScreen()">Continue →</button>`;

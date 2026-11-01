@@ -32,7 +32,7 @@ function cardHtml(c, i, mode, extra='') {
   return `<div class="card cat-${c.cat} ${extra}" onclick="${clickFn}">
     <div class="card-cost-gem">${c.cost}</div>
     <div class="card-pts-gem">${pts}</div>
-    <div class="card-art">${catIcon(c.cat)}</div>
+    <div class="card-art">${c.cat === 'token' && c.points >= 0 ? '✨' : catIcon(c.cat)}</div>
     <div class="card-name-banner">${c.name}</div>
     <div class="card-tags-row">${tagHtml(c.tags)}</div>
     <div class="card-effect-text">${c.desc || ''}</div>
