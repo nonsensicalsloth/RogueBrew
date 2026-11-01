@@ -156,6 +156,9 @@
 .tag-clean    { color: #e3f2fd; border-color: #e3f2fd; }
 .tag-sour     { color: #f06292; border-color: #f06292; }
 .tag-belgian  { color: #7986cb; border-color: #7986cb; }
+.tag-noble    { color: #c5e1a5; border-color: #c5e1a5; }
+.tag-dank     { color: #558b2f; border-color: #558b2f; }
+.tag-thiol    { color: #ea80fc; border-color: #ea80fc; font-weight: bold; }
 
 /* ── Field cards ── */
 .field-card {
