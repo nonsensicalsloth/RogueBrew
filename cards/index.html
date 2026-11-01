@@ -233,6 +233,7 @@
       <div class="info-pill">ROUND <span id="round-num">1</span>/<span id="max-rounds">3</span></div>
       <div class="info-pill">TURN <span id="turn-num">—</span>/10</div>
       <div class="info-pill">BUDGET <span id="budget-rem">—</span></div>
+      <div class="info-pill" id="judging-pill" style="display:none;color:var(--gold);"></div>
       <div class="info-pill" id="roast-tracker" style="color:var(--dim);">🔥 ROAST <span id="roast-count">0</span>/5</div>
     </div>
     <div class="board">
@@ -243,21 +244,21 @@
         </span>
       </div>
       <div class="lane enemy-lane">
-        <div class="lane-header"><span class="lane-name">HOT SIDE</span><span class="lane-score" id="hs-e">0 pts</span></div>
+        <div class="lane-header"><span class="lane-name">HOT SIDE<span class="lane-mult" id="mult-hot-e"></span></span><span class="lane-score" id="hs-e">0 pts</span></div>
         <div class="lane-cards" id="elane-hot"><span class="empty-msg">— empty —</span></div>
       </div>
       <div class="lane enemy-lane">
-        <div class="lane-header"><span class="lane-name">COLD SIDE</span><span class="lane-score" id="cs-e">0 pts</span></div>
+        <div class="lane-header"><span class="lane-name">COLD SIDE<span class="lane-mult" id="mult-cold-e"></span></span><span class="lane-score" id="cs-e">0 pts</span></div>
         <div class="lane-cards" id="elane-cold"><span class="empty-msg">— empty —</span></div>
       </div>
       <hr class="board-divider">
       <div class="board-side-label player">YOUR BREWERY</div>
       <div class="lane player-lane">
-        <div class="lane-header"><span class="lane-name">HOT SIDE</span><span class="lane-score" id="hs-p">0 pts</span></div>
+        <div class="lane-header"><span class="lane-name">HOT SIDE<span class="lane-mult" id="mult-hot-p"></span></span><span class="lane-score" id="hs-p">0 pts</span></div>
         <div class="lane-cards" id="plane-hot"><span class="empty-msg">— empty —</span></div>
       </div>
       <div class="lane player-lane">
-        <div class="lane-header"><span class="lane-name">COLD SIDE</span><span class="lane-score" id="cs-p">0 pts</span></div>
+        <div class="lane-header"><span class="lane-name">COLD SIDE<span class="lane-mult" id="mult-cold-p"></span></span><span class="lane-score" id="cs-p">0 pts</span></div>
         <div class="lane-cards" id="plane-cold"><span class="empty-msg">— empty —</span></div>
       </div>
     </div>
