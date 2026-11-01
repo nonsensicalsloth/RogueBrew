@@ -10,10 +10,28 @@ function shuffle(arr) {
 }
 
 // Draw n cards from a deck into a hand.
-// Does NOT reshuffle — when deck is empty, drawing stops.
+// When the deck runs out, the matching discard pile is shuffled back in
+// (tokens are left out — they don't recycle).
 function drawCards(n, deck, hand) {
-  let amt = Math.min(n, deck.length);
-  if (amt > 0) hand.push(...deck.splice(0, amt));
+  for (let i = 0; i < n; i++) {
+    if (deck.length === 0 && !reshuffleDiscard(deck)) break;
+    hand.push(deck.shift());
+  }
+}
+
+function reshuffleDiscard(deck) {
+  if (typeof state === 'undefined' || !state) return false;
+  const discard = deck === state.pDeck ? state.pDiscard
+                : deck === state.eDeck ? state.eDiscard : null;
+  if (!discard || discard.length === 0) return false;
+  const cards = shuffle(discard.filter(c => c.cat !== 'token'));
+  discard.length = 0;
+  if (cards.length === 0) return false;
+  deck.push(...cards);
+  if (typeof addLog === 'function') {
+    addLog(`↻ ${deck === state.pDeck ? 'Your' : "Rival's"} discard reshuffled into deck (${cards.length} cards).`, 'sys');
+  }
+  return true;
 }
 
 // Move all field cards to discard at end of round.

@@ -107,6 +107,22 @@ function endTurn() {
   setTimeout(() => { enemyTurn(); render(); }, 500);
 }
 
+// Gwent-style pass: you stop playing (and drawing) for the rest of the round.
+// Cards left in your hand carry into the next round.
+function passRound() {
+  if (!state.playerTurn || state.phase !== 'play') return;
+  selectedCard = null;
+  state.pPassed = true;
+  addLog(`You pass with ${state.pHand.length} card(s) in hand.`, 'player');
+  if (state.ePassed) { endRound(); return; }
+  endTurn();
+}
+
+function enemyPass(reason) {
+  state.ePassed = true;
+  addLog(`Rival passes${reason ? ' — ' + reason : ''}.`, 'enemy');
+}
+
 // ── Enemy AI ──
 // Prioritizes disruptive process cards when behind,
 // otherwise plays highest scoring card it can afford.
@@ -121,11 +137,19 @@ function enemyPlayCard(c) {
 }
 
 function enemyTurn() {
+  if (state.phase !== 'play') return;
+  if (state.ePassed) { setTimeout(() => advanceTurn(), 300); return; }
+
   const lead = totalScore('e') - totalScore('p');
+
+  // Pass decisions before playing
+  if (state.pPassed && lead > 0) {
+    enemyPass("it's ahead and you've passed");
+    setTimeout(() => advanceTurn(), 300); return;
+  }
   if (lead >= 50) {
-    addLog(`Rival is ${lead} ahead — ends turn.`, 'enemy');
-    setTimeout(() => advanceTurn(), 300);
-    return;
+    enemyPass(`${lead} points ahead`);
+    setTimeout(() => advanceTurn(), 300); return;
   }
 
   let remaining = state.budget;
@@ -144,14 +168,11 @@ function enemyTurn() {
   }
 
   // Keep playing highest scoring affordable cards until budget runs out
-  let keepGoing = true;
-  while (keepGoing && remaining > 0) {
+  while (remaining > 0) {
     const sorted = state.eHand
-      .filter(c => !ENEMY_DISRUPT_CARDS.has(c.id) && c.cost <= remaining)
+      .filter(c => !ENEMY_DISRUPT_CARDS.has(c.id) && c.cost <= remaining && c.points >= 0)
       .sort((a, b) => b.points - a.points);
-
-    if (sorted.length === 0) { keepGoing = false; break; }
-
+    if (sorted.length === 0) break;
     const c = sorted[0];
     state.eHand.splice(state.eHand.indexOf(c), 1);
     remaining -= c.cost;
@@ -160,5 +181,10 @@ function enemyTurn() {
   }
 
   if (!playedAny) addLog('Rival has nothing to play.', 'enemy');
+
+  // Pass after playing if it has pulled ahead of a passed player, or is out of cards entirely
+  if (state.pPassed && totalScore('e') > totalScore('p')) enemyPass("it's ahead and you've passed");
+  else if (state.eHand.length === 0 && state.eDeck.length === 0 && state.eDiscard.length === 0) enemyPass('out of ingredients');
+
   setTimeout(() => advanceTurn(), 300);
 }

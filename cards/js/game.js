@@ -6,16 +6,29 @@ const LANE_NAMES = { hot: 'Hot side', cold: 'Cold side' };
 // ── Game State ──
 let state = {};
 
-function initGame() {
+// Transient flags that should never carry from one battle into the next
+const BATTLE_FLAGS = ['_basePoints','_thiolReleased','_victory','_award','_locked','_noMultiplier','_mixedFerm'];
+
+function freshCopy(c) {
+  const copy = { ...c, tags: [...(c.tags || [])] };
+  BATTLE_FLAGS.forEach(f => delete copy[f]);
+  return copy;
+}
+
+// Single entry point for every battle.
+//   initGame()                      — practice game (default rival, best of 3)
+//   initGame({ rivalDeck, node })   — map battle (1 round, or best of 3 for bosses)
+function initGame(opts = {}) {
   document.getElementById('overlay').classList.add('hidden');
   selectedCard = null;
 
-  // Use the player's built deck; enemy always uses default for now
-  // Deep-copy and strip run-specific flags so retries start clean
+  const node   = opts.node || null;
+  const isBoss = node ? node.type === 'boss' : false;
+
   const pDeck = shuffle(draftState.deck.length > 0
-    ? draftState.deck.map(c => { const copy = { ...c }; delete copy._upgraded; return copy; })
+    ? draftState.deck.map(freshCopy)
     : buildDefaultDeck());
-  const eDeck = shuffle(buildEnemyDeck());
+  const eDeck = shuffle(opts.rivalDeck ? opts.rivalDeck.map(freshCopy) : buildEnemyDeck());
 
   state = {
     phase:      'mulligan',
@@ -38,9 +51,11 @@ function initGame() {
     mulSel:           [],
     logs:             [],
     victoryCards:     [],
-    maxRounds:        3,
-    currentNode:      null,
-    isBoss:           false,
+    maxRounds:        node ? (isBoss ? 3 : 1) : 3,
+    currentNode:      node,
+    isBoss,
+    pPassed:          false,
+    ePassed:          false,
     nextCardDiscount: 0,
     roastTokens:      0,
     roastSafe:        0,
@@ -94,6 +109,8 @@ function startRound() {
   state.budgetUsed      = 0;
   state.budget          = getBudget(1);
   state.playerTurn      = true;
+  state.pPassed         = false;
+  state.ePassed         = false;
   state.nextCardDiscount  = 0;
   state.lastPlayedCard    = null;
   state.lastPlayedLane    = null;
@@ -132,8 +149,9 @@ function endRound() {
     .concat(state.field.cold.p.filter(c => c._award));
 
   LANES.forEach(l => {
-    state.pDiscard.push(...state.field[l].p.filter(c => !c._victory));
-    state.eDiscard.push(...state.field[l].e);
+    // Tokens (Haze, Body, Sugar Clots, Contamination...) leave the game at round end
+    state.pDiscard.push(...state.field[l].p.filter(c => !c._victory && c.cat !== 'token'));
+    state.eDiscard.push(...state.field[l].e.filter(c => c.cat !== 'token'));
     state.field[l].p = [];
     state.field[l].e = [];
   });
@@ -157,38 +175,49 @@ function endRound() {
 
   if (pw >= 2 || ew >= 2 || state.round >= state.maxRounds) {
     state.phase = 'end';
-    if (pw > ew) {
-      if (typeof onBattleWin === 'function') onBattleWin(state.currentNode);
-      else showOverlay(pw, ew);
-    } else {
-      if (typeof onBattleLoss === 'function') onBattleLoss();
-      else showOverlay(pw, ew);
-    }
+    // Map battles report back to the map; practice games show the overlay
+    if (state.currentNode && pw > ew)      onBattleWin(state.currentNode);
+    else if (state.currentNode)            onBattleLoss();
+    else                                   showOverlay(pw, ew);
   } else {
     state.round++;
     state.phase = 'between';
+    if (state.pHand.length) addLog(`Your ${state.pHand.length} card(s) in hand carry into round ${state.round}.`, 'sys');
   }
   render();
 }
 
 // ── Turn advancement ──
 function advanceTurn() {
+  if (state.phase !== 'play') return;
+  if (state.pPassed && state.ePassed) { endRound(); return; }
+
   state.turn++;
   state.budgetUsed = 0;
   state.budget     = getBudget(state.turn);
-  state.playerTurn = true;
   state.nextCardDiscount = 0;
   state.cardsThisTurn    = { p: 0, e: 0 };
   if (state.turn > 10) { endRound(); return; }
   addLog(`▸ Turn ${state.turn} — Budget: ${state.budget}`);
-  drawCards(1, state.pDeck, state.pHand);
-  drawCards(1, state.eDeck, state.eHand);
-  // Apply persistent effects (brett, lacto, contamination etc)
+
+  // Passed brewers stop drawing — that's the price of saving cards
+  if (!state.pPassed) drawCards(1, state.pDeck, state.pHand);
+  if (!state.ePassed) drawCards(1, state.eDeck, state.eHand);
+
+  // Persistent effects keep working whether or not you've passed (yeast keeps fermenting)
   applyTurnEffects('p');
   applyTurnEffects('e');
-  // Auto-play any contamination drawn this turn
   checkContaminationInHand('p');
   checkContaminationInHand('e');
+
+  if (state.pPassed) {
+    // You've passed — the rival keeps brewing on its own
+    state.playerTurn = false;
+    render();
+    setTimeout(() => { enemyTurn(); render(); }, 500);
+    return;
+  }
+  state.playerTurn = true;
   render();
 }
 

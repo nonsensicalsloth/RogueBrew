@@ -4,7 +4,8 @@ const BREWERIES = [
   { id:'test', name:'Test Brewery', subtitle:'A blank slate. Good for learning.', icon:'🧪', bonus:'No special bonus yet.', unlocked:true },
 ];
 
-const DECK_SIZE  = 15;
+const DECK_SIZE      = 15;   // starting deck you build before a run
+const MAX_DECK_SIZE  = 30;   // cap while adding cards on the map
 const MAX_COPIES = 3;
 const MAX_DECKS  = 3;
 const SAVE_KEY   = 'wortcraft_decks';
@@ -104,7 +105,9 @@ function renderDeckManager() {
         <div class="deck-slot-cats">${deckCatSummary(deck.cards)}</div>
         <div class="deck-slot-actions">
           <button class="btn btn-primary" onclick="openBuilder(${i})">EDIT</button>
-          <button class="btn btn-gold"    onclick="startRunWithDeck(${i})">▶ USE</button>
+          ${deck.cards.filter(id => getCardDef(id)).length === DECK_SIZE
+            ? `<button class="btn btn-gold" onclick="startRunWithDeck(${i})">▶ USE</button>`
+            : `<button class="btn btn-gold" style="opacity:0.4;cursor:not-allowed;" title="Needs ${DECK_SIZE} cards">▶ USE</button>`}
           <button class="btn btn-danger"  onclick="deleteDeck(${i})">✕</button>
         </div>`;
     } else {
@@ -168,7 +171,7 @@ function builderAddCard(id) {
     showBuilderMsg(`Max ${MAX_COPIES} copies!`, 'warn'); return;
   }
   if (builderState.cards.length >= DECK_SIZE) {
-    showBuilderMsg('Deck is full (30/30)!', 'warn'); return;
+    showBuilderMsg(`Deck is full (${DECK_SIZE}/${DECK_SIZE})!`, 'warn'); return;
   }
   builderState.cards.push(id);
   renderBuilderDeck();
@@ -272,8 +275,9 @@ function renderBuilderDeck() {
 function startRunWithDeck(slotIndex) {
   const decks = loadSavedDecks();
   const deck  = decks[slotIndex];
-  if (!deck || deck.cards.length < 1) {
-    alert('That deck is empty! Build a deck first.'); return;
+  const valid = deck ? deck.cards.filter(id => getCardDef(id)) : [];
+  if (valid.length !== DECK_SIZE) {
+    alert(`A starting deck needs exactly ${DECK_SIZE} cards (this one has ${valid.length}). Edit it first!`); return;
   }
   draftState.deckIndex = slotIndex;
   draftState.deck = deck.cards.filter(id => getCardDef(id)).map(id => ({ ...getCardDef(id) }));

@@ -266,7 +266,7 @@ function handleNode(node) {
 
 function startMapBattle(node) {
   // Build rival deck scaled to node.rivalSize
-  const rivalIds = ENEMY_DECK_IDS.slice(0, node.rivalSize);
+  const rivalIds = shuffle(ENEMY_DECK_IDS).slice(0, node.rivalSize);
   const rivalDeck = rivalIds.map(id => ({ ...getCardDef(id) }));
 
   setScreen('game-screen');
@@ -274,35 +274,7 @@ function startMapBattle(node) {
 }
 
 function initGameWithRival(rivalDeck, node) {
-  document.getElementById('overlay').classList.add('hidden');
-  selectedCard = null;
-
-  const isBoss = node.type === 'boss';
-
-  const pDeck = shuffle(draftState.deck.map(c => ({ ...c })));
-  const eDeck = shuffle(rivalDeck);
-
-  state = {
-    phase:'mulligan', round:1, turn:0, playerTurn:true,
-    budget:0, budgetUsed:0,
-    pDeck, eDeck,
-    pDiscard:[], eDiscard:[],
-    pHand:[], eHand:[],
-    field:{ hot:{p:[],e:[]}, cold:{p:[],e:[]} },
-    roundWins:[], mulSel:[], logs:[],
-    nextCardDiscount:0, roastTokens:0, roastSafe:0,
-    roastThreshold:5, eRoastTokens:0,
-    nextYeastDiscount:0, nextHopDiscount:0,
-    lastPlayedCard:null, lastPlayedLane:null,
-    victoryCards:[],
-    isBoss,
-    currentNode: node,
-    maxRounds: isBoss ? 3 : 1,
-  };
-
-  drawCards(5, state.pDeck, state.pHand);
-  drawCards(5, state.eDeck, state.eHand);
-  render();
+  initGame({ rivalDeck, node });
 }
 
 // ── Draft node ──
@@ -335,8 +307,8 @@ function generateMapOffer() {
 function pickMapCard(idx) {
   const card = mapDraftState.offer[idx];
   if (!card) return;
-  if (draftState.deck.length >= 30) {
-    document.getElementById('map-draft-msg').textContent = 'Deck is full (30/30)!';
+  if (draftState.deck.length >= MAX_DECK_SIZE) {
+    document.getElementById('map-draft-msg').textContent = `Deck is full (${MAX_DECK_SIZE}/${MAX_DECK_SIZE})!`;
     return;
   }
   draftState.deck.push({ ...card });
@@ -363,7 +335,7 @@ function renderMapDraft() {
     </div>`;
   }).join('');
   document.getElementById('map-draft-count').textContent =
-    `${draftState.deck.length} / 30 cards`;
+    `${draftState.deck.length} / ${MAX_DECK_SIZE} cards`;
 }
 
 // ── Shop node ──
@@ -397,7 +369,7 @@ function renderMapShop() {
   document.getElementById('shop-gold').textContent = `💰 ${mapState.gold} gold`;
   el.innerHTML = shopInventory.map((c, i) => {
     const canAfford = mapState.gold >= c.price;
-    const full      = draftState.deck.length >= 30;
+    const full      = draftState.deck.length >= MAX_DECK_SIZE;
     const disabled  = !canAfford || full;
     const pts       = c.points >= 0 ? `+${c.points}` : `${c.points}`;
     const lane      = c.lane === 'both' ? 'HOT/COLD' : c.lane === 'hot' ? 'HOT SIDE' : 'COLD SIDE';
@@ -420,7 +392,7 @@ function buyCard(idx) {
   const card = shopInventory[idx];
   if (!card) return;
   if (mapState.gold < card.price) return;
-  if (draftState.deck.length >= 30) return;
+  if (draftState.deck.length >= MAX_DECK_SIZE) return;
   mapState.gold -= card.price;
   draftState.deck.push({ ...card });
   shopInventory.splice(idx, 1);
@@ -441,7 +413,7 @@ const MAP_EVENTS = [
     options: [
       { label: 'Accept it (add random card)', action: () => {
         const card = CARD_POOL[Math.floor(Math.random() * CARD_POOL.length)];
-        if (draftState.deck.length < 30) draftState.deck.push({ ...card });
+        if (draftState.deck.length < MAX_DECK_SIZE) draftState.deck.push({ ...card });
         return `Added ${card.name} to your deck!`;
       }},
       { label: 'Decline', action: () => 'You turned it down. Safe choice.' },
@@ -483,7 +455,7 @@ const MAP_EVENTS = [
     options: [
       { label: 'Enter (+20 gold, add wild yeast)', action: () => {
         mapState.gold += 20;
-        if (draftState.deck.length < 30) draftState.deck.push({ ...getCardDef('brett') });
+        if (draftState.deck.length < MAX_DECK_SIZE) draftState.deck.push({ ...getCardDef('brett') });
         return 'Won 20 gold and a Brett Yeast card!';
       }},
       { label: 'Skip the festival', action: () => 'You stayed home and brewed quietly.' },
@@ -497,7 +469,7 @@ const MAP_EVENTS = [
         if (mapState.gold >= 30) {
           mapState.gold -= 30;
           const malts = ['2row','pilsner','munich'];
-          malts.forEach(id => { if (draftState.deck.length < 30) draftState.deck.push({ ...getCardDef(id) }); });
+          malts.forEach(id => { if (draftState.deck.length < MAX_DECK_SIZE) draftState.deck.push({ ...getCardDef(id) }); });
           return 'Added 2-Row, Pilsner, and Munich Malt!';
         }
         return 'Not enough gold!';
@@ -638,7 +610,7 @@ function showBattleReward(node, goldReward) {
 function pickRewardCard(idx, offerJson) {
   const offer = JSON.parse(offerJson);
   const card  = offer[idx];
-  if (card && draftState.deck.length < 30) {
+  if (card && draftState.deck.length < MAX_DECK_SIZE) {
     draftState.deck.push({ ...getCardDef(card.id) });
   }
   showMapScreen();

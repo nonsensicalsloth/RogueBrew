@@ -84,9 +84,10 @@ function renderActions() {
   if (state.phase === 'mulligan') {
     el.innerHTML = `<button class="btn btn-primary" onclick="confirmMulligan()">CONFIRM MULLIGAN (${state.mulSel.length})</button>`;
   } else if (state.phase === 'play' && state.playerTurn) {
-    el.innerHTML = `<button class="btn btn-primary" onclick="endTurn()">END TURN</button>${hint}`;
+    el.innerHTML = `<button class="btn btn-primary" onclick="endTurn()">END TURN</button>
+      <button class="btn btn-danger" onclick="passRound()" title="Stop playing this round. You stop drawing, and cards in hand carry over.">PASS ROUND</button>${hint}`;
   } else if (state.phase === 'play' && !state.playerTurn) {
-    el.innerHTML = `<div class="status-tag">RIVAL BREWING...</div>`;
+    el.innerHTML = `<div class="status-tag">${state.pPassed ? 'YOU PASSED — ' : ''}RIVAL BREWING...</div>`;
   } else if (state.phase === 'between') {
     el.innerHTML = `<button class="btn btn-gold" onclick="startNextRound()">▶ START ROUND ${state.round}</button>`;
   } else if (state.phase === 'end') {
@@ -149,7 +150,9 @@ function render() {
 
   document.getElementById('phase-label').textContent =
     state.phase === 'mulligan'  ? 'MULLIGAN' :
-    state.phase === 'play'      ? (state.playerTurn ? 'YOUR TURN' : 'RIVAL TURN') :
+    state.phase === 'play'      ? (state.playerTurn
+                                    ? (state.ePassed ? 'YOUR TURN — RIVAL PASSED' : 'YOUR TURN')
+                                    : (state.pPassed ? 'PASSED' : 'RIVAL TURN')) :
     state.phase === 'between'   ? 'BETWEEN ROUNDS' : 'GAME OVER';
 
   // Roast tracker
