@@ -13,6 +13,10 @@ function selectCard(idx) {
 }
 
 function getEffectiveCost(c) {
+  // Honey is free if it's the first adjunct on your board this round
+  if (c.id === 'honey' && !getAllOnField('p').some(x => x.cat === 'adjunct')) return 0;
+  // Grapefruit Zest makes the next hop free
+  if (c.cat === 'hop' && state.nextHopFree) return 0;
   let discount = state.nextCardDiscount || 0;
   if (c.cat === 'yeast') discount += (state.nextYeastDiscount || 0);
   if (c.cat === 'hop')   discount += (state.nextHopDiscount   || 0);
@@ -39,53 +43,61 @@ function playToLane(lane) {
 
   // Remove from hand, place on field
   state.pHand.splice(selectedCard, 1);
-  state.field[lane].p.push(c);
   state.budgetUsed += effectiveCost;
 
-  // Consume discount if used
-  if (state.nextCardDiscount > 0)   state.nextCardDiscount  = 0;
-  if (c.cat === 'yeast' && state.nextYeastDiscount > 0) state.nextYeastDiscount = 0;
-  if (c.cat === 'hop'   && state.nextHopDiscount   > 0) state.nextHopDiscount   = 0;
-
-  // Track last played card for Double Batch etc
-  state.lastPlayedCard = { ...c };
-  state.lastPlayedLane = lane;
+  // Consume discounts
+  if (state.nextCardDiscount > 0) state.nextCardDiscount = 0;
+  if (c.cat === 'yeast') state.nextYeastDiscount = 0;
+  if (c.cat === 'hop')   { state.nextHopDiscount = 0; state.nextHopFree = false; }
 
   addLog(`You play ${c.name} (+${c.points}) → ${LANE_NAMES[lane]}`, 'player');
+  resolvePlay(c, lane, 'p');
 
-  // Apply pending hop buff from Extra Pale Pilsner/Wheat
-  if (c.cat === 'hop' && (state.pendingHopBuff || 0) > 0) {
+  selectedCard = null;
+  render();
+}
+
+// ── Shared play resolution (player and rival) ──
+// Places the card, runs its effect and synergies, then tidies up.
+function resolvePlay(c, lane, who) {
+  state.field[lane][who].push(c);
+
+  // Pending hop buff from Extra Pale Pilsner / Wheat (player only)
+  if (who === 'p' && c.cat === 'hop' && (state.pendingHopBuff || 0) > 0) {
     c.points += state.pendingHopBuff;
     addLog(`Hop buff applied: +${state.pendingHopBuff} to ${c.name}!`, 'player');
     state.pendingHopBuff = 0;
   }
 
-  // Auto-remove sugar clot when any hop lands on hot side
-  if (c.cat === 'hop' && lane === 'hot') {
-    removeFirstToken('p', 'sugar_clot');
-    removeFirstToken('p', 'sugar_clot8');
+  // Any hop in the boil clears one Sugar Clot
+  if (c.cat === 'hop' && lane === 'hot') removeSugarClot(who);
+
+  applyCardEffect(c, lane, who);
+  applyThiolOnPlay(c, who);
+  trackLastHop(c, who);
+  trackLastMalt(c, who);
+
+  if (c.tags && c.tags.includes('c-hop'))   applyCHopSynergy(lane, who);
+  if (c.tags && c.tags.includes('nuanced')) applyNuancedSynergy(who);
+
+  // Process cards that ended with no points leave the board after resolving
+  if (c.cat === 'process' && c.points === 0) {
+    LANES.forEach(l => {
+      const i = state.field[l][who].indexOf(c);
+      if (i >= 0) state.field[l][who].splice(i, 1);
+    });
+    (who === 'p' ? state.pDiscard : state.eDiscard).push(c);
   }
 
-  // Apply on-play effects
-  applyCardEffect(c, lane, 'p');
-  applyThiolOnPlay(c, 'p');
-  trackLastHop(c, 'p');
-
-  // Check c-hop synergy if it's a hop
-  if (c.tags && c.tags.includes('c-hop')) {
-    applyCHopSynergy(lane, 'p');
+  // Track last played card AFTER effects, so Double Batch / Blueberry see the previous one
+  if (who === 'p') {
+    state.lastPlayedCard = c;
+    state.lastPlayedLane = lane;
   }
+  state.cardsThisTurn = state.cardsThisTurn || { p: 0, e: 0 };
+  state.cardsThisTurn[who]++;
 
-  // Check nuanced synergy
-  if (c.tags && c.tags.includes('nuanced')) {
-    applyNuancedSynergy('p');
-  }
-
-  // Check for contamination in hand (auto-plays immediately)
-  checkContaminationInHand();
-
-  selectedCard = null;
-  render();
+  checkContaminationInHand(who);
 }
 
 function endTurn() {
@@ -102,27 +114,10 @@ function endTurn() {
 const ENEMY_DISRUPT_CARDS = new Set([
   'badbatch','inspector','crosscontam','drunkcellar','drunkbrewer','hopthief'
 ]);
-const ENEMY_PROCESS_CARDS = new Set([
-  'badbatch','inspector','crosscontam','drunkcellar','drunkbrewer','hopthief',
-  'doublebatch','barreltrans','fermlog','coldcrash','heatkill','cip','sip','filtration'
-]);
-
 function enemyPlayCard(c) {
   const lane = c.lane === 'both' ? 'hot' : c.lane;
-
-  if (ENEMY_PROCESS_CARDS.has(c.id)) {
-    // Process cards trigger effect but don't go on the field
-    addLog(`Rival uses ${c.name}!`, 'enemy');
-    applyCardEffect(c, lane, 'e');
-  } else {
-    state.field[lane].e.push(c);
-    addLog(`Rival plays ${c.name} (+${c.points}) → ${LANE_NAMES[lane]}`, 'enemy');
-    applyCardEffect(c, lane, 'e');
-    applyThiolOnPlay(c, 'e');
-    trackLastHop(c, 'e');
-    if (c.tags && c.tags.includes('c-hop'))  applyCHopSynergy(lane, 'e');
-    if (c.tags && c.tags.includes('nuanced')) applyNuancedSynergy('e');
-  }
+  addLog(c.cat === 'process' ? `Rival uses ${c.name}!` : `Rival plays ${c.name} (+${c.points}) → ${LANE_NAMES[lane]}`, 'enemy');
+  resolvePlay(c, lane, 'e');
 }
 
 function enemyTurn() {

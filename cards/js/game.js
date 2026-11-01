@@ -46,6 +46,12 @@ function initGame() {
     roastSafe:        0,
     roastThreshold:   5,
     eRoastTokens:     0,
+    eRoastSafe:       0,
+    eRoastThreshold:  5,
+    cardsThisTurn:    { p: 0, e: 0 },
+    lastMalt:         {},
+    lastHop:          {},
+    nextHopFree:      false,
     nextYeastDiscount:0,
     nextHopDiscount:  0,
     pendingHopBuff:   0,
@@ -64,15 +70,10 @@ function getBudget(turn) { return Math.min(turn, 5); }
 // ── Scoring ──
 function laneScore(lane, who) {
   const raw = state.field[lane][who].reduce((s, c) => s + c.points, 0);
-  if (lane === 'hot' && who === 'p') {
-    const roast     = state.roastTokens || 0;
-    const threshold = state.roastThreshold || 5;
-    const safe      = state.roastSafe || 0;
-    if (roast - safe >= threshold) return Math.floor(raw / 2);
-  }
-  if (lane === 'hot' && who === 'e') {
-    const eRoast = state.eRoastTokens || 0;
-    if (eRoast >= 5) return Math.floor(raw / 2);
+  if (lane === 'hot') {
+    const k = roastKeys(who);
+    const roast = (state[k.t] || 0) - (state[k.s] || 0);
+    if (roast >= (state[k.th] || 5)) return Math.floor(raw / 2);
   }
   return raw;
 }
@@ -101,6 +102,11 @@ function startRound() {
   state.roastSafe         = 0;
   state.roastThreshold    = 5;
   state.eRoastTokens      = 0;
+  state.eRoastSafe        = 0;
+  state.eRoastThreshold   = 5;
+  state.cardsThisTurn     = { p: 0, e: 0 };
+  state.lastMalt          = {};
+  state.nextHopFree       = false;
   state.nextYeastDiscount = 0;
   state.nextHopDiscount   = 0;
   state.pendingHopBuff    = 0;
@@ -120,6 +126,8 @@ function endRound() {
 
   // Handle Victory Malt — keep on board if player won this round
   const victoryCards = state.field.hot.p.filter(c => c._victory);
+  // If you didn't win, Victory Malt goes to the discard like everything else
+  if (!(ps > es)) victoryCards.forEach(c => delete c._victory);
   const awardCards   = state.field.hot.p.filter(c => c._award)
     .concat(state.field.cold.p.filter(c => c._award));
 
@@ -170,6 +178,7 @@ function advanceTurn() {
   state.budget     = getBudget(state.turn);
   state.playerTurn = true;
   state.nextCardDiscount = 0;
+  state.cardsThisTurn    = { p: 0, e: 0 };
   if (state.turn > 10) { endRound(); return; }
   addLog(`▸ Turn ${state.turn} — Budget: ${state.budget}`);
   drawCards(1, state.pDeck, state.pHand);
@@ -178,7 +187,8 @@ function advanceTurn() {
   applyTurnEffects('p');
   applyTurnEffects('e');
   // Auto-play any contamination drawn this turn
-  checkContaminationInHand();
+  checkContaminationInHand('p');
+  checkContaminationInHand('e');
   render();
 }
 

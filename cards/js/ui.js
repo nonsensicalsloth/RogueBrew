@@ -159,7 +159,7 @@ function render() {
   const roastEl   = document.getElementById('roast-tracker');
   const roastCnt  = document.getElementById('roast-count');
   if (roastEl && roastCnt) {
-    roastCnt.textContent = `${roast}/${threshold}${eRoast > 0 ? ` | rival:${eRoast}/5` : ''}`;
+    roastCnt.textContent = `${roast}/${threshold}${eRoast > 0 ? ` | rival:${eRoast}/${state.eRoastThreshold || 5}` : ''}`;
     roastEl.style.color  = roast >= threshold ? 'var(--red)' : roast >= threshold - 1 ? 'var(--orange)' : 'var(--dim)';
   }
   const discountMsg = (state.nextCardDiscount || 0) > 0 ? ` ★-${state.nextCardDiscount}` : '';
