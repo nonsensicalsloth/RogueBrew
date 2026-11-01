@@ -117,20 +117,9 @@ function endTurn() {
   setTimeout(() => { enemyTurn(); render(); }, 500);
 }
 
-// Gwent-style pass: you stop playing (and drawing) for the rest of the round.
-// Cards left in your hand carry into the next round.
-function passRound() {
-  if (!state.playerTurn || state.phase !== 'play') return;
-  selectedCard = null;
-  state.pPassed = true;
-  addLog(`You pass with ${state.pHand.length} card(s) in hand.`, 'player');
-  if (state.ePassed) { endRound(); return; }
-  endTurn();
-}
-
 function enemyPass(reason) {
   state.ePassed = true;
-  addLog(`Rival passes${reason ? ' — ' + reason : ''}.`, 'enemy');
+  addLog(`Rival stops brewing this round${reason ? ' — ' + reason : ''}.`, 'enemy');
 }
 
 // ── Enemy AI ──
@@ -152,11 +141,7 @@ function enemyTurn() {
 
   const lead = totalScore('e') - totalScore('p');
 
-  // Pass decisions before playing
-  if (state.pPassed && lead > 0) {
-    enemyPass("it's ahead and you've passed");
-    setTimeout(() => advanceTurn(), 300); return;
-  }
+  // The rival stops playing for the round once it's far enough ahead
   if (lead >= 50) {
     enemyPass(`${lead} points ahead`);
     setTimeout(() => advanceTurn(), 300); return;
@@ -192,9 +177,8 @@ function enemyTurn() {
 
   if (!playedAny) addLog('Rival has nothing to play.', 'enemy');
 
-  // Pass after playing if it has pulled ahead of a passed player, or is out of cards entirely
-  if (state.pPassed && totalScore('e') > totalScore('p')) enemyPass("it's ahead and you've passed");
-  else if (state.eHand.length === 0 && state.eDeck.length === 0 && state.eDiscard.length === 0) enemyPass('out of ingredients');
+  // Stop if completely out of cards
+  if (state.eHand.length === 0 && state.eDeck.length === 0 && state.eDiscard.length === 0) enemyPass('out of ingredients');
 
   setTimeout(() => advanceTurn(), 300);
 }

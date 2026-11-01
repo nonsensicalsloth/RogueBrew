@@ -54,7 +54,6 @@ function initGame(opts = {}) {
     maxRounds:        node ? (isBoss ? 3 : 1) : 3,
     currentNode:      node,
     isBoss,
-    pPassed:          false,
     rivalBonus:       opts.rivalBonus || 0,
     rivalBonusName:   opts.rivalBonusName || 'Crowd Favorite',
     rivalName:        opts.rival ? opts.rival.name : 'Rival Brewery',
@@ -87,6 +86,22 @@ function initGame(opts = {}) {
   render();
 }
 
+// ── Judging categories (3-round fights: bosses and practice games) ──
+// Each round of a best-of-3 is scored like a real beer competition category.
+const JUDGING = [
+  { id:'aroma',   name:'Aroma',              icon:'👃', lane:'cold', desc:'Cold side scores double' },
+  { id:'flavor',  name:'Flavor',             icon:'👅', lane:'hot',  desc:'Hot side scores double' },
+  { id:'overall', name:'Overall Impression', icon:'🏆', lane:null,   desc:'Standard scoring' },
+];
+
+function judgingFor(round) {
+  return state.maxRounds === 3 ? JUDGING[round - 1] || null : null;
+}
+
+function laneMultiplier(lane) {
+  return state.judging && state.judging.lane === lane ? 2 : 1;
+}
+
 // ── Budget ──
 function getBudget(turn, who = 'p') {
   const cap = 5 + (who === 'p' && hasRelic('fermenter') ? 1 : 0);
@@ -95,13 +110,13 @@ function getBudget(turn, who = 'p') {
 
 // ── Scoring ──
 function laneScore(lane, who) {
-  const raw = state.field[lane][who].reduce((s, c) => s + c.points, 0);
+  let score = state.field[lane][who].reduce((s, c) => s + c.points, 0);
   if (lane === 'hot') {
     const k = roastKeys(who);
     const roast = (state[k.t] || 0) - (state[k.s] || 0);
-    if (roast >= (state[k.th] || 5)) return Math.floor(raw / 2);
+    if (roast >= (state[k.th] || 5)) score = Math.floor(score / 2);
   }
-  return raw;
+  return score * laneMultiplier(lane);
 }
 function totalScore(who) {
   return LANES.reduce((s, l) => s + laneScore(l, who), 0);
@@ -120,7 +135,6 @@ function startRound() {
   state.budgetUsed      = 0;
   state.budget          = getBudget(1);
   state.playerTurn      = true;
-  state.pPassed         = false;
   state.ePassed         = false;
   state.nextCardDiscount  = 0;
   state.lastPlayedCard    = null;
@@ -141,7 +155,9 @@ function startRound() {
   state.pendingHopBuff    = 0;
   state.field           = { hot: { p: [...(state.victoryCards || [])], e: [] }, cold: { p: [], e: [] } };
   state.victoryCards    = [];
+  state.judging = judgingFor(state.round);
   addLog(`▶ Round ${state.round} begins! Budget: ${state.budget}`);
+  if (state.judging) addLog(`${state.judging.icon} Judging: ${state.judging.name} — ${state.judging.desc}.`, 'sys');
   if (state.rivalBonus) {
     const fav = createToken('crowd_fav');
     fav.points = state.rivalBonus;
@@ -156,7 +172,7 @@ function startRound() {
 
 function endRound() {
   const ps = totalScore('p'), es = totalScore('e');
-  addLog(`■ Round ${state.round} ends — You: ${ps}  Rival: ${es}`);
+  addLog(`■ Round ${state.round}${state.judging ? ` (${state.judging.name})` : ''} ends — You: ${ps}  Rival: ${es}`);
   if (ps > es)      { state.roundWins.push('player'); addLog(`★ You win round ${state.round}!`, 'player'); }
   else if (es > ps) { state.roundWins.push('enemy');  addLog(`✗ Rival wins round ${state.round}.`, 'enemy'); }
   else              { state.roundWins.push('draw');   addLog('— Draw!'); }
@@ -210,8 +226,6 @@ function endRound() {
 // ── Turn advancement ──
 function advanceTurn() {
   if (state.phase !== 'play') return;
-  if (state.pPassed && state.ePassed) { endRound(); return; }
-
   state.turn++;
   state.budgetUsed = 0;
   state.budget     = getBudget(state.turn);
@@ -220,8 +234,7 @@ function advanceTurn() {
   if (state.turn > 10) { endRound(); return; }
   addLog(`▸ Turn ${state.turn} — Budget: ${state.budget}`);
 
-  // Passed brewers stop drawing — that's the price of saving cards
-  if (!state.pPassed) drawCards(1, state.pDeck, state.pHand);
+  drawCards(1, state.pDeck, state.pHand);
   if (!state.ePassed) drawCards(state.rivalTrait === 'massprod' ? 2 : 1, state.eDeck, state.eHand);
   if (state.rivalTrait === 'spontaneous' && state.turn % 3 === 0) {
     addLog('Spontaneous Fermentation: wild microbes drift into your deck...', 'enemy');
@@ -234,13 +247,6 @@ function advanceTurn() {
   checkContaminationInHand('p');
   checkContaminationInHand('e');
 
-  if (state.pPassed) {
-    // You've passed — the rival keeps brewing on its own
-    state.playerTurn = false;
-    render();
-    setTimeout(() => { enemyTurn(); render(); }, 500);
-    return;
-  }
   state.playerTurn = true;
   render();
 }

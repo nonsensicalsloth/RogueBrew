@@ -141,6 +141,8 @@ function rivalWouldOverload(c) {
 // Where the rival puts a card that can go on either side
 function rivalLaneFor(c) {
   if (c.lane !== 'both') return c.lane;
+  // In a judged round, flexible cards go where they score double
+  if (typeof state !== 'undefined' && state && state.judging && state.judging.lane) return state.judging.lane;
   if (c.cat === 'hop') {
     // Bittering hops go in the boil; aroma hops get dry hopped
     return c.tags && c.tags.includes('bitter') ? 'hot' : 'cold';

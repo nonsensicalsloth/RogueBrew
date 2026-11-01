@@ -84,12 +84,13 @@ function renderActions() {
   if (state.phase === 'mulligan') {
     el.innerHTML = `<button class="btn btn-primary" onclick="confirmMulligan()">CONFIRM MULLIGAN (${state.mulSel.length})</button>`;
   } else if (state.phase === 'play' && state.playerTurn) {
-    el.innerHTML = `<button class="btn btn-primary" onclick="endTurn()">END TURN</button>
-      <button class="btn btn-danger" onclick="passRound()" title="Stop playing this round. You stop drawing, and cards in hand carry over.">PASS ROUND</button>${hint}`;
+    el.innerHTML = `<button class="btn btn-primary" onclick="endTurn()">END TURN</button>${hint}`;
   } else if (state.phase === 'play' && !state.playerTurn) {
-    el.innerHTML = `<div class="status-tag">${state.pPassed ? 'YOU PASSED — ' : ''}RIVAL BREWING...</div>`;
+    el.innerHTML = `<div class="status-tag">RIVAL BREWING...</div>`;
   } else if (state.phase === 'between') {
-    el.innerHTML = `<button class="btn btn-gold" onclick="startNextRound()">▶ START ROUND ${state.round}</button>`;
+    const next = judgingFor(state.round);
+    el.innerHTML = `<button class="btn btn-gold" onclick="startNextRound()">▶ START ROUND ${state.round}${next ? ` — ${next.icon} ${next.name.toUpperCase()}` : ''}</button>
+      ${next ? `<span style="font-size:7px;color:var(--dim);margin-left:8px">${next.desc}</span>` : ''}`;
   } else if (state.phase === 'end') {
     el.innerHTML = `<button class="btn btn-gold" onclick="initGame()">PLAY AGAIN</button>`;
   }
@@ -152,7 +153,7 @@ function render() {
     state.phase === 'mulligan'  ? 'MULLIGAN' :
     state.phase === 'play'      ? (state.playerTurn
                                     ? (state.ePassed ? 'YOUR TURN — RIVAL PASSED' : 'YOUR TURN')
-                                    : (state.pPassed ? 'PASSED' : 'RIVAL TURN')) :
+                                    : 'RIVAL TURN') :
     state.phase === 'between'   ? 'BETWEEN ROUNDS' : 'GAME OVER';
 
   // Roast tracker
@@ -173,6 +174,18 @@ function render() {
 
   const rivalNameEl = document.getElementById('rival-name');
   if (rivalNameEl) rivalNameEl.textContent = (state.rivalName || 'Rival Brewery').toUpperCase();
+
+  // Judging category for this round
+  const judgingEl = document.getElementById('judging-pill');
+  if (judgingEl) {
+    const j = state.phase === 'between' ? judgingFor(state.round) : state.judging;
+    judgingEl.style.display = j ? '' : 'none';
+    judgingEl.textContent   = j ? `${j.icon} ${j.name.toUpperCase()}${j.lane ? ` — ${j.lane.toUpperCase()} ×2` : ''}` : '';
+  }
+  LANES.forEach(l => ['p','e'].forEach(w => {
+    const m = document.getElementById(`mult-${l}-${w}`);
+    if (m) m.textContent = state.phase === 'play' && state.judging && laneMultiplier(l) > 1 ? ' ×2' : '';
+  }));
 
   const relicBar = document.getElementById('relic-bar');
   if (relicBar) relicBar.innerHTML = state.currentNode ? relicIconsHtml() : '';
