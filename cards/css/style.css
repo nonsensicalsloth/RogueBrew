@@ -592,3 +592,6 @@ body::after {
 .relic-card-desc { font-size:6px; color:var(--dim); line-height:1.8; }
 .relic-icon { font-size:12px; cursor:help; }
 #relic-bar { display:flex; gap:4px; }
+
+/* ── Judging categories ── */
+.lane-mult { color: var(--gold); font-weight: bold; }
