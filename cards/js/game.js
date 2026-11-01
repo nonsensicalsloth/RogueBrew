@@ -55,6 +55,8 @@ function initGame(opts = {}) {
     currentNode:      node,
     isBoss,
     pPassed:          false,
+    rivalBonus:       opts.rivalBonus || 0,
+    hopBackUsed:      false,
     ePassed:          false,
     nextCardDiscount: 0,
     roastTokens:      0,
@@ -80,7 +82,10 @@ function initGame(opts = {}) {
 }
 
 // ── Budget ──
-function getBudget(turn) { return Math.min(turn, 5); }
+function getBudget(turn, who = 'p') {
+  const cap = 5 + (who === 'p' && hasRelic('fermenter') ? 1 : 0);
+  return Math.min(turn, cap);
+}
 
 // ── Scoring ──
 function laneScore(lane, who) {
@@ -117,7 +122,8 @@ function startRound() {
   state.lastHop           = {};
   state.roastTokens       = 0;
   state.roastSafe         = 0;
-  state.roastThreshold    = 5;
+  state.roastThreshold    = 5 + (hasRelic('roaster') ? 2 : 0);
+  state.hopBackUsed       = false;
   state.eRoastTokens      = 0;
   state.eRoastSafe        = 0;
   state.eRoastThreshold   = 5;
@@ -130,7 +136,13 @@ function startRound() {
   state.field           = { hot: { p: [...(state.victoryCards || [])], e: [] }, cold: { p: [], e: [] } };
   state.victoryCards    = [];
   addLog(`▶ Round ${state.round} begins! Budget: ${state.budget}`);
-  drawCards(1, state.pDeck, state.pHand);
+  if (state.rivalBonus) {
+    const fav = createToken('crowd_fav');
+    fav.points = state.rivalBonus;
+    state.field.hot.e.push(fav);
+    addLog(`🎪 The crowd loves the rival: +${state.rivalBonus} to start.`, 'enemy');
+  }
+  drawCards(hasRelic('grainmill') ? 2 : 1, state.pDeck, state.pHand);
   drawCards(1, state.eDeck, state.eHand);
 }
 
@@ -239,9 +251,11 @@ function confirmMulligan() {
   render();
 }
 
+function mulliganLimit() { return hasRelic('recipebook') ? 3 : 2; }
+
 function toggleMulligan(idx) {
   const s = state.mulSel, pos = s.indexOf(idx);
   if (pos >= 0) s.splice(pos, 1);
-  else if (s.length < 2) s.push(idx);
+  else if (s.length < mulliganLimit()) s.push(idx);
   render();
 }

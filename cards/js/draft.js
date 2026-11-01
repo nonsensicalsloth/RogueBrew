@@ -292,6 +292,11 @@ function startRunWithDeck(slotIndex) {
     visited:     {},
     edges:       [],
     removals:    0,     // shop removal price goes up with each one
+    relics:      [],    // brewing equipment won from bosses
+    barrel:      [],    // cards aging in the Barrel Room
+    nodeCount:   0,     // stops visited this run (barrel timing)
+    contract:    null,  // category for the next card offer
+    notice:      '',
   };
   generateMap();
 

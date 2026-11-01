@@ -917,12 +917,13 @@ function applyCardEffect(card, lane, who) {
 
     case 'barreltrans': {
       // Best cold side card gets +50%
-      const coldCards2 = getLaneCards('cold', who).filter(c => c.cat !== 'token');
+      const coldCards2 = getLaneCards('cold', who).filter(c => c.cat !== 'token' && c !== card);
       if (coldCards2.length > 0) {
         const best2 = coldCards2.reduce((a, b) => a.points > b.points ? a : b);
-        const bonus  = Math.floor(best2.points * 0.5);
+        const oaky   = best2.tags && best2.tags.includes('oaky');
+        const bonus  = Math.floor(best2.points * (oaky ? 1 : 0.5));
         best2.points += bonus;
-        addLog(`Barrel Transfer: ${best2.name} gets +${bonus} pts (+50%)!`, 'player');
+        addLog(`Barrel Transfer: ${best2.name} gets +${bonus} pts (${oaky ? '+100%, oaky' : '+50%'})!`, 'player');
       }
       break;
     }
@@ -1347,7 +1348,7 @@ function applyTurnEffects(who) {
     if (c.cat !== 'yeast' || NO_ACCUMULATION.includes(c.id)) return;
 
     if (c.id === 'brett') {
-      c.points += 3;
+      c.points += 3 + (isPlayer && hasRelic('glycol') ? 1 : 0);
       if (Math.random() < 0.5) {
         if (isPlayer) addLog('Brettanomyces: +3 pts — and it got loose in the cellar...', 'warn');
         shuffleIntoRemainingDeck(who, 'contamination');
@@ -1357,8 +1358,9 @@ function applyTurnEffects(who) {
       return;
     }
 
-    c.points += 2;
-    if (isPlayer) addLog(`${c.name}: +2 pts (accumulating).`, 'player');
+    const chill = isPlayer && hasRelic('glycol') ? 1 : 0;
+    c.points += 2 + chill;
+    if (isPlayer) addLog(`${c.name}: +${2 + chill} pts (accumulating).`, 'player');
   });
 }
 
@@ -1371,7 +1373,8 @@ function checkContaminationInHand(who = 'p') {
   while ((idx = hand.findIndex(c => c.id === 'contamination' || c.id === 'contam_soft')) >= 0) {
     let c = hand.splice(idx, 1)[0];
     // A clean yeast on the cold side outcompetes it — softened to -5
-    const cleanYeast = getLaneCards('cold', who).some(y => y.cat === 'yeast' && y.tags && y.tags.includes('clean'));
+    const cleanYeast = getLaneCards('cold', who).some(y => y.cat === 'yeast' && y.tags && y.tags.includes('clean'))
+                    || (who === 'p' && hasRelic('microscope'));
     if (cleanYeast && c.id === 'contamination') c = createToken('contam_soft');
     state.field.cold[who].push(c);
     addLog(`⚠ Contamination drawn — auto-played to ${who === 'p' ? 'your' : "rival's"} cold side! (${c.points} pts${cleanYeast ? ', softened by clean yeast' : ''})`, who === 'p' ? 'warn' : 'enemy');

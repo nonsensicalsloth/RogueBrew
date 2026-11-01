@@ -168,8 +168,11 @@ function render() {
   const discountMsg = (state.nextCardDiscount || 0) > 0 ? ` ★-${state.nextCardDiscount}` : '';
   document.getElementById('hand-lbl').textContent =
     state.phase === 'mulligan'
-      ? 'YOUR HAND — SELECT UP TO 2 TO SEND BACK'
+      ? `YOUR HAND — SELECT UP TO ${mulliganLimit()} TO SEND BACK`
       : `YOUR HAND (${state.pHand.length}) — BUDGET: ${state.budget - state.budgetUsed}/${state.budget}${discountMsg}`;
+
+  const relicBar = document.getElementById('relic-bar');
+  if (relicBar) relicBar.innerHTML = state.currentNode ? relicIconsHtml() : '';
 
   renderField();
   renderHand();

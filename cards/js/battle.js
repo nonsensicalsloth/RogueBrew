@@ -15,8 +15,9 @@ function selectCard(idx) {
 function getEffectiveCost(c) {
   // Honey is free if it's the first adjunct on your board this round
   if (c.id === 'honey' && !getAllOnField('p').some(x => x.cat === 'adjunct')) return 0;
-  // Grapefruit Zest makes the next hop free
+  // Grapefruit Zest makes the next hop free; Hop Back makes the first hop each round free
   if (c.cat === 'hop' && state.nextHopFree) return 0;
+  if (c.cat === 'hop' && hasRelic('hopback') && !state.hopBackUsed) return 0;
   let discount = state.nextCardDiscount || 0;
   if (c.cat === 'yeast') discount += (state.nextYeastDiscount || 0);
   if (c.cat === 'hop')   discount += (state.nextHopDiscount   || 0);
@@ -48,7 +49,7 @@ function playToLane(lane) {
   // Consume discounts
   if (state.nextCardDiscount > 0) state.nextCardDiscount = 0;
   if (c.cat === 'yeast') state.nextYeastDiscount = 0;
-  if (c.cat === 'hop')   { state.nextHopDiscount = 0; state.nextHopFree = false; }
+  if (c.cat === 'hop')   { state.nextHopDiscount = 0; state.nextHopFree = false; state.hopBackUsed = true; }
 
   addLog(`You play ${c.name} (+${c.points}) → ${LANE_NAMES[lane]}`, 'player');
   resolvePlay(c, lane, 'p');
@@ -67,6 +68,12 @@ function resolvePlay(c, lane, who) {
     c.points += state.pendingHopBuff;
     addLog(`Hop buff applied: +${state.pendingHopBuff} to ${c.name}!`, 'player');
     state.pendingHopBuff = 0;
+  }
+
+  // Hop Cannon relic: your cold side hops get +2
+  if (who === 'p' && c.cat === 'hop' && lane === 'cold' && hasRelic('hopcannon')) {
+    c.points += 2;
+    addLog(`Hop Cannon: ${c.name} +2!`, 'player');
   }
 
   // Any hop in the boil clears one Sugar Clot
@@ -152,7 +159,7 @@ function enemyTurn() {
     setTimeout(() => advanceTurn(), 300); return;
   }
 
-  let remaining = state.budget;
+  let remaining = getBudget(state.turn, 'e');
   let playedAny = false;
 
   // If behind, try a disruptive card first

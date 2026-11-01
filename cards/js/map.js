@@ -6,20 +6,20 @@ const ACT_NAMES = ['The Mash', 'Fermentation', 'Conditioning'];
 const RIVAL_SIZES_BY_ACT = [15, 20, 30];
 
 // Boss is always 30
-function getRivalSize(act, layer) {
-  if (layer === 6) return 30; // boss
+function getRivalSize(act, layer, type) {
+  if (layer === 6 || type === 'festival') return 30; // boss / festival elite
   return RIVAL_SIZES_BY_ACT[act];
 }
 
 // Node type distribution per layer (0-indexed)
 const LAYER_TEMPLATES = [
-  ['draft','draft','event'],              // Layer 0 — mostly draft/event
-  ['battle','draft','shop','event'],      // Layer 1
-  ['battle','battle','draft','rest'],     // Layer 2
-  ['battle','battle','shop','event'],     // Layer 3
-  ['battle','draft','event','rest'],      // Layer 4
-  ['battle','battle','battle','rest'],    // Layer 5
-  ['boss'],                               // Layer 6 — act boss
+  ['draft','draft','event'],                 // Layer 0 — build up before the first fight
+  ['battle','draft','shop','lab'],           // Layer 1
+  ['battle','battle','barrel','event'],      // Layer 2 — barrel early so it pays off this act
+  ['battle','festival','shop','collab'],     // Layer 3
+  ['battle','contract','taproom','rest'],    // Layer 4
+  ['battle','festival','battle','rest'],     // Layer 5 — last chance to prep for the boss
+  ['boss'],                                  // Layer 6 — act boss
 ];
 
 const NODE_ICONS = {
@@ -27,8 +27,20 @@ const NODE_ICONS = {
   draft:  '🃏',
   shop:   '🛒',
   event:  '?',
-  rest:   '🛌',
-  boss:   '💀',
+  rest:     '🛌',
+  boss:     '💀',
+  festival: '🎪',
+  barrel:   '🛢',
+  collab:   '🤝',
+  lab:      '🔬',
+  taproom:  '🍺',
+  contract: '📜',
+};
+
+const NODE_NAMES = {
+  battle:'Rival Brewery', draft:'Draft', shop:'Shop', event:'Event', rest:'Rest Stop', boss:'Act Boss',
+  festival:'Beer Festival (elite)', barrel:'Barrel Room', collab:'Collab Brew', lab:'Quality Lab',
+  taproom:'Taproom Night', contract:'Supplier Contract',
 };
 
 const NODE_COLORS = {
@@ -36,8 +48,14 @@ const NODE_COLORS = {
   draft:  '#2980b9',
   shop:   '#f39c12',
   event:  '#8e44ad',
-  rest:   '#27ae60',
-  boss:   '#e74c3c',
+  rest:     '#27ae60',
+  boss:     '#e74c3c',
+  festival: '#e67e22',
+  barrel:   '#a1887f',
+  collab:   '#16a085',
+  lab:      '#4fc3f7',
+  taproom:  '#d4af37',
+  contract: '#95a5a6',
 };
 
 // ── Run state additions ──
@@ -65,7 +83,7 @@ function generateMap() {
       const layerNodes = template.map((type, idx) => ({
         act, layer, index: idx,
         type,
-        rivalSize: getRivalSize(act, layer),
+        rivalSize: getRivalSize(act, layer, type),
         id: `${act}-${layer}-${idx}`,
         accessible: layer === 0 && act === mapState.act,
       }));
@@ -155,6 +173,13 @@ function renderMap() {
   document.getElementById('map-gold').textContent      = `💰 ${mapState.gold}`;
   document.getElementById('map-act-name').textContent  = ACT_NAMES[act];
   document.getElementById('map-deck-count').textContent= `🃏 ${draftState.deck.length} cards`;
+  const extras = [];
+  if (mapState.barrel && mapState.barrel.length) extras.push(`🛢 ${mapState.barrel.length} aging`);
+  if (mapState.contract) extras.push(`📜 ${mapState.contract} contract`);
+  const extraEl = document.getElementById('map-extras');
+  if (extraEl) extraEl.innerHTML = extras.join(' ') + ' ' + relicIconsHtml();
+  const noticeEl = document.getElementById('map-notice');
+  if (noticeEl) { noticeEl.textContent = mapState.notice || ''; mapState.notice = ''; }
 
   const W      = Math.max(el.offsetWidth, 320);
   const layers = actNodes.length;
@@ -205,11 +230,12 @@ function renderMap() {
 
       svg += `<g transform="translate(${x},${y})" opacity="${opacity}"
         ${canClick ? `onclick="clickMapNode('${node.id}')" style="cursor:pointer"` : ''}>
+        <title>${NODE_NAMES[node.type] || node.type}</title>
         <circle r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${visited ? 2.5 : 1.5}"/>
         <text text-anchor="middle" dominant-baseline="central"
           font-size="${node.type === 'boss' ? 14 : 12}"
           fill="${visited ? '#ffd700' : access ? color : '#444'}">${icon}</text>
-        ${node.type === 'battle' || node.type === 'boss'
+        ${node.type === 'battle' || node.type === 'boss' || node.type === 'festival'
           ? `<text text-anchor="middle" y="${r + 12}" font-size="7" fill="#666" font-family="monospace">${node.rivalSize}🃏</text>`
           : ''}
       </g>`;
@@ -236,6 +262,8 @@ function clickMapNode(nodeId) {
   const node = getNode(act, layer, index);
   if (!node || !canVisit(node)) return;
   markVisited(node);
+  mapState.nodeCount = (mapState.nodeCount || 0) + 1;
+  checkBarrel();
   handleNode(node);
 }
 
@@ -245,8 +273,14 @@ function handleNode(node) {
   switch (node.type) {
     case 'battle':
     case 'boss':
+    case 'festival':
       startMapBattle(node);
       break;
+    case 'barrel':   showBarrelRoom(); break;
+    case 'collab':   showCollab();     break;
+    case 'lab':      showLab();        break;
+    case 'taproom':  showTaproom();    break;
+    case 'contract': showContract();   break;
     case 'draft':
       showMapDraft(node);
       break;
@@ -270,7 +304,8 @@ function startMapBattle(node) {
   const rivalDeck = rivalIds.map(id => ({ ...getCardDef(id) }));
 
   setScreen('game-screen');
-  initGameWithRival(rivalDeck, node);
+  // Festival rivals are crowd favorites: they start each round with a +10 token
+  initGame({ rivalDeck, node, rivalBonus: node.type === 'festival' ? 10 : 0 });
 }
 
 function initGameWithRival(rivalDeck, node) {
@@ -291,17 +326,27 @@ let mapDraftState = { node: null, offer: [] };
 function generateMapOffer() {
   const counts = {};
   draftState.deck.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
+  // A supplier contract focuses the next offer on one category, with 4 picks
+  const contract = mapState.contract;
+  const size = contract ? 4 : 3;
+  mapState.contract = null;
   const pool = CARD_POOL.filter(c =>
-    (counts[c.id] || 0) < MAX_COPIES && c.cat !== 'token'
+    (counts[c.id] || 0) < MAX_COPIES && c.cat !== 'token' && (!contract || c.cat === contract)
   );
   const shuffled = [...pool].sort(() => Math.random() - 0.5);
   const seen = new Set();
   const offer = [];
   for (const c of shuffled) {
     if (!seen.has(c.id)) { seen.add(c.id); offer.push({ ...c }); }
-    if (offer.length >= 3) break;
+    if (offer.length >= size) break;
   }
   return offer;
+}
+
+// Festival prize: premium (cost 3+) cards
+function generateRareOffer() {
+  const pool = CARD_POOL.filter(c => c.cost >= 3 && c.cat !== 'token' && copiesInDeck(c.id) < MAX_COPIES);
+  return shuffle(pool).slice(0, 3).map(c => ({ ...c }));
 }
 
 function pickMapCard(idx) {
@@ -661,7 +706,7 @@ function onBattleWin(node) {
 
   if (node.type === 'boss') {
     if (mapState.act < 2) {
-      showActTransition(goldReward);
+      showRelicChoice(goldReward);   // boss reward: pick a piece of equipment
     } else {
       showRunWin();
     }
@@ -674,32 +719,24 @@ function onBattleLoss() {
   showRunLoss();
 }
 
+let rewardOffer = [];
+
 function showBattleReward(node, goldReward) {
   setScreen('battle-reward-screen');
-  document.getElementById('reward-gold').textContent = `+${goldReward} gold earned!`;
-  const offer = generateMapOffer();
-  const el    = document.getElementById('reward-card-offer');
-  el.innerHTML = offer.map((c, i) => {
-    const pts  = c.points >= 0 ? `+${c.points}` : `${c.points}`;
-    const lane = c.lane === 'both' ? 'HOT/COLD' : c.lane === 'hot' ? 'HOT SIDE' : 'COLD SIDE';
-    return `<div class="card cat-${c.cat}" onclick="pickRewardCard(${i}, '${JSON.stringify(offer).replace(/'/g,"\\'")}')">
-      <div class="card-cost-gem">${c.cost}</div>
-      <div class="card-pts-gem">${pts}</div>
-      <div class="card-art">${catIcon(c.cat)}</div>
-      <div class="card-name-banner">${c.name}</div>
-      <div class="card-tags-row">${tagHtml(c.tags)}</div>
-      <div class="card-effect-text">${c.desc || ''}</div>
-      <div class="card-restrict">${lane}</div>
-    </div>`;
-  }).join('');
+  const festival = node.type === 'festival';
+  document.getElementById('reward-gold').textContent =
+    festival ? `🎪 Festival winner! +${goldReward} gold — pick a premium card` : `+${goldReward} gold earned!`;
+  rewardOffer = festival ? generateRareOffer() : generateMapOffer();
+  document.getElementById('reward-card-offer').innerHTML =
+    rewardOffer.map((c, i) => specialCardHtml(c, `pickRewardCard(${i})`)).join('');
 }
 
-function pickRewardCard(idx, offerJson) {
-  const offer = JSON.parse(offerJson);
-  const card  = offer[idx];
+function pickRewardCard(idx) {
+  const card = rewardOffer[idx];
   if (card && draftState.deck.length < MAX_DECK_SIZE) {
     draftState.deck.push({ ...getCardDef(card.id) });
   }
+  rewardOffer = [];
   showMapScreen();
 }
 
