@@ -100,7 +100,7 @@ function renderDeckManager() {
     if (deck) {
       div.innerHTML = `
         <div class="deck-slot-name">${deck.name}</div>
-        <div class="deck-slot-count">${deck.cards.length} / ${DECK_SIZE} cards</div>
+        <div class="deck-slot-count">${deck.cards.filter(id => getCardDef(id)).length} / ${DECK_SIZE} cards${deck.cards.some(id => !getCardDef(id)) ? ' <span style="color:var(--orange)">(retired cards removed — re-edit)</span>' : ''}</div>
         <div class="deck-slot-cats">${deckCatSummary(deck.cards)}</div>
         <div class="deck-slot-actions">
           <button class="btn btn-primary" onclick="openBuilder(${i})">EDIT</button>
@@ -145,7 +145,8 @@ function openBuilder(slotIndex) {
   const existing = decks[slotIndex];
   builderState.slotIndex = slotIndex;
   builderState.name  = existing ? existing.name  : `Deck ${slotIndex + 1}`;
-  builderState.cards = existing ? [...existing.cards] : [];
+  // Drop any card ids that no longer exist (e.g. after a card pool update)
+  builderState.cards = existing ? existing.cards.filter(id => getCardDef(id)) : [];
   builderState.activeTab = 'malt';
   setScreen('builder-screen');
   renderBuilder();
@@ -275,7 +276,7 @@ function startRunWithDeck(slotIndex) {
     alert('That deck is empty! Build a deck first.'); return;
   }
   draftState.deckIndex = slotIndex;
-  draftState.deck = deck.cards.map(id => ({ ...getCardDef(id) }));
+  draftState.deck = deck.cards.filter(id => getCardDef(id)).map(id => ({ ...getCardDef(id) }));
 
   // Init map state
   mapState = {
