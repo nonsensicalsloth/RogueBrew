@@ -342,6 +342,9 @@ function renderMapDraft() {
 
 function showMapShop(node) {
   setScreen('map-shop-screen');
+  shopInventory   = generateShopInventory();
+  shopRemovalUsed = false;
+  shopRemoving    = false;
   renderMapShop();
 }
 
@@ -361,10 +364,17 @@ function getCardPrice(c) {
   return Math.round(base / 5) * 5 || 5;
 }
 
-let shopInventory = [];
+let shopInventory   = [];
+let shopRemovalUsed = false;   // one cleanout per shop visit
+let shopRemoving    = false;   // is the removal picker open?
+
+function getRemovalPrice() {
+  return 50 + 25 * (mapState.removals || 0);
+}
 
 function renderMapShop() {
-  if (!shopInventory.length) shopInventory = generateShopInventory();
+  document.getElementById('shop-gold').textContent = `💰 ${mapState.gold} gold`;
+  renderShopRemoval();
   const el = document.getElementById('map-shop-items');
   document.getElementById('shop-gold').textContent = `💰 ${mapState.gold} gold`;
   el.innerHTML = shopInventory.map((c, i) => {
@@ -402,6 +412,61 @@ function buyCard(idx) {
 function leaveShop() {
   shopInventory = [];
   showMapScreen();
+}
+
+// ── Card removal (shared by shop and rest) ──
+
+function canRemoveCard() {
+  return draftState.deck.length > MIN_DECK_SIZE;
+}
+
+// Renders the deck as a clickable list. onPick is the name of a global function taking an index.
+function deckPickerHtml(onPick, rowExtra) {
+  return draftState.deck
+    .map((c, i) => ({ c, i }))
+    .sort((a, b) => a.c.cat.localeCompare(b.c.cat) || a.c.name.localeCompare(b.c.name))
+    .map(({ c, i }) => {
+      const pts = c.points >= 0 ? `+${c.points}` : `${c.points}`;
+      const extra = rowExtra ? rowExtra(c) : { html: pts, disabled: false };
+      return `<div class="deck-list-row" ${extra.disabled ? 'style="padding:6px 8px;opacity:0.4;cursor:default;"'
+                                                         : `onclick="${onPick}(${i})" style="cursor:pointer;padding:6px 8px;"`}>
+        <span class="deck-list-count" style="color:${catColor(c.cat)}">${catIcon(c.cat)}</span>
+        <span class="deck-list-name">${c.name}${c._upgraded ? ' ★' : ''}</span>
+        <span style="font-size:7px;color:var(--dim);">${extra.html}</span>
+      </div>`;
+    }).join('');
+}
+
+function renderShopRemoval() {
+  const el = document.getElementById('shop-removal');
+  if (!el) return;
+  const price = getRemovalPrice();
+  if (shopRemovalUsed) {
+    el.innerHTML = `<div style="font-size:7px;color:var(--dim);">🧹 Cellar cleaned out. Come back next shop.</div>`;
+  } else if (!canRemoveCard()) {
+    el.innerHTML = `<div style="font-size:7px;color:var(--dim);">🧹 Your deck is at the minimum (${MIN_DECK_SIZE}) — nothing to clean out.</div>`;
+  } else if (shopRemoving) {
+    el.innerHTML = `<div style="font-size:8px;color:var(--gold);margin-bottom:6px;">Choose a card to remove (💰 ${price})</div>
+      <div class="removal-list">${deckPickerHtml('shopRemoveCard')}</div>
+      <button class="btn btn-primary" style="margin-top:6px;" onclick="shopRemoving=false;renderMapShop();">Cancel</button>`;
+  } else {
+    const afford = mapState.gold >= price;
+    el.innerHTML = `<button class="btn ${afford ? 'btn-gold' : 'btn-primary'}" ${afford ? '' : 'style="opacity:0.4;cursor:not-allowed;"'}
+      onclick="${afford ? 'shopRemoving=true;renderMapShop();' : 'void(0)'}">🧹 CLEAN OUT THE CELLAR — remove a card (💰 ${price})</button>`;
+  }
+}
+
+function shopRemoveCard(idx) {
+  const price = getRemovalPrice();
+  if (shopRemovalUsed || !canRemoveCard() || mapState.gold < price) return;
+  const [removed] = draftState.deck.splice(idx, 1);
+  mapState.gold -= price;
+  mapState.removals = (mapState.removals || 0) + 1;
+  shopRemovalUsed = true;
+  shopRemoving    = false;
+  renderMapShop();
+  const msg = document.getElementById('shop-removal');
+  if (msg && removed) msg.innerHTML = `<div style="font-size:8px;color:var(--green);">🧹 ${removed.name} removed from your deck.</div>`;
 }
 
 // ── Event node ──
@@ -506,40 +571,62 @@ function chooseEvent(idx) {
 
 // ── Rest node ──
 
+const REST_UPGRADE = 5;
+
 function showMapRest(node) {
   setScreen('map-rest-screen');
-  renderMapRest();
+  document.getElementById('rest-result').textContent = '';
+  document.getElementById('rest-card-list').innerHTML = '';
+  document.getElementById('rest-card-list').style.display = 'none';
+  document.getElementById('rest-sub').textContent = 'Take a breather. Choose one:';
+  const removeOk = canRemoveCard();
+  document.getElementById('rest-choices').innerHTML = `
+    <button class="btn btn-gold" onclick="renderMapRest('upgrade')">⬆ UPGRADE A CARD<br><span style="font-size:6px;">+${REST_UPGRADE} pts for the rest of the run</span></button>
+    <button class="btn btn-primary" ${removeOk ? `onclick="renderMapRest('remove')"` : 'style="opacity:0.4;cursor:not-allowed;"'}>🧹 REMOVE A CARD<br><span style="font-size:6px;">${removeOk ? 'trim your deck for free' : `deck is at minimum (${MIN_DECK_SIZE})`}</span></button>`;
+  document.getElementById('rest-confirm').innerHTML =
+    `<button class="btn btn-primary" onclick="showMapScreen()">Skip</button>`;
 }
 
-function renderMapRest() {
-  const el = document.getElementById('rest-card-list');
-  el.innerHTML = draftState.deck.map((c, i) => {
-    const pts = c.points >= 0 ? `+${c.points}` : `${c.points}`;
-    if (c._upgraded) {
-      return `<div class="deck-list-row" style="padding:6px 8px;opacity:0.4;cursor:default;">
-        <span class="deck-list-count" style="color:${catColor(c.cat)}">${catIcon(c.cat)}</span>
-        <span class="deck-list-name">${c.name}</span>
-        <span style="font-size:7px;color:var(--dim);">${pts} (already upgraded)</span>
-      </div>`;
-    }
-    return `<div class="deck-list-row" onclick="upgradeCard(${i})" style="cursor:pointer;padding:6px 8px;">
-      <span class="deck-list-count" style="color:${catColor(c.cat)}">${catIcon(c.cat)}</span>
-      <span class="deck-list-name">${c.name}</span>
-      <span style="font-size:7px;color:var(--green);">${pts} → +${c.points + 5}</span>
-    </div>`;
-  }).join('');
+function renderMapRest(mode) {
+  const list = document.getElementById('rest-card-list');
+  document.getElementById('rest-choices').innerHTML = '';
+  list.style.display = '';
+  document.getElementById('rest-confirm').innerHTML =
+    `<button class="btn btn-primary" onclick="showMapRest()">← Back</button>`;
+  if (mode === 'upgrade') {
+    document.getElementById('rest-sub').textContent = `Choose a card to upgrade (+${REST_UPGRADE} pts for this run)`;
+    list.innerHTML = deckPickerHtml('upgradeCard', c => {
+      const pts = c.points >= 0 ? `+${c.points}` : `${c.points}`;
+      return c._upgraded
+        ? { html: `${pts} (already upgraded)`, disabled: true }
+        : { html: `<span style="color:var(--green)">${pts} → +${c.points + REST_UPGRADE}</span>`, disabled: false };
+    });
+  } else {
+    document.getElementById('rest-sub').textContent = 'Choose a card to remove from your deck';
+    list.innerHTML = deckPickerHtml('restRemoveCard', c => ({ html: '<span style="color:var(--red)">remove</span>', disabled: false }));
+  }
+}
+
+function finishRest(message) {
+  document.getElementById('rest-result').textContent = message;
+  document.getElementById('rest-card-list').innerHTML = '';
+  document.getElementById('rest-card-list').style.display = 'none';
+  document.getElementById('rest-confirm').innerHTML =
+    `<button class="btn btn-gold" onclick="showMapScreen()">Continue →</button>`;
 }
 
 function upgradeCard(idx) {
   const card = draftState.deck[idx];
-  if (!card) return;
-  card.points += 5;
+  if (!card || card._upgraded) return;
+  card.points += REST_UPGRADE;
   card._upgraded = true;
-  document.getElementById('rest-result').textContent =
-    `${card.name} upgraded to +${card.points} pts!`;
-  document.getElementById('rest-card-list').innerHTML = '';
-  document.getElementById('rest-confirm').innerHTML =
-    `<button class="btn btn-gold" onclick="showMapScreen()">Continue →</button>`;
+  finishRest(`${card.name} upgraded to +${card.points} pts!`);
+}
+
+function restRemoveCard(idx) {
+  if (!canRemoveCard()) return;
+  const [card] = draftState.deck.splice(idx, 1);
+  if (card) finishRest(`${card.name} removed from your deck.`);
 }
 
 // ── Act transition ──
