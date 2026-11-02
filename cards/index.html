@@ -15,6 +15,8 @@
   <div class="wortcraft-sub">A Deck Building Brewery Roguelike</div>
   <div class="wortcraft-version">v0.1 — prototype</div>
   <div class="title-buttons">
+    <button class="btn btn-gold" id="continue-run-btn" style="display:none" onclick="continueRun()">▶ CONTINUE RUN</button>
+    <div id="continue-run-info" style="font-size:7px;color:var(--dim);text-align:center;"></div>
     <button class="btn btn-gold"    onclick="showDeckManager()">▶ START GAME</button>
     <button class="btn btn-primary" onclick="showDeckManager()">🃏 BUILD DECK</button>
     <button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;">🔒 RELICS</button>
@@ -98,6 +100,7 @@
     <div class="map-header-title" id="map-act-name">The Mash</div>
     <div class="map-header-info">
       <span id="map-gold">💰 100</span>
+      <span id="map-rep">⭐ 100/100</span>
       <span id="map-deck-count">🃏 15 cards</span>
       <span id="map-extras"></span>
     </div>
@@ -181,6 +184,15 @@
   </div>
 </div>
 
+<!-- ===== BATTLE LOST (not fatal) ===== -->
+<div id="battle-lost-screen" class="screen">
+  <div class="run-loss-title" style="font-size:16px;">BATCH REJECTED</div>
+  <div id="lost-detail" style="font-size:8px;color:var(--dim);"></div>
+  <div id="lost-rep" style="font-size:10px;color:var(--red);"></div>
+  <div style="font-size:7px;color:var(--dim);max-width:320px;line-height:1.8;">Close losses cost less reputation than blowouts. Rest stops can recover it, and beating a boss restores some too.</div>
+  <button class="btn btn-gold" style="margin-top:12px;" onclick="showMapScreen()">Back to the map →</button>
+</div>
+
 <!-- ===== ACT TRANSITION ===== -->
 <div id="act-transition-screen" class="screen">
   <div class="wortcraft-title" id="act-transition-title">Act Complete!</div>
@@ -231,8 +243,9 @@
     </div>
     <div class="info-bar">
       <div class="info-pill">ROUND <span id="round-num">1</span>/<span id="max-rounds">3</span></div>
-      <div class="info-pill">TURN <span id="turn-num">—</span>/10</div>
+      <div class="info-pill">TURN <span id="turn-num">—</span>/<span id="max-turns">8</span></div>
       <div class="info-pill">BUDGET <span id="budget-rem">—</span></div>
+      <div class="info-pill" id="rep-pill" style="display:none;color:var(--gold);"></div>
       <div class="info-pill" id="judging-pill" style="display:none;color:var(--gold);"></div>
       <div class="info-pill" id="roast-tracker" style="color:var(--dim);">🔥 ROAST <span id="roast-count">0</span>/5</div>
     </div>
@@ -297,6 +310,7 @@
 <script src="js/relics.js"></script>
 <script src="js/nodes.js"></script>
 <script src="js/rivals.js"></script>
+<script src="js/save.js"></script>
 <script src="js/deck.js"></script>
 <script src="js/draft.js"></script>
 <script src="js/effects.js"></script>
