@@ -22,7 +22,9 @@ function tagHtml(tags) {
   return (tags || []).map(t => `<span class="card-tag tag-${t}">${t}</span>`).join('');
 }
 
-function cardHtml(c, i, mode, extra='') {
+function cardHtml(c, i, mode, extra='', shownCost=null) {
+  const cost   = shownCost === null ? c.cost : shownCost;
+  const costCls = cost < c.cost ? ' cost-discounted' : '';
   const pts    = c.points >= 0 ? `+${c.points}` : `${c.points}`;
   const lane   = c.lane === 'both' ? 'HOT/COLD' : c.lane === 'hot' ? 'HOT SIDE' : 'COLD SIDE';
   let clickFn  = 'void(0)';
@@ -30,7 +32,7 @@ function cardHtml(c, i, mode, extra='') {
   else if (mode === 'play')  clickFn = `selectCard(${i})`;
   else if (mode === 'build') clickFn = `builderAddCard('${c.id}')`;
   return `<div class="card cat-${c.cat} ${extra}" onclick="${clickFn}">
-    <div class="card-cost-gem">${c.cost}</div>
+    <div class="card-cost-gem${costCls}" ${cost < c.cost ? `title="Normally ${c.cost}"` : ''}>${cost}</div>
     <div class="card-pts-gem">${pts}</div>
     <div class="card-art">${c.cat === 'token' && c.points >= 0 ? '✨' : catIcon(c.cat)}</div>
     <div class="card-name-banner">${c.name}</div>

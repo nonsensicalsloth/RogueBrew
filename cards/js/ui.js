@@ -58,14 +58,18 @@ function renderHand() {
       return cardHtml(c, i, 'mulligan', sel ? 'mulligan-on' : '');
     }).join('');
   } else {
-    const canAct = state.playerTurn && state.phase === 'play';
+    const canAct  = state.playerTurn && state.phase === 'play';
+    const mustPour = canAct && playerMustPlayContamination();
     el.innerHTML = state.pHand.map((c, i) => {
-      const ok    = canAct && getEffectiveCost(c) <= rem;
+      const cost  = getEffectiveCost(c);
+      const ok    = canAct && cost <= rem && (!mustPour || isContamination(c));
       const isSel = selectedCard === i;
-      let extra = '';
-      if (!ok) extra = 'card-disabled';
-      if (isSel) extra = 'selected-card';
-      return cardHtml(c, i, ok ? 'play' : 'disabled', extra);
+      const cls = [];
+      if (!ok) cls.push('card-disabled');
+      if (isSel) cls.push('selected-card');
+      if (mustPour && isContamination(c)) cls.push('must-play');
+      if (state.newCards && state.newCards.has(c)) cls.push('card-new');
+      return cardHtml(c, i, ok ? 'play' : 'disabled', cls.join(' '), cost);
     }).join('');
   }
 
@@ -83,6 +87,9 @@ function renderActions() {
 
   if (state.phase === 'mulligan') {
     el.innerHTML = `<button class="btn btn-primary" onclick="confirmMulligan()">CONFIRM MULLIGAN (${state.mulSel.length})</button>`;
+  } else if (state.phase === 'play' && state.playerTurn && playerMustPlayContamination()) {
+    el.innerHTML = `<button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;">END TURN</button>
+      <span style="font-size:7px;color:var(--red);margin-left:8px">⚠ POUR THE CONTAMINATION ONTO YOUR COLD SIDE FIRST</span>`;
   } else if (state.phase === 'play' && state.playerTurn) {
     el.innerHTML = `<button class="btn btn-primary" onclick="endTurn()">END TURN</button>${hint}`;
   } else if (state.phase === 'play' && !state.playerTurn) {
@@ -170,7 +177,9 @@ function render() {
   document.getElementById('hand-lbl').textContent =
     state.phase === 'mulligan'
       ? `YOUR HAND — SELECT UP TO ${mulliganLimit()} TO SEND BACK`
-      : `YOUR HAND (${state.pHand.length}) — BUDGET: ${state.budget - state.budgetUsed}/${state.budget}${discountMsg}`;
+      : playerMustPlayContamination() && state.phase === 'play'
+        ? '⚠ CONTAMINATION! CLICK IT, THEN YOUR COLD SIDE'
+        : `YOUR HAND (${state.pHand.length}) — BUDGET: ${state.budget - state.budgetUsed}/${state.budget}${discountMsg}`;
 
   const rivalNameEl = document.getElementById('rival-name');
   if (rivalNameEl) rivalNameEl.textContent = (state.rivalName || 'Rival Brewery').toUpperCase();
@@ -189,6 +198,17 @@ function render() {
 
   const relicBar = document.getElementById('relic-bar');
   if (relicBar) relicBar.innerHTML = state.currentNode ? relicIconsHtml() : '';
+
+  // What the rival just did, shown until you end your turn
+  const sumEl = document.getElementById('rival-summary');
+  if (sumEl) {
+    const lines = (state.phase === 'play' && state.playerTurn && state.rivalSummary) || [];
+    sumEl.style.display = lines.length ? '' : 'none';
+    sumEl.innerHTML = lines.length
+      ? `<div class="rival-summary-title">RIVAL'S LAST TURN</div>` +
+        lines.map(l => `<div class="${l.type === 'warn' ? 'rival-summary-bad' : ''}">${l.msg}</div>`).join('')
+      : '';
+  }
 
   renderField();
   renderHand();

@@ -15,7 +15,13 @@ function shuffle(arr) {
 function drawCards(n, deck, hand) {
   for (let i = 0; i < n; i++) {
     if (deck.length === 0 && !reshuffleDiscard(deck)) break;
-    hand.push(deck.shift());
+    const card = deck.shift();
+    hand.push(card);
+    // Remember what the player just drew so the hand can highlight it
+    if (typeof state !== 'undefined' && state && hand === state.pHand) {
+      state.newCards = state.newCards || new Set();
+      state.newCards.add(card);
+    }
   }
 }
 

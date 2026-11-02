@@ -8,6 +8,8 @@ function selectCard(idx) {
   if (!state.playerTurn || state.phase !== 'play') return;
   const c = state.pHand[idx];
   if (!c || getEffectiveCost(c) > state.budget - state.budgetUsed) return;
+  // While Contamination is in hand, it's the only card you can pick
+  if (playerMustPlayContamination() && !isContamination(c)) return;
   selectedCard = (selectedCard === idx) ? null : idx;
   render();
 }
@@ -61,6 +63,7 @@ function playToLane(lane) {
 // ── Shared play resolution (player and rival) ──
 // Places the card, runs its effect and synergies, then tidies up.
 function resolvePlay(c, lane, who) {
+  c = softenContamination(c, who);
   state.field[lane][who].push(c);
 
   // Pending hop buff from Extra Pale Pilsner / Wheat (player only)
@@ -104,14 +107,22 @@ function resolvePlay(c, lane, who) {
     state.lastPlayedCard = c;
     state.lastPlayedLane = lane;
   }
+  // Forced Contamination plays don't count as your "first card" (Pilsner Malt etc.)
   state.cardsThisTurn = state.cardsThisTurn || { p: 0, e: 0 };
-  state.cardsThisTurn[who]++;
+  if (!isContamination(c)) state.cardsThisTurn[who]++;
 
   checkContaminationInHand(who);
 }
 
 function endTurn() {
+  if (playerMustPlayContamination()) {
+    addLog('⚠ You must pour the Contamination before ending your turn.', 'warn');
+    render();
+    return;
+  }
   selectedCard = null;
+  state.newCards = new Set();
+  state.rivalSummary = [];
   state.playerTurn = false;
   render();
   setTimeout(() => { enemyTurn(); render(); }, 500);
@@ -137,6 +148,14 @@ function enemyPlayCard(c) {
 
 function enemyTurn() {
   if (state.phase !== 'play') return;
+  // Capture the log lines from this rival turn so the player sees a summary
+  const logMark = state.logs[0];
+  setTimeout(() => {
+    const i = state.logs.indexOf(logMark);
+    state.rivalSummary = state.logs.slice(0, i < 0 ? state.logs.length : i)
+      .filter(l => l.type === 'enemy' || l.type === 'warn').map(l => l).reverse();
+    render();
+  }, 350);
   if (state.ePassed) { setTimeout(() => advanceTurn(), 300); return; }
 
   const lead = totalScore('e') - totalScore('p');

@@ -144,8 +144,12 @@ function removeAllTokens(who, tokenId) {
 }
 
 function drawForPlayer(n) {
+  const before = state.pHand.length;
   drawCards(n, state.pDeck, state.pHand);
-  addLog(`Drew ${n} card${n > 1 ? 's' : ''}.`, 'player');
+  const drawn = state.pHand.length - before;
+  if (drawn > 0) addLog(`Drew ${drawn} card${drawn > 1 ? 's' : ''}.`, 'player');
+  else           addLog('Tried to draw, but your deck and discard are empty.', 'warn');
+  return drawn;
 }
 
 const BASE_MALT_IDS = ['2row','pilsner','6row','marisotter','goldenprom','vienna','munich','wheatwhite',
@@ -856,7 +860,7 @@ function applyCardEffect(card, lane, who) {
       if (oppHot.length > 0) {
         const bestIdx = oppHot.reduce((bi, c, i) => c.points > oppHot[bi].points ? i : bi, 0);
         const removed = oppHot.splice(bestIdx, 1)[0];
-        addLog(`Bad Batch: removed ${isPlayer ? "rival's" : "your"} ${removed.name} (+${removed.points})!`, isPlayer ? 'player' : 'enemy');
+        addLog(`Bad Batch: removed ${isPlayer ? "rival's" : "your"} ${removed.name} (+${removed.points})!`, isPlayer ? 'player' : 'warn');
       } else {
         addLog(`Bad Batch: ${isPlayer ? 'rival' : 'your'} hot side is empty.`, 'sys');
       }
@@ -872,7 +876,7 @@ function applyCardEffect(card, lane, who) {
           const idx = state.field[l][opp].indexOf(best);
           if (idx >= 0) state.field[l][opp].splice(idx, 1);
         });
-        addLog(`Health Inspector: removed ${isPlayer ? "rival's" : "your"} ${best.name} (+${best.points})!`, isPlayer ? 'player' : 'enemy');
+        addLog(`Health Inspector: removed ${isPlayer ? "rival's" : "your"} ${best.name} (+${best.points})!`, isPlayer ? 'player' : 'warn');
       }
       break;
     }
@@ -1368,16 +1372,35 @@ function applyTurnEffects(who) {
 // ── Contamination auto-play check ──
 // Called at start of player's turn — if a contamination card is in hand, auto-play it
 
+// A clean yeast (or the Lab Microscope) outcompetes Contamination when it lands
+function softenContamination(c, who) {
+  if (c.id !== 'contamination') return c;
+  const cleanYeast = getLaneCards('cold', who).some(y => y.cat === 'yeast' && y.tags && y.tags.includes('clean'))
+                  || (who === 'p' && hasRelic('microscope'));
+  if (!cleanYeast) return c;
+  addLog('A clean yeast outcompetes the Contamination — softened to −5.', who === 'p' ? 'player' : 'enemy');
+  return createToken('contam_soft');
+}
+
+function isContamination(c) {
+  return c && (c.id === 'contamination' || c.id === 'contam_soft');
+}
+
+// The player must pour Contamination from their hand before doing anything else
+function playerMustPlayContamination() {
+  return state.pHand.some(isContamination);
+}
+
+// The rival auto-plays any Contamination it draws. The player's stays in hand (see battle.js).
 function checkContaminationInHand(who = 'p') {
-  const hand = who === 'p' ? state.pHand : state.eHand;
+  if (who === 'p') {
+    if (playerMustPlayContamination()) addLog('⚠ Contamination in your hand — you must pour it onto your cold side!', 'warn');
+    return;
+  }
   let idx;
-  while ((idx = hand.findIndex(c => c.id === 'contamination' || c.id === 'contam_soft')) >= 0) {
-    let c = hand.splice(idx, 1)[0];
-    // A clean yeast on the cold side outcompetes it — softened to -5
-    const cleanYeast = getLaneCards('cold', who).some(y => y.cat === 'yeast' && y.tags && y.tags.includes('clean'))
-                    || (who === 'p' && hasRelic('microscope'));
-    if (cleanYeast && c.id === 'contamination') c = createToken('contam_soft');
-    state.field.cold[who].push(c);
-    addLog(`⚠ Contamination drawn — auto-played to ${who === 'p' ? 'your' : "rival's"} cold side! (${c.points} pts${cleanYeast ? ', softened by clean yeast' : ''})`, who === 'p' ? 'warn' : 'enemy');
+  while ((idx = state.eHand.findIndex(isContamination)) >= 0) {
+    const c = softenContamination(state.eHand.splice(idx, 1)[0], 'e');
+    state.field.cold.e.push(c);
+    addLog(`⚠ Rival drew Contamination — poured onto its cold side (${c.points} pts).`, 'enemy');
   }
 }

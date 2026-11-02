@@ -4,7 +4,7 @@
 //   hopback     → battle.js getEffectiveCost / playToLane
 //   grainmill   → game.js startRound
 //   fermenter   → game.js getBudget
-//   microscope  → effects.js checkContaminationInHand
+//   microscope  → effects.js softenContamination
 //   roaster     → game.js startRound
 //   hopcannon   → battle.js resolvePlay
 //   recipebook  → game.js toggleMulligan
