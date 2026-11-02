@@ -60,7 +60,7 @@ function renderHand() {
   if (state.phase === 'mulligan') {
     el.innerHTML = state.pHand.map((c, i) => {
       const sel = state.mulSel.includes(i);
-      return cardHtml(c, i, 'mulligan', sel ? 'mulligan-on' : '');
+      return cardHtml(c, i, 'mulligan', sel ? 'mulligan-on' : '', null, formulaPreview(c));
     }).join('');
   } else {
     const canAct  = state.playerTurn && state.phase === 'play';
@@ -74,7 +74,7 @@ function renderHand() {
       if (isSel) cls.push('selected-card');
       if (mustPour && isContamination(c)) cls.push('must-play');
       if (state.newCards && state.newCards.has(c)) cls.push('card-new');
-      return cardHtml(c, i, ok ? 'play' : 'disabled', cls.join(' '), cost);
+      return cardHtml(c, i, ok ? 'play' : 'disabled', cls.join(' '), cost, formulaPreview(c));
     }).join('');
   }
 

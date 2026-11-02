@@ -20,6 +20,38 @@ function getLaneCards(lane, who) {
   return state.field[lane][who];
 }
 
+// ── Live values for formula cards in your hand ──
+// These cards' scores come from a formula based on the board (not on which lane
+// you pick — they're all hot-side only), so the hand can show what they're worth
+// right now. Returns null for every other card.
+function formulaPreview(c, who = 'p') {
+  const def    = getCardDef(c.id);
+  if (!def) return null;
+  const earned = c.points - def.points;                  // upgrades, aging, etc.
+  const hotNow = getLaneCards('hot', who).filter(x => x.cat !== 'token').length;
+  switch (c.id) {
+    case 'crystal80': {
+      const r = getRoast(who);
+      return { points: r * 8 + earned, note: `now: ${r} roast × 8` };
+    }
+    case 'specialb': {
+      const r = getRoast(who);
+      return { points: r * 6 + earned, note: `now: ${r} roast × 6` };
+    }
+    case 'biscuit': {
+      const rows = hotNow + 1;                            // counts itself once played
+      return { points: def.points * rows + earned, note: `now: ${rows} cards × ${def.points}` };
+    }
+    case 'crystal75':
+      return { points: c.points + hotNow * 4, note: `now: ${hotNow} other cards × 4` };
+    case 'melanoidin': {
+      const n = (who === 'p' ? state.pDiscard : state.eDiscard).filter(x => x.id === 'melanoidin').length;
+      return { points: c.points * (n + 1), note: `now: ${n} in discard, ×${n + 1}` };
+    }
+  }
+  return null;
+}
+
 // Like countTag, but never counts the card itself
 function countOthers(tag, who, self, lane = null) {
   const cards = lane ? getLaneCards(lane, who) : getAllOnField(who);

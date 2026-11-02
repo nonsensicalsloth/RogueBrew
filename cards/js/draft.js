@@ -22,10 +22,14 @@ function tagHtml(tags) {
   return (tags || []).map(t => `<span class="card-tag tag-${t}">${t}</span>`).join('');
 }
 
-function cardHtml(c, i, mode, extra='', shownCost=null) {
+function cardHtml(c, i, mode, extra='', shownCost=null, preview=null) {
   const cost   = shownCost === null ? c.cost : shownCost;
   const costCls = cost < c.cost ? ' cost-discounted' : '';
-  const pts    = c.points >= 0 ? `+${c.points}` : `${c.points}`;
+  // Formula cards show what they'd score right now: green if above printed, red if below
+  const shownPts = preview ? preview.points : c.points;
+  const ptsCls   = preview ? (shownPts > c.points ? ' pts-up' : shownPts < c.points ? ' pts-down' : '') : '';
+  const nowNote  = preview ? ` <span class="now-note${ptsCls}">(${preview.note})</span>` : '';
+  const pts    = shownPts >= 0 ? `+${shownPts}` : `${shownPts}`;
   const lane   = c.lane === 'both' ? 'HOT/COLD' : c.lane === 'hot' ? 'HOT SIDE' : 'COLD SIDE';
   let clickFn  = 'void(0)';
   if (mode === 'mulligan')   clickFn = `toggleMulligan(${i})`;
@@ -33,11 +37,11 @@ function cardHtml(c, i, mode, extra='', shownCost=null) {
   else if (mode === 'build') clickFn = `builderAddCard('${c.id}')`;
   return `<div class="card cat-${c.cat} ${extra}" onclick="${clickFn}">
     <div class="card-cost-gem${costCls}" ${cost < c.cost ? `title="Normally ${c.cost}"` : ''}>${cost}</div>
-    <div class="card-pts-gem">${pts}</div>
+    <div class="card-pts-gem${ptsCls}" ${preview ? `title="Printed: ${c.points}"` : ''}>${pts}</div>
     <div class="card-art">${c.cat === 'token' && c.points >= 0 ? '✨' : catIcon(c.cat)}</div>
     <div class="card-name-banner">${c.name}</div>
     <div class="card-tags-row">${tagHtml(c.tags)}</div>
-    <div class="card-effect-text">${c.desc || ''}</div>
+    <div class="card-effect-text"><span>${c.desc || ''}${nowNote}</span></div>
     <div class="card-restrict">${lane}</div>
   </div>`;
 }
