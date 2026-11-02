@@ -160,11 +160,6 @@ function enemyTurn() {
 
   const lead = totalScore('e') - totalScore('p');
 
-  // The rival stops playing for the round once it's far enough ahead
-  if (lead >= 50) {
-    enemyPass(`${lead} points ahead`);
-    setTimeout(() => advanceTurn(), 300); return;
-  }
 
   let remaining = getBudget(state.turn, 'e');
   let playedAny = false;

@@ -9,7 +9,7 @@
 // requested size is larger than the list.
 
 const RIVAL_SIZES = { battle: [15, 20, 25], boss: [20, 25, 30], festival: 30 };
-const RIVAL_ACT_BONUS = [0, 1, 2];   // flat points added to each scoring card
+const RIVAL_ACT_BONUS = [0, 0, 1];   // flat points added to each scoring card
 const BOSS_EXTRA_BONUS = [1, 0, 0];  // extra per-card points for bosses, by act (act 1 bosses need a boost)
 
 const LOCAL_RIVALS = [
@@ -38,8 +38,8 @@ const CRAFT_RIVALS = [
            'candisugardk','coriander','coriander','orangepeel','grainspara','cardamom','abbey','abbey','saison','saison',
            'hallertau','hallertau','tettnang','inspector'] },
   { id:'pinepellet', name:'Pine & Pellet Co.', style:'West Coast',
-    cards:['2row','2row','2row','crystal10','crystal10','carapils','cascade','cascade','cascade','centennial','centennial',
-           'chinook','chinook','columbus','columbus','simcoe','simcoe','magnum','chico','chico','kettletrans','citrazest','hopthief'] },
+    cards:['2row','2row','2row','2row','crystal10','crystal10','carapils','paleale','cascade','cascade','centennial',
+           'chinook','columbus','simcoe','crystal40','magnum','chico','chico','vienna','citrazest','hopthief','amarillo','crystal20'] },
   { id:'kuhlhaus', name:'Kühlhaus Lagerei', style:'lager',
     cards:['pilsner','pilsner','pilsner','floorpilsner','floorpilsner','vienna','vienna','saaz','saaz','saaz','hallertau',
            'hallertau','tettnang','tettnang','hallblanc','w3470','w3470','czechlager','czechlager','kolsch','coldcrash',
@@ -47,7 +47,7 @@ const CRAFT_RIVALS = [
   { id:'tartcellars', name:'Tart Cellars', style:'sour',
     cards:['pilsner','pilsner','wheatwhite','wheatwhite','goldenprom','lacto','lacto','sourvisiae','sourvisiae','sourvisiae',
            'raspberry','raspberry','cherry','vanilla','passionfr','passionfr','blueberry','phantasm','cosmicpunch','honey',
-           'crosscontam','crystal20','cherry'] },
+           'crosscontam','crystal20','cherry','vanillabn','raspberry'] },
 ];
 
 // Two possible bosses per act; one is picked when the map is generated

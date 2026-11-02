@@ -6,6 +6,17 @@
 
 
 
+// One card on the board: shows what it actually scores, plus any synergy multiplier
+function fieldCardHtml(c, lane, who) {
+  const mult = synergyMultiplier(c, lane, who);
+  const pts  = c.points * mult;
+  const sign = pts >= 0 ? '+' : '';
+  return `<div class="field-card ${who}${pts < 0 ? ' field-card-neg' : ''}" title="${c.name}: ${c.points} pts${mult > 1 ? ` × ${mult} synergy = ${pts}` : ''}">
+    <div class="field-card-name">${c.name}</div>
+    <div class="field-card-pts">${sign}${pts}${mult > 1 ? `<span class="field-card-mult"> ×${mult}</span>` : ''}</div>
+  </div>`;
+}
+
 function renderField() {
   LANES.forEach(l => {
     const pe = document.getElementById('plane-' + l);
@@ -16,18 +27,12 @@ function renderField() {
 
     pe.innerHTML = state.field[l].p.length
       ? state.field[l].p.map(c => `
-          <div class="field-card p">
-            <div class="field-card-name">${c.name}</div>
-            <div class="field-card-pts">+${c.points}</div>
-          </div>`).join('')
+${fieldCardHtml(c, l, 'p')}`).join('')
       : '<span class="empty-msg">— empty —</span>';
 
     ee.innerHTML = state.field[l].e.length
       ? state.field[l].e.map(c => `
-          <div class="field-card e">
-            <div class="field-card-name">${c.name}</div>
-            <div class="field-card-pts">+${c.points}</div>
-          </div>`).join('')
+${fieldCardHtml(c, l, 'e')}`).join('')
       : '<span class="empty-msg">— empty —</span>';
 
     const playerLane = document.getElementById('plane-' + l).closest('.lane');

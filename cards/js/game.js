@@ -110,7 +110,7 @@ function getBudget(turn, who = 'p') {
 
 // ── Scoring ──
 function laneScore(lane, who) {
-  let score = state.field[lane][who].reduce((s, c) => s + c.points, 0);
+  let score = state.field[lane][who].reduce((s, c) => s + effectivePoints(c, lane, who), 0);
   if (lane === 'hot') {
     const k = roastKeys(who);
     const roast = (state[k.t] || 0) - (state[k.s] || 0);

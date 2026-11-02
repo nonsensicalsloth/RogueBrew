@@ -21,15 +21,15 @@ const CARD_POOL = [
   { id:'heritage',    name:'Local Grown Heritage',  cat:'malt', lane:'hot', points:10, cost:3, tags:['nuanced'],         desc:'Nuanced cards multiply each other.' },
 
   // ── Light Crystal (multiply cheap cards) ──
-  { id:'crystal10',  name:'Crystal 10',    cat:'malt', lane:'hot', points:6,  cost:1, tags:['sweet','crisp'],           desc:'All cost-1 cards on your hot side get +3 pts.' },
-  { id:'crystal20',  name:'Crystal 20',    cat:'malt', lane:'hot', points:8,  cost:1, tags:['sweet','crisp'],           desc:'All cost-1 cards on your hot side get +4 pts.' },
+  { id:'crystal10',  name:'Crystal 10',    cat:'malt', lane:'hot', points:6,  cost:1, tags:['sweet','crisp'],           desc:'All other cost-1 cards on your hot side get +3 pts.' },
+  { id:'crystal20',  name:'Crystal 20',    cat:'malt', lane:'hot', points:8,  cost:1, tags:['sweet','crisp'],           desc:'All other cost-1 cards on your hot side get +4 pts.' },
   { id:'crystal30',  name:'Crystal 30',    cat:'malt', lane:'hot', points:10, cost:2, tags:['sweet'],                   desc:'All cost-1 cards on your hot side get +5 pts.' },
 
   // ── Medium Crystal (board composition) ──
   { id:'crystal40',  name:'Crystal 40',    cat:'malt', lane:'hot', points:10, cost:2, tags:['sweet'],                   desc:'+2 pts for each base malt on your hot side.' },
   { id:'crystal50',  name:'Crystal 50',    cat:'malt', lane:'hot', points:12, cost:2, tags:['sweet','toasty'],          desc:'Doubles the last base malt on your hot side.' },
   { id:'crystal60',  name:'Crystal 60',    cat:'malt', lane:'hot', points:14, cost:2, tags:['sweet','toasty'],          desc:'+3 pts for each base malt on your hot side.' },
-  { id:'crystal75',  name:'Crystal 75',    cat:'malt', lane:'hot', points:16, cost:3, tags:['sweet','toasty'],          desc:'+4 pts for each card currently on your hot side.' },
+  { id:'crystal75',  name:'Crystal 75',    cat:'malt', lane:'hot', points:16, cost:3, tags:['sweet','toasty'],          desc:'+4 pts for each other card on your hot side.' },
 
   // ── Dark Crystal (explosive but dangerous) ──
   { id:'crystal80',  name:'Crystal 80',    cat:'malt', lane:'hot', points:18, cost:3, tags:['sweet','roasty'],          desc:'Score = roast tokens x8. Adds a Sugar Clot (-10 pts) to hot side. Hops played hot side remove it.' },
@@ -55,31 +55,31 @@ const CARD_POOL = [
   { id:'palechoc',    name:'Pale Chocolate',   cat:'malt', lane:'hot', points:14, cost:2, tags:['toasty','roasty'],  desc:'Adds 1 roast token. Milder chocolate character.' },
   { id:'midnightw',   name:'Midnight Wheat',   cat:'malt', lane:'hot', points:16, cost:3, tags:['roasty','smooth'],  desc:'Adds 1 roast token but counts as 0 toward the penalty threshold.' },
   { id:'debittered',  name:'De-bittered Black',cat:'malt', lane:'hot', points:14, cost:2, tags:['roasty','smooth'],  desc:'Removes 1 roast token when played.' },
-  { id:'smokedmalt',  name:'Smoked Malt',      cat:'malt', lane:'hot', points:12, cost:2, tags:['roasty','dry'],     desc:'Adds 1 roast token. All roasty cards on hot side get +2 pts.' },
+  { id:'smokedmalt',  name:'Smoked Malt',      cat:'malt', lane:'hot', points:12, cost:2, tags:['roasty','dry'],     desc:'Adds 1 roast token. All other roasty cards on your hot side get +2 pts.' },
 
   // ── Adjuncts ──
 
   // Carried over
   { id:'oats',       name:'Flaked Oats',     cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['smooth','hazy'],               desc:'If played next to a dark malt, double that malt\'s base score.' },
-  { id:'coffee',     name:'Coffee Beans',    cat:'adjunct', lane:'hot', points:12, cost:3, tags:['toasty','roasty'],       desc:'Doubles every dark malt on your hot side.' },
+  { id:'coffee',     name:'Coffee Beans',    cat:'adjunct', lane:'both', points:12, cost:3, tags:['toasty','roasty'],       desc:'Doubles every dark malt on your hot side.' },
   { id:'maltodex',   name:'Maltodextrin',    cat:'adjunct', lane:'hot', points:6,  cost:2, tags:['smooth'],               desc:'Your next card costs 2 less.' },
   { id:'lactose',    name:'Lactose',         cat:'adjunct', lane:'hot', points:8,  cost:2, tags:['sweet'],                desc:'Removes 2 roast tokens.' },
 
   // Fruit adjuncts
-  { id:'raspberry',  name:'Raspberries',     cat:'adjunct', lane:'hot', points:10, cost:2, tags:['sweet','fruity'],       desc:'Each sweet tagged card on hot side gets +2 pts.' },
-  { id:'cherry',     name:'Cherries',        cat:'adjunct', lane:'hot', points:10, cost:2, tags:['sweet','fruity'],       desc:'If 2+ dark malts on hot side, +8 bonus pts.' },
-  { id:'mango',      name:'Mango',           cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['sweet','tropical','hazy'],desc:'Adds a Haze token to your hand.' },
-  { id:'passionfr',  name:'Passion Fruit',   cat:'adjunct', lane:'hot', points:10, cost:2, tags:['tropical','fruity'],       desc:'Every hop on your cold side gets +2.' },
-  { id:'blueberry',  name:'Blueberry',       cat:'adjunct', lane:'hot', points:8,  cost:2, tags:['sweet','fruity'],       desc:'If played after a crystal malt, score double.' },
-  { id:'bloodorange',name:'Blood Orange',    cat:'adjunct', lane:'hot', points:10, cost:2, tags:['fruity','bitter'],      desc:'If you have a citrus hop on cold side, +6 pts.' },
+  { id:'raspberry',  name:'Raspberries',     cat:'adjunct', lane:'both', points:10, cost:2, tags:['sweet','fruity'],       desc:'+2 pts for each other sweet card on your hot side.' },
+  { id:'cherry',     name:'Cherries',        cat:'adjunct', lane:'both', points:10, cost:2, tags:['sweet','fruity'],       desc:'If 2+ dark malts are on your hot side, +8 pts.' },
+  { id:'mango',      name:'Mango',           cat:'adjunct', lane:'both', points:8,  cost:1, tags:['sweet','tropical','hazy'],desc:'Adds a Haze token to your hand.' },
+  { id:'passionfr',  name:'Passion Fruit',   cat:'adjunct', lane:'both', points:10, cost:2, tags:['tropical','fruity'],       desc:'Every hop on your cold side gets +2.' },
+  { id:'blueberry',  name:'Blueberry',       cat:'adjunct', lane:'both', points:8,  cost:2, tags:['sweet','fruity'],       desc:'If played after a crystal malt, score double.' },
+  { id:'bloodorange',name:'Blood Orange',    cat:'adjunct', lane:'both', points:10, cost:2, tags:['fruity','bitter'],      desc:'If you have a citrus hop on cold side, +6 pts.' },
 
   // Sweet/pastry adjuncts
-  { id:'vanilla',    name:'Vanilla',         cat:'adjunct', lane:'hot', points:10, cost:2, tags:['sweet','smooth'],       desc:'All sweet tagged cards on your board get +2 pts.' },
+  { id:'vanilla',    name:'Vanilla',         cat:'adjunct', lane:'both', points:10, cost:2, tags:['sweet','smooth'],       desc:'All other sweet cards on your board get +2 pts.' },
   { id:'coconut',    name:'Coconut',         cat:'adjunct', lane:'both', points:8,  cost:2, tags:['sweet','smooth'],       desc:'Adds a Body token to your hand.' },
-  { id:'cacaonibs',  name:'Cacao Nibs',      cat:'adjunct', lane:'hot', points:14, cost:3, tags:['sweet','roasty'],       desc:'Adds 1 roast token. If Chocolate Malt on hot side, score double.' },
+  { id:'cacaonibs',  name:'Cacao Nibs',      cat:'adjunct', lane:'both', points:14, cost:3, tags:['sweet','roasty'],       desc:'Adds 1 roast token. If Chocolate Malt on hot side, score double.' },
   { id:'honey',      name:'Honey',           cat:'adjunct', lane:'hot', points:10, cost:2, tags:['sweet','crisp'],        desc:'Costs 0 if it is your first adjunct this round. +3 per floral card on your board.' },
-  { id:'maple',      name:'Maple Syrup',     cat:'adjunct', lane:'hot', points:12, cost:3, tags:['sweet','malty'],        desc:'+4 pts for each malty tagged card on hot side.' },
-  { id:'marshm',     name:'Marshmallow',     cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['sweet','smooth'],       desc:'All smooth tagged cards get +2 pts this round.' },
+  { id:'maple',      name:'Maple Syrup',     cat:'adjunct', lane:'hot', points:12, cost:3, tags:['sweet','malty'],        desc:'+4 pts for each other malty card on your hot side.' },
+  { id:'marshm',     name:'Marshmallow',     cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['sweet','smooth'],       desc:'All other smooth cards on your board get +2 pts.' },
 
   // Grain/texture adjuncts
   { id:'flakedwheat',name:'Flaked Wheat',    cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['smooth','bready','hazy'],      desc:'Adds a Haze token to your hand.' },
@@ -96,13 +96,13 @@ const CARD_POOL = [
   { id:'coriander',   name:'Coriander',           cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['spicy','belgian'],            desc:'If a Belgian yeast is on your cold side, +8 pts.' },
   { id:'orangepeel',  name:'Orange Peel',         cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['citrus','belgian','fruity'],  desc:'Every other citrus and belgian card on your board gets +2.' },
   { id:'grainspara',  name:'Grains of Paradise',  cat:'adjunct', lane:'hot', points:10, cost:2, tags:['spicy','belgian','dry'],      desc:'If 3+ belgian tagged cards on board, +12 pts.' },
-  { id:'cardamom',    name:'Cardamom',             cat:'adjunct', lane:'hot', points:8,  cost:2, tags:['spicy','sweet','belgian'],    desc:'+3 pts for each sweet card and each spicy card on board.' },
+  { id:'cardamom',    name:'Cardamom',             cat:'adjunct', lane:'hot', points:8,  cost:2, tags:['spicy','sweet','belgian'],    desc:'+3 pts for each other sweet card and each other spicy card on your board.' },
   { id:'citrazest',  name:'Grapefruit Zest',      cat:'adjunct', lane:'hot', points:10, cost:2, tags:['fruity','bitter'],      desc:'Your next hop costs 0.' },
-  { id:'vanillabn',  name:'Vanilla Bean',    cat:'adjunct', lane:'hot', points:12, cost:3, tags:['sweet','smooth'],       desc:'All sweet cards on your board get +3 pts.' },
-  { id:'toastedcoc', name:'Toasted Coconut', cat:'adjunct', lane:'both', points:10, cost:2, tags:['sweet','toasty'],       desc:'If both sweet and toasty tags present on hot side, +8 pts.' },
-  { id:'coldbrewcof',name:'Cold Brew Coffee',cat:'adjunct', lane:'hot', points:16, cost:3, tags:['toasty','roasty','smooth'], desc:'Adds 1 roast token. Roast penalty threshold +1.' },
-  { id:'chili',      name:'Chili Pepper',    cat:'adjunct', lane:'hot', points:8,  cost:2, tags:['spicy','dry'],          desc:'Removes a Sugar Clot from your board if present.' },
-  { id:'cinnamon',   name:'Cinnamon',        cat:'adjunct', lane:'hot', points:8,  cost:2, tags:['spicy','sweet'],        desc:'+3 pts for each sweet card on hot side.' },
+  { id:'vanillabn',  name:'Vanilla Bean',    cat:'adjunct', lane:'both', points:12, cost:3, tags:['sweet','smooth'],       desc:'All other sweet cards on your board get +3 pts.' },
+  { id:'toastedcoc', name:'Toasted Coconut', cat:'adjunct', lane:'both', points:10, cost:2, tags:['sweet','toasty'],       desc:'If another sweet card and a toasty card are on your hot side, +8 pts.' },
+  { id:'coldbrewcof',name:'Cold Brew Coffee',cat:'adjunct', lane:'both', points:16, cost:3, tags:['toasty','roasty','smooth'], desc:'Adds 1 roast token. Roast penalty threshold +1.' },
+  { id:'chili',      name:'Chili Pepper',    cat:'adjunct', lane:'both', points:8,  cost:2, tags:['spicy','dry'],          desc:'Removes a Sugar Clot from your board if present.' },
+  { id:'cinnamon',   name:'Cinnamon',        cat:'adjunct', lane:'hot', points:8,  cost:2, tags:['spicy','sweet'],        desc:'+3 pts for each other sweet card on your hot side.' },
   { id:'phantasm',   name:'Phantasm',        cat:'adjunct', lane:'hot', points:2,  cost:2, tags:['fruity','thiol'],       desc:'Grape-derived bound thiols. Worth little alone — a thiol-releasing yeast unlocks +12.' },
 
   // ── Process Cards ──
@@ -136,7 +136,7 @@ const CARD_POOL = [
   { id:'award',        name:'Award Entry',       cat:'process', lane:'both', points:20, cost:4, tags:[],  desc:'If you win this round, draw 3 cards.' },
   { id:'pilotbatch',   name:'Pilot Batch',       cat:'process', lane:'hot',  points:8,  cost:1, tags:[],         desc:'Draw 2 cards when played.' },
   { id:'grainreview',  name:'Grain Bill Review', cat:'process', lane:'hot',  points:0,  cost:1, tags:[],           desc:'Reveal the top 3 cards of your deck.' },
-  { id:'fermlog',      name:'Fermentation Log',  cat:'process', lane:'cold', points:0,  cost:1, tags:[],           desc:'+2 pts to every card currently on your cold side.' },
+  { id:'fermlog',      name:'Fermentation Log',  cat:'process', lane:'cold', points:0,  cost:1, tags:[],           desc:'+2 pts to every other card on your cold side.' },
 
   // ══════════════════════════════════════════════════════════════
   // ── HOPS ──
@@ -162,18 +162,18 @@ const CARD_POOL = [
 
   // Modern American
   { id:'citra',      name:'Citra',              cat:'hop', lane:'both', points:14, cost:2, tags:['citrus','tropical'],               desc:'Draw a card when played.' },
-  { id:'mosaic',     name:'Mosaic',             cat:'hop', lane:'both', points:12, cost:2, tags:['fruity','tropical','piney'],                desc:'+2 for each different hop variety on your board.' },
+  { id:'mosaic',     name:'Mosaic',             cat:'hop', lane:'both', points:12, cost:2, tags:['fruity','tropical','piney'],                desc:'+2 for each other hop variety on your board.' },
   { id:'strata',     name:'Strata',             cat:'hop', lane:'both', points:14, cost:3, tags:['dank','fruity','tropical'],         desc:'+3 for each other dank or tropical card on your board.' },
   { id:'idaho7',     name:'Idaho 7',            cat:'hop', lane:'both', points:12, cost:2, tags:['tropical','piney','earthy'],       desc:'+6 if both a tropical and a piney card are on your board.' },
   { id:'talus',      name:'Talus',              cat:'hop', lane:'both', points:12, cost:2, tags:['citrus','piney','earthy'],     desc:'Dry hop (cold side): every hazy card on your board gets +2.' },
-  { id:'sabro',      name:'Sabro',              cat:'hop', lane:'both', points:12, cost:2, tags:['tropical','citrus','smooth'],     desc:'All smooth cards on your board get +2.' },
+  { id:'sabro',      name:'Sabro',              cat:'hop', lane:'both', points:12, cost:2, tags:['tropical','citrus','smooth'],     desc:'All other smooth cards on your board get +2.' },
   { id:'eldorado',   name:'El Dorado',          cat:'hop', lane:'both', points:12, cost:2, tags:['fruity','sweet'],               desc:'+2 for each sweet adjunct on your hot side.' },
   { id:'amarillo',   name:'Amarillo',           cat:'hop', lane:'both', points:12, cost:2, tags:['citrus','floral'],              desc:'+2 for each fruity adjunct on your hot side.' },
 
   // Southern Hemisphere
   { id:'galaxy',     name:'Galaxy',             cat:'hop', lane:'both', points:14, cost:2, tags:['tropical','fruity','citrus'],       desc:'+8 if 2+ hazy cards are on your board.' },
   { id:'nelson',     name:'Nelson Sauvin',      cat:'hop', lane:'both', points:14, cost:3, tags:['fruity','nuanced','thiol'], desc:'Nuanced cards multiply each other. Thiol.' },
-  { id:'motueka',    name:'Motueka',            cat:'hop', lane:'both', points:10, cost:2, tags:['citrus','earthy'],               desc:'+2 for each citrus card on your board.' },
+  { id:'motueka',    name:'Motueka',            cat:'hop', lane:'both', points:10, cost:2, tags:['citrus','earthy'],               desc:'+2 for each other citrus card on your board.' },
   { id:'nectaron',   name:'Nectaron',           cat:'hop', lane:'both', points:14, cost:2, tags:['tropical','fruity','citrus'],       desc:'+3 for each other NZ hop on your board (Nelson, Motueka, Riwaka).' },
   { id:'riwaka',     name:'Riwaka',             cat:'hop', lane:'both', points:14, cost:3, tags:['citrus','tropical','thiol'],        desc:'Dry hop (cold side): +6. Thiol.' },
 

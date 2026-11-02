@@ -20,6 +20,12 @@ function getLaneCards(lane, who) {
   return state.field[lane][who];
 }
 
+// Like countTag, but never counts the card itself
+function countOthers(tag, who, self, lane = null) {
+  const cards = lane ? getLaneCards(lane, who) : getAllOnField(who);
+  return cards.filter(c => c !== self && c.tags && c.tags.includes(tag)).length;
+}
+
 function countTag(tag, who, lane = null) {
   if (lane) return getLaneCards(lane, who).filter(c => c.tags && c.tags.includes(tag)).length;
   return getAllOnField(who).filter(c => c.tags && c.tags.includes(tag)).length;
@@ -313,7 +319,7 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'fermlog':
-      coldCards.forEach(c => { if (c.cat !== 'token' && !c._locked) c.points += 2; });
+      coldCards.forEach(c => { if (c !== card && c.cat !== 'token' && !c._locked) c.points += 2; });
       addLog('Fermentation Log: +2 pts to all cold side cards.', 'player');
       break;
 
@@ -325,12 +331,12 @@ function applyCardEffect(card, lane, who) {
     // ── Tier 2: Board reading ──
 
     case 'crystal10':
-      buffLaneCards('hot', who, 3, c => c.cost <= 1 && c.cat !== 'token');
+      buffLaneCards('hot', who, 3, c => c !== card && c.cost <= 1 && c.cat !== 'token');
       addLog('Crystal 10: +3 to all cost-1 hot side cards.', 'player');
       break;
 
     case 'crystal20':
-      buffLaneCards('hot', who, 4, c => c.cost <= 1 && c.cat !== 'token');
+      buffLaneCards('hot', who, 4, c => c !== card && c.cost <= 1 && c.cat !== 'token');
       addLog('Crystal 20: +4 to all cost-1 hot side cards.', 'player');
       break;
 
@@ -366,7 +372,7 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'crystal75': {
-      const total = hotCards.filter(c => c.cat !== 'token').length;
+      const total = hotCards.filter(c => c !== card && c.cat !== 'token').length;
       card.points += total * 4;
       addLog(`Crystal 75: +${total * 4} pts (${total} hot side cards).`, 'player');
       break;
@@ -427,32 +433,32 @@ function applyCardEffect(card, lane, who) {
 
 
     case 'vanilla':
-      buffLaneCards('hot', who, 2, c => c.tags && c.tags.includes('sweet'));
-      buffLaneCards('cold', who, 2, c => c.tags && c.tags.includes('sweet'));
+      buffLaneCards('hot', who, 2, c => c !== card && c.tags && c.tags.includes('sweet'));
+      buffLaneCards('cold', who, 2, c => c !== card && c.tags && c.tags.includes('sweet'));
       addLog('Vanilla: +2 to all sweet cards on board.', 'player');
       break;
 
     case 'vanillabn':
-      buffLaneCards('hot', who, 3, c => c.tags && c.tags.includes('sweet'));
-      buffLaneCards('cold', who, 3, c => c.tags && c.tags.includes('sweet'));
+      buffLaneCards('hot', who, 3, c => c !== card && c.tags && c.tags.includes('sweet'));
+      buffLaneCards('cold', who, 3, c => c !== card && c.tags && c.tags.includes('sweet'));
       addLog('Vanilla Bean: +3 to all sweet cards on board.', 'player');
       break;
 
     case 'marshm':
-      buffLaneCards('hot', who, 2, c => c.tags && c.tags.includes('smooth'));
-      buffLaneCards('cold', who, 2, c => c.tags && c.tags.includes('smooth'));
+      buffLaneCards('hot', who, 2, c => c !== card && c.tags && c.tags.includes('smooth'));
+      buffLaneCards('cold', who, 2, c => c !== card && c.tags && c.tags.includes('smooth'));
       addLog('Marshmallow: +2 to all smooth cards this round.', 'player');
       break;
 
     case 'raspberry': {
-      const sweetCount = countTag('sweet', who, 'hot');
+      const sweetCount = countOthers('sweet', who, card, 'hot');
       card.points += sweetCount * 2;
       addLog(`Raspberries: +${sweetCount * 2} pts (${sweetCount} sweet cards).`, 'player');
       break;
     }
 
     case 'cherry': {
-      const darkCount = hotCards.filter(c => c.tags && c.tags.includes('roasty')).length;
+      const darkCount = hotCards.filter(c => c.cat === 'malt' && c.tags && c.tags.includes('roasty')).length;
       if (darkCount >= 2) {
         card.points += 8;
         addLog('Cherries: 2+ dark malts — +8 pts!', 'player');
@@ -471,14 +477,14 @@ function applyCardEffect(card, lane, who) {
 
 
     case 'maple': {
-      const maltyCount = countTag('malty', who, 'hot');
+      const maltyCount = countOthers('malty', who, card, 'hot');
       card.points += maltyCount * 4;
       addLog(`Maple Syrup: +${maltyCount * 4} pts (${maltyCount} malty cards).`, 'player');
       break;
     }
 
     case 'cinnamon': {
-      const sweetCount = countTag('sweet', who, 'hot');
+      const sweetCount = countOthers('sweet', who, card, 'hot');
       card.points += sweetCount * 3;
       addLog(`Cinnamon: +${sweetCount * 3} pts (${sweetCount} sweet cards on hot side).`, 'player');
       break;
@@ -571,8 +577,8 @@ function applyCardEffect(card, lane, who) {
       break;
     }
     case 'cardamom': {
-      const sweetCount  = getAllOnField(who).filter(c => c.tags && c.tags.includes('sweet')).length;
-      const spicyCount  = getAllOnField(who).filter(c => c.tags && c.tags.includes('spicy')).length;
+      const sweetCount  = countOthers('sweet', who, card);
+      const spicyCount  = countOthers('spicy', who, card);
       card.points += (sweetCount + spicyCount) * 3;
       addLog(`Cardamom: +${sweetCount} sweet, +${spicyCount} spicy cards × 3 = +${(sweetCount + spicyCount) * 3} pts.`, 'player');
       break;
@@ -626,7 +632,7 @@ function applyCardEffect(card, lane, who) {
 
     case 'smokedmalt':
       addRoastToken(who, 1);
-      buffLaneCards('hot', who, 2, c => c.tags && c.tags.includes('roasty'));
+      buffLaneCards('hot', who, 2, c => c !== card && c.tags && c.tags.includes('roasty'));
       addLog('Smoked Malt: +2 to all roasty cards.', 'player');
       break;
 
@@ -644,7 +650,7 @@ function applyCardEffect(card, lane, who) {
 
     case 'crystal80': {
       const roast80 = getRoast(who);
-      card.points = roast80 * 8;
+      card.points = roast80 * 8 + (card.points - getCardDef('crystal80').points);
       addLog(`Crystal 80: ${roast80} roast × 8 = ${card.points} pts! Sugar Clot added.`, 'warn');
       state.field.hot[who].push(createToken('sugar_clot'));
       break;
@@ -652,7 +658,7 @@ function applyCardEffect(card, lane, who) {
 
     case 'specialb': {
       const roastSB = getRoast(who);
-      card.points = roastSB * 6;
+      card.points = roastSB * 6 + (card.points - getCardDef('specialb').points);
       addLog(`Special B: ${roastSB} roast × 6 = ${card.points} pts! Sugar Clot added.`, 'warn');
       state.field.hot[who].push(createToken('sugar_clot8'));
       break;
@@ -703,7 +709,9 @@ function applyCardEffect(card, lane, who) {
       // Immune to multipliers, scores base × row count
       const rowCount = getLaneCards('hot', who).filter(c => c.cat !== 'token').length;
       const baseDef  = getCardDef('biscuit');
-      card.points    = (baseDef ? baseDef.points : 3) * rowCount;
+      const basePts  = baseDef ? baseDef.points : 3;
+      const earned   = card.points - basePts;          // upgrades, aging, act bonus
+      card.points    = basePts * rowCount + earned;
       card._noMultiplier = true;
       addLog(`Biscuit Malt: ${rowCount} cards in hot side row — ${card.points} pts!`, 'player');
       break;
@@ -811,8 +819,8 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'toastedcoc': {
-      const hasSweet  = countTag('sweet', who, 'hot') > 0;
-      const hasToasty = countTag('toasty', who, 'hot') > 0;
+      const hasSweet  = countOthers('sweet', who, card, 'hot') > 0;
+      const hasToasty = countOthers('toasty', who, card, 'hot') > 0;
       if (hasSweet && hasToasty) {
         card.points += 8;
         addLog('Toasted Coconut: sweet + toasty both present — +8 pts!', 'player');
@@ -858,9 +866,10 @@ function applyCardEffect(card, lane, who) {
       const opp = who === 'p' ? 'e' : 'p';
       const oppHot = getLaneCards('hot', opp);
       if (oppHot.length > 0) {
-        const bestIdx = oppHot.reduce((bi, c, i) => c.points > oppHot[bi].points ? i : bi, 0);
+        const bestIdx = oppHot.reduce((bi, c, i) => effectivePoints(c, 'hot', opp) > effectivePoints(oppHot[bi], 'hot', opp) ? i : bi, 0);
+        const removedPts = effectivePoints(oppHot[bestIdx], 'hot', opp);
         const removed = oppHot.splice(bestIdx, 1)[0];
-        addLog(`Bad Batch: removed ${isPlayer ? "rival's" : "your"} ${removed.name} (+${removed.points})!`, isPlayer ? 'player' : 'warn');
+        addLog(`Bad Batch: removed ${isPlayer ? "rival's" : "your"} ${removed.name} (+${removedPts})!`, isPlayer ? 'player' : 'warn');
       } else {
         addLog(`Bad Batch: ${isPlayer ? 'rival' : 'your'} hot side is empty.`, 'sys');
       }
@@ -871,12 +880,14 @@ function applyCardEffect(card, lane, who) {
       const opp = who === 'p' ? 'e' : 'p';
       const allOpp = [...getLaneCards('hot', opp), ...getLaneCards('cold', opp)];
       if (allOpp.length > 0) {
-        const best = allOpp.reduce((a, b) => a.points > b.points ? a : b);
+        // "Highest scoring" means what it actually scores, synergies included
+        const scoreOf = c => effectivePoints(c, getLaneCards('hot', opp).includes(c) ? 'hot' : 'cold', opp);
+        const best = allOpp.reduce((a, b) => scoreOf(a) >= scoreOf(b) ? a : b);
         ['hot', 'cold'].forEach(l => {
           const idx = state.field[l][opp].indexOf(best);
           if (idx >= 0) state.field[l][opp].splice(idx, 1);
         });
-        addLog(`Health Inspector: removed ${isPlayer ? "rival's" : "your"} ${best.name} (+${best.points})!`, isPlayer ? 'player' : 'warn');
+        addLog(`Health Inspector: removed ${isPlayer ? "rival's" : "your"} ${best.name} (+${scoreOf(best)})!`, isPlayer ? 'player' : 'warn');
       }
       break;
     }
@@ -923,7 +934,7 @@ function applyCardEffect(card, lane, who) {
       // Best cold side card gets +50%
       const coldCards2 = getLaneCards('cold', who).filter(c => c.cat !== 'token' && c !== card);
       if (coldCards2.length > 0) {
-        const best2 = coldCards2.reduce((a, b) => a.points > b.points ? a : b);
+        const best2 = coldCards2.reduce((a, b) => effectivePoints(a, 'cold', who) >= effectivePoints(b, 'cold', who) ? a : b);
         const oaky   = best2.tags && best2.tags.includes('oaky');
         const bonus  = Math.floor(best2.points * (oaky ? 1 : 0.5));
         best2.points += bonus;
@@ -1069,7 +1080,7 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'mosaic': {
-      const varieties = new Set(allMine.filter(c => c.cat === 'hop').map(c => c.id)).size;
+      const varieties = new Set(allMine.filter(c => c !== card && c.cat === 'hop').map(c => c.id)).size;
       card.points += varieties * 2;
       addLog(`Mosaic: +${varieties * 2} pts (${varieties} hop varieties).`, 'player');
       break;
@@ -1098,8 +1109,8 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'sabro':
-      buffLaneCards('hot', who, 2, c => c.tags && c.tags.includes('smooth'));
-      buffLaneCards('cold', who, 2, c => c.tags && c.tags.includes('smooth'));
+      buffLaneCards('hot', who, 2, c => c !== card && c.tags && c.tags.includes('smooth'));
+      buffLaneCards('cold', who, 2, c => c !== card && c.tags && c.tags.includes('smooth'));
       addLog('Sabro: +2 to all smooth cards.', 'player');
       break;
 
@@ -1127,7 +1138,7 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'motueka': {
-      const citrus = countTag('citrus', who);
+      const citrus = countOthers('citrus', who, card);
       card.points += citrus * 2;
       addLog(`Motueka: +${citrus * 2} pts (${citrus} citrus cards).`, 'player');
       break;
@@ -1311,33 +1322,40 @@ function applyCardEffect(card, lane, who) {
 // Called after any nuanced card is played.
 // All nuanced cards on the board multiply each other's base score.
 
-function applyNuancedSynergy(who) {
-  const allCards = getAllOnField(who);
-  const nuanced  = allCards.filter(c => c.tags && c.tags.includes('nuanced') && c.cat !== 'token');
-  if (nuanced.length < 2) return;
-  // Snapshot the buffed value the first time this card enters a synergy,
-  // so pre-play buffs (Vienna, pendingHopBuff, etc.) are preserved.
-  nuanced.forEach(c => {
-    if (c._basePoints === undefined) c._basePoints = c.points;
-    c.points = c._basePoints * Math.min(nuanced.length, 3);
-  });
-  const mult = Math.min(nuanced.length, 3);
-  addLog(`Nuanced synergy! ${nuanced.length} nuanced cards — all scores x${mult}${nuanced.length > 3 ? ' (max)' : ''}!`, who === 'p' ? 'player' : 'enemy');
+// ── Live synergy multipliers ──
+// C-hop doubling and nuanced multiplication are NOT baked into a card's points.
+// They're worked out whenever the board is scored, so:
+//   • flat buffs added later (Haze, Magnum, Whirlpool...) are kept and multiplied too
+//   • if a partner card is removed, the multiplier drops back down
+function synergyMultiplier(c, lane, who) {
+  if (c.cat === 'token' || c._noMultiplier || !c.tags) return 1;
+  let m = 1;
+  if (c.tags.includes('c-hop')) {
+    const cHops = getLaneCards(lane, who).filter(x => x.tags && x.tags.includes('c-hop')).length;
+    if (cHops >= 2) m *= 2;
+  }
+  if (c.tags.includes('nuanced')) {
+    const nuanced = getAllOnField(who).filter(x => x.cat !== 'token' && x.tags && x.tags.includes('nuanced')).length;
+    if (nuanced >= 2) m *= Math.min(nuanced, 3);
+  }
+  return m;
 }
-// Called after any hop is placed to check if c-hop doubling applies
+
+function effectivePoints(c, lane, who) {
+  return c.points * synergyMultiplier(c, lane, who);
+}
+
+// These just announce the synergy; the math lives in synergyMultiplier
+function applyNuancedSynergy(who) {
+  const n = getAllOnField(who).filter(c => c.cat !== 'token' && c.tags && c.tags.includes('nuanced')).length;
+  if (n < 2) return;
+  addLog(`Nuanced synergy! ${n} nuanced cards — each scores x${Math.min(n, 3)}${n > 3 ? ' (max)' : ''}.`, who === 'p' ? 'player' : 'enemy');
+}
 
 function applyCHopSynergy(lane, who) {
-  const laneCards = getLaneCards(lane, who);
-  const cHops = laneCards.filter(c => c.tags && c.tags.includes('c-hop'));
-  if (cHops.length >= 2) {
-    // Snapshot the buffed value the first time this card enters a synergy,
-    // so pre-play buffs (pendingHopBuff, etc.) are preserved.
-    cHops.forEach(c => {
-      if (c._basePoints === undefined) c._basePoints = c.points;
-      c.points = c._basePoints * 2;
-    });
-    addLog(`C-Hop synergy! ${cHops.length} c-hops on ${LANE_NAMES[lane]} — all doubled!`, who === 'p' ? 'player' : 'enemy');
-  }
+  const n = getLaneCards(lane, who).filter(c => c.tags && c.tags.includes('c-hop')).length;
+  if (n < 2) return;
+  addLog(`C-Hop synergy! ${n} c-hops on ${LANE_NAMES[lane]} — each scores double.`, who === 'p' ? 'player' : 'enemy');
 }
 
 // ── Per-turn persistent effects ──
