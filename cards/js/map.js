@@ -165,6 +165,7 @@ function markVisited(node) {
 
 function showMapScreen() {
   setScreen('map-screen');
+  saveRun({ screen: 'map' });
   setTimeout(() => renderMap(), 50);
 }
 
@@ -179,6 +180,11 @@ function renderMap() {
   const boss     = bossNode && getRivalDef(bossNode.rival);
   document.getElementById('map-act-name').textContent  = ACT_NAMES[act] + (boss ? ` — 💀 ${boss.name}` : '');
   document.getElementById('map-deck-count').textContent= `🃏 ${draftState.deck.length} cards`;
+  const repEl = document.getElementById('map-rep');
+  if (repEl) {
+    repEl.textContent = `⭐ ${mapState.rep}/${mapState.maxRep}`;
+    repEl.style.color = mapState.rep <= mapState.maxRep * 0.3 ? 'var(--red)' : 'var(--gold)';
+  }
   const extras = [];
   if (mapState.barrel && mapState.barrel.length) extras.push(`🛢 ${mapState.barrel.length} aging`);
   if (mapState.contract) extras.push(`📜 ${mapState.contract} contract`);
@@ -280,6 +286,7 @@ function clickMapNode(nodeId) {
   markVisited(node);
   mapState.nodeCount = (mapState.nodeCount || 0) + 1;
   checkBarrel();
+  saveRun({ screen: 'node', nodeId: node.id });   // a refresh re-enters this node
   handleNode(node);
 }
 
@@ -651,7 +658,9 @@ function showMapRest(node) {
   document.getElementById('rest-card-list').style.display = 'none';
   document.getElementById('rest-sub').textContent = 'Take a breather. Choose one:';
   const removeOk = canRemoveCard();
+  const missing  = mapState.maxRep - mapState.rep;
   document.getElementById('rest-choices').innerHTML = `
+    <button class="btn btn-gold" ${missing > 0 ? 'onclick="restRecover()"' : 'style="opacity:0.4;cursor:not-allowed;"'}>😌 RECOVER<br><span style="font-size:6px;">${missing > 0 ? `+${Math.min(REST_HEAL, missing)} reputation (⭐ ${mapState.rep}/${mapState.maxRep})` : 'reputation is full'}</span></button>
     <button class="btn btn-gold" onclick="renderMapRest('upgrade')">⬆ UPGRADE A CARD<br><span style="font-size:6px;">+${REST_UPGRADE} pts for the rest of the run</span></button>
     <button class="btn btn-primary" ${removeOk ? `onclick="renderMapRest('remove')"` : 'style="opacity:0.4;cursor:not-allowed;"'}>🧹 REMOVE A CARD<br><span style="font-size:6px;">${removeOk ? 'trim your deck for free' : `deck is at minimum (${MIN_DECK_SIZE})`}</span></button>`;
   document.getElementById('rest-confirm').innerHTML =
@@ -684,6 +693,11 @@ function finishRest(message) {
   document.getElementById('rest-card-list').style.display = 'none';
   document.getElementById('rest-confirm').innerHTML =
     `<button class="btn btn-gold" onclick="showMapScreen()">Continue →</button>`;
+}
+
+function restRecover() {
+  const healed = healRep(REST_HEAL);
+  finishRest(`A good night's sleep. +${healed} reputation (⭐ ${mapState.rep}/${mapState.maxRep}).`);
 }
 
 function upgradeCard(idx) {
@@ -732,17 +746,56 @@ function onBattleWin(node) {
 
   if (node.type === 'boss') {
     if (mapState.act < 2) {
+      healRep(BOSS_HEAL);
+      saveRun({ screen: 'relic', gold: goldReward });
       showRelicChoice(goldReward);   // boss reward: pick a piece of equipment
     } else {
       showRunWin();
     }
   } else {
+    saveRun({ screen: 'reward', gold: goldReward, nodeId: node.id });
     showBattleReward(node, goldReward);
   }
 }
 
+// ── Reputation (run health) ──
+// Losing a regular fight costs Reputation based on how badly you lost.
+// Losing a boss fight, or running out of Reputation, ends the run.
+const START_REP = 100;
+const REST_HEAL = 30;
+const BOSS_HEAL = 25;
+
+function repDamage(gap) {
+  return Math.min(35, 5 + Math.floor(Math.max(0, gap) / 3));
+}
+
+function healRep(amount) {
+  const before = mapState.rep;
+  mapState.rep = Math.min(mapState.maxRep, mapState.rep + amount);
+  return mapState.rep - before;
+}
+
 function onBattleLoss() {
-  showRunLoss();
+  const node = state.currentNode;
+  if (!node || node.type === 'boss') {
+    showRunLoss('The judges crowned your rival. The boss must be beaten.');
+    return;
+  }
+  const sc   = state.lastRoundScore || { p: 0, e: 0 };
+  const gap  = sc.e - sc.p;
+  const loss = repDamage(gap);
+  mapState.rep -= loss;
+  if (mapState.rep <= 0) {
+    mapState.rep = 0;
+    showRunLoss(`Your reputation hit zero after losing to ${state.rivalName} by ${gap}.`);
+    return;
+  }
+  saveRun({ screen: 'map' });
+  setScreen('battle-lost-screen');
+  document.getElementById('lost-detail').textContent =
+    gap > 0 ? `${state.rivalName} beat you ${sc.e} to ${sc.p} (by ${gap}).` : `A tie with ${state.rivalName} — the judges weren't impressed.`;
+  document.getElementById('lost-rep').textContent =
+    `−${loss} Reputation  ·  ⭐ ${mapState.rep}/${mapState.maxRep} left`;
 }
 
 let rewardOffer = [];
@@ -781,10 +834,12 @@ function showActTransition(goldReward) {
   document.getElementById('act-transition-deck').textContent =
     `Your deck: ${draftState.deck.length} cards`;
   document.getElementById('act-transition-gold').textContent =
-    `Gold: ${mapState.gold}`;
+    `Gold: ${mapState.gold}  ·  ⭐ ${mapState.rep}/${mapState.maxRep} (boss win: +${BOSS_HEAL} reputation)`;
+  saveRun({ screen: 'act', gold: goldReward });
 }
 
 function showRunWin() {
+  clearRun();
   setScreen('run-win-screen');
   document.getElementById('run-win-deck').textContent =
     `Final deck: ${draftState.deck.length} cards`;
@@ -792,12 +847,13 @@ function showRunWin() {
     `Gold remaining: ${mapState.gold}`;
 }
 
-function showRunLoss() {
+function showRunLoss(reason) {
+  clearRun();
   setScreen('run-loss-screen');
   document.getElementById('run-loss-deck').textContent =
-    `You had ${draftState.deck.length} cards`;
+    reason || `You had ${draftState.deck.length} cards`;
   document.getElementById('run-loss-act').textContent =
-    `Fell in Act ${mapState.act + 1}`;
+    `Fell in Act ${mapState.act + 1} with ${draftState.deck.length} cards`;
 }
 
 // ── Start a run ──

@@ -87,6 +87,11 @@ function setScreen(id) {
 
 function showTitleScreen() {
   setScreen('title-screen');
+  const btn  = document.getElementById('continue-run-btn');
+  const info = document.getElementById('continue-run-info');
+  const has  = hasSavedRun();
+  if (btn)  btn.style.display  = has ? '' : 'none';
+  if (info) info.textContent   = has ? savedRunSummary() : '';
 }
 
 // ── Deck manager screen ──
@@ -280,6 +285,8 @@ function renderBuilderDeck() {
 // ── Start Run ──
 
 function startRunWithDeck(slotIndex) {
+  if (hasSavedRun() && !confirm('You have a run in progress. Abandon it and start a new one?')) return;
+  clearRun();
   const decks = loadSavedDecks();
   const deck  = decks[slotIndex];
   const valid = deck ? deck.cards.filter(id => getCardDef(id)) : [];
@@ -298,6 +305,8 @@ function startRunWithDeck(slotIndex) {
     visited:     {},
     edges:       [],
     removals:    0,     // shop removal price goes up with each one
+    rep:         START_REP,   // run health — see onBattleLoss in map.js
+    maxRep:      START_REP,
     relics:      [],    // brewing equipment won from bosses
     barrel:      [],    // cards aging in the Barrel Room
     nodeCount:   0,     // stops visited this run (barrel timing)

@@ -102,6 +102,9 @@ function laneMultiplier(lane) {
   return state.judging && state.judging.lane === lane ? 2 : 1;
 }
 
+// ── Round length ──
+const MAX_TURNS = 8;
+
 // ── Budget ──
 function getBudget(turn, who = 'p') {
   const cap = 5 + (who === 'p' && hasRelic('fermenter') ? 1 : 0);
@@ -172,6 +175,7 @@ function startRound() {
 
 function endRound() {
   const ps = totalScore('p'), es = totalScore('e');
+  state.lastRoundScore = { p: ps, e: es };
   addLog(`■ Round ${state.round}${state.judging ? ` (${state.judging.name})` : ''} ends — You: ${ps}  Rival: ${es}`);
   if (ps > es)      { state.roundWins.push('player'); addLog(`★ You win round ${state.round}!`, 'player'); }
   else if (es > ps) { state.roundWins.push('enemy');  addLog(`✗ Rival wins round ${state.round}.`, 'enemy'); }
@@ -231,7 +235,7 @@ function advanceTurn() {
   state.budget     = getBudget(state.turn);
   state.nextCardDiscount = 0;
   state.cardsThisTurn    = { p: 0, e: 0 };
-  if (state.turn > 10) { endRound(); return; }
+  if (state.turn > MAX_TURNS) { endRound(); return; }
   addLog(`▸ Turn ${state.turn} — Budget: ${state.budget}`);
 
   drawCards(1, state.pDeck, state.pHand);

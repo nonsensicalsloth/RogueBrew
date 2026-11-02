@@ -155,6 +155,14 @@ function render() {
   et.textContent = (es > ps && diff > 0) ? `▲ +${diff}` : '';
 
   document.getElementById('round-num').textContent   = state.round;
+  const repPill = document.getElementById('rep-pill');
+  if (repPill) {
+    const show = state.currentNode && typeof mapState !== 'undefined' && mapState && mapState.maxRep;
+    repPill.style.display = show ? '' : 'none';
+    if (show) repPill.textContent = `⭐ ${mapState.rep}/${mapState.maxRep}${state.isBoss ? ' · MUST WIN' : ''}`;
+  }
+  const maxTurnsEl = document.getElementById('max-turns');
+  if (maxTurnsEl) maxTurnsEl.textContent = MAX_TURNS;
   const maxRoundsEl = document.getElementById('max-rounds');
   if (maxRoundsEl) maxRoundsEl.textContent = state.maxRounds || 3;
   document.getElementById('turn-num').textContent   = state.phase === 'play' ? state.turn : '—';
