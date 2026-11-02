@@ -184,3 +184,6 @@
 .card.card-new { box-shadow: 0 0 10px rgba(79,195,247,0.7); }
 .card.must-play { border-color: #f44336 !important; box-shadow: 0 0 14px #f44336; animation: mustPlayPulse 1s ease-in-out infinite; }
 @keyframes mustPlayPulse { 0%,100% { transform: translateY(-4px); } 50% { transform: translateY(-8px); } }
+
+.field-card-mult { font-size: 6px; color: var(--gold); }
+.field-card.field-card-neg .field-card-pts { color: var(--red); }
