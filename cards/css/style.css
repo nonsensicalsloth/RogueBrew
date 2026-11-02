@@ -600,3 +600,8 @@ body::after {
 #rival-summary { background: var(--bg2); border: 1px solid var(--enemy); border-left: 3px solid var(--enemy); padding: 6px 10px; margin: 6px 0; font-size: 7px; line-height: 1.9; color: var(--dim); }
 .rival-summary-title { color: var(--enemy); margin-bottom: 2px; }
 .rival-summary-bad { color: var(--red); }
+
+/* ── Non-fatal battle loss ── */
+#battle-lost-screen { display:none; flex-direction:column; align-items:center; justify-content:center; min-height:80vh; text-align:center; gap:12px; }
+#battle-lost-screen.active { display:flex; }
+#map-rep { font-weight:bold; }
