@@ -178,3 +178,9 @@
 .field-card-pts { font-size: 9px; }
 .field-card.p .field-card-pts { color: var(--player); }
 .field-card.e .field-card-pts { color: var(--enemy); }
+
+/* ── Hand states ── */
+.card-cost-gem.cost-discounted { border-color: var(--green, #4caf50); color: #b9f6ca; box-shadow: 0 0 6px #4caf50; }
+.card.card-new { box-shadow: 0 0 10px rgba(79,195,247,0.7); }
+.card.must-play { border-color: #f44336 !important; box-shadow: 0 0 14px #f44336; animation: mustPlayPulse 1s ease-in-out infinite; }
+@keyframes mustPlayPulse { 0%,100% { transform: translateY(-4px); } 50% { transform: translateY(-8px); } }
