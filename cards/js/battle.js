@@ -20,10 +20,12 @@ function getEffectiveCost(c) {
   // Grapefruit Zest makes the next hop free; Hop Back makes the first hop each round free
   if (c.cat === 'hop' && state.nextHopFree) return 0;
   if (c.cat === 'hop' && hasRelic('hopback') && !state.hopBackUsed) return 0;
+  // Hop House ability: a scouted hop costs 1 less on the turn it was drawn
+  const scout = c._scoutKey && c._scoutKey === abilityKey() ? 1 : 0;
   let discount = state.nextCardDiscount || 0;
   if (c.cat === 'yeast') discount += (state.nextYeastDiscount || 0);
   if (c.cat === 'hop')   discount += (state.nextHopDiscount   || 0);
-  return Math.max(0, c.cost - discount);
+  return Math.max(0, c.cost - discount - scout);
 }
 
 function playToLane(lane) {
@@ -76,6 +78,20 @@ function resolvePlay(c, lane, who) {
     state.pendingHopBuff = 0;
   }
 
+  // Brewery passives (map runs only)
+  if (who === 'p' && c.cat !== 'token') {
+    const brew = activeBrewery();
+    if (brew === 'lagerhaus' && c.tags && c.tags.includes('crisp')) {
+      c.points += 1;
+      addLog(`Lagerhaus: ${c.name} +1 (crisp).`, 'player');
+    }
+    if (brew === 'hophouse' && c.cat === 'hop' && !state.firstHopBonusUsed) {
+      c.points += 2;
+      state.firstHopBonusUsed = true;
+      addLog(`Hop House: first hop this turn — ${c.name} +2.`, 'player');
+    }
+  }
+
   // Hop Cannon relic: your cold side hops get +2
   if (who === 'p' && c.cat === 'hop' && lane === 'cold' && hasRelic('hopcannon')) {
     c.points += 2;
@@ -120,6 +136,7 @@ function resolvePlay(c, lane, who) {
 }
 
 function endTurn() {
+  state.abilityTargeting = false;
   if (playerMustPlayContamination()) {
     addLog('⚠ You must pour the Contamination before ending your turn.', 'warn');
     render();

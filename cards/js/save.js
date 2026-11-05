@@ -63,7 +63,8 @@ function refreshRunCard(c) {
   if (!def) return c;                     // retired card: leave as-is
   const fresh = { ...def, tags: [...(def.tags || [])] };
   if (c._upgraded) {
-    fresh.points += REST_UPGRADE;
+    fresh.points += c._upgradeBonus || REST_UPGRADE;
+    fresh._upgradeBonus = c._upgradeBonus || REST_UPGRADE;
     fresh._upgraded = true;
   }
   if (c._barrelAged) {

@@ -1,8 +1,6 @@
 // draft.js — brewery selection, deck builder, run setup
 
-const BREWERIES = [
-  { id:'test', name:'Test Brewery', subtitle:'A blank slate. Good for learning.', icon:'🧪', bonus:'No special bonus yet.', unlocked:true },
-];
+// BREWERIES lives in breweries.js
 
 const DECK_SIZE      = 15;   // starting deck you build before a run
 const MAX_DECK_SIZE  = 50;   // safety cap only — dilution is the real limit
@@ -327,6 +325,8 @@ function startRunWithDeck(slotIndex) {
 
 function selectBrewery(id) {
   draftState.brewery = BREWERIES.find(b => b.id === id);
+  // Wild Cellar run perk: lower Reputation ceiling
+  if (id === 'wildcellar') { mapState.rep = WILD_START_REP; mapState.maxRep = WILD_START_REP; }
   showMapScreen();
 }
 
@@ -349,13 +349,7 @@ function showBrewerySelect() {
 
 function renderBreweryChoices() {
   const el = document.getElementById('brewery-choices');
-  el.innerHTML = BREWERIES.map(b => `
-    <div class="brewery-card ${b.unlocked ? '' : 'locked'}" onclick="${b.unlocked ? `selectBrewery('${b.id}')` : 'void(0)'}">
-      <div class="brewery-icon">${b.icon}</div>
-      <div class="brewery-name">${b.name}</div>
-      <div class="brewery-sub">${b.subtitle}</div>
-      <div class="brewery-bonus">${b.unlocked ? b.bonus : '🔒 LOCKED'}</div>
-    </div>`).join('');
+  el.innerHTML = BREWERIES.map(breweryCardHtml).join('');
 }
 
 // ── Deck Review ──

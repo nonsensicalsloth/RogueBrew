@@ -1421,7 +1421,8 @@ function applyTurnEffects(who) {
 function softenContamination(c, who) {
   if (c.id !== 'contamination') return c;
   const cleanYeast = getLaneCards('cold', who).some(y => y.cat === 'yeast' && y.tags && y.tags.includes('clean'))
-                  || (who === 'p' && hasRelic('microscope'));
+                  || (who === 'p' && hasRelic('microscope'))
+                  || (who === 'p' && activeBrewery() === 'wildcellar');   // Wild Cellar passive
   if (!cleanYeast) return c;
   addLog('A clean yeast outcompetes the Contamination — softened to −5.', who === 'p' ? 'player' : 'enemy');
   return createToken('contam_soft');

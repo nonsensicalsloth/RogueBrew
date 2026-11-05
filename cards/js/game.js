@@ -147,6 +147,10 @@ function startRound() {
   state.roastSafe         = 0;
   state.roastThreshold    = 5 + (hasRelic('roaster') ? 2 : 0);
   state.hopBackUsed       = false;
+  state.abilityUsed       = false;
+  state.abilityTargeting  = false;
+  state.firstHopBonusUsed = false;
+  state.wildUsedRound     = false;
   state.eRoastTokens      = 0;
   state.eRoastSafe        = 0;
   state.eRoastThreshold   = 5;
@@ -235,6 +239,9 @@ function advanceTurn() {
   state.budget     = getBudget(state.turn);
   state.nextCardDiscount = 0;
   state.cardsThisTurn    = { p: 0, e: 0 };
+  state.abilityUsed      = false;
+  state.abilityTargeting = false;
+  state.firstHopBonusUsed = false;
   if (state.turn > MAX_TURNS) { endRound(); return; }
   addLog(`▸ Turn ${state.turn} — Budget: ${state.budget}`);
 

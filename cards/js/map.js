@@ -189,7 +189,9 @@ function renderMap() {
   if (mapState.barrel && mapState.barrel.length) extras.push(`🛢 ${mapState.barrel.length} aging`);
   if (mapState.contract) extras.push(`📜 ${mapState.contract} contract`);
   const extraEl = document.getElementById('map-extras');
-  if (extraEl) extraEl.innerHTML = extras.join(' ') + ' ' + relicIconsHtml();
+  const bDef = BREWERIES.find(b => b.id === runBrewery());
+  const bIcon = bDef ? `<span class="relic-icon" title="${bDef.name} — Passive: ${bDef.passive} | Ability: ${bDef.ability.name}: ${bDef.ability.desc} | Perk: ${bDef.perk}">${bDef.icon}</span>` : '';
+  if (extraEl) extraEl.innerHTML = bIcon + ' ' + extras.join(' ') + ' ' + relicIconsHtml();
   const noticeEl = document.getElementById('map-notice');
   if (noticeEl) { noticeEl.textContent = mapState.notice || ''; mapState.notice = ''; }
 
@@ -354,7 +356,8 @@ function generateMapOffer() {
   draftState.deck.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
   // A supplier contract focuses the next offer on one category, with 4 picks
   const contract = mapState.contract;
-  const size = contract ? 4 : 3;
+  // Hop House run perk: one extra option on every card offer
+  const size = (contract ? 4 : 3) + (runBrewery() === 'hophouse' ? 1 : 0);
   mapState.contract = null;
   const pool = CARD_POOL.filter(c =>
     (counts[c.id] || 0) < MAX_COPIES && c.cat !== 'token' && (!contract || c.cat === contract)
@@ -372,7 +375,7 @@ function generateMapOffer() {
 // Festival prize: premium (cost 3+) cards
 function generateRareOffer() {
   const pool = CARD_POOL.filter(c => c.cost >= 3 && c.cat !== 'token' && copiesInDeck(c.id) < MAX_COPIES);
-  return shuffle(pool).slice(0, 3).map(c => ({ ...c }));
+  return shuffle(pool).slice(0, 3 + (runBrewery() === 'hophouse' ? 1 : 0)).map(c => ({ ...c }));
 }
 
 function pickMapCard(idx) {
@@ -632,14 +635,29 @@ function renderMapEvent() {
   document.getElementById('event-result').textContent = '';
   const el = document.getElementById('event-options');
   // Options you can't take (not enough gold, deck too small) are shown greyed out
-  el.innerHTML = currentEvent.options.map((opt, i) => (!opt.can || opt.can())
+  el.innerHTML = eventOptions().map((opt, i) => (!opt.can || opt.can())
     ? `<button class="btn btn-primary" onclick="chooseEvent(${i})">${opt.label}</button>`
     : `<button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;">${opt.label}</button>`
   ).join('');
 }
 
+// Wild Cellar run perk: every event gets an extra gamble
+const WILD_EVENT_OPTION = {
+  label: '🦠 Let it ferment wild (50%: +40 gold · 50%: −10 Reputation)',
+  can: () => mapState.rep > 10,
+  action: () => {
+    if (Math.random() < 0.5) { mapState.gold += 40; return 'The wild yeast worked its magic. +40 gold!'; }
+    mapState.rep -= 10;
+    return `It went sideways. −10 Reputation (⭐ ${mapState.rep}).`;
+  },
+};
+
+function eventOptions() {
+  return runBrewery() === 'wildcellar' ? [...currentEvent.options, WILD_EVENT_OPTION] : currentEvent.options;
+}
+
 function chooseEvent(idx) {
-  const opt = currentEvent.options[idx];
+  const opt = eventOptions()[idx];
   if (!opt || (opt.can && !opt.can())) return;
   const result = opt.action();
   document.getElementById('event-result').textContent = result;
@@ -651,6 +669,11 @@ function chooseEvent(idx) {
 
 const REST_UPGRADE = 5;
 
+// Lagerhaus run perk: bigger rest-stop upgrades
+function restUpgradeAmount() {
+  return runBrewery() === 'lagerhaus' ? 8 : REST_UPGRADE;
+}
+
 function showMapRest(node) {
   setScreen('map-rest-screen');
   document.getElementById('rest-result').textContent = '';
@@ -661,7 +684,7 @@ function showMapRest(node) {
   const missing  = mapState.maxRep - mapState.rep;
   document.getElementById('rest-choices').innerHTML = `
     <button class="btn btn-gold" ${missing > 0 ? 'onclick="restRecover()"' : 'style="opacity:0.4;cursor:not-allowed;"'}>😌 RECOVER<br><span style="font-size:6px;">${missing > 0 ? `+${Math.min(REST_HEAL, missing)} reputation (⭐ ${mapState.rep}/${mapState.maxRep})` : 'reputation is full'}</span></button>
-    <button class="btn btn-gold" onclick="renderMapRest('upgrade')">⬆ UPGRADE A CARD<br><span style="font-size:6px;">+${REST_UPGRADE} pts for the rest of the run</span></button>
+    <button class="btn btn-gold" onclick="renderMapRest('upgrade')">⬆ UPGRADE A CARD<br><span style="font-size:6px;">+${restUpgradeAmount()} pts for the rest of the run</span></button>
     <button class="btn btn-primary" ${removeOk ? `onclick="renderMapRest('remove')"` : 'style="opacity:0.4;cursor:not-allowed;"'}>🧹 REMOVE A CARD<br><span style="font-size:6px;">${removeOk ? 'trim your deck for free' : `deck is at minimum (${MIN_DECK_SIZE})`}</span></button>`;
   document.getElementById('rest-confirm').innerHTML =
     `<button class="btn btn-primary" onclick="showMapScreen()">Skip</button>`;
@@ -674,12 +697,12 @@ function renderMapRest(mode) {
   document.getElementById('rest-confirm').innerHTML =
     `<button class="btn btn-primary" onclick="showMapRest()">← Back</button>`;
   if (mode === 'upgrade') {
-    document.getElementById('rest-sub').textContent = `Choose a card to upgrade (+${REST_UPGRADE} pts for this run)`;
+    document.getElementById('rest-sub').textContent = `Choose a card to upgrade (+${restUpgradeAmount()} pts for this run)`;
     list.innerHTML = deckPickerHtml('upgradeCard', c => {
       const pts = c.points >= 0 ? `+${c.points}` : `${c.points}`;
       return c._upgraded
         ? { html: `${pts} (already upgraded)`, disabled: true }
-        : { html: `<span style="color:var(--green)">${pts} → +${c.points + REST_UPGRADE}</span>`, disabled: false };
+        : { html: `<span style="color:var(--green)">${pts} → +${c.points + restUpgradeAmount()}</span>`, disabled: false };
     });
   } else {
     document.getElementById('rest-sub').textContent = 'Choose a card to remove from your deck';
@@ -703,8 +726,10 @@ function restRecover() {
 function upgradeCard(idx) {
   const card = draftState.deck[idx];
   if (!card || card._upgraded) return;
-  card.points += REST_UPGRADE;
+  const bonus = restUpgradeAmount();
+  card.points += bonus;
   card._upgraded = true;
+  card._upgradeBonus = bonus;
   finishRest(`${card.name} upgraded to +${card.points} pts!`);
 }
 
