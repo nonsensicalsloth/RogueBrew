@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'rebalance 1 (Nov 5)';
+const CARDS_VERSION = 'rebalance 2 (Nov 5)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -12,7 +12,7 @@ const CARD_POOL = [
   { id:'2row',        name:'2-Row Malt',           cat:'malt', lane:'hot', points:10, cost:1, tags:['neutral'],         desc:'Basic points, no frills.' },
   { id:'pilsner',     name:'Pilsner Malt',          cat:'malt', lane:'hot', points:8,  cost:1, tags:['crisp'],           desc:'If it is the first card you play this turn, draw 1.' },
   { id:'6row',        name:'6-Row Malt',            cat:'malt', lane:'hot', points:6,  cost:1, tags:['neutral'],          desc:'Next card you play this turn costs 1 less.' },
-  { id:'marisotter',  name:'Maris Otter',           cat:'malt', lane:'hot', points:14, cost:2, tags:['biscuity'],        desc:'If you have 3+ combined crystal/dark malts on hot side, +8 pts.' },
+  { id:'marisotter',  name:'Maris Otter',           cat:'malt', lane:'hot', points:12, cost:2, tags:['biscuity'],        desc:'If you have 3+ combined crystal/dark malts on hot side, +8 pts.' },
   { id:'goldenprom',  name:'Golden Promise',        cat:'malt', lane:'hot', points:18, cost:2, tags:['sweet'],           desc:'Premium base malt. High flat score.' },
   { id:'vienna',      name:'Vienna Malt',           cat:'malt', lane:'hot', points:10,  cost:2, tags:['smooth'],          desc:'Increases base score of all other malts on your hot side by +2.' },
   { id:'munich',      name:'Munich Malt',           cat:'malt', lane:'hot', points:14, cost:2, tags:['malty'],           desc:'Rich bready character.' },
@@ -183,7 +183,7 @@ const CARD_POOL = [
 
   // Hop products
   { id:'cryo',       name:'Cryo Hops',          cat:'hop', lane:'both', points:14, cost:2, tags:[],                         desc:'Concentrated lupulin. Copies the flavor tags of the last hop you played. Your next hop costs 1 less.' },
-  { id:'hopoil',     name:'Hop Oil',            cat:'hop', lane:'cold', points:6,  cost:1, tags:[],                         desc:'Dry hop only. Copies the flavor tags of the last hop you played. Every hop on your cold side gets +3.' },
+  { id:'hopoil',     name:'Hop Oil',            cat:'hop', lane:'both', points:6,  cost:1, tags:[],                         desc:'Copies the flavor tags of the last hop you played. Every hop on your cold side gets +3.' },
 
   // ══════════════════════════════════════════════════════════════
   // ── YEAST ── (all gain +2 pts per turn on the field unless noted)
