@@ -482,7 +482,7 @@ function showMapShop(node) {
 
 function generateShopInventory() {
   const shuffled = [...CARD_POOL]
-    .filter(c => c.cat !== 'token')
+    .filter(c => c.cat !== 'token' && copiesInDeck(c.id) < MAX_COPIES)
     .sort(() => Math.random() - 0.5)
     .slice(0, 6);
   return shuffled.map(c => ({
@@ -512,7 +512,8 @@ function renderMapShop() {
   el.innerHTML = shopInventory.map((c, i) => {
     const canAfford = mapState.gold >= c.price;
     const full      = draftState.deck.length >= MAX_DECK_SIZE;
-    const disabled  = !canAfford || full;
+    const maxed     = copiesInDeck(c.id) >= MAX_COPIES;
+    const disabled  = !canAfford || full || maxed;
     const pts       = c.points >= 0 ? `+${c.points}` : `${c.points}`;
     const lane      = c.lane === 'both' ? 'HOT/COLD' : c.lane === 'hot' ? 'HOT SIDE' : 'COLD SIDE';
     return `<div class="card cat-${c.cat} ${disabled ? 'card-disabled' : ''}"
@@ -535,8 +536,11 @@ function buyCard(idx) {
   if (!card) return;
   if (mapState.gold < card.price) return;
   if (draftState.deck.length >= MAX_DECK_SIZE) return;
+  if (copiesInDeck(card.id) >= MAX_COPIES) return;
   mapState.gold -= card.price;
-  draftState.deck.push({ ...card });
+  const bought = { ...card };
+  delete bought.price;
+  draftState.deck.push(bought);
   shopInventory.splice(idx, 1);
   renderMapShop();
 }
@@ -603,6 +607,54 @@ function shopRemoveCard(idx) {
 
 // ── Event node ──
 
+// ── Event pickers: options where the player chooses cards ──
+const BULK_MALT_PRICE = 10;
+const BULK_MALT_MAX   = 3;
+let bulkBought = [];
+
+function bulkMaltChoices() {
+  return BASE_MALT_IDS.map(getCardDef).filter(c => c && copiesInDeck(c.id) < MAX_COPIES);
+}
+
+function showBulkMaltPicker() {
+  const left   = BULK_MALT_MAX - bulkBought.length;
+  const canBuy = left > 0 && mapState.gold >= BULK_MALT_PRICE && draftState.deck.length < MAX_DECK_SIZE;
+  document.getElementById('event-result').textContent =
+    `Picked ${bulkBought.length}/${BULK_MALT_MAX} · 💰 ${mapState.gold} gold` +
+    (bulkBought.length ? ` · ${bulkBought.join(', ')}` : '');
+  document.getElementById('event-options').innerHTML =
+    (canBuy ? `<div class="special-cards">${bulkMaltChoices().map(c =>
+      specialCardHtml(c, `buyBulkMalt('${c.id}')`)).join('')}</div>` : '') +
+    `<button class="btn btn-gold" onclick="finishEvent(bulkBought.length ? 'Added ' + bulkBought.join(', ') + ' to your deck!' : 'You passed on the deal.')">${bulkBought.length ? 'Done' : 'Never mind'}</button>`;
+}
+
+function buyBulkMalt(id) {
+  const c = getCardDef(id);
+  if (!c || bulkBought.length >= BULK_MALT_MAX || mapState.gold < BULK_MALT_PRICE) return;
+  if (copiesInDeck(id) >= MAX_COPIES || draftState.deck.length >= MAX_DECK_SIZE) return;
+  mapState.gold -= BULK_MALT_PRICE;
+  draftState.deck.push({ ...c });
+  bulkBought.push(c.name);
+  showBulkMaltPicker();
+}
+
+function showHopSalePicker() {
+  document.getElementById('event-result').textContent = 'Which hop do you sell for 30 gold?';
+  document.getElementById('event-options').innerHTML =
+    `<div class="removal-list" style="width:100%;max-width:400px;">${deckPickerHtml('sellHop', c => c.cat === 'hop'
+      ? { html: '<span style="color:var(--gold)">sell +30</span>', disabled: false }
+      : { html: '', disabled: true })}</div>
+     <button class="btn btn-primary" onclick="renderMapEvent()">← Back</button>`;
+}
+
+function sellHop(idx) {
+  const c = draftState.deck[idx];
+  if (!c || c.cat !== 'hop' || !canRemoveCard()) return;
+  draftState.deck.splice(idx, 1);
+  mapState.gold += 30;
+  finishEvent(`Sold ${c.name} for 30 gold!`);
+}
+
 const MAP_EVENTS = [
   {
     title: 'Mystery Grain Delivery',
@@ -622,13 +674,9 @@ const MAP_EVENTS = [
     title: 'Hop Shortage',
     desc: 'Your hop supplier is out of stock. Sell a hop card for gold?',
     options: [
-      { label: 'Sell a hop (+30 gold)',
+      { label: 'Sell a hop of your choice (+30 gold)',
         can: () => canRemoveCard() && draftState.deck.some(c => c.cat === 'hop'),
-        action: () => {
-        const idx = draftState.deck.findIndex(c => c.cat === 'hop');
-        if (idx >= 0) { draftState.deck.splice(idx, 1); mapState.gold += 30; return 'Sold a hop for 30 gold!'; }
-        return 'No hops to sell.';
-      }},
+        picker: () => showHopSalePicker() },
       { label: 'Keep your hops', action: () => 'You held on to your hops.' },
     ]
   },
@@ -668,12 +716,9 @@ const MAP_EVENTS = [
     title: 'Bulk Grain Deal',
     desc: 'A supplier offers you a deal on base malts.',
     options: [
-      { label: 'Buy 3 base malts (30 gold)', can: () => mapState.gold >= 30, action: () => {
-        mapState.gold -= 30;
-        const added = ['2row','pilsner','munich'].filter(id =>
-          draftState.deck.length < MAX_DECK_SIZE && copiesInDeck(id) < MAX_COPIES && draftState.deck.push({ ...getCardDef(id) }));
-        return added.length ? `Added ${added.map(id => getCardDef(id).name).join(', ')}!` : 'You already had all the malt you could store.';
-      }},
+      { label: `Choose up to ${BULK_MALT_MAX} base malts (${BULK_MALT_PRICE} gold each)`,
+        can: () => mapState.gold >= BULK_MALT_PRICE && bulkMaltChoices().length > 0 && draftState.deck.length < MAX_DECK_SIZE,
+        picker: () => { bulkBought = []; showBulkMaltPicker(); } },
       { label: 'Pass', action: () => 'You passed on the deal.' },
     ]
   },
@@ -717,7 +762,11 @@ function eventOptions() {
 function chooseEvent(idx) {
   const opt = eventOptions()[idx];
   if (!opt || (opt.can && !opt.can())) return;
-  const result = opt.action();
+  if (opt.picker) { opt.picker(); return; }          // options where you choose a card
+  finishEvent(opt.action());
+}
+
+function finishEvent(result) {
   document.getElementById('event-result').textContent = result;
   document.getElementById('event-options').innerHTML =
     `<button class="btn btn-gold" onclick="showMapScreen()">Continue →</button>`;
