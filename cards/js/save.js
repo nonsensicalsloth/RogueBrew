@@ -55,14 +55,36 @@ function savedRunSummary() {
   return `Act ${m.act + 1} · ⭐ ${m.rep}/${m.maxRep} · 💰 ${m.gold} · 🃏 ${d.draft.deck.length}`;
 }
 
+// A saved run stores full card copies, so a card that was rebalanced since the
+// run started would keep its old cost and points. Rebuild each card from the
+// current definition, then re-apply what the run did to it (upgrades, aging).
+function refreshRunCard(c) {
+  const def = getCardDef(c.id);
+  if (!def) return c;                     // retired card: leave as-is
+  const fresh = { ...def, tags: [...(def.tags || [])] };
+  if (c._upgraded) {
+    fresh.points += REST_UPGRADE;
+    fresh._upgraded = true;
+  }
+  if (c._barrelAged) {
+    fresh.points += BARREL_BONUS;
+    fresh.name = `Barrel-Aged ${def.name}`;
+    fresh.tags.push('oaky');
+    fresh._barrelAged = true;
+  }
+  if (c._barrelReturn !== undefined) fresh._barrelReturn = c._barrelReturn;
+  return fresh;
+}
+
 function continueRun() {
   const d = loadRunData();
   if (!d) { showTitleScreen(); return; }
 
-  draftState.deck      = d.draft.deck;
+  draftState.deck      = d.draft.deck.map(refreshRunCard);
   draftState.deckIndex = d.draft.deckIndex;
   draftState.brewery   = BREWERIES.find(b => b.id === d.draft.breweryId) || null;
   mapState             = d.map;
+  mapState.barrel      = (mapState.barrel || []).map(refreshRunCard);
   mapState.currentNode = findNodeById(d.map.currentNode);
 
   const r = d.resume || { screen: 'map' };
