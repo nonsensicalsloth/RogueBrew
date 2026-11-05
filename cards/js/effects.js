@@ -32,21 +32,21 @@ function formulaPreview(c, who = 'p') {
   switch (c.id) {
     case 'crystal80': {
       const r = getRoast(who);
-      return { points: r * 8 + earned, note: `now: ${r} roast × 8` };
+      return { points: r * 8 + earned, note: `now: ${r} roast` };
     }
     case 'specialb': {
       const r = getRoast(who);
-      return { points: r * 6 + earned, note: `now: ${r} roast × 6` };
+      return { points: c.points + r * 6, note: `now: ${r} roast` };
     }
     case 'biscuit': {
       const rows = hotNow + 1;                            // counts itself once played
-      return { points: def.points * rows + earned, note: `now: ${rows} cards × ${def.points}` };
+      return { points: def.points * rows + earned, note: `now: ${rows} cards` };
     }
     case 'crystal75':
-      return { points: c.points + hotNow * 4, note: `now: ${hotNow} other cards × 4` };
+      return { points: c.points + hotNow * 4, note: `now: ${hotNow} other cards` };
     case 'melanoidin': {
       const n = (who === 'p' ? state.pDiscard : state.eDiscard).filter(x => x.id === 'melanoidin').length;
-      return { points: c.points * (n + 1), note: `now: ${n} in discard, ×${n + 1}` };
+      return { points: c.points * (n + 1), note: `now: ${n} in discard` };
     }
   }
   return null;
@@ -327,10 +327,7 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'fining':
-      if (!removeFirstToken(who)) {
-        drawFor(who, 1);
-        addLog('Fining Agent: nothing to remove — drew 1 card.', 'player');
-      }
+      if (!removeFirstToken(who)) addLog('Fining Agent: nothing to remove.', 'sys');
       break;
 
     case 'heatkill':
@@ -351,7 +348,7 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'fermlog':
-      coldCards.forEach(c => { if (c !== card && c.cat !== 'token' && !c._locked) c.points += 2; });
+      coldCards.forEach(c => { if (c !== card && c.cat !== 'token' && !c._locked) c.points += 3; });
       addLog('Fermentation Log: +2 pts to all cold side cards.', 'player');
       break;
 
@@ -563,8 +560,8 @@ function applyCardEffect(card, lane, who) {
     case 'qc': {
       const opp = who === 'p' ? 'e' : 'p';
       if (totalScore(who) > totalScore(opp)) {
-        card.points += 10;
-        addLog(`Quality Control: ${isPlayer ? "you're" : "rival is"} ahead — +10 pts!`, isPlayer ? 'player' : 'enemy');
+        card.points += 14;
+        addLog(`Quality Control: ${isPlayer ? "you're" : "rival is"} ahead — +14 pts!`, isPlayer ? 'player' : 'enemy');
       }
       break;
     }
@@ -683,16 +680,20 @@ function applyCardEffect(card, lane, who) {
     case 'crystal80': {
       const roast80 = getRoast(who);
       card.points = roast80 * 8 + (card.points - getCardDef('crystal80').points);
-      addLog(`Crystal 80: ${roast80} roast × 8 = ${card.points} pts! Sugar Clot added.`, 'warn');
-      state.field.hot[who].push(createToken('sugar_clot'));
+      if (roast80 < 3) {
+        state.field.hot[who].push(createToken('sugar_clot'));
+        addLog(`Crystal 80: ${roast80} roast × 8 = ${card.points} pts. Not roasty enough — Sugar Clot added!`, 'warn');
+      } else {
+        addLog(`Crystal 80: ${roast80} roast × 8 = ${card.points} pts!`, 'player');
+      }
       break;
     }
 
     case 'specialb': {
+      // Special B: a safer roast payoff (base 6, no Sugar Clot). Crystal 80 is the high-risk one.
       const roastSB = getRoast(who);
-      card.points = roastSB * 6 + (card.points - getCardDef('specialb').points);
-      addLog(`Special B: ${roastSB} roast × 6 = ${card.points} pts! Sugar Clot added.`, 'warn');
-      state.field.hot[who].push(createToken('sugar_clot8'));
+      card.points += roastSB * 6;
+      addLog(`Special B: 6 + ${roastSB} roast × 6 = ${card.points} pts!`, 'player');
       break;
     }
 
@@ -867,16 +868,8 @@ function applyCardEffect(card, lane, who) {
     // ── Process: Disruption ──
 
     case 'filtration': {
-      const coldList = getLaneCards('cold', who).filter(c => c !== card);
-      if (coldList.length > 0) {
-        const worst = coldList.reduce((a, b) => b.points < a.points ? b : a);
-        const all = getLaneCards('cold', who);
-        all.splice(all.indexOf(worst), 1);
-        addLog(`Filtration: filtered out ${worst.name} (${worst.points}).`, isPlayer ? 'player' : 'enemy');
-      } else {
-        addLog('Filtration: nothing to filter.', 'sys');
-      }
-      drawFor(who, 1);
+      // Only filters out something harmful — never your good cards
+      if (!removeFirstToken(who, null, 'cold')) addLog('Filtration: nothing to filter.', 'sys');
       break;
     }
 
@@ -942,8 +935,8 @@ function applyCardEffect(card, lane, who) {
 
     case 'kettletrans': {
       // Whirlpool: every hop on your hot side gets +3
-      const n = buffLaneCards('hot', who, 3, c => c.cat === 'hop');
-      addLog(`Whirlpool: +3 to ${n} hop(s) on hot side.`, 'player');
+      const n = buffLaneCards('hot', who, 4, c => c.cat === 'hop');
+      addLog(`Whirlpool: +4 to ${n} hop(s) on hot side.`, 'player');
       break;
     }
 
@@ -1232,8 +1225,8 @@ function applyCardEffect(card, lane, who) {
 
     case 'englishale': {
       const n = allMine.filter(c => c !== card && c.tags && (c.tags.includes('biscuity') || c.tags.includes('malty') || c.tags.includes('earthy'))).length;
-      card.points += n * 2;
-      addLog(`English Ale: +${n * 2} pts (${n} biscuity/malty/earthy cards).`, 'player');
+      card.points += n * 3;
+      addLog(`English Ale: +${n * 3} pts (${n} biscuity/malty/earthy cards).`, 'player');
       break;
     }
 
@@ -1291,9 +1284,9 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'hefeweizen': {
-      const bready = countTag('bready', who, 'hot');
-      card.points += bready * 2;
-      addLog(`Hefeweizen: +${bready * 2} pts (${bready} bready cards).`, 'player');
+      const bready = allMine.filter(c => c !== card && c.tags && ['bready','fruity','spicy'].some(t => c.tags.includes(t))).length;
+      card.points += bready * 3;
+      addLog(`Hefeweizen: +${bready * 3} pts (${bready} bready/fruity/spicy cards).`, 'player');
       break;
     }
 
@@ -1324,6 +1317,8 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'cosmicpunch': {
+      const coldHops = getLaneCards('cold', who).filter(c => c.cat === 'hop').length;
+      card.points += coldHops * 2;
       const freed = allMine.filter(c => c !== card && c.tags && c.tags.includes('thiol') && !c._thiolReleased);
       freed.forEach(c => releaseThiol(c));
       addLog(`Cosmic Punch: released thiols from ${freed.length} card(s)!`, 'player');
@@ -1340,8 +1335,8 @@ function applyCardEffect(card, lane, who) {
       // Buff all hops currently on the board
       const allHops = [...getLaneCards('hot', who), ...getLaneCards('cold', who)]
         .filter(c => c.cat === 'hop');
-      allHops.forEach(h => { h.points += 4; });
-      addLog(`Haze: +4 pts to ${allHops.length} hop(s) on board!`, 'player');
+      allHops.forEach(h => { h.points += 3; });
+      addLog(`Haze: +3 pts to ${allHops.length} hop(s) on board!`, 'player');
       break;
     }
 
