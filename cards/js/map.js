@@ -2,25 +2,22 @@
 
 const ACT_NAMES = ['The Mash', 'Fermentation', 'Conditioning'];
 
-// Rival deck sizes per layer per act
-const RIVAL_SIZES_BY_ACT = [15, 20, 30];
+// ── Map shape (Slay the Spire style) ──
+// Each act is a grid MAP_COLS wide and MAP_FLOORS tall, plus a boss floor.
+// MAP_PATHS random paths are walked from the first floor to the last; wherever
+// they overlap they merge, wherever they separate you get a fork.
+const MAP_FLOORS = 10;
+const MAP_COLS   = 7;
+const MAP_PATHS  = 6;
+const MAP_EXTRA_FORK = 0.6;    // chance a node gets an extra diagonal fork
 
-// Boss is always 30
-function getRivalSize(act, layer, type) {
-  if (layer === 6 || type === 'festival') return 30; // boss / festival elite
-  return RIVAL_SIZES_BY_ACT[act];
-}
-
-// Node type distribution per layer (0-indexed)
-const LAYER_TEMPLATES = [
-  ['draft','draft','event'],                 // Layer 0 — build up before the first fight
-  ['battle','draft','shop','lab'],           // Layer 1
-  ['battle','battle','barrel','event'],      // Layer 2 — barrel early so it pays off this act
-  ['battle','festival','shop','collab'],     // Layer 3
-  ['battle','contract','taproom','rest'],    // Layer 4
-  ['battle','festival','battle','rest'],     // Layer 5 — last chance to prep for the boss
-  ['boss'],                                  // Layer 6 — act boss
-];
+// Weighted odds for floors that aren't fixed (see assignNodeTypes for the rules)
+const NODE_WEIGHTS = {
+  battle: 40, event: 14, draft: 10, festival: 9, rest: 8, shop: 7,
+  barrel: 3, collab: 3, lab: 3, taproom: 3, contract: 3,
+};
+// These shouldn't follow themselves on a path
+const NO_REPEAT = ['rest', 'shop', 'festival'];
 
 const NODE_ICONS = {
   battle: '⚔',
@@ -73,52 +70,113 @@ let mapState = {
 function generateMap() {
   mapState.nodes = [];
   mapState.edges = [];
+  for (let act = 0; act < 3; act++) generateAct(act);
+}
 
-  for (let act = 0; act < 3; act++) {
-    const actNodes = [];
-    for (let layer = 0; layer < LAYER_TEMPLATES.length; layer++) {
-      const template = [...LAYER_TEMPLATES[layer]];
-      // Shuffle non-boss layers
-      if (layer < 6) shuffleArray(template);
-      const layerNodes = template.map((type, idx) => {
-        const node = {
-          act, layer, index: idx,
-          type,
-          id: `${act}-${layer}-${idx}`,
-          accessible: layer === 0 && act === mapState.act,
-        };
-        node.rival     = assignRival(node);
-        node.rivalSize = rivalSizeFor(node);
-        return node;
-      });
-      actNodes.push(layerNodes);
+function generateAct(act) {
+  // 1. Walk random paths across the grid
+  const cells = new Set();            // "floor:col" that have a node
+  const links = new Set();            // "floor:col>col2" edges between floors
+  let firstStart = -1;
+  for (let p = 0; p < MAP_PATHS; p++) {
+    let col = Math.floor(Math.random() * MAP_COLS);
+    // The first two paths start apart, so there's always a real first choice
+    if (p === 1) while (col === firstStart) col = Math.floor(Math.random() * MAP_COLS);
+    if (p === 0) firstStart = col;
+    cells.add(`0:${col}`);
+    for (let f = 0; f < MAP_FLOORS - 1; f++) {
+      const steps = shuffle([-1, 0, 1]).filter(d => col + d >= 0 && col + d < MAP_COLS);
+      // Never cross an existing diagonal edge
+      const step = steps.find(d => d === 0 || !links.has(`${f}:${col + d}>${col}`)) ?? 0;
+      links.add(`${f}:${col}>${col + step}`);
+      col += step;
+      cells.add(`${f + 1}:${col}`);
     }
-    mapState.nodes.push(actNodes);
-    generateEdges(act, actNodes);
+  }
+
+  // 2. Build node objects floor by floor (sorted left to right)
+  const actNodes = [];
+  for (let f = 0; f < MAP_FLOORS; f++) {
+    const cols = [...cells].filter(k => +k.split(':')[0] === f).map(k => +k.split(':')[1]).sort((x, y) => x - y);
+    actNodes.push(cols.map((col, idx) => ({
+      act, layer: f, index: idx, col, type: null,
+      id: `${act}-${f}-${idx}`,
+      accessible: f === 0 && act === mapState.act,
+    })));
+  }
+  const at = (f, col) => actNodes[f].find(n => n.col === col);
+
+  // Extra forks: sometimes link a node to a neighbouring node on the next floor too,
+  // as long as the new line doesn't cross an existing one
+  for (let f = 0; f < MAP_FLOORS - 1; f++) {
+    for (const node of actNodes[f]) {
+      if (Math.random() >= MAP_EXTRA_FORK) continue;
+      for (const d of shuffle([-1, 1])) {
+        const c2 = node.col + d;
+        if (!at(f + 1, c2) || links.has(`${f}:${node.col}>${c2}`)) continue;
+        if (links.has(`${f}:${c2}>${node.col}`)) continue;                 // would cross
+        links.add(`${f}:${node.col}>${c2}`);
+        break;
+      }
+    }
+  }
+  links.forEach(k => {
+    const [f, rest] = k.split(':');
+    const [c1, c2] = rest.split('>').map(Number);
+    mapState.edges.push({ from: at(+f, c1).id, to: at(+f + 1, c2).id });
+  });
+
+  // 3. Boss floor: one node, every last-floor node leads to it
+  const boss = { act, layer: MAP_FLOORS, index: 0, col: (MAP_COLS - 1) / 2, type: 'boss', id: `${act}-${MAP_FLOORS}-0` };
+  actNodes.push([boss]);
+  actNodes[MAP_FLOORS - 1].forEach(n => mapState.edges.push({ from: n.id, to: boss.id }));
+
+  mapState.nodes.push(actNodes);
+  assignNodeTypes(act, actNodes);
+  actNodes.flat().forEach(n => { n.rival = assignRival(n); n.rivalSize = rivalSizeFor(n); });
+}
+
+function parentsOf(node) {
+  return mapState.edges.filter(e => e.to === node.id).map(e => findNodeById(e.from)).filter(Boolean);
+}
+function childrenOf(node) {
+  return mapState.edges.filter(e => e.from === node.id).map(e => findNodeById(e.to)).filter(Boolean);
+}
+
+// Room rules, modeled on Slay the Spire:
+//   • floor 1 is always a fight, the floor before the boss is always a rest stop
+//   • no festivals (elites) or rests on the first 3 floors, no shops on the first 2
+//   • rests, shops and festivals never follow themselves on a path
+//   • nodes that share a parent are different types, so forks are real choices
+function assignNodeTypes(act, actNodes) {
+  for (let f = 0; f < MAP_FLOORS; f++) {
+    for (const node of actNodes[f]) {
+      if (f === 0)              { node.type = 'battle'; continue; }
+      if (f === MAP_FLOORS - 1) { node.type = 'rest';   continue; }
+      const banned = new Set();
+      if (f < 3) { banned.add('festival'); banned.add('rest'); }
+      if (f < 2) banned.add('shop');
+      if (f === MAP_FLOORS - 2) banned.add('rest');            // a rest row is coming
+      const parents = parentsOf(node);
+      parents.forEach(p => { if (NO_REPEAT.includes(p.type)) banned.add(p.type); });
+      // Siblings: other children of my parents that already have a type
+      parents.forEach(p => childrenOf(p).forEach(c => { if (c !== node && c.type) banned.add(c.type); }));
+      node.type = weightedPick(NODE_WEIGHTS, banned);
+    }
   }
 }
 
-function generateEdges(act, actNodes) {
-  for (let layer = 0; layer < actNodes.length - 1; layer++) {
-    const fromLayer = actNodes[layer];
-    const toLayer   = actNodes[layer + 1];
-    // Each node connects to 1-2 nodes in next layer
-    fromLayer.forEach((fromNode, fi) => {
-      const targets = new Set();
-      // Always connect to same-ish index
-      targets.add(Math.min(fi, toLayer.length - 1));
-      // Sometimes connect to neighbor
-      if (Math.random() < 0.5 && toLayer.length > 1) {
-        targets.add(Math.min(fi + 1, toLayer.length - 1));
-      }
-      targets.forEach(ti => {
-        mapState.edges.push({
-          from: fromNode.id,
-          to:   toLayer[ti].id,
-        });
-      });
-    });
-  }
+function weightedPick(weights, banned) {
+  const opts = Object.entries(weights).filter(([t]) => !banned.has(t));
+  if (!opts.length) return 'battle';
+  let r = Math.random() * opts.reduce((s, [, w]) => s + w, 0);
+  for (const [t, w] of opts) { r -= w; if (r <= 0) return t; }
+  return opts[opts.length - 1][0];
+}
+
+function getBossNode(act) {
+  const floors = mapState.nodes[act];
+  return floors ? floors[floors.length - 1][0] : null;
 }
 
 function shuffleArray(arr) {
@@ -195,71 +253,65 @@ function renderMap() {
   const noticeEl = document.getElementById('map-notice');
   if (noticeEl) { noticeEl.textContent = mapState.notice || ''; mapState.notice = ''; }
 
-  const W      = Math.max(el.offsetWidth, 320);
+  const W      = Math.min(Math.max(el.offsetWidth || 0, 320), 640);
   const layers = actNodes.length;
-  const layerH = 90;
-  const H      = layers * layerH + 60;
+  const layerH = 68;
+  const H      = layers * layerH + 40;
+  const pos    = n => ({ x: nodeX(n, W), y: nodeY(n.layer, H, layers) });
+  const choices = new Set(actNodes.flat().filter(canVisit).map(n => n.id));
 
-  let svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">`;
+  let svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;">`;
 
-  // Draw edges first
+  // Edges: your path solid purple, the ways you can go next bright gold, the rest faint
   mapState.edges.forEach(edge => {
-    const [fa, fl, fi] = edge.from.split('-').map(Number);
-    const [ta, tl, ti] = edge.to.split('-').map(Number);
-    if (fa !== act || ta !== act) return;
-
-    const fromNodes = actNodes[fl];
-    const toNodes   = actNodes[tl];
-    const fx = nodeX(fi, fromNodes.length, W);
-    const fy = nodeY(fl, H, layers);
-    const tx = nodeX(ti, toNodes.length, W);
-    const ty = nodeY(tl, H, layers);
-
-    const fromVisited = mapState.visited[edge.from];
-    const toVisited   = mapState.visited[edge.to];
-    const active      = fromVisited;
-
-    svg += `<line x1="${fx}" y1="${fy}" x2="${tx}" y2="${ty}"
-      stroke="${active ? '#6c63ff' : '#2a2a4a'}"
-      stroke-width="${active ? 2 : 1}"
-      stroke-dasharray="${active ? 'none' : '4,4'}"
-      opacity="${active ? 0.8 : 0.4}"/>`;
+    const from = findNodeById(edge.from), to = findNodeById(edge.to);
+    if (!from || !to || from.act !== act) return;
+    const a = pos(from), b = pos(to);
+    const walked = mapState.visited[edge.from] && mapState.visited[edge.to];
+    const next   = choices.has(edge.to) && !!mapState.currentNode && mapState.currentNode.id === edge.from;
+    const stroke = walked ? '#6c63ff' : next ? '#ffd700' : '#4a4a72';
+    svg += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${stroke}"
+      stroke-width="${walked || next ? 2.5 : 1.2}" stroke-dasharray="${walked || next ? 'none' : '3,4'}"
+      opacity="${walked || next ? 0.95 : 0.7}"/>`;
   });
 
-  // Draw nodes
-  actNodes.forEach((layerNodes, layer) => {
-    layerNodes.forEach((node, idx) => {
-      const x       = nodeX(idx, layerNodes.length, W);
-      const y       = nodeY(layer, H, layers);
-      const visited = isVisited(node);
-      const access  = isAccessible(node);
-      const canClick = canVisit(node);
-      const color   = NODE_COLORS[node.type] || '#555';
-      const icon    = NODE_ICONS[node.type]  || '?';
+  // Nodes
+  actNodes.flat().forEach(node => {
+    const { x, y } = pos(node);
+    const visited  = isVisited(node);
+    const canClick = choices.has(node.id);
+    const color    = NODE_COLORS[node.type] || '#555';
+    const icon     = NODE_ICONS[node.type]  || '?';
+    const r        = node.type === 'boss' ? 22 : 15;
+    const stroke   = visited ? '#ffd700' : canClick ? color : '#3a3a5e';
+    const opacity  = canClick || visited ? 1 : 0.8;   // the whole act stays readable for route planning
+    const isHere   = mapState.currentNode && mapState.currentNode.id === node.id;
 
-      const r      = node.type === 'boss' ? 22 : 18;
-      const stroke = visited ? '#ffd700' : access ? color : '#2a2a4a';
-      const fill   = visited ? '#1a1a2e' : access ? '#12121f' : '#0a0a14';
-      const opacity = access || visited ? 1 : 0.4;
-
-      svg += `<g transform="translate(${x},${y})" opacity="${opacity}"
-        ${canClick ? `onclick="clickMapNode('${node.id}')" style="cursor:pointer"` : ''}>
-        <title>${nodeTooltip(node)}</title>
-        <circle r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${visited ? 2.5 : 1.5}"/>
-        <text text-anchor="middle" dominant-baseline="central"
-          font-size="${node.type === 'boss' ? 14 : 12}"
-          fill="${visited ? '#ffd700' : access ? color : '#444'}">${icon}</text>
-        ${node.type === 'boss'
-          ? `<text text-anchor="middle" y="${r + 12}" font-size="7" fill="#e74c3c" font-family="monospace">${(getRivalDef(node.rival) || {}).short || ''}</text>`
-          : node.type === 'battle' || node.type === 'festival'
-          ? `<text text-anchor="middle" y="${r + 12}" font-size="7" fill="#666" font-family="monospace">${node.rivalSize}🃏</text>`
-          : ''}
-      </g>`;
-    });
+    svg += `<g transform="translate(${x},${y})" opacity="${opacity}" ${isHere || (canClick && !mapState.currentNode) ? 'data-focus="1"' : ''}
+      ${canClick ? `onclick="clickMapNode('${node.id}')" style="cursor:pointer"` : ''}>
+      <title>${nodeTooltip(node)}</title>
+      ${canClick ? `<circle r="${r + 5}" fill="none" stroke="${color}" stroke-width="1.5" class="map-node-pulse"/>` : ''}
+      <circle r="${r}" fill="${visited ? '#1a1a2e' : '#12121f'}" stroke="${stroke}" stroke-width="${visited || canClick ? 2.5 : 1.2}"/>
+      <text text-anchor="middle" dominant-baseline="central" font-size="${node.type === 'boss' ? 14 : 11}"
+        fill="${visited ? '#ffd700' : canClick ? color : '#666'}">${icon}</text>
+      ${node.type === 'boss'
+        ? `<text text-anchor="middle" y="${r + 12}" font-size="7" fill="#e74c3c" font-family="monospace">${(getRivalDef(node.rival) || {}).short || ''}</text>`
+        : ''}
+    </g>`;
   });
 
   svg += '</svg>';
-  el.innerHTML = svg;
+
+  // Legend: only the room types in this act
+  const types = [...new Set(actNodes.flat().map(n => n.type))];
+  const legend = `<div class="map-legend">${types.map(t =>
+    `<span style="color:${NODE_COLORS[t]}">${NODE_ICONS[t]} ${NODE_NAMES[t]}</span>`).join('')}</div>`;
+
+  el.innerHTML = legend + svg;
+
+  // Keep where you are (or your first choice) in view
+  const focus = el.querySelector ? el.querySelector('[data-focus]') : null;
+  if (focus && focus.scrollIntoView) focus.scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
 
 function nodeTooltip(node) {
@@ -270,10 +322,16 @@ function nodeTooltip(node) {
   return `${base}: ${r.name} (${r.style}, ${node.rivalSize} cards)${trait}`;
 }
 
-function nodeX(idx, total, W) {
-  const padding = 60;
-  if (total === 1) return W / 2;
-  return padding + (idx / (total - 1)) * (W - padding * 2);
+// Horizontal position comes from the node's grid column, with a small fixed
+// wobble so the map looks hand-drawn rather than ruled.
+function nodeX(node, W) {
+  const padding = 40;
+  const floor = mapState.nodes[node.act][node.layer];
+  const col = node.col !== undefined ? node.col
+            : floor.length > 1 ? node.index / (floor.length - 1) * (MAP_COLS - 1)
+            : (MAP_COLS - 1) / 2;                           // older saves without columns
+  const wobble = node.type === 'boss' ? 0 : ((node.layer * 7 + Math.round(col) * 13) % 9) - 4;
+  return padding + (col / (MAP_COLS - 1)) * (W - padding * 2) + wobble;
 }
 
 function nodeY(layer, H, totalLayers) {
@@ -852,7 +910,7 @@ function showActTransition(goldReward) {
   setScreen('act-transition-screen');
   document.getElementById('act-transition-title').textContent =
     `Act ${mapState.act + 1} Complete!`;
-  const nextBossNode = mapState.nodes[mapState.act + 1] && mapState.nodes[mapState.act + 1][6][0];
+  const nextBossNode = mapState.nodes[mapState.act + 1] && getBossNode(mapState.act + 1);
   const nextBoss = nextBossNode && getRivalDef(nextBossNode.rival);
   document.getElementById('act-transition-next').textContent =
     `Next: ${ACT_NAMES[mapState.act + 1]}${nextBoss ? ` — boss: ${nextBoss.name}` : ''}`;

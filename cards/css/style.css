@@ -610,3 +610,8 @@ body::after {
 .brewery-tier { font-size: 6px; color: var(--dim); line-height: 1.8; text-align: left; margin-top: 8px; }
 .brewery-tier span { display: block; color: var(--gold); margin-bottom: 2px; }
 .field-card.field-card-target { cursor: pointer; border-color: var(--gold) !important; box-shadow: 0 0 8px var(--gold); animation: mustPlayPulse 1s ease-in-out infinite; }
+
+/* ── Map ── */
+.map-legend { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; font-size:6px; padding:6px 0 10px; }
+.map-node-pulse { animation: mapPulse 1.4s ease-in-out infinite; transform-origin: center; }
+@keyframes mapPulse { 0%,100% { opacity:0.25; } 50% { opacity:0.9; } }
