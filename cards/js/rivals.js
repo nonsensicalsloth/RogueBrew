@@ -54,10 +54,10 @@ const CRAFT_RIVALS = [
 const BOSSES = [
   [ // Act 1
     { id:'macro', name:'Big Macro Brewing Co.', short:'Big Macro', style:'light lager', trait:'massprod',
-      traitName:'Mass Production', traitDesc:'Draws 2 cards each turn instead of 1.',
+      traitName:'Mass Production', traitDesc:'Draws an extra card every 3rd turn.',
       cards:['6row','6row','6row','2row','2row','2row','flakedcorn','flakedcorn','flakedcorn','ricehulls','ricehulls',
-             'pilotbatch','pilotbatch','kolsch','kolsch','chico','chico','magnum','cascade','crystal10','filtration',
-             'drunkbrewer','coldcrash'] },
+             'pilotbatch','kolsch','kolsch','chico','chico','magnum','cascade','crystal10','6row','2row',
+             'flakedcorn','coldcrash'] },
     { id:'brewpub', name:'Old Town Brewpub', short:'Old Town', style:'pub ales', trait:'regulars',
       traitName:'The Regulars', traitDesc:'Starts every round with +15 on its hot side.',
       cards:['marisotter','marisotter','goldenprom','paleale','paleale','crystal60','crystal60','crystal40','ekg','ekg',

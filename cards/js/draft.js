@@ -87,6 +87,11 @@ function setScreen(id) {
 
 function showTitleScreen() {
   setScreen('title-screen');
+  // Shows which card data actually loaded — handy when a file didn't get replaced
+  const ver = document.getElementById('version-label');
+  if (ver) ver.textContent = typeof CARDS_VERSION !== 'undefined'
+    ? `v0.2 — prototype · cards: ${CARDS_VERSION}`
+    : 'v0.2 — prototype · cards: OLD FILE (replace js/cards.js)';
   const btn  = document.getElementById('continue-run-btn');
   const info = document.getElementById('continue-run-info');
   const has  = hasSavedRun();

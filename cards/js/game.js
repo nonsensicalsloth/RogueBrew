@@ -239,7 +239,7 @@ function advanceTurn() {
   addLog(`▸ Turn ${state.turn} — Budget: ${state.budget}`);
 
   drawCards(1, state.pDeck, state.pHand);
-  if (!state.ePassed) drawCards(state.rivalTrait === 'massprod' ? 2 : 1, state.eDeck, state.eHand);
+  if (!state.ePassed) drawCards(state.rivalTrait === 'massprod' && state.turn % 3 === 0 ? 2 : 1, state.eDeck, state.eHand);
   if (state.rivalTrait === 'spontaneous' && state.turn % 3 === 0) {
     addLog('Spontaneous Fermentation: wild microbes drift into your deck...', 'enemy');
     shuffleIntoRemainingDeck('p', 'contamination');

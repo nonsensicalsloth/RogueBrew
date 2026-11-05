@@ -60,6 +60,9 @@ function playToLane(lane) {
   render();
 }
 
+// Process cards that already draw on their own don't get the extra cantrip draw
+const CANTRIP_EXEMPT = ['drunkcellar', 'drunkbrewer', 'inspector'];
+
 // ── Shared play resolution (player and rival) ──
 // Places the card, runs its effect and synergies, then tidies up.
 function resolvePlay(c, lane, who) {
@@ -93,13 +96,15 @@ function resolvePlay(c, lane, who) {
   if (c.tags && c.tags.includes('c-hop'))   applyCHopSynergy(lane, who);
   if (c.tags && c.tags.includes('nuanced')) applyNuancedSynergy(who);
 
-  // Process cards that ended with no points leave the board after resolving
+  // Process cards that ended with no points leave the board after resolving,
+  // and replace themselves with a card draw (a "cantrip", like Slay the Spire)
   if (c.cat === 'process' && c.points === 0) {
     LANES.forEach(l => {
       const i = state.field[l][who].indexOf(c);
       if (i >= 0) state.field[l][who].splice(i, 1);
     });
     (who === 'p' ? state.pDiscard : state.eDiscard).push(c);
+    if (!CANTRIP_EXEMPT.includes(c.id)) drawFor(who, 1);
   }
 
   // Track last played card AFTER effects, so Double Batch / Blueberry see the previous one
