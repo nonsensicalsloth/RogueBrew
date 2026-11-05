@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'rebalance 2 (Nov 5)';
+const CARDS_VERSION = 'rebalance 3 (Nov 5)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -9,19 +9,19 @@ const CARDS_VERSION = 'rebalance 2 (Nov 5)';
 
 const CARD_POOL = [
   // ── Base Malts ──
-  { id:'2row',        name:'2-Row Malt',           cat:'malt', lane:'hot', points:10, cost:1, tags:['neutral'],         desc:'Basic points, no frills.' },
+  { id:'2row',        name:'2-Row Malt',           cat:'malt', lane:'hot', points:10, cost:1, tags:['neutral'],         desc:'No effect. Counts as neutral for Flaked Corn.' },
   { id:'pilsner',     name:'Pilsner Malt',          cat:'malt', lane:'hot', points:8,  cost:1, tags:['crisp'],           desc:'If it is the first card you play this turn, draw 1.' },
   { id:'6row',        name:'6-Row Malt',            cat:'malt', lane:'hot', points:6,  cost:1, tags:['neutral'],          desc:'Next card you play this turn costs 1 less.' },
   { id:'marisotter',  name:'Maris Otter',           cat:'malt', lane:'hot', points:12, cost:2, tags:['biscuity'],        desc:'If you have 3+ combined crystal/dark malts on hot side, +8 pts.' },
-  { id:'goldenprom',  name:'Golden Promise',        cat:'malt', lane:'hot', points:18, cost:2, tags:['sweet'],           desc:'Premium base malt. High flat score.' },
+  { id:'goldenprom',  name:'Golden Promise',        cat:'malt', lane:'hot', points:18, cost:2, tags:['sweet'],           desc:'No effect, big base score.' },
   { id:'vienna',      name:'Vienna Malt',           cat:'malt', lane:'hot', points:10,  cost:2, tags:['smooth'],          desc:'Increases base score of all other malts on your hot side by +2.' },
-  { id:'munich',      name:'Munich Malt',           cat:'malt', lane:'hot', points:14, cost:2, tags:['malty'],           desc:'Rich bready character.' },
+  { id:'munich',      name:'Munich Malt',           cat:'malt', lane:'hot', points:18, cost:2, tags:['malty'],           desc:'No effect, big base score.' },
   { id:'wheatwhite',  name:'White Wheat Malt',      cat:'malt', lane:'hot', points:8,  cost:1, tags:['bready','hazy'],          desc:'Add a Body card (0 cost, +5 pts) to your hand when played.' },
   { id:'expilsner',   name:'Extra Pale Pilsner',    cat:'malt', lane:'hot', points:12, cost:2, tags:['crisp'],           desc:'Your next hop this round gets +2 pts.' },
   { id:'floorpilsner',name:'Floor Malted Pilsner',  cat:'malt', lane:'hot', points:19, cost:3, tags:['crisp'],           desc:'If no crystal or dark malts on hot side, +10 bonus pts.' },
   { id:'darkmunich',  name:'Dark Munich',           cat:'malt', lane:'hot', points:19, cost:3, tags:['bready','toasty'], desc:'Each crystal malt already on your hot side gets +4 pts.' },
   { id:'expwheat',    name:'Extra Pale Wheat',      cat:'malt', lane:'hot', points:12, cost:2, tags:['neutral','crisp'], desc:'Your next hop this round gets +3 pts.' },
-  { id:'paleale',     name:'Pale Ale Malt',         cat:'malt', lane:'hot', points:10, cost:1, tags:['biscuity'],        desc:'Simple reliable base malt.' },
+  { id:'paleale',     name:'Pale Ale Malt',         cat:'malt', lane:'hot', points:11, cost:1, tags:['biscuity'],        desc:'No effect. A touch richer than 2-Row.' },
   { id:'heritage',    name:'Local Grown Heritage',  cat:'malt', lane:'hot', points:15, cost:3, tags:['nuanced'],         desc:'Nuanced cards multiply each other.' },
 
   // ── Light Crystal (multiply cheap cards) ──
@@ -46,7 +46,7 @@ const CARD_POOL = [
   { id:'aromatic',   name:'Aromatic Malt', cat:'malt', lane:'hot', points:14, cost:2, tags:['malty','bready'],          desc:'Copies the on-play effect of the last malt you played this round.' },
   { id:'biscuit',    name:'Biscuit Malt',  cat:'malt', lane:'hot', points:3,  cost:2, tags:['biscuity','toasty'],       desc:'Scores 3 × the number of cards on your hot side (including itself). Cannot benefit from multipliers.' },
   { id:'victory',    name:'Victory Malt',  cat:'malt', lane:'hot', points:18, cost:3, tags:['biscuity','toasty'],       desc:'If you win the round this was played in, it stays on the board next round instead of discarding.' },
-  { id:'caramun',    name:'Caramunich',    cat:'malt', lane:'hot', points:14, cost:2, tags:['sweet','toasty'],          desc:'Rich caramel and bread character.' },
+  { id:'caramun',    name:'Caramunich',    cat:'malt', lane:'hot', points:17, cost:2, tags:['sweet','toasty'],          desc:'No effect, but sweet and toasty for synergies.' },
 
   // ── Dark Malts ──
   { id:'choc',        name:'Chocolate Malt',   cat:'malt', lane:'hot', points:21, cost:3, tags:['toasty','roasty'],  desc:'Adds 1 roast token.' },
