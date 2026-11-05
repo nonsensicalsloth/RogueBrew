@@ -191,6 +191,9 @@
 /* ── Live values on formula cards (green = better than printed, red = worse) ── */
 .card-pts-gem.pts-up   { color: #69f0ae !important; border-color: #69f0ae !important; box-shadow: 0 0 6px #69f0ae; }
 .card-pts-gem.pts-down { color: #ff5252 !important; border-color: #ff5252 !important; box-shadow: 0 0 6px #ff5252; }
-.now-note        { color: var(--text); white-space: nowrap; }
+.now-note        { color: var(--text); display: block; margin-top: 2px; }
 .now-note.pts-up   { color: #69f0ae; }
 .now-note.pts-down { color: #ff5252; }
+
+/* Long effect text wraps inside the card instead of spilling past the edge */
+.card-effect-text { overflow-wrap: anywhere; word-break: break-word; overflow: hidden; }
