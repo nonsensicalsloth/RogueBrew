@@ -9,7 +9,7 @@
 // requested size is larger than the list.
 
 const RIVAL_SIZES = { battle: [15, 20, 25], boss: [20, 25, 30], festival: 30 };
-const RIVAL_ACT_BONUS = [0, 0, 1];   // flat points added to each scoring card
+const RIVAL_ACT_BONUS = [0, 0, 0];   // flat points added to each scoring card
 const BOSS_EXTRA_BONUS = [1, 0, 0];  // extra per-card points for bosses, by act (act 1 bosses need a boost)
 
 const LOCAL_RIVALS = [

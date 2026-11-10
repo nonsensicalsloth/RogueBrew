@@ -647,3 +647,13 @@ body::after {
 .howto-room > span { font-size:16px; }
 .howto-room b { color:var(--text); }
 .howto-nav { display:flex; gap:14px; align-items:center; justify-content:center; margin-top:12px; }
+
+/* ── Rival intent ── */
+.rival-intent { display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-size:7px; padding:4px 8px; margin:2px 0 4px;
+  border:1px dashed var(--enemy); background:rgba(244,67,54,0.06); }
+.intent-label { color:var(--enemy); }
+.intent-icon { font-size:11px; }
+.intent-icon small { font-size:6px; color:var(--dim); margin-left:1px; }
+.intent-gain { color:var(--text); }
+.intent-attack { color:#ff8a80; border:1px solid #ff5252; padding:1px 4px; }
+.intent-quiet { color:var(--dim); }

@@ -194,6 +194,7 @@ function startRound() {
   if (state.rivalTrait === 'roastmaster') state.eRoastThreshold = 10;
   drawCards(hasRelic('grainmill') ? 2 : 1, state.pDeck, state.pHand);
   drawCards(1, state.eDeck, state.eHand);
+  planRivalTurn();
 }
 
 function endRound() {
@@ -282,6 +283,7 @@ function advanceTurn() {
   checkContaminationInHand('e');
 
   state.playerTurn = true;
+  planRivalTurn();          // rival commits to next turn; you see it as an intent
   render();
 }
 

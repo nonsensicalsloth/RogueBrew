@@ -125,6 +125,7 @@ const HOWTO_CONTENT = {
       `You start with 5 cards (you can send back up to 2), then <b>draw 1 each turn</b>. When your deck runs out, your discard pile is shuffled back in.`,
       `<b>To play a card:</b> click it in your hand, then click the side you want.`,
       `Click <b>END TURN</b> when you're done. Then the rival brews, and the panel above your hand shows what they did.`,
+      `<b>RIVAL NEXT</b>, above the rival's board, shows what they've committed to playing on their turn: ingredient icons, which side (H or C), roughly how many points, and any ⚔️ attacks coming your way. Plan around it.`,
       `Cards stay on the board all round. Highest total score at the end wins.`,
     ]) +
     hbox('Things to watch for',

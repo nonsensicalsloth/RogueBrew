@@ -248,6 +248,14 @@ function render() {
   const bIcon = bDef ? `<span class="relic-icon" title="${bDef.name} — Passive: ${bDef.passive} | Ability: ${bDef.ability.name}: ${bDef.ability.desc}">${bDef.icon}</span>` : '';
   if (relicBar) relicBar.innerHTML = state.currentNode ? bIcon + relicIconsHtml() : '';
 
+  // What the rival is about to do (committed plan)
+  const intentEl = document.getElementById('rival-intent');
+  if (intentEl) {
+    const show = state.phase === 'play' && state.playerTurn && state.rivalPlan;
+    intentEl.style.display = show ? '' : 'none';
+    intentEl.innerHTML = show ? rivalIntentHtml() : '';
+  }
+
   // What the rival just did, shown until you end your turn
   const sumEl = document.getElementById('rival-summary');
   if (sumEl) {

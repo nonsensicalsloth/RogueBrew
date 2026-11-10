@@ -165,11 +165,9 @@ function enemyPass(reason) {
 // Prioritizes disruptive process cards when behind,
 // otherwise plays highest scoring card it can afford.
 
-const ENEMY_DISRUPT_CARDS = new Set([
-  'badbatch','inspector','crosscontam','drunkcellar','drunkbrewer','hopthief'
-]);
-function enemyPlayCard(c) {
-  const lane = rivalLaneFor(c);
+// Rival decisions live in rivalai.js (planning, intents). This just plays them out.
+function enemyPlayCard(c, laneOverride) {
+  const lane = laneOverride || rivalLaneFor(c);
   addLog(c.cat === 'process' ? `Rival uses ${c.name}!` : `Rival plays ${c.name} (+${c.points}) → ${LANE_NAMES[lane]}`, 'enemy');
   resolvePlay(c, lane, 'e');
 }
@@ -186,38 +184,10 @@ function enemyTurn() {
   }, 350);
   if (state.ePassed) { setTimeout(() => advanceTurn(), 300); return; }
 
-  const lead = totalScore('e') - totalScore('p');
-
-
-  let remaining = getBudget(state.turn, 'e');
-  let playedAny = false;
-
-  // If behind, try a disruptive card first
-  if (lead < 0) {
-    const disrupt = state.eHand.filter(c => ENEMY_DISRUPT_CARDS.has(c.id) && c.cost <= remaining);
-    if (disrupt.length > 0) {
-      const c = disrupt[0];
-      state.eHand.splice(state.eHand.indexOf(c), 1);
-      remaining -= c.cost;
-      enemyPlayCard(c);
-      playedAny = true;
-    }
-  }
-
-  // Keep playing highest scoring affordable cards until budget runs out
-  while (remaining > 0) {
-    const sorted = state.eHand
-      .filter(c => !ENEMY_DISRUPT_CARDS.has(c.id) && c.cost <= remaining && c.points >= 0 && !rivalWouldOverload(c))
-      .sort((a, b) => b.points - a.points);
-    if (sorted.length === 0) break;
-    const c = sorted[0];
-    state.eHand.splice(state.eHand.indexOf(c), 1);
-    remaining -= c.cost;
-    enemyPlayCard(c);
-    playedAny = true;
-  }
-
-  if (!playedAny) addLog('Rival has nothing to play.', 'enemy');
+  // Play the plan the rival committed to (shown as its intent during your turn)
+  if (!state.rivalPlan) planRivalTurn();
+  const played = executeRivalPlan();
+  if (!played) addLog('Rival holds back this turn.', 'enemy');
 
   // Stop if completely out of cards
   if (state.eHand.length === 0 && state.eDeck.length === 0 && state.eDiscard.length === 0) enemyPass('out of ingredients');
