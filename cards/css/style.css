@@ -617,9 +617,11 @@ body::after {
 @keyframes mapPulse { 0%,100% { opacity:0.25; } 50% { opacity:0.9; } }
 
 /* ── Deck builder filters ── */
-.builder-filters { display:flex; flex-wrap:wrap; gap:6px 16px; align-items:center; padding:6px 0 10px; }
+.builder-filters { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; padding:8px 0 12px; }
 .filter-group { display:flex; gap:4px; align-items:center; flex-wrap:wrap; }
-.filter-group > span { font-size:6px; color:var(--dim); margin-right:2px; }
-.btn.filter-chip { font-size:6px; padding:3px 6px; }
-.collection-count { font-size:6px; color:var(--gold); margin-left:8px; }
+.filter-group > span { font-size:8px; color:var(--text); margin-right:4px; }
+.btn.filter-chip { font-size:8px; padding:5px 9px; color:var(--text); background:var(--bg2); border:2px solid var(--border); opacity:1; }
+.btn.filter-chip:hover { border-color:var(--gold); color:var(--gold); }
+.btn.filter-chip.active-tab { background:var(--gold); color:var(--bg); border-color:var(--gold); }
+.collection-count { font-size:8px; color:var(--gold); margin-left:8px; }
 .deck-slot-locked { font-size:6px; color:var(--orange); margin:4px 0; }
