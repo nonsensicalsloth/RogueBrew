@@ -1,203 +1,410 @@
-// battle.js — player card play, lane enforcement, enemy AI
+// battle.js - Auto-battle engine (1v1: active pokemon only)
 
-let selectedCard = null;
+function calcDamage(attacker, defender, move, items, defItems = []) {
+  const lvl = attacker.level;
+  const isSpecial = (attacker.baseStats?.special || 0) >= (attacker.baseStats?.atk || 0);
+  const atk = getEffectiveStat(attacker, isSpecial ? 'special' : 'atk', items);
+  const def = getEffectiveStat(defender, isSpecial ? 'spdef' : 'def', defItems);
+  const power = move.power || 40;
+  const moveType = move.type || 'Blonde';
 
-// ── Player ──
+  let damage = Math.floor(((2 * lvl / 5 + 2) * power * atk / def / 50 + 2));
 
-function selectCard(idx) {
-  if (!state.playerTurn || state.phase !== 'play') return;
-  const c = state.pHand[idx];
-  if (!c || getEffectiveCost(c) > state.budget - state.budgetUsed) return;
-  // While Contamination is in hand, it's the only card you can pick
-  if (playerMustPlayContamination() && !isContamination(c)) return;
-  selectedCard = (selectedCard === idx) ? null : idx;
-  render();
-}
+  const typeEff = getTypeEffectiveness(moveType, defender.types || ['Blonde']);
+  // Cap each individual 2x type interaction at 1.5x so double weaknesses (4x)
+  // remain meaningfully stronger than single (2.25x vs 1.5x) without OHKOs.
+  // Resistances and immunities are left unchanged.
+  let cappedEff;
+  if      (typeEff >= 4.0) cappedEff = 2.25;  // double super effective → 1.5 × 1.5
+  else if (typeEff >= 2.0) cappedEff = 1.5;   // single super effective
+  else if (typeEff <= 0)   cappedEff = 0;      // immune
+  else                     cappedEff = typeEff; // neutral or resist — unchanged
+  damage = Math.floor(damage * cappedEff);
 
-function getEffectiveCost(c) {
-  // Honey is free if it's the first adjunct on your board this round
-  if (c.id === 'honey' && !getAllOnField('p').some(x => x.cat === 'adjunct')) return 0;
-  // Grapefruit Zest makes the next hop free; Hop Back makes the first hop each round free
-  if (c.cat === 'hop' && state.nextHopFree) return 0;
-  if (c.cat === 'hop' && hasRelic('hopback') && !state.hopBackUsed) return 0;
-  let discount = state.nextCardDiscount || 0;
-  if (c.cat === 'yeast') discount += (state.nextYeastDiscount || 0);
-  if (c.cat === 'hop')   discount += (state.nextHopDiscount   || 0);
-  return Math.max(0, c.cost - discount);
-}
-
-function playToLane(lane) {
-  if (selectedCard === null) return;
-  const c = state.pHand[selectedCard];
-  if (!c) return;
-
-  // Lane restriction check
-  const allowed = c.lane === 'both' ? ['hot', 'cold'] : [c.lane];
-  if (!allowed.includes(lane)) {
-    addLog(`Cannot play ${c.name} on ${LANE_NAMES[lane]}!`, 'warn');
-    return;
+  // STAB
+  if (attacker.types && attacker.types.some(t => t.toLowerCase() === moveType.toLowerCase())) {
+    damage = Math.floor(damage * 1.5);
   }
 
-  const effectiveCost = getEffectiveCost(c);
-  if (effectiveCost > state.budget - state.budgetUsed) {
-    addLog('Not enough budget!', 'warn');
-    return;
+  const typeBoostItem = getTypeBoostItem(moveType, items);
+  if (typeBoostItem) damage = Math.floor(damage * 1.4); // type boost: 40%
+
+  if (hasItem(items, 'life_orb'))      damage = Math.floor(damage * 1.3);
+  if (hasItem(items, 'hop_extract'))   damage = Math.floor(damage * 1.2);
+  if (hasItem(items, 'late_lunch'))    damage = Math.floor(damage * 1.5);
+  if (hasItem(items, 'pasteurization')) damage = Math.floor(damage * 2.0);
+  // Overcarbonated: first hit only — flag checked/set in the turn loop after calcDamage returns
+  if (hasItem(items, 'overcarbonated') && !attacker._overcarb_fired) damage = Math.floor(damage * 2.0);
+
+  // Choice Band: +30% flavor (physical) damage, defender takes +30% more aroma (special) damage
+  // Choice Specs: +30% aroma (special) damage, defender takes +30% more flavor (physical) damage
+  if (isSpecial) {
+    if (hasItem(items, 'wise_glasses'))  damage = Math.floor(damage * 1.2);
+    if (hasItem(items, 'choice_specs'))  damage = Math.floor(damage * 1.3);
+    if (hasItem(defItems, 'choice_band')) damage = Math.floor(damage * 1.3); // band wearer takes more aroma
+  } else {
+    if (hasItem(items, 'muscle_band'))   damage = Math.floor(damage * 1.2);
+    if (hasItem(items, 'choice_band'))   damage = Math.floor(damage * 1.3);
+    if (hasItem(defItems, 'choice_specs')) damage = Math.floor(damage * 1.3); // specs wearer takes more flavor
   }
 
-  // Remove from hand, place on field
-  state.pHand.splice(selectedCard, 1);
-  state.budgetUsed += effectiveCost;
+  // Adaptability Band: +50% if team has ≤2 unique types
+  if (hasItem(items, 'adaptability_band')) {
+    const uniqueTypes = new Set((typeof state !== 'undefined' ? state.team : []).flatMap(p => p.types || []));
+    if (uniqueTypes.size <= 2) damage = Math.floor(damage * 1.5);
+  }
 
-  // Consume discounts
-  if (state.nextCardDiscount > 0) state.nextCardDiscount = 0;
-  if (c.cat === 'yeast') state.nextYeastDiscount = 0;
-  if (c.cat === 'hop')   { state.nextHopDiscount = 0; state.nextHopFree = false; state.hopBackUsed = true; }
+  if (hasItem(items, 'expert_belt') && typeEff >= 1.5) damage = Math.floor(damage * 1.2);
+  if (hasItem(defItems, 'air_balloon') && moveType.toLowerCase() === 'brown') damage = 0;
 
-  addLog(`You play ${c.name} (+${c.points}) → ${LANE_NAMES[lane]}`, 'player');
-  resolvePlay(c, lane, 'p');
+  // Hop Extract: attacker takes 20% more damage (handled in post-hit recoil below via flag)
+  // Oak Barrel: defender takes 20% less damage
+  if (hasItem(defItems, 'oak_barrel')) damage = Math.floor(damage * 0.8);
 
-  selectedCard = null;
-  render();
+  // Crit chance: 6.25% base
+  // scope_lens (Centrifuge): double crit chance (12.5%), normal 1.5x crit damage
+  // razor_claw (C-Box): base crit chance, but crits deal 3x damage
+  let critChance = 0.0625;
+  let critMult   = 1.5;
+  if (hasItem(items, 'scope_lens')) critChance = 0.125;
+  if (hasItem(items, 'razor_claw')) critMult   = 3.0;
+  const crit = Math.random() < critChance;
+  if (crit) damage = Math.floor(damage * critMult);
+
+  const rng = 0.85 + Math.random() * 0.15;
+  damage = Math.max(1, Math.floor(damage * rng));
+
+  return { damage, typeEff, moveType, crit };
 }
 
-// Process cards that already draw on their own don't get the extra cantrip draw
-const CANTRIP_EXEMPT = ['drunkcellar', 'drunkbrewer', 'inspector'];
+function getEffectiveStat(pokemon, stat, items) {
+  // spdef falls back to special for Gen 1 hardcoded teams that don't have it
+  const rawStat = stat === 'spdef'
+    ? (pokemon.baseStats?.spdef ?? pokemon.baseStats?.special ?? 50)
+    : (pokemon.baseStats?.[stat] ?? 50);
+  let val = rawStat || 50;
+  val = Math.floor(val * pokemon.level / 50) + 5;
 
-// ── Shared play resolution (player and rival) ──
-// Places the card, runs its effect and synergies, then tidies up.
-function resolvePlay(c, lane, who) {
-  c = softenContamination(c, who);
-  state.field[lane][who].push(c);
-
-  // Pending hop buff from Extra Pale Pilsner / Wheat (player only)
-  if (who === 'p' && c.cat === 'hop' && (state.pendingHopBuff || 0) > 0) {
-    c.points += state.pendingHopBuff;
-    addLog(`Hop buff applied: +${state.pendingHopBuff} to ${c.name}!`, 'player');
-    state.pendingHopBuff = 0;
+  if (stat === 'def') {
+    if (hasItem(items, 'eviolite'))     val = Math.floor(val * 1.5);
+    if (hasItem(items, 'assault_vest')) val = Math.floor(val * 1.4); // 40%
   }
-
-  // Hop Cannon relic: your cold side hops get +2
-  if (who === 'p' && c.cat === 'hop' && lane === 'cold' && hasRelic('hopcannon')) {
-    c.points += 2;
-    addLog(`Hop Cannon: ${c.name} +2!`, 'player');
+  if (stat === 'special' || stat === 'spdef') {
+    if (hasItem(items, 'eviolite'))     val = Math.floor(val * 1.5);
+    if (hasItem(items, 'assault_vest')) val = Math.floor(val * 1.4); // 40%
   }
-
-  // Haze Lord boss: its hops get +3
-  if (who === 'e' && c.cat === 'hop' && state.rivalTrait === 'juicebomb') c.points += 3;
-
-  // Any hop in the boil clears one Sugar Clot
-  if (c.cat === 'hop' && lane === 'hot') removeSugarClot(who);
-
-  applyCardEffect(c, lane, who);
-  applyThiolOnPlay(c, who);
-  trackLastHop(c, who);
-  trackLastMalt(c, who);
-
-  if (c.tags && c.tags.includes('c-hop'))   applyCHopSynergy(lane, who);
-  if (c.tags && c.tags.includes('nuanced')) applyNuancedSynergy(who);
-
-  // Process cards that ended with no points leave the board after resolving,
-  // and replace themselves with a card draw (a "cantrip", like Slay the Spire)
-  if (c.cat === 'process' && c.points === 0) {
-    LANES.forEach(l => {
-      const i = state.field[l][who].indexOf(c);
-      if (i >= 0) state.field[l][who].splice(i, 1);
-    });
-    (who === 'p' ? state.pDiscard : state.eDiscard).push(c);
-    if (!CANTRIP_EXEMPT.includes(c.id)) drawFor(who, 1);
+  if (stat === 'atk') {
+    if (hasItem(items, 'choice_scarf')) val = Math.floor(val * 0.75);
   }
-
-  // Track last played card AFTER effects, so Double Batch / Blueberry see the previous one
-  if (who === 'p') {
-    state.lastPlayedCard = c;
-    state.lastPlayedLane = lane;
+  if (stat === 'speed') {
+    if (hasItem(items, 'choice_scarf')) val = Math.floor(val * 1.5);
+    if (hasItem(items, 'oak_barrel'))   val = Math.floor(val * 0.8);  // -20% speed
+    if (hasItem(items, 'late_lunch'))   val = 0; // always goes last
   }
-  // Forced Contamination plays don't count as your "first card" (Pilsner Malt etc.)
-  state.cardsThisTurn = state.cardsThisTurn || { p: 0, e: 0 };
-  if (!isContamination(c)) state.cardsThisTurn[who]++;
-
-  checkContaminationInHand(who);
+  return Math.max(stat === 'speed' && hasItem(items, 'late_lunch') ? 0 : 1, val);
 }
 
-function endTurn() {
-  if (playerMustPlayContamination()) {
-    addLog('⚠ You must pour the Contamination before ending your turn.', 'warn');
-    render();
-    return;
-  }
-  selectedCard = null;
-  state.newCards = new Set();
-  state.rivalSummary = [];
-  state.playerTurn = false;
-  render();
-  setTimeout(() => { enemyTurn(); render(); }, 500);
+function hasItem(items, id) {
+  return items && items.some(it => it.id === id);
 }
 
-function enemyPass(reason) {
-  state.ePassed = true;
-  addLog(`Rival stops brewing this round${reason ? ' — ' + reason : ''}.`, 'enemy');
+function getTypeBoostItem(moveType, items) {
+  if (!items) return false;
+  const cap = moveType.charAt(0).toUpperCase() + moveType.slice(1).toLowerCase();
+  const needed = TYPE_ITEM_MAP[cap];
+  if (!needed) return false;
+  return items.some(it => it.id === needed);
 }
 
-// ── Enemy AI ──
-// Prioritizes disruptive process cards when behind,
-// otherwise plays highest scoring card it can afford.
+function runBattle(playerTeam, enemyTeam, bagItems, enemyItems, onLog) {
+  const items = bagItems; // bag — only used for Lucky Egg check in level gain
+  const pTeam = playerTeam.map(p => ({ ...p }));
+  const eTeam = enemyTeam.map(p => ({
+    ...p,
+    currentHp: p.currentHp !== undefined ? p.currentHp : calcHp(p.baseStats.hp, p.level),
+    maxHp:     p.maxHp     !== undefined ? p.maxHp     : calcHp(p.baseStats.hp, p.level),
+  }));
 
-const ENEMY_DISRUPT_CARDS = new Set([
-  'badbatch','inspector','crosscontam','drunkcellar','drunkbrewer','hopthief'
-]);
-function enemyPlayCard(c) {
-  const lane = rivalLaneFor(c);
-  addLog(c.cat === 'process' ? `Rival uses ${c.name}!` : `Rival plays ${c.name} (+${c.points}) → ${LANE_NAMES[lane]}`, 'enemy');
-  resolvePlay(c, lane, 'e');
-}
+  const log = [];
+  const detailedLog = [];
+  const addLog = (msg, cls = '') => { log.push({ msg, cls }); if (onLog) onLog(msg, cls); };
+  const playerParticipants = new Set();
 
-function enemyTurn() {
-  if (state.phase !== 'play') return;
-  // Capture the log lines from this rival turn so the player sees a summary
-  const logMark = state.logs[0];
-  setTimeout(() => {
-    const i = state.logs.indexOf(logMark);
-    state.rivalSummary = state.logs.slice(0, i < 0 ? state.logs.length : i)
-      .filter(l => l.type === 'enemy' || l.type === 'warn').map(l => l).reverse();
-    render();
-  }, 350);
-  if (state.ePassed) { setTimeout(() => advanceTurn(), 300); return; }
+  // Announce initial send-outs
+  const firstP = pTeam[0];
+  const firstE = eTeam[0];
+  if (firstP.currentHp > 0) playerParticipants.add(0);
+  detailedLog.push({ type: 'send_out', side: 'player', idx: 0, name: firstP.nickname || firstP.brewName || firstP.name });
+  detailedLog.push({ type: 'send_out', side: 'enemy',  idx: 0, name: firstE.name });
 
-  const lead = totalScore('e') - totalScore('p');
+  let rounds = 0;
+  const MAX_ROUNDS = 300;
 
+  while (pTeam.some(p => p.currentHp > 0) && eTeam.some(p => p.currentHp > 0) && rounds < MAX_ROUNDS) {
+    rounds++;
 
-  let remaining = getBudget(state.turn, 'e');
-  let playedAny = false;
+    // Active = first alive on each side
+    const pEntry = pTeam.map((p, i) => ({ p, idx: i })).find(x => x.p.currentHp > 0);
+    const eEntry = eTeam.map((p, i) => ({ p, idx: i })).find(x => x.p.currentHp > 0);
+    if (!pEntry || !eEntry) break;
 
-  // If behind, try a disruptive card first
-  if (lead < 0) {
-    const disrupt = state.eHand.filter(c => ENEMY_DISRUPT_CARDS.has(c.id) && c.cost <= remaining);
-    if (disrupt.length > 0) {
-      const c = disrupt[0];
-      state.eHand.splice(state.eHand.indexOf(c), 1);
-      remaining -= c.cost;
-      enemyPlayCard(c);
-      playedAny = true;
+    const { p: pActive, idx: pIdx } = pEntry;
+    const { p: eActive, idx: eIdx } = eEntry;
+
+    // Ditto: Transform into the active enemy pokemon (once per send-out)
+    if (pActive.speciesId === 132 && !pActive._transformed) {
+      pActive._transformed = true;
+      pActive.types     = [...(eActive.types || ['Blonde'])];
+      pActive.baseStats = { ...eActive.baseStats };
+      pActive.spriteUrl = eActive.spriteUrl || '';
+      const dName = pActive.nickname || pActive.brewName || pActive.name;
+      addLog(`${dName} transformed into ${eActive.name}!`, 'log-player');
+      detailedLog.push({ type: 'transform', side: 'player', idx: pIdx,
+        name: dName, intoName: eActive.name, spriteUrl: pActive.spriteUrl,
+        types: pActive.types });
+    }
+
+    // Per-Pokemon held items for this round
+    const pActiveItems = pActive.heldItems || [];
+    const eActiveItems = eActive.heldItems || [];
+
+    // Speed determines turn order
+    const pSpeed = getEffectiveStat(pActive, 'speed', pActiveItems);
+    const eSpeed = getEffectiveStat(eActive, 'speed', eActiveItems);
+
+    // If both active Pokemon can only use noDamage moves, force Struggle to break the stalemate
+    const pMove = getBestMove(pActive.types || ['Blonde'], pActive.baseStats, pActive.speciesId, pActive.moveTier ?? 1);
+    const eMove = getBestMove(eActive.types || ['Blonde'], eActive.baseStats, eActive.speciesId, eActive.moveTier ?? 1);
+    const bothUseless = pMove.noDamage && eMove.noDamage;
+
+    const turns = pSpeed >= eSpeed
+      ? [{ attacker: pActive, aIdx: pIdx, side: 'player', target: eActive, tIdx: eIdx, tSide: 'enemy' },
+         { attacker: eActive, aIdx: eIdx, side: 'enemy',  target: pActive, tIdx: pIdx, tSide: 'player' }]
+      : [{ attacker: eActive, aIdx: eIdx, side: 'enemy',  target: pActive, tIdx: pIdx, tSide: 'player' },
+         { attacker: pActive, aIdx: pIdx, side: 'player', target: eActive, tIdx: eIdx, tSide: 'enemy' }];
+
+    for (const { attacker, aIdx, side, target, tIdx, tSide } of turns) {
+      if (attacker.currentHp <= 0 || target.currentHp <= 0) continue;
+
+      let move = getBestMove(attacker.types || ['Blonde'], attacker.baseStats, attacker.speciesId, attacker.moveTier ?? 1);
+      // If both sides are stuck with useless moves, force Struggle on both
+      if (bothUseless) {
+        move = { name: 'Struggle', power: 50, type: 'Blonde', isSpecial: false };
+      }
+      // If the attacker's best move has no effect on the target, use Struggle (typeless)
+      if (!move.noDamage && getTypeEffectiveness(move.type, target.types || ['Blonde']) === 0) {
+        move = { name: 'Struggle', power: 50, type: 'Blonde', isSpecial: false };
+      }
+      const attackerItems = side === 'player' ? pActiveItems : eActiveItems;
+      const defenderItems = side === 'player' ? eActiveItems : pActiveItems;
+
+      if (move.noDamage) {
+        const aName = attacker.nickname || attacker.brewName || attacker.name;
+        addLog(`${side === 'player' ? '' : '(enemy) '}${aName} used ${move.name}! But nothing happened!`,
+               side === 'player' ? 'log-player' : 'log-enemy');
+        detailedLog.push({
+          type: 'attack', side, attackerIdx: aIdx, attackerName: aName,
+          targetSide: tSide, targetIdx: tIdx, targetName: target.nickname || target.name,
+          moveName: move.name, moveType: move.type, damage: 0, typeEff: 1, crit: false, isSpecial: false,
+          attackerHpAfter: attacker.currentHp, targetHpAfter: target.currentHp,
+        });
+        continue;
+      }
+
+      const { damage, typeEff, moveType, crit } = calcDamage(attacker, target, move, attackerItems, defenderItems);
+
+      const targetPreHp = target.currentHp;
+      target.currentHp = Math.max(0, target.currentHp - damage);
+
+      // Focus Band: 15% chance to survive a KO at 1 HP (works for both sides)
+      if (target.currentHp === 0 && targetPreHp > 0 && (target.heldItems||[]).some(it=>it.id==='focus_band') && Math.random() < 0.15) {
+        target.currentHp = 1;
+      }
+
+      const aName = attacker.nickname || attacker.brewName || attacker.name;
+      const tName = target.nickname || target.name;
+
+      let effText = '';
+      if (typeEff >= 2)   effText = ' Super effective!';
+      else if (typeEff === 0) effText = ' No effect!';
+      else if (typeEff < 1)  effText = ' Not very effective...';
+
+      addLog(`${side === 'player' ? '' : '(enemy) '}${aName} used ${move.name} → ${tName} took ${damage} dmg.${effText}`,
+             side === 'player' ? 'log-player' : 'log-enemy');
+
+      detailedLog.push({
+        type: 'attack', side, attackerIdx: aIdx, attackerName: aName,
+        targetSide: tSide, targetIdx: tIdx, targetName: tName,
+        moveName: move.name, moveType, damage, typeEff, crit, isSpecial: move.isSpecial,
+        attackerHpAfter: attacker.currentHp, targetHpAfter: target.currentHp,
+      });
+
+      // Life Orb recoil
+      if ((attacker.heldItems||[]).some(it=>it.id==='life_orb')) {
+        const recoil = Math.max(1, Math.floor(attacker.maxHp * 0.1));
+        attacker.currentHp = Math.max(0, attacker.currentHp - recoil);
+        addLog(`${aName} lost ${recoil} HP from Banquet Beer Stash!`, 'log-item');
+        detailedLog.push({ type: 'effect', side, idx: aIdx, name: aName,
+          hpChange: -recoil, hpAfter: attacker.currentHp, reason: `${aName} lost ${recoil} HP from Banquet Beer Stash!` });
+      }
+
+      // Hop Extract: attacker takes 20% of damage dealt as recoil
+      if ((attacker.heldItems||[]).some(it=>it.id==='hop_extract')) {
+        const recoil = Math.max(1, Math.floor(damage * 0.2));
+        attacker.currentHp = Math.max(0, attacker.currentHp - recoil);
+        addLog(`${aName} took ${recoil} recoil from Hop Extract!`, 'log-item');
+        detailedLog.push({ type: 'effect', side, idx: aIdx, name: aName,
+          hpChange: -recoil, hpAfter: attacker.currentHp, reason: `${aName} took ${recoil} recoil from Hop Extract!` });
+      }
+
+      // Overcarbonated: first hit of the battle deals 2x (already applied in calcDamage via flag),
+      // then attacker loses 50% current HP (floor at 10% max HP)
+      if ((attacker.heldItems||[]).some(it=>it.id==='overcarbonated') && !attacker._overcarb_fired) {
+        attacker._overcarb_fired = true;
+        const floor = Math.max(1, Math.floor(attacker.maxHp * 0.1));
+        const loss  = Math.floor(attacker.currentHp * 0.5);
+        attacker.currentHp = Math.max(floor, attacker.currentHp - loss);
+        addLog(`${aName} vented pressure! Lost ${loss} HP from Overcarbonated!`, 'log-item');
+        detailedLog.push({ type: 'effect', side, idx: aIdx, name: aName,
+          hpChange: -loss, hpAfter: attacker.currentHp, reason: `Overcarbonated pressure vent!` });
+      }
+
+      // "Barrel-aged" Helmet
+      if (side === 'enemy' && (target.heldItems||[]).some(it=>it.id==='"barrel-aged"_helmet')) {
+        const helmet = Math.max(1, Math.floor(attacker.maxHp * 0.15));
+        attacker.currentHp = Math.max(0, attacker.currentHp - helmet);
+        addLog(`Steel Jacket hurt ${aName} for ${helmet} HP!`, 'log-item');
+        detailedLog.push({ type: 'effect', side: 'enemy', idx: aIdx, name: aName,
+          hpChange: -helmet, hpAfter: attacker.currentHp, reason: `Steel Jacket hurt ${aName} for ${helmet} HP!` });
+      }
+
+      // Shell Bell: 20% lifesteal (works for both sides)
+      if ((attacker.heldItems||[]).some(it=>it.id==='shell_bell')) {
+        const heal   = Math.max(1, Math.floor(damage * 0.20));
+        const actual = Math.min(heal, attacker.maxHp - attacker.currentHp);
+        if (actual > 0) {
+          attacker.currentHp += actual;
+          addLog(`Closed Loop restored ${actual} HP to ${aName}!`, 'log-item');
+          detailedLog.push({ type: 'effect', side, idx: aIdx, name: aName,
+            hpChange: actual, hpAfter: attacker.currentHp, reason: `Closed Loop restored ${actual} HP to ${aName}!` });
+        }
+      }
+
+      // Faint checks
+      if (target.currentHp <= 0) {
+        addLog(`${tName} fainted!`, 'log-faint');
+        detailedLog.push({ type: 'faint', side: tSide, idx: tIdx, name: tName });
+        const nextTeam = tSide === 'player' ? pTeam : eTeam;
+        const next = nextTeam.map((p, i) => ({ p, idx: i })).find(x => x.p.currentHp > 0);
+        if (next) {
+          if (tSide === 'player') playerParticipants.add(next.idx);
+          const nName = next.p.nickname || next.p.brewName || next.p.name;
+          addLog(`${nName} was sent out!`, tSide === 'player' ? 'log-player' : 'log-enemy');
+          detailedLog.push({ type: 'send_out', side: tSide, idx: next.idx, name: nName });
+        }
+      }
+
+      if (attacker.currentHp <= 0) {
+        addLog(`${aName} fainted!`, 'log-faint');
+        detailedLog.push({ type: 'faint', side, idx: aIdx, name: aName });
+        const nextTeam = side === 'player' ? pTeam : eTeam;
+        const next = nextTeam.map((p, i) => ({ p, idx: i })).find(x => x.p.currentHp > 0);
+        if (next) {
+          if (side === 'player') playerParticipants.add(next.idx);
+          const nName = next.p.nickname || next.p.brewName || next.p.name;
+          addLog(`${nName} was sent out!`, side === 'player' ? 'log-player' : 'log-enemy');
+          detailedLog.push({ type: 'send_out', side, idx: next.idx, name: nName });
+        }
+      }
+    }
+
+    // Leftovers: heal active pokemon on each side 1/16 maxHP each round
+    const activeP = pTeam.map((p, i) => ({ p, i })).find(x => x.p.currentHp > 0);
+    if ((activeP?.p.heldItems||[]).some(it=>it.id==='leftovers')) {
+      const heal = Math.max(1, Math.floor(activeP.p.maxHp / 16));
+      const actual = Math.min(heal, activeP.p.maxHp - activeP.p.currentHp);
+      if (actual > 0) {
+        activeP.p.currentHp += actual;
+        const n = activeP.p.nickname || activeP.p.brewName || activeP.p.name;
+        addLog(`Yeast Nutrient restored ${actual} HP to ${n}!`, 'log-item');
+        detailedLog.push({ type: 'effect', side: 'player', idx: activeP.i, name: n,
+          hpChange: actual, hpAfter: activeP.p.currentHp, reason: `Yeast Nutrient restored ${actual} HP to ${n}!` });
+      }
+    }
+    const activeE = eTeam.map((p, i) => ({ p, i })).find(x => x.p.currentHp > 0);
+    if ((activeE?.p.heldItems||[]).some(it=>it.id==='leftovers')) {
+      const heal = Math.max(1, Math.floor(activeE.p.maxHp / 16));
+      const actual = Math.min(heal, activeE.p.maxHp - activeE.p.currentHp);
+      if (actual > 0) {
+        activeE.p.currentHp += actual;
+        const n = activeE.p.nickname || activeE.p.brewName || activeE.p.name;
+        addLog(`Yeast Nutrient restored ${actual} HP to ${n}!`, 'log-item');
+        detailedLog.push({ type: 'effect', side: 'enemy', idx: activeE.i, name: n,
+          hpChange: actual, hpAfter: activeE.p.currentHp, reason: `Yeast Nutrient restored ${actual} HP to ${n}!` });
+      }
     }
   }
 
-  // Keep playing highest scoring affordable cards until budget runs out
-  while (remaining > 0) {
-    const sorted = state.eHand
-      .filter(c => !ENEMY_DISRUPT_CARDS.has(c.id) && c.cost <= remaining && c.points >= 0 && !rivalWouldOverload(c))
-      .sort((a, b) => b.points - a.points);
-    if (sorted.length === 0) break;
-    const c = sorted[0];
-    state.eHand.splice(state.eHand.indexOf(c), 1);
-    remaining -= c.cost;
-    enemyPlayCard(c);
-    playedAny = true;
+  const playerWon = pTeam.some(p => p.currentHp > 0) && !eTeam.some(p => p.currentHp > 0);
+  addLog(playerWon ? '--- Victory! ---' : '--- Defeat! ---', playerWon ? 'log-win' : 'log-lose');
+  detailedLog.push({ type: 'result', playerWon });
+
+  return { playerWon, log, detailedLog, pTeam, eTeam, playerParticipants };
+}
+
+function getLevelGain(team, bagItems) {
+  const hasLucky = (team || []).some(p => (p.heldItems||[]).some(it=>it.id==='lucky_egg')) || hasItem(bagItems, 'lucky_egg');
+  return hasLucky ? 3 : 2;
+}
+
+// Applies level gains and returns an array of level-up events for animation.
+// Each entry: { idx, pokemon, oldLevel, newLevel, preHp }
+function applyLevelGain(team, bagItems, participantIdxs, maxEnemyLevel = 0, hardMode = false) {
+  const baseGain = hardMode ? 1 : getLevelGain(team, bagItems);
+  const levelUps = [];
+
+  for (let i = 0; i < team.length; i++) {
+    const p = team[i];
+    const getsXp = p.currentHp > 0 || (participantIdxs && participantIdxs.has(i));
+    if (!getsXp) continue;
+
+    // Pasteurization: holder never levels up
+    if ((p.heldItems || []).some(it => it.id === 'pasteurization')) continue;
+
+    const overleveled = !hardMode && maxEnemyLevel > 0 && p.level > maxEnemyLevel + 5;
+    const gain = overleveled ? 1 : baseGain;
+    const oldLevel = p.level;
+    const newLevel = Math.min(100, oldLevel + gain);
+    if (newLevel === oldLevel) continue; // already at cap
+
+    const preHp = p.currentHp;
+    p.level = newLevel;
+    const newMaxHp = calcHp(p.baseStats.hp, newLevel);
+    if (p.currentHp > 0) {
+      p.currentHp = Math.min(p.currentHp + (newMaxHp - p.maxHp), newMaxHp);
+    }
+    p.maxHp = newMaxHp;
+
+    levelUps.push({ idx: i, pokemon: p, oldLevel, newLevel, preHp });
   }
 
-  if (!playedAny) addLog('Rival has nothing to play.', 'enemy');
+  return levelUps;
+}
 
-  // Stop if completely out of cards
-  if (state.eHand.length === 0 && state.eDeck.length === 0 && state.eDiscard.length === 0) enemyPass('out of ingredients');
-
-  setTimeout(() => advanceTurn(), 300);
+// Pizza Party: heal 5% max HP to all living team members after every battle.
+// Stacks if multiple pokemon hold it.
+function applyPizzaParty(team) {
+  const holders = team.filter(p => p.currentHp > 0 && (p.heldItems||[]).some(it => it.id === 'pizza_party'));
+  if (holders.length === 0) return [];
+  const heals = [];
+  for (const p of team) {
+    if (p.currentHp <= 0) continue;
+    const healAmt = Math.max(1, Math.floor(p.maxHp * 0.05 * holders.length));
+    const actual  = Math.min(healAmt, p.maxHp - p.currentHp);
+    if (actual > 0) {
+      p.currentHp += actual;
+      heals.push({ name: p.nickname || p.brewName || p.name, amount: actual });
+    }
+  }
+  return heals;
 }
