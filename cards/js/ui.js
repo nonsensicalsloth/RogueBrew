@@ -224,6 +224,23 @@ function render() {
     if (m) m.textContent = state.phase === 'play' && state.judging && laneMultiplier(l) > 1 ? ' ×2' : '';
   }));
 
+  // Complete Beer indicator
+  const beerEl = document.getElementById('beer-pill');
+  if (beerEl) {
+    const show = state.phase === 'play' || state.phase === 'between';
+    beerEl.style.display = show ? '' : 'none';
+    if (show) {
+      const b = beerStatus('p'), r = beerStatus('e');
+      const mine = b.specialty ? `🍺 SPECIALTY BEER +${b.bonus}`
+                 : b.complete  ? `🍺 COMPLETE BEER +${b.bonus}`
+                 : `🍺 NEED: ${b.missing.join(', ').toUpperCase()}`;
+      beerEl.textContent = mine;
+      beerEl.style.color = b.complete ? 'var(--gold)' : 'var(--dim)';
+      beerEl.title = `Malt + hop + yeast on your board: +${COMPLETE_BEER_BONUS}. Add an adjunct: +${SPECIALTY_BEER_BONUS} more.`
+        + ` Rival: ${r.complete ? `${r.specialty ? 'Specialty' : 'Complete'} Beer (+${r.bonus})` : 'needs ' + r.missing.join(', ')}.`;
+    }
+  }
+
   const relicBar = document.getElementById('relic-bar');
   const bDef = breweryDef();
   const bIcon = bDef ? `<span class="relic-icon" title="${bDef.name} — Passive: ${bDef.passive} | Ability: ${bDef.ability.name}: ${bDef.ability.desc}">${bDef.icon}</span>` : '';

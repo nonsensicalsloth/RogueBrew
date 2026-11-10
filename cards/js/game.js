@@ -121,8 +121,25 @@ function laneScore(lane, who) {
   }
   return score * laneMultiplier(lane);
 }
+// ── Complete Beer bonus ──
+// You can't make beer without malt, hops and yeast. Having all three on your board
+// earns a flat bonus; adding an adjunct makes it a Specialty Beer for a bit more.
+// It counts live, so the scoreboard always includes it.
+const COMPLETE_BEER_BONUS  = 30;
+const SPECIALTY_BEER_BONUS = 10;
+const BEER_PARTS = ['malt', 'hop', 'yeast'];
+
+function beerStatus(who) {
+  const cats    = new Set(LANES.flatMap(l => state.field[l][who].map(c => c.cat)));
+  const missing = BEER_PARTS.filter(c => !cats.has(c));
+  const complete  = missing.length === 0;
+  const specialty = complete && cats.has('adjunct');
+  const bonus = complete ? COMPLETE_BEER_BONUS + (specialty ? SPECIALTY_BEER_BONUS : 0) : 0;
+  return { complete, specialty, missing, bonus };
+}
+
 function totalScore(who) {
-  return LANES.reduce((s, l) => s + laneScore(l, who), 0);
+  return LANES.reduce((s, l) => s + laneScore(l, who), 0) + beerStatus(who).bonus;
 }
 
 // ── Logging ──
@@ -180,6 +197,10 @@ function startRound() {
 function endRound() {
   const ps = totalScore('p'), es = totalScore('e');
   state.lastRoundScore = { p: ps, e: es };
+  ['p', 'e'].forEach(w => {
+    const b = beerStatus(w);
+    if (b.complete) addLog(`🍺 ${w === 'p' ? 'Your' : "Rival's"} ${b.specialty ? 'Specialty' : 'Complete'} Beer: +${b.bonus}`, w === 'p' ? 'player' : 'enemy');
+  });
   addLog(`■ Round ${state.round}${state.judging ? ` (${state.judging.name})` : ''} ends — You: ${ps}  Rival: ${es}`);
   if (ps > es)      { state.roundWins.push('player'); addLog(`★ You win round ${state.round}!`, 'player'); }
   else if (es > ps) { state.roundWins.push('enemy');  addLog(`✗ Rival wins round ${state.round}.`, 'enemy'); }

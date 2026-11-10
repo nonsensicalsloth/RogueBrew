@@ -32,7 +32,7 @@ const CRAFT_RIVALS = [
   { id:'blackkettle', name:'Black Kettle Stoutworks', style:'stout',
     cards:['marisotter','marisotter','2row','2row','choc','choc','roastedbar','carafaII','carafaII','carafaIII','midnightw',
            'midnightw','debittered','oats','oats','lactose','lactose','coffee','coldbrewcof','vanilla','englishale','englishale',
-           'magnum','badbatch'] },
+           'magnum','magnum','badbatch'] },
   { id:'stwort', name:'Abbey of St. Wort', style:'Belgian',
     cards:['pilsner','pilsner','pilsner','munich','munich','candisugarcl','candisugarcl','candisugarab','candisugarab',
            'candisugardk','coriander','coriander','orangepeel','grainspara','cardamom','abbey','abbey','saison','saison',
@@ -47,7 +47,7 @@ const CRAFT_RIVALS = [
   { id:'tartcellars', name:'Tart Cellars', style:'sour',
     cards:['pilsner','pilsner','wheatwhite','wheatwhite','goldenprom','lacto','lacto','sourvisiae','sourvisiae','sourvisiae',
            'raspberry','raspberry','cherry','vanilla','passionfr','passionfr','blueberry','phantasm','cosmicpunch','honey',
-           'crosscontam','crystal20','cherry','vanillabn','raspberry'] },
+           'crosscontam','saaz','hallertau','vanillabn','raspberry'] },   // a touch of aged noble hops, like a real sour
 ];
 
 // Two possible bosses per act; one is picked when the map is generated

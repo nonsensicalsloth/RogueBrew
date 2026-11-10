@@ -4,7 +4,7 @@
 
 const DECK_SIZE      = 15;   // starting deck you build before a run
 const MAX_DECK_SIZE  = 50;   // safety cap only — dilution is the real limit
-const MIN_DECK_SIZE  = 10;   // removal can't trim below this
+const MIN_DECK_SIZE  = 15;   // removal can't trim below this (a 15-card deck already nearly runs dry in 8 turns)
 const MAX_COPIES = 3;
 const MAX_DECKS  = 3;
 const SAVE_KEY   = 'wortcraft_decks';
