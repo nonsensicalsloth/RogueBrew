@@ -28,8 +28,18 @@
     <div id="title-collection" style="font-size:7px;color:var(--gold);text-align:center;"></div>
     <button class="btn btn-gold"    onclick="showDeckManager()">▶ START GAME</button>
     <button class="btn btn-primary" onclick="showDeckManager()">🃏 BUILD DECK</button>
+    <button class="btn btn-primary" onclick="showHowTo(0)">📖 HOW TO PLAY</button>
     <button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;">🔒 RELICS</button>
   </div>
+</div>
+
+<!-- ===== HOW TO PLAY ===== -->
+<div id="howto-screen" class="screen">
+  <div class="wortcraft-title" style="font-size:14px;margin-bottom:10px;">HOW TO PLAY</div>
+  <div id="howto-tabs" class="howto-tabs"></div>
+  <div id="howto-body" class="howto-body"></div>
+  <div id="howto-nav" class="howto-nav"></div>
+  <button class="btn btn-primary" style="margin-top:10px;" onclick="showTitleScreen()">← MAIN MENU</button>
 </div>
 
 <!-- ===== DECK MANAGER ===== -->
@@ -326,6 +336,7 @@
 <script src="js/rivals.js"></script>
 <script src="js/save.js"></script>
 <script src="js/collection.js"></script>
+<script src="js/howto.js"></script>
 <script src="js/deck.js"></script>
 <script src="js/draft.js"></script>
 <script src="js/effects.js"></script>

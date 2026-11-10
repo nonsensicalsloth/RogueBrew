@@ -625,3 +625,25 @@ body::after {
 .btn.filter-chip.active-tab { background:var(--gold); color:var(--bg); border-color:var(--gold); }
 .collection-count { font-size:8px; color:var(--gold); margin-left:8px; }
 .deck-slot-locked { font-size:6px; color:var(--orange); margin:4px 0; }
+
+/* ── How to Play ── */
+#howto-screen { display:none; flex-direction:column; align-items:center; padding:20px 14px 30px; }
+#howto-screen.active { display:flex; }
+.howto-tabs { display:flex; flex-wrap:wrap; gap:5px; justify-content:center; max-width:760px; margin-bottom:12px; }
+.howto-body { width:100%; max-width:640px; background:var(--bg2); border:2px solid var(--border); padding:16px 18px; min-height:300px; }
+.howto-heading { font-size:12px; color:var(--gold); margin-bottom:12px; }
+.howto-p { font-size:8px; line-height:2; color:var(--text); margin:0 0 10px; }
+.howto-list { font-size:8px; line-height:2; color:var(--text); margin:0 0 10px; padding-left:18px; }
+.howto-list li { margin-bottom:4px; }
+.howto-box { border:1px solid var(--border); border-left:3px solid var(--gold); background:var(--bg3); padding:8px 12px; margin:12px 0; }
+.howto-box-title { font-size:8px; color:var(--gold); margin-bottom:6px; }
+.howto-box .howto-p, .howto-box .howto-list { margin-bottom:0; }
+.howto-split { display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap; }
+.howto-split > div:last-child { flex:1; min-width:260px; }
+.howto-example { padding:12px 10px; }
+.howto-example .card { width:120px; cursor:default; }
+.howto-rooms { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:8px; }
+.howto-room { display:flex; gap:10px; align-items:flex-start; font-size:7px; line-height:1.9; color:var(--dim); background:var(--bg3); padding:6px 8px; }
+.howto-room > span { font-size:16px; }
+.howto-room b { color:var(--text); }
+.howto-nav { display:flex; gap:14px; align-items:center; justify-content:center; margin-top:12px; }
