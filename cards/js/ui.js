@@ -230,14 +230,13 @@ function render() {
     const show = state.phase === 'play' || state.phase === 'between';
     beerEl.style.display = show ? '' : 'none';
     if (show) {
-      const b = beerStatus('p'), r = beerStatus('e');
-      const mine = b.specialty ? `🍺 SPECIALTY BEER +${b.bonus}`
-                 : b.complete  ? `🍺 COMPLETE BEER +${b.bonus}`
-                 : `🍺 NEED: ${b.missing.join(', ').toUpperCase()}`;
+      const b = beerStatus('p');
+      const mine = b.specialty ? `SPECIALTY BEER +${b.bonus}`
+                 : b.complete  ? `COMPLETE BEER +${b.bonus}`
+                 : `NEED: ${b.missing.join(', ').toUpperCase()}`;
       beerEl.textContent = mine;
       beerEl.style.color = b.complete ? 'var(--gold)' : 'var(--dim)';
-      beerEl.title = `Malt + hop + yeast on your board: +${COMPLETE_BEER_BONUS}. Add an adjunct: +${SPECIALTY_BEER_BONUS} more.`
-        + ` Rival: ${r.complete ? `${r.specialty ? 'Specialty' : 'Complete'} Beer (+${r.bonus})` : 'needs ' + r.missing.join(', ')}.`;
+      beerEl.title = `+${COMPLETE_BEER_BONUS} points for a complete beer (malt, hop and yeast). +${SPECIALTY_BEER_BONUS} bonus with an adjunct.`;
     }
   }
 
