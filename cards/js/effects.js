@@ -907,7 +907,7 @@ function applyCardEffect(card, lane, who) {
 
     case 'honey': {
       // Free-if-first is handled in getEffectiveCost
-      const floral = allMine.filter(c => c.tags && c.tags.includes('floral')).length;
+      const floral = allMine.filter(c => c !== card && c.tags && c.tags.includes('floral')).length;
       card.points += floral * 3;
       addLog(`Honey: +${floral * 3} pts (${floral} floral cards).`, 'player');
       break;
