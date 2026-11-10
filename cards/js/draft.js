@@ -20,6 +20,15 @@ function tagHtml(tags) {
   return (tags || []).map(t => `<span class="card-tag tag-${t}">${t}</span>`).join('');
 }
 
+// Rarity: a coloured strip under the art, and a label in the footer for uncommon/rare
+function rarityBar(c) {
+  const r = c.rarity || 'common';
+  return `<div class="card-rarity rarity-${r}" title="${RARITY_NAMES[r] || ''}"></div>`;
+}
+function rarityLabel(c) {
+  return c.rarity && c.rarity !== 'common' ? ` · <span class="rarity-text rarity-${c.rarity}">${RARITY_NAMES[c.rarity].toUpperCase()}</span>` : '';
+}
+
 function cardHtml(c, i, mode, extra='', shownCost=null, preview=null) {
   const cost   = shownCost === null ? c.cost : shownCost;
   const costCls = cost < c.cost ? ' cost-discounted' : '';
@@ -37,10 +46,10 @@ function cardHtml(c, i, mode, extra='', shownCost=null, preview=null) {
     <div class="card-cost-gem${costCls}" ${cost < c.cost ? `title="Normally ${c.cost}"` : ''}>${cost}</div>
     <div class="card-pts-gem${ptsCls}" ${preview ? `title="Printed: ${c.points}"` : ''}>${pts}</div>
     <div class="card-art">${c.cat === 'token' && c.points >= 0 ? '✨' : catIcon(c.cat)}</div>
-    <div class="card-name-banner">${c.name}</div>
+    ${rarityBar(c)}<div class="card-name-banner">${c.name}</div>
     <div class="card-tags-row">${tagHtml(c.tags)}</div>
     <div class="card-effect-text"><span>${c.desc || ''}${nowNote}</span></div>
-    <div class="card-restrict">${lane}</div>
+    <div class="card-restrict">${lane}${rarityLabel(c)}</div>
   </div>`;
 }
 
@@ -260,10 +269,10 @@ function renderBuilderCards() {
       <div class="card-pts-gem">${pts}</div>
       ${n > 0 ? `<div class="card-copy-badge">${n}/${MAX_COPIES}</div>` : ''}
       <div class="card-art">${catIcon(c.cat)}</div>
-      <div class="card-name-banner">${c.name}</div>
+      ${rarityBar(c)}<div class="card-name-banner">${c.name}</div>
       <div class="card-tags-row">${tagHtml(c.tags)}</div>
       <div class="card-effect-text">${c.desc || ''}</div>
-      <div class="card-restrict">${lane}</div>
+      <div class="card-restrict">${lane}${rarityLabel(c)}</div>
     </div>`;
   }).join('');
 }

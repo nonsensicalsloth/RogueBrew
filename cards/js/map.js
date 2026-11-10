@@ -409,31 +409,46 @@ function showMapDraft(node) {
 
 let mapDraftState = { node: null, offer: [] };
 
-function generateMapOffer() {
-  const counts = {};
-  draftState.deck.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
+// How often each rarity shows up in card offers
+const RARITY_WEIGHTS = {
+  normal:   { common: 65, uncommon: 30, rare: 5 },     // battle rewards and draft rooms
+  festival: { common: 0,  uncommon: 60, rare: 40 },    // Beer Festival prizes
+};
+const RARITY_PRICE = { common: 25, uncommon: 45, rare: 75 };
+
+// Builds a card offer: each slot rolls a rarity, then a random card of that rarity
+function generateMapOffer(kind = 'normal') {
   // A supplier contract focuses the next offer on one category, with 4 picks
   const contract = mapState.contract;
   // Hop House run perk: one extra option on every card offer
   const size = (contract ? 4 : 3) + (runBrewery() === 'hophouse' ? 1 : 0);
   mapState.contract = null;
   const pool = CARD_POOL.filter(c =>
-    (counts[c.id] || 0) < MAX_COPIES && c.cat !== 'token' && (!contract || c.cat === contract)
-  );
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
-  const seen = new Set();
+    copiesInDeck(c.id) < MAX_COPIES && c.cat !== 'token' && (!contract || c.cat === contract));
   const offer = [];
-  for (const c of shuffled) {
-    if (!seen.has(c.id)) { seen.add(c.id); offer.push({ ...c }); }
-    if (offer.length >= size) break;
+  while (offer.length < size) {
+    const left = pool.filter(c => !offer.some(o => o.id === c.id));
+    if (!left.length) break;
+    const rarity = rollRarity(RARITY_WEIGHTS[kind], left);
+    const options = left.filter(c => c.rarity === rarity);
+    offer.push({ ...options[Math.floor(Math.random() * options.length)] });
   }
   return offer;
 }
 
+// Picks a rarity by weight, skipping rarities with no cards left
+function rollRarity(weights, cards) {
+  const avail = Object.entries(weights).filter(([r, w]) => w > 0 && cards.some(c => c.rarity === r));
+  if (!avail.length) return cards[0].rarity;
+  let roll = Math.random() * avail.reduce((s, [, w]) => s + w, 0);
+  for (const [r, w] of avail) { roll -= w; if (roll <= 0) return r; }
+  return avail[avail.length - 1][0];
+}
+
 // Festival prize: premium (cost 3+) cards
+// Festival prize: mostly uncommons and rares
 function generateRareOffer() {
-  const pool = CARD_POOL.filter(c => c.cost >= 3 && c.cat !== 'token' && copiesInDeck(c.id) < MAX_COPIES);
-  return shuffle(pool).slice(0, 3 + (runBrewery() === 'hophouse' ? 1 : 0)).map(c => ({ ...c }));
+  return generateMapOffer('festival');
 }
 
 function pickMapCard(idx) {
@@ -460,10 +475,10 @@ function renderMapDraft() {
       <div class="card-cost-gem">${c.cost}</div>
       <div class="card-pts-gem">${pts}</div>
       <div class="card-art">${catIcon(c.cat)}</div>
-      <div class="card-name-banner">${c.name}</div>
+      ${rarityBar(c)}<div class="card-name-banner">${c.name}</div>
       <div class="card-tags-row">${tagHtml(c.tags)}</div>
       <div class="card-effect-text">${c.desc || ''}</div>
-      <div class="card-restrict">${lane}</div>
+      <div class="card-restrict">${lane}${rarityLabel(c)}</div>
     </div>`;
   }).join('');
   document.getElementById('map-draft-count').textContent =
@@ -480,20 +495,19 @@ function showMapShop(node) {
   renderMapShop();
 }
 
+// Shop stock: 3 commons, 2 uncommons, 1 rare (topped up from any rarity if one runs out)
 function generateShopInventory() {
-  const shuffled = [...CARD_POOL]
-    .filter(c => c.cat !== 'token' && copiesInDeck(c.id) < MAX_COPIES)
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 6);
-  return shuffled.map(c => ({
-    ...c,
-    price: getCardPrice(c),
-  }));
+  const pool = shuffle(CARD_POOL.filter(c => c.cat !== 'token' && copiesInDeck(c.id) < MAX_COPIES));
+  const pickN = (r, n) => pool.filter(c => c.rarity === r).slice(0, n);
+  let stock = [...pickN('common', 3), ...pickN('uncommon', 2), ...pickN('rare', 1)];
+  for (const c of pool) { if (stock.length >= 6) break; if (!stock.includes(c)) stock.push(c); }
+  return stock.map(c => ({ ...c, price: getCardPrice(c) }));
 }
 
+// Price by rarity, nudged up a little for pricier cards
 function getCardPrice(c) {
-  const base = c.cost * 8 + c.points / 3;
-  return Math.round(base / 5) * 5 || 5;
+  const base = RARITY_PRICE[c.rarity] || RARITY_PRICE.common;
+  return base + 5 * Math.max(0, c.cost - 2);
 }
 
 let shopInventory   = [];
@@ -522,10 +536,10 @@ function renderMapShop() {
       <div class="card-cost-gem">${c.cost}</div>
       <div class="card-pts-gem">${pts}</div>
       <div class="card-art">${catIcon(c.cat)}</div>
-      <div class="card-name-banner">${c.name}</div>
+      ${rarityBar(c)}<div class="card-name-banner">${c.name}</div>
       <div class="card-tags-row">${tagHtml(c.tags)}</div>
       <div class="card-effect-text">${c.desc || ''}</div>
-      <div class="card-restrict">${lane}</div>
+      <div class="card-restrict">${lane}${rarityLabel(c)}</div>
       <div class="shop-price ${canAfford ? '' : 'cant-afford'}">💰 ${c.price}</div>
     </div>`;
   }).join('');

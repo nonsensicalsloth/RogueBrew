@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'rebalance 4 (Nov 12)';
+const CARDS_VERSION = 'rarity 1 (Nov 12)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -217,6 +217,31 @@ const CARD_POOL = [
 
 // ── Default deck composition (30 cards) ──
 // Change this list to change the starting deck makeup.
+// ══════════════════════════════════════════════════════════════
+// ── RARITY ── (anything not listed is common)
+//   Common   ~55%  plain malts, simple hops/yeasts, single-condition cards
+//   Uncommon ~30%  synergy builders, special hops/yeasts, most process cards
+//   Rare     ~15%  build-arounds and standouts
+// ══════════════════════════════════════════════════════════════
+const RARE_CARDS = [
+  'nelson','riwaka','cosmicpunch','kveik','phantasm',
+  'crystal75','crystal80','crystal120','coffee','aromatic','melanoidin','biscuit','victory','blackmalt',
+  'heritage','spelt','buckwheat',
+  'award','doublebatch','inspector','barreltrans',
+];
+const UNCOMMON_CARDS = [
+  'floorpilsner','darkmunich','expwheat','expilsner','crystal50','crystal60','specialb','carafaIII',
+  'roastedbar','midnightw','smokedmalt','patent',
+  'cacaonibs','coldbrewcof','vanillabn','toastedcoc','maple','honey','cardamom','grainspara','candisugardk','citrazest',
+  'filtration','heatkill','recipetweak','hopthief','crosscontam','badbatch','dryhop','kettletrans','fermlog',
+  'hallblanc','strata','talus','nectaron','cryo','hopoil',
+  'london3','barbarian','abbey','brett','sourvisiae',
+];
+const RARITY_NAMES = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare' };
+CARD_POOL.forEach(c => {
+  c.rarity = RARE_CARDS.includes(c.id) ? 'rare' : UNCOMMON_CARDS.includes(c.id) ? 'uncommon' : 'common';
+});
+
 const DEFAULT_DECK_IDS = [
   '2row','2row','2row',
   'pilsner','pilsner','pilsner',

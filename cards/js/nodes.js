@@ -33,10 +33,10 @@ function specialCardHtml(c, onclick) {
     <div class="card-cost-gem">${c.cost}</div>
     <div class="card-pts-gem">${pts}</div>
     <div class="card-art">${catIcon(c.cat)}</div>
-    <div class="card-name-banner">${c.name}</div>
+    ${rarityBar(c)}<div class="card-name-banner">${c.name}</div>
     <div class="card-tags-row">${tagHtml(c.tags)}</div>
     <div class="card-effect-text">${c.desc || ''}</div>
-    <div class="card-restrict">${lane}</div>
+    <div class="card-restrict">${lane}${rarityLabel(c)}</div>
   </div>`;
 }
 

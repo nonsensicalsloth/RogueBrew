@@ -197,3 +197,11 @@
 
 /* Long effect text wraps inside the card instead of spilling past the edge */
 .card-effect-text { overflow-wrap: anywhere; word-break: break-word; overflow: hidden; }
+
+/* ── Rarity ── */
+.card-rarity { height: 3px; width: 100%; }
+.card-rarity.rarity-common   { background: #5a5f6e; }
+.card-rarity.rarity-uncommon { background: #42a5f5; box-shadow: 0 0 4px #42a5f5; }
+.card-rarity.rarity-rare     { background: linear-gradient(90deg, #b8860b, #ffd700, #b8860b); box-shadow: 0 0 6px #ffd700; }
+.rarity-text.rarity-uncommon { color: #64b5f6; }
+.rarity-text.rarity-rare     { color: #ffd700; }
