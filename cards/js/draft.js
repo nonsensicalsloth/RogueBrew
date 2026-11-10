@@ -81,7 +81,12 @@ let builderState = {
   name:        'My Deck',
   cards:       [],    // array of card ids
   activeTab:   'malt',
+  costFilter:   'all',    // 'all' | 0 | 1 | 2 | 3 | '4+'
+  rarityFilter: 'all',    // 'all' | 'common' | 'uncommon' | 'rare'
+  showLocked:   true,
 };
+
+const RARITY_ORDER = { common: 0, uncommon: 1, rare: 2 };
 
 // ── Screen manager ──
 
@@ -104,6 +109,8 @@ function showTitleScreen() {
   const has  = hasSavedRun();
   if (btn)  btn.style.display  = has ? '' : 'none';
   if (info) info.textContent   = has ? savedRunSummary() : '';
+  const colEl = document.getElementById('title-collection');
+  if (colEl) colEl.textContent = `Collection: ${collectionCount()}/${CARD_POOL.length} cards`;
 }
 
 // ── Deck manager screen ──
@@ -127,9 +134,10 @@ function renderDeckManager() {
         <div class="deck-slot-name">${deck.name}</div>
         <div class="deck-slot-count">${deck.cards.filter(id => getCardDef(id)).length} / ${DECK_SIZE} cards${deck.cards.some(id => !getCardDef(id)) ? ' <span style="color:var(--orange)">(retired cards removed — re-edit)</span>' : ''}</div>
         <div class="deck-slot-cats">${deckCatSummary(deck.cards)}</div>
+        ${deckLockedCards(deck.cards).length ? `<div class="deck-slot-locked">🔒 Uses ${deckLockedCards(deck.cards).length} card(s) you don't own yet — edit to replace them.</div>` : ''}
         <div class="deck-slot-actions">
           <button class="btn btn-primary" onclick="openBuilder(${i})">EDIT</button>
-          ${deck.cards.filter(id => getCardDef(id)).length === DECK_SIZE
+          ${deck.cards.filter(id => getCardDef(id)).length === DECK_SIZE && !deckLockedCards(deck.cards).length
             ? `<button class="btn btn-gold" onclick="startRunWithDeck(${i})">▶ USE</button>`
             : `<button class="btn btn-gold" style="opacity:0.4;cursor:not-allowed;" title="Needs ${DECK_SIZE} cards">▶ USE</button>`}
           <button class="btn btn-danger"  onclick="deleteDeck(${i})">✕</button>
@@ -141,6 +149,14 @@ function renderDeckManager() {
     }
     el.appendChild(div);
   }
+  const col = loadCollection();
+  const foot = document.getElementById('collection-footer');
+  if (foot) foot.innerHTML = `
+    <div style="font-size:8px;color:var(--gold);">Collection: ${collectionCount()}/${CARD_POOL.length} cards owned</div>
+    <div style="font-size:6px;color:var(--dim);margin:4px 0;">Commons are free. Buy uncommons and rares in shops during runs to unlock them forever.</div>
+    <label style="font-size:6px;color:var(--dim);cursor:pointer;">
+      <input type="checkbox" ${col.unlockAll ? 'checked' : ''} onchange="setUnlockAll(this.checked);renderDeckManager();"> Playtest mode: treat every card as owned
+    </label>`;
 }
 
 function deckCatSummary(cardIds) {
@@ -181,6 +197,7 @@ function openBuilder(slotIndex) {
 
 function builderSetTab(tab) {
   builderState.activeTab = tab;
+  renderBuilderFilters();
   renderBuilderCards();
   // Update tab buttons
   document.querySelectorAll('.builder-tab').forEach(t => {
@@ -189,6 +206,7 @@ function builderSetTab(tab) {
 }
 
 function builderAddCard(id) {
+  if (!isOwned(id)) { showBuilderMsg('Locked — buy it in a shop during a run.', 'warn'); return; }
   const counts = {};
   builderState.cards.forEach(cid => counts[cid] = (counts[cid] || 0) + 1);
   if ((counts[id] || 0) >= MAX_COPIES) {
@@ -240,6 +258,7 @@ function renderBuilder() {
   const nameEl = document.getElementById('deck-name-input');
   if (nameEl) nameEl.value = builderState.name;
   updateBuilderCount();
+  renderBuilderFilters();
   renderBuilderCards();
   renderBuilderDeck();
   // Set active tab
@@ -248,10 +267,41 @@ function renderBuilder() {
   });
 }
 
+// Sorted like Hearthstone: by cost, then rarity, then name
+function builderPool() {
+  const f = builderState;
+  return CARD_POOL
+    .filter(c => c.cat === f.activeTab)
+    .filter(c => f.costFilter === 'all' || (f.costFilter === '4+' ? c.cost >= 4 : c.cost === f.costFilter))
+    .filter(c => f.rarityFilter === 'all' || c.rarity === f.rarityFilter)
+    .filter(c => f.showLocked || isOwned(c.id))
+    .sort((a, b) => a.cost - b.cost || RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity] || a.name.localeCompare(b.name));
+}
+
+function builderSetFilter(kind, value) {
+  if (kind === 'cost')   builderState.costFilter   = value;
+  if (kind === 'rarity') builderState.rarityFilter = value;
+  if (kind === 'locked') builderState.showLocked   = !builderState.showLocked;
+  renderBuilderFilters();
+  renderBuilderCards();
+}
+
+function renderBuilderFilters() {
+  const el = document.getElementById('builder-filters');
+  if (!el) return;
+  const f = builderState;
+  const chip = (kind, value, label, active) =>
+    `<button class="btn filter-chip ${active ? 'active-tab' : ''}" onclick="builderSetFilter('${kind}', ${typeof value === 'number' ? value : `'${value}'`})">${label}</button>`;
+  el.innerHTML = `
+    <div class="filter-group"><span>COST</span>${['all', 0, 1, 2, 3, '4+'].map(v => chip('cost', v, v === 'all' ? 'ALL' : v, f.costFilter === v)).join('')}</div>
+    <div class="filter-group"><span>RARITY</span>${['all', 'common', 'uncommon', 'rare'].map(v => chip('rarity', v, v.toUpperCase(), f.rarityFilter === v)).join('')}</div>
+    <div class="filter-group">${chip('locked', 'x', f.showLocked ? '🔒 SHOWING LOCKED' : '🔒 HIDING LOCKED', f.showLocked)}
+      <span class="collection-count">Owned: ${collectionCount()}/${CARD_POOL.length}</span></div>`;
+}
+
 function renderBuilderCards() {
   const el   = document.getElementById('builder-card-pool');
-  const tab  = builderState.activeTab;
-  const pool = CARD_POOL.filter(c => c.cat === tab);
+  const pool = builderPool();
   const counts = {};
   builderState.cards.forEach(id => counts[id] = (counts[id] || 0) + 1);
 
@@ -259,12 +309,15 @@ function renderBuilderCards() {
     const n        = counts[c.id] || 0;
     const maxed    = n >= MAX_COPIES;
     const full     = builderState.cards.length >= DECK_SIZE;
-    const disabled = maxed || full;
+    const locked   = !isOwned(c.id);
+    const disabled = maxed || full || locked;
     const pts      = c.points >= 0 ? `+${c.points}` : `${c.points}`;
     const lane     = c.lane === 'both' ? 'HOT/COLD' : c.lane === 'hot' ? 'HOT SIDE' : 'COLD SIDE';
-    return `<div class="card cat-${c.cat} ${disabled ? 'card-disabled' : ''}" 
+    return `<div class="card cat-${c.cat} ${disabled ? 'card-disabled' : ''} ${locked ? 'card-locked' : ''}"
       onclick="${disabled ? 'void(0)' : `builderAddCard('${c.id}')`}"
+      ${locked ? 'title="Locked — buy this card in a shop during a run to unlock it for deck building."' : ''}
       style="position:relative;">
+      ${locked ? '<div class="card-lock-badge">🔒</div>' : ''}
       <div class="card-cost-gem">${c.cost}</div>
       <div class="card-pts-gem">${pts}</div>
       ${n > 0 ? `<div class="card-copy-badge">${n}/${MAX_COPIES}</div>` : ''}
@@ -302,6 +355,9 @@ function startRunWithDeck(slotIndex) {
   const decks = loadSavedDecks();
   const deck  = decks[slotIndex];
   const valid = deck ? deck.cards.filter(id => getCardDef(id)) : [];
+  if (deck && deckLockedCards(deck.cards).length) {
+    alert('This deck uses cards you don\'t own yet. Edit it to replace them first.'); return;
+  }
   if (valid.length !== DECK_SIZE) {
     alert(`A starting deck needs exactly ${DECK_SIZE} cards (this one has ${valid.length}). Edit it first!`); return;
   }

@@ -489,6 +489,8 @@ function renderMapDraft() {
 
 function showMapShop(node) {
   setScreen('map-shop-screen');
+  const um = document.getElementById('shop-unlock-msg');
+  if (um) um.textContent = '';
   shopInventory   = generateShopInventory();
   shopRemovalUsed = false;
   shopRemoving    = false;
@@ -541,6 +543,7 @@ function renderMapShop() {
       <div class="card-effect-text">${c.desc || ''}</div>
       <div class="card-restrict">${lane}${rarityLabel(c)}</div>
       <div class="shop-price ${canAfford ? '' : 'cant-afford'}">💰 ${c.price}</div>
+      ${isOwned(c.id) ? '' : '<div class="unlock-badge">🔓 UNLOCKS FOREVER</div>'}
     </div>`;
   }).join('');
 }
@@ -556,7 +559,12 @@ function buyCard(idx) {
   delete bought.price;
   draftState.deck.push(bought);
   shopInventory.splice(idx, 1);
+  const isNew = unlockCard(card.id);
   renderMapShop();
+  if (isNew) {
+    const msg = document.getElementById('shop-unlock-msg');
+    if (msg) msg.textContent = `🔓 ${card.name} is now in your collection for deck building!`;
+  }
 }
 
 function leaveShop() {

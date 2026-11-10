@@ -615,3 +615,11 @@ body::after {
 .map-legend { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; font-size:6px; padding:6px 0 10px; }
 .map-node-pulse { animation: mapPulse 1.4s ease-in-out infinite; transform-origin: center; }
 @keyframes mapPulse { 0%,100% { opacity:0.25; } 50% { opacity:0.9; } }
+
+/* ── Deck builder filters ── */
+.builder-filters { display:flex; flex-wrap:wrap; gap:6px 16px; align-items:center; padding:6px 0 10px; }
+.filter-group { display:flex; gap:4px; align-items:center; flex-wrap:wrap; }
+.filter-group > span { font-size:6px; color:var(--dim); margin-right:2px; }
+.btn.filter-chip { font-size:6px; padding:3px 6px; }
+.collection-count { font-size:6px; color:var(--gold); margin-left:8px; }
+.deck-slot-locked { font-size:6px; color:var(--orange); margin:4px 0; }

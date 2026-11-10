@@ -205,3 +205,8 @@
 .card-rarity.rarity-rare     { background: linear-gradient(90deg, #b8860b, #ffd700, #b8860b); box-shadow: 0 0 6px #ffd700; }
 .rarity-text.rarity-uncommon { color: #64b5f6; }
 .rarity-text.rarity-rare     { color: #ffd700; }
+
+/* ── Collection ── */
+.card.card-locked { filter: grayscale(0.85); opacity: 0.45; }
+.card-lock-badge { position: absolute; top: 34px; left: 50%; transform: translateX(-50%); font-size: 18px; z-index: 3; }
+.unlock-badge { font-size: 5px; color: var(--gold); text-align: center; padding: 2px 0 3px; }

@@ -25,6 +25,7 @@
   <div class="title-buttons">
     <button class="btn btn-gold" id="continue-run-btn" style="display:none" onclick="continueRun()">▶ CONTINUE RUN</button>
     <div id="continue-run-info" style="font-size:7px;color:var(--dim);text-align:center;"></div>
+    <div id="title-collection" style="font-size:7px;color:var(--gold);text-align:center;"></div>
     <button class="btn btn-gold"    onclick="showDeckManager()">▶ START GAME</button>
     <button class="btn btn-primary" onclick="showDeckManager()">🃏 BUILD DECK</button>
     <button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;">🔒 RELICS</button>
@@ -38,6 +39,7 @@
     <div style="font-size:8px;color:var(--dim);">Build up to 3 decks. Pick one to start a run.</div>
   </div>
   <div id="deck-slots" style="display:flex;flex-direction:column;gap:12px;max-width:480px;margin:0 auto;width:100%;"></div>
+  <div id="collection-footer" style="text-align:center;margin-top:14px;"></div>
   <div style="text-align:center;margin-top:16px;">
     <button class="btn btn-primary" onclick="showTitleScreen()">← BACK</button>
   </div>
@@ -66,6 +68,7 @@
     <button class="btn builder-tab"            data-tab="yeast"   onclick="builderSetTab('yeast')">🧫 YEAST</button>
     <button class="btn builder-tab"            data-tab="process" onclick="builderSetTab('process')">⚙️ PROCESS</button>
   </div>
+  <div id="builder-filters" class="builder-filters"></div>
 
   <div class="builder-body">
     <div class="builder-pool-wrap">
@@ -137,6 +140,7 @@
     <div id="shop-gold" style="font-size:9px;color:var(--gold);margin-bottom:4px;">💰 100 gold</div>
     <div style="font-size:7px;color:var(--dim);">Click a card to buy it</div>
   </div>
+  <div id="shop-unlock-msg" style="font-size:8px;color:var(--gold);text-align:center;min-height:12px;margin-bottom:6px;"></div>
   <div id="map-shop-items"></div>
   <div id="shop-removal" style="text-align:center;margin-top:8px;width:100%;max-width:400px;"></div>
   <div style="text-align:center;margin-top:16px;">
@@ -321,6 +325,7 @@
 <script src="js/nodes.js"></script>
 <script src="js/rivals.js"></script>
 <script src="js/save.js"></script>
+<script src="js/collection.js"></script>
 <script src="js/deck.js"></script>
 <script src="js/draft.js"></script>
 <script src="js/effects.js"></script>
