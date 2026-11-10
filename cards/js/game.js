@@ -168,6 +168,8 @@ function startRound() {
   state.abilityTargeting  = false;
   state.firstHopBonusUsed = false;
   state.wildUsedRound     = false;
+  state.noGrowth          = new Set();
+  state.cardTargeting     = null;
   state.eRoastTokens      = 0;
   state.eRoastSafe        = 0;
   state.eRoastThreshold   = 5;

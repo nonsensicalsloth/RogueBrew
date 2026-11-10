@@ -8,11 +8,11 @@
 
 // One card on the board: shows what it actually scores, plus any synergy multiplier
 function fieldCardHtml(c, lane, who, idx) {
-  const target = who === 'p' && isAbilityTarget(c, lane);
+  const target = who === 'p' && isBoardTarget(c, lane);
   const mult = synergyMultiplier(c, lane, who);
   const pts  = c.points * mult;
   const sign = pts >= 0 ? '+' : '';
-  return `<div class="field-card ${who}${pts < 0 ? ' field-card-neg' : ''}${target ? ' field-card-target' : ''}" ${target ? `onclick="event.stopPropagation();abilityPickTarget('${lane}', ${idx})"` : ''} title="${c.name}: ${c.points} pts${mult > 1 ? ` × ${mult} synergy = ${pts}` : ''}">
+  return `<div class="field-card ${who}${pts < 0 ? ' field-card-neg' : ''}${target ? ' field-card-target' : ''}" ${target ? `onclick="event.stopPropagation();pickBoardTarget('${lane}', ${idx})"` : ''} title="${c.name}: ${c.points} pts${mult > 1 ? ` × ${mult} synergy = ${pts}` : ''}">
     <div class="field-card-name">${c.name}</div>
     <div class="field-card-pts">${sign}${pts}${mult > 1 ? `<span class="field-card-mult"> ×${mult}</span>` : ''}</div>
   </div>`;
@@ -107,6 +107,9 @@ function renderActions() {
 
   if (state.phase === 'mulligan') {
     el.innerHTML = `<button class="btn btn-primary" onclick="confirmMulligan()">CONFIRM MULLIGAN (${state.mulSel.length})</button>`;
+  } else if (state.phase === 'play' && state.playerTurn && cardTargetingActive()) {
+    el.innerHTML = `<button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;">END TURN</button>
+      <span style="font-size:7px;color:var(--gold);margin-left:8px">▲ ${CARD_TARGETS[state.cardTargeting.kind].prompt}</span>`;
   } else if (state.phase === 'play' && state.playerTurn && playerMustPlayContamination()) {
     el.innerHTML = `<button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;">END TURN</button>
       <span style="font-size:7px;color:var(--red);margin-left:8px">⚠ POUR THE CONTAMINATION ONTO YOUR COLD SIDE FIRST</span>`;

@@ -10,6 +10,8 @@ function selectCard(idx) {
   if (!c || getEffectiveCost(c) > state.budget - state.budgetUsed) return;
   // While Contamination is in hand, it's the only card you can pick
   if (playerMustPlayContamination() && !isContamination(c)) return;
+  // Finish choosing a target for the last card first
+  if (cardTargetingActive()) return;
   selectedCard = (selectedCard === idx) ? null : idx;
   render();
 }
@@ -19,6 +21,8 @@ function getEffectiveCost(c) {
   if (c.id === 'honey' && !getAllOnField('p').some(x => x.cat === 'adjunct')) return 0;
   // Grapefruit Zest makes the next hop free; Hop Back makes the first hop each round free
   if (c.cat === 'hop' && state.nextHopFree) return 0;
+  // Filtration: a re-pitched yeast is free on the turn it came back
+  if (c._freeKey && c._freeKey === `${state.round}:${state.turn}`) return 0;
   if (c.cat === 'hop' && hasRelic('hopback') && !state.hopBackUsed) return 0;
   // Hop House ability: a scouted hop costs 1 less on the turn it was drawn
   const scout = c._scoutKey && c._scoutKey === abilityKey() ? 1 : 0;
@@ -30,6 +34,7 @@ function getEffectiveCost(c) {
 
 function playToLane(lane) {
   if (selectedCard === null) return;
+  if (cardTargetingActive()) return;
   const c = state.pHand[selectedCard];
   if (!c) return;
 
@@ -136,6 +141,7 @@ function resolvePlay(c, lane, who) {
 }
 
 function endTurn() {
+  if (cardTargetingActive()) { addLog('Choose a target for your card first.', 'warn'); render(); return; }
   state.abilityTargeting = false;
   if (playerMustPlayContamination()) {
     addLog('⚠ You must pour the Contamination before ending your turn.', 'warn');

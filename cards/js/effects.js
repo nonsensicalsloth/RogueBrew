@@ -269,6 +269,93 @@ function applyDryHopBonus(card, who) {
   }
 }
 
+// ══ Choosing a card on your board ══
+// Some cards ask you to pick one of your board cards after they resolve
+// (Filtration, Recipe Tweak, Crystal 120). The rival picks automatically.
+const CARD_TARGETS = {
+  filtration: {
+    prompt: 'FILTRATION: CHOOSE A YEAST TO RETURN TO YOUR HAND',
+    ok:     (c, lane) => lane === 'cold' && c.cat === 'yeast',
+    aiPick: list => list.reduce((a, b) => b.c.points < a.c.points ? b : a),   // replay its cheapest yeast
+    pick(t, who) {
+      const back = returnToHand(t.c, t.lane, who);
+      back._freeKey = `${state.round}:${state.turn}`;          // re-pitch it for free this turn
+      addLog(`Filtration: ${t.c.name} back in hand — free to pitch again this turn.`, who === 'p' ? 'player' : 'enemy');
+    },
+  },
+  recipetweak: {
+    prompt: 'RECIPE TWEAK: CHOOSE A CARD TO RETURN TO YOUR HAND',
+    ok:     (c, lane, src) => c.cat !== 'token' && c !== src,
+    aiPick: list => list.reduce((a, b) => b.c.points < a.c.points ? b : a),
+    pick(t, who) {
+      returnToHand(t.c, t.lane, who);
+      if (who === 'p') state.nextCardDiscount = (state.nextCardDiscount || 0) + 1;
+      addLog(`Recipe Tweak: ${t.c.name} back to hand. Next card costs 1 less.`, who === 'p' ? 'player' : 'enemy');
+    },
+  },
+  crystal120: {
+    prompt: 'CRYSTAL 120: CHOOSE A CRYSTAL MALT TO ABSORB',
+    ok:     (c, lane, src) => lane === 'hot' && c !== src && c.id && c.id.startsWith('crystal'),
+    aiPick: list => list.reduce((a, b) => b.c.points > a.c.points ? b : a),
+    pick(t, who, src) {
+      const lane = state.field[t.lane][who];
+      lane.splice(lane.indexOf(t.c), 1);
+      src.points += t.c.points * 2;
+      addLog(`Crystal 120: absorbed ${t.c.name} — +${t.c.points * 2} pts (double)!`, who === 'p' ? 'player' : 'enemy');
+    },
+  },
+};
+
+// Puts a card back in its owner's hand at its printed stats
+function returnToHand(c, lane, who) {
+  const list = state.field[lane][who];
+  const i = list.indexOf(c);
+  if (i >= 0) list.splice(i, 1);
+  const fresh = { ...(getCardDef(c.id) || c) };
+  (who === 'p' ? state.pHand : state.eHand).push(fresh);
+  return fresh;
+}
+
+function targetCandidates(kind, who, src) {
+  const t = CARD_TARGETS[kind];
+  return LANES.flatMap(lane => state.field[lane][who]
+    .filter(c => t.ok(c, lane, src)).map(c => ({ c, lane })));
+}
+
+// Called from a card's effect. Player: wait for a click. Rival: choose now.
+function startCardTargeting(kind, src, who) {
+  const list = targetCandidates(kind, who, src);
+  if (!list.length) { addLog(`${src.name}: nothing to choose.`, 'sys'); return; }
+  if (who === 'e') { CARD_TARGETS[kind].pick(CARD_TARGETS[kind].aiPick(list), 'e', src); return; }
+  state.cardTargeting = { kind, src };
+}
+
+function cardTargetingActive() { return !!(state && state.cardTargeting); }
+
+function isCardTarget(c, lane) {
+  if (!cardTargetingActive()) return false;
+  const { kind, src } = state.cardTargeting;
+  return CARD_TARGETS[kind].ok(c, lane, src);
+}
+
+function cardPickTarget(lane, idx) {
+  if (!cardTargetingActive()) return;
+  const { kind, src } = state.cardTargeting;
+  const c = state.field[lane].p[idx];
+  if (!c || !CARD_TARGETS[kind].ok(c, lane, src)) return;
+  state.cardTargeting = null;
+  CARD_TARGETS[kind].pick({ c, lane }, 'p', src);
+  checkContaminationInHand('p');
+  render();
+}
+
+// One entry point for the board: card effects first, then the brewery ability
+function isBoardTarget(c, lane) { return isCardTarget(c, lane) || isAbilityTarget(c, lane); }
+function pickBoardTarget(lane, idx) {
+  if (cardTargetingActive()) cardPickTarget(lane, idx);
+  else abilityPickTarget(lane, idx);
+}
+
 // ── On-play effects (Tier 1 & 2) ──
 
 function applyCardEffect(card, lane, who) {
@@ -326,15 +413,23 @@ function applyCardEffect(card, lane, who) {
       if (!removeFirstToken(who, null, 'hot')) addLog('SIP Rinse: nothing to clean on hot side.', 'sys');
       break;
 
-    case 'fining':
-      if (!removeFirstToken(who)) addLog('Fining Agent: nothing to remove.', 'sys');
+    case 'fining': {
+      removeFirstToken(who);
+      const n = buffLaneCards('cold', who, 2, c => c.cat === 'yeast');
+      addLog(`Fining Agent: clearer beer — ${n} yeast(s) +2.`, 'player');
       break;
+    }
 
-    case 'heatkill':
+    case 'heatkill': {
+      // Kills everything alive: Contamination is gone, yeasts get a burst but stop growing this round
       removeAllTokens(who, 'contamination');
       removeAllTokens(who, 'contam_soft');
-      addLog('Heat Kill: all Contamination removed from cold side.', 'player');
+      const yeasts = getLaneCards('cold', who).filter(c => c.cat === 'yeast');
+      state.noGrowth = state.noGrowth || new Set();
+      yeasts.forEach(y => { y.points += 5; state.noGrowth.add(y); });
+      addLog(`Heat Kill: Contamination cleared. ${yeasts.length} yeast(s) +5, but they stop growing this round.`, 'player');
       break;
+    }
 
     case 'cip': {
       let n = 0;
@@ -519,9 +614,18 @@ function applyCardEffect(card, lane, who) {
       break;
     }
 
-    case 'chili':
-      if (removeSugarClot(who)) addLog('Chili Pepper: Sugar Clot removed!', 'player');
+    case 'chili': {
+      // Turn up the heat: the rival's best card loses points
+      const opp = isPlayer ? 'e' : 'p';
+      const oppCards = LANES.flatMap(l => getLaneCards(l, opp).filter(c => c.cat !== 'token' && !c._locked).map(c => ({ c, l })));
+      if (oppCards.length) {
+        const best = oppCards.reduce((a, b) => effectivePoints(b.c, b.l, opp) > effectivePoints(a.c, a.l, opp) ? b : a);
+        const cut = Math.min(6, Math.max(0, best.c.points));
+        best.c.points -= cut;
+        addLog(`Chili Pepper: ${isPlayer ? "rival's" : 'your'} ${best.c.name} −${cut} pts. Too hot!`, isPlayer ? 'player' : 'warn');
+      } else addLog('Chili Pepper: nothing to scorch.', 'sys');
       break;
+    }
 
     case 'drunkcellar':
       // Adds +8 to OPPONENT's cold side, caster draws 2
@@ -756,19 +860,10 @@ function applyCardEffect(card, lane, who) {
       addLog('Victory Malt: will stay on board if you win this round!', 'player');
       break;
 
-    case 'crystal120': {
-      // Sacrifice a crystal malt already on hot side
-      const hotList120 = getLaneCards('hot', who);
-      const sacrificeIdx = hotList120.findIndex(c => c.id && c.id.startsWith('crystal') && c !== card);
-      if (sacrificeIdx >= 0) {
-        const sacrificed = hotList120.splice(sacrificeIdx, 1)[0];
-        card.points += sacrificed.points;
-        addLog(`Crystal 120: sacrificed ${sacrificed.name} (+${sacrificed.points}) — bonus pts gained!`, 'player');
-      } else {
-        addLog('Crystal 120: no crystal to sacrifice — played at base score.', 'player');
-      }
+    case 'crystal120':
+      // You choose a crystal malt on your hot side; it's absorbed for double its points
+      startCardTargeting('crystal120', card, who);
       break;
-    }
 
     case 'oats': {
       const oatHot = getLaneCards('hot', who);
@@ -868,8 +963,12 @@ function applyCardEffect(card, lane, who) {
     // ── Process: Disruption ──
 
     case 'filtration': {
-      // Only filters out something harmful — never your good cards
-      if (!removeFirstToken(who, null, 'cold')) addLog('Filtration: nothing to filter.', 'sys');
+      // Destroy every negative card on your cold side, then pull a yeast back to pitch again
+      const before = state.field.cold[who].length;
+      state.field.cold[who] = state.field.cold[who].filter(c => !(c.cat === 'token' && c.points < 0));
+      const gone = before - state.field.cold[who].length;
+      if (gone) addLog(`Filtration: filtered out ${gone} negative card(s).`, 'player');
+      startCardTargeting('filtration', card, who);
       break;
     }
 
@@ -968,22 +1067,10 @@ function applyCardEffect(card, lane, who) {
       break;
     }
 
-    case 'recipetweak': {
-      // Return the last ingredient on your hot side to hand (reset to base); next card costs 1 less.
-      const hotList = getLaneCards('hot', who);
-      const idx = [...hotList].reverse().findIndex(c => c.cat !== 'token' && c !== card);
-      if (idx >= 0) {
-        const realIdx = hotList.length - 1 - idx;
-        const back = hotList.splice(realIdx, 1)[0];
-        const fresh = { ...(getCardDef(back.id) || back) };
-        (isPlayer ? state.pHand : state.eHand).push(fresh);
-        if (isPlayer) state.nextCardDiscount = (state.nextCardDiscount || 0) + 1;
-        addLog(`Recipe Tweak: ${back.name} returned to hand. Next card costs 1 less.`, 'player');
-      } else {
-        addLog('Recipe Tweak: nothing to tweak on hot side.', 'sys');
-      }
+    case 'recipetweak':
+      // You choose any card on your board to return to hand (reset); next card costs 1 less
+      startCardTargeting('recipetweak', card, who);
       break;
-    }
 
     case 'tasting':
       // Show enemy hand in log
@@ -1395,6 +1482,7 @@ function applyTurnEffects(who) {
 
   coldCards.forEach(c => {
     if (c.cat !== 'yeast' || NO_ACCUMULATION.includes(c.id)) return;
+    if (state.noGrowth && state.noGrowth.has(c)) return;      // Heat Kill
 
     if (c.id === 'brett') {
       c.points += 3 + (isPlayer && hasRelic('glycol') ? 1 : 0);

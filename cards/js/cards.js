@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'rebalance 3 (Nov 5)';
+const CARDS_VERSION = 'rebalance 4 (Nov 12)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -9,7 +9,7 @@ const CARDS_VERSION = 'rebalance 3 (Nov 5)';
 
 const CARD_POOL = [
   // ── Base Malts ──
-  { id:'2row',        name:'2-Row Malt',           cat:'malt', lane:'hot', points:10, cost:1, tags:['neutral'],         desc:'No effect. Counts as neutral for Flaked Corn.' },
+  { id:'2row',        name:'2-Row Malt',           cat:'malt', lane:'hot', points:10, cost:1, tags:['neutral'],         desc:'No effect.' },
   { id:'pilsner',     name:'Pilsner Malt',          cat:'malt', lane:'hot', points:8,  cost:1, tags:['crisp'],           desc:'If it is the first card you play this turn, draw 1.' },
   { id:'6row',        name:'6-Row Malt',            cat:'malt', lane:'hot', points:6,  cost:1, tags:['neutral'],          desc:'Next card you play this turn costs 1 less.' },
   { id:'marisotter',  name:'Maris Otter',           cat:'malt', lane:'hot', points:12, cost:2, tags:['biscuity'],        desc:'If you have 3+ combined crystal/dark malts on hot side, +8 pts.' },
@@ -37,7 +37,7 @@ const CARD_POOL = [
 
   // ── Dark Crystal (explosive but dangerous) ──
   { id:'crystal80',  name:'Crystal 80',    cat:'malt', lane:'hot', points:18, cost:2, tags:['sweet','roasty'],          desc:'Score = roast tokens x8. With fewer than 3 roast, adds a Sugar Clot (-10 pts) to your hot side.' },
-  { id:'crystal120', name:'Crystal 120',   cat:'malt', lane:'hot', points:12, cost:2, tags:['sweet','roasty'],          desc:'Sacrifices a crystal malt on your hot side (if any) and gains its points.' },
+  { id:'crystal120', name:'Crystal 120',   cat:'malt', lane:'hot', points:12, cost:2, tags:['sweet','roasty'],          desc:'Choose a crystal malt on your hot side. Crystal 120 absorbs it and gains double its points.' },
 
   // ── Specialty / Mid-range ──
   { id:'carapils',   name:'Carapils',      cat:'malt', lane:'hot', points:6,  cost:1, tags:['smooth','sweet'],          desc:'Adjacent cards on hot side each get +3 pts.' },
@@ -105,18 +105,18 @@ const CARD_POOL = [
   { id:'vanillabn',  name:'Vanilla Bean',    cat:'adjunct', lane:'both', points:17, cost:3, tags:['sweet','smooth'],       desc:'All other sweet cards on your board get +3 pts.' },
   { id:'toastedcoc', name:'Toasted Coconut', cat:'adjunct', lane:'both', points:12, cost:2, tags:['sweet','toasty'],       desc:'If another sweet card and a toasty card are on your hot side, +8 pts.' },
   { id:'coldbrewcof',name:'Cold Brew Coffee',cat:'adjunct', lane:'both', points:21, cost:3, tags:['toasty','roasty','smooth'], desc:'Adds 1 roast token. Roast penalty threshold +1.' },
-  { id:'chili',      name:'Chili Pepper',    cat:'adjunct', lane:'both', points:12,  cost:2, tags:['spicy','dry'],          desc:'Removes a Sugar Clot from your board if present.' },
+  { id:'chili',      name:'Chili Pepper',    cat:'adjunct', lane:'both', points:8,  cost:2, tags:['spicy','dry'],          desc:'Turn up the heat: the rival\'s highest-scoring card loses 6 pts.' },
   { id:'cinnamon',   name:'Cinnamon',        cat:'adjunct', lane:'hot', points:10,  cost:2, tags:['spicy','sweet'],        desc:'+3 pts for each other sweet card on your hot side.' },
   { id:'phantasm',   name:'Phantasm',        cat:'adjunct', lane:'hot', points:6,  cost:1, tags:['fruity','thiol'],       desc:'Grape-derived bound thiols. A thiol-releasing yeast unlocks +12.' },
 
   // ── Process Cards ──
 
   // Cleaning/Removal (your side)
-  { id:'cip',          name:'CIP Cycle',        cat:'process', lane:'both', points:0,  cost:1, tags:[],           desc:'Remove every negative token from your board. Draw 1.' },
+  { id:'cip',          name:'CIP Cycle',        cat:'process', lane:'both', points:0,  cost:2, tags:[],           desc:'Remove every negative token from your board. Draw 1.' },
   { id:'sip',          name:'SIP Rinse',         cat:'process', lane:'hot',  points:0,  cost:1, tags:[],           desc:'Remove one negative token from your hot side. Draw 1.' },
-  { id:'heatkill',     name:'Heat Kill',         cat:'process', lane:'cold', points:0,  cost:1, tags:[],           desc:'Remove all Contamination cards from your cold side. Draw 1.' },
-  { id:'filtration',   name:'Filtration',        cat:'process', lane:'cold', points:0,  cost:1, tags:[],           desc:'Remove one negative card from your cold side. Draw 1.' },
-  { id:'fining',       name:'Fining Agent',      cat:'process', lane:'hot',  points:0,  cost:1, tags:[],  desc:'Remove one negative token from your board. Draw 1.' },
+  { id:'heatkill',     name:'Heat Kill',         cat:'process', lane:'cold', points:0,  cost:2, tags:[],           desc:'Remove all Contamination from your cold side. Each yeast there gets +5 now, but stops growing this round. Draw 1.' },
+  { id:'filtration',   name:'Filtration',        cat:'process', lane:'cold', points:0,  cost:2, tags:[],           desc:'Destroy every negative card on your cold side, then choose a yeast there to return to your hand. It costs 0 this turn. Draw 1.' },
+  { id:'fining',       name:'Fining Agent',      cat:'process', lane:'both',  points:0,  cost:1, tags:[],  desc:'Remove one negative token from your board. Every yeast on your cold side gets +2. Draw 1.' },
   { id:'coldcrash',    name:'Cold Crash',        cat:'process', lane:'cold', points:14,  cost:2, tags:[],   desc:'Scores points and clears one negative token from your cold side.' },
 
   // Disruption (enemy side)
@@ -132,7 +132,7 @@ const CARD_POOL = [
   { id:'kettletrans',  name:'Whirlpool',   cat:'process', lane:'hot',  points:0,  cost:1, tags:[],           desc:'Every hop on your hot side gets +4. Draw 1.' },
   { id:'doublebatch',  name:'Double Batch',      cat:'process', lane:'both', points:0,  cost:2, tags:[],           desc:'Copy the last card you played and add a second instance to the same lane. Draw 1.' },
   { id:'barreltrans',  name:'Barrel Transfer',   cat:'process', lane:'cold', points:12, cost:3, tags:[],  desc:'The highest scoring card on your cold side gets +50% pts (+100% if it is oaky).' },
-  { id:'recipetweak',  name:'Recipe Tweak',      cat:'process', lane:'both', points:0,  cost:1, tags:[],         desc:'Return the last ingredient on your hot side to your hand (reset to base). Your next card costs 1 less. Draw 1.' },
+  { id:'recipetweak',  name:'Recipe Tweak',      cat:'process', lane:'both', points:0,  cost:1, tags:[],         desc:'Choose any card on your board and return it to your hand (reset to base). Your next card costs 1 less. Draw 1.' },
 
   // Scoring/multiplier process cards
   { id:'qc',           name:'Quality Control',   cat:'process', lane:'both', points:0,  cost:1, tags:[],   desc:'If your total score is higher than the rival\'s, +14 pts. Otherwise, draw 1.' },

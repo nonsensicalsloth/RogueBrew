@@ -62,6 +62,7 @@ function abilityStatus() {
   if (state.phase !== 'play' || !state.playerTurn)     return { ok: false, reason: 'Not your turn' };
   if (state.abilityUsed)                               return { ok: false, reason: 'Already used this turn' };
   if (playerMustPlayContamination())                   return { ok: false, reason: 'Pour the Contamination first' };
+  if (cardTargetingActive())                           return { ok: false, reason: 'Choose a target for your card first' };
   if (b.ability.cost > state.budget - state.budgetUsed) return { ok: false, reason: 'Not enough budget' };
   if (b.id === 'lagerhaus' && !getLaneCards('cold', 'p').some(c => c.cat === 'yeast'))
     return { ok: false, reason: 'No yeast on your cold side' };
