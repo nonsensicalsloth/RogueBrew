@@ -13,7 +13,7 @@ const MAP_EXTRA_FORK = 0.6;    // chance a node gets an extra diagonal fork
 
 // Weighted odds for floors that aren't fixed (see assignNodeTypes for the rules)
 const NODE_WEIGHTS = {
-  battle: 40, event: 14, draft: 10, festival: 9, rest: 8, shop: 7,
+  battle: 40, event: 14, draft: 10, festival: 9, rest: 8, shop: 10,
   barrel: 3, collab: 3, lab: 3, taproom: 3, contract: 3,
 };
 // These shouldn't follow themselves on a path
@@ -223,6 +223,7 @@ function markVisited(node) {
 
 function showMapScreen() {
   setScreen('map-screen');
+  mapState.barrelBroker = false;
   saveRun({ screen: 'map' });
   setTimeout(() => renderMap(), 50);
 }
@@ -414,7 +415,8 @@ const RARITY_WEIGHTS = {
   normal:   { common: 65, uncommon: 30, rare: 5 },     // battle rewards and draft rooms
   festival: { common: 0,  uncommon: 60, rare: 40 },    // Beer Festival prizes
 };
-const RARITY_PRICE = { common: 25, uncommon: 45, rare: 75 };
+const RARITY_PRICE = { common: 30, uncommon: 60, rare: 100 };
+const SHOP_NEW_CARD_CHANCE = 0.9;    // chance each shop slot shows a card you don't own yet (if any are left)
 
 // Builds a card offer: each slot rolls a rarity, then a random card of that rarity
 function generateMapOffer(kind = 'normal') {
@@ -500,7 +502,18 @@ function showMapShop(node) {
 // Shop stock: 3 commons, 2 uncommons, 1 rare (topped up from any rarity if one runs out)
 function generateShopInventory() {
   const pool = shuffle(CARD_POOL.filter(c => c.cat !== 'token' && copiesInDeck(c.id) < MAX_COPIES));
-  const pickN = (r, n) => pool.filter(c => c.rarity === r).slice(0, n);
+  // Cards you haven't unlocked yet are favoured, so shops keep offering something new to collect
+  const pickN = (r, n) => {
+    const ofRarity = pool.filter(c => c.rarity === r);
+    const picks = [];
+    for (let k = 0; k < n; k++) {
+      const left   = ofRarity.filter(c => !picks.includes(c));
+      const fresh  = left.filter(c => !isOwned(c.id));
+      const source = fresh.length && Math.random() < SHOP_NEW_CARD_CHANCE ? fresh : left;
+      if (source.length) picks.push(source[0]);
+    }
+    return picks;
+  };
   let stock = [...pickN('common', 3), ...pickN('uncommon', 2), ...pickN('rare', 1)];
   for (const c of pool) { if (stock.length >= 6) break; if (!stock.includes(c)) stock.push(c); }
   return stock.map(c => ({ ...c, price: getCardPrice(c) }));
@@ -749,7 +762,7 @@ const MAP_EVENTS = [
 let currentEvent = null;
 
 function showMapEvent(node) {
-  currentEvent = MAP_EVENTS[Math.floor(Math.random() * MAP_EVENTS.length)];
+  currentEvent = pickMapEvent();   // events.js: avoids repeats within a run
   setScreen('map-event-screen');
   renderMapEvent();
 }

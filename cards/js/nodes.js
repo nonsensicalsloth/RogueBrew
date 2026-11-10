@@ -70,6 +70,7 @@ function barrelCard(idx) {
   card._barrelReturn = (mapState.nodeCount || 0) + BARREL_STOPS + 1;
   mapState.barrel = mapState.barrel || [];
   mapState.barrel.push(card);
+  if (mapState.barrelBroker) { mapState.gold -= 40; mapState.barrelBroker = false; }   // Barrel Broker event
   finishSpecial(`${card.name} is resting in oak. Back in ${BARREL_STOPS} stops.`);
 }
 
