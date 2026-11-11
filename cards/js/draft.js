@@ -91,6 +91,7 @@ const RARITY_ORDER = { common: 0, uncommon: 1, rare: 2 };
 // ── Screen manager ──
 
 function setScreen(id) {
+  if (typeof hideCardHover === 'function') hideCardHover();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }

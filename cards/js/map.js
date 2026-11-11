@@ -587,6 +587,49 @@ function leaveShop() {
 
 // ── Card removal (shared by shop and rest) ──
 
+// ── Hover preview for deck lists (rest stops, shop removal, barrel, collab, lab, events) ──
+// Shows the card exactly as it is in your deck right now: upgrades, aging and all.
+function deckPreviewEl() {
+  let el = document.getElementById('deck-preview');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'deck-preview';
+    el.className = 'deck-preview';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+
+function showCardHover(idx, ev) {
+  const c = draftState.deck[idx];
+  if (!c) return;
+  const def   = getCardDef(c.id);
+  const notes = [];
+  if (c._upgraded)   notes.push(`★ Upgraded (+${c._upgradeBonus || REST_UPGRADE})`);
+  if (c._barrelAged) notes.push(`🛢 Barrel-aged (+${BARREL_BONUS}, oaky)`);
+  if (def && c.points !== def.points && !notes.length) notes.push(`Printed: ${def.points} pts`);
+  const el = deckPreviewEl();
+  el.innerHTML = cardHtml(c, idx, 'view') + (notes.length ? `<div class="deck-preview-notes">${notes.join('<br>')}</div>` : '');
+  el.style.display = 'block';
+  moveCardHover(ev);
+}
+
+function moveCardHover(ev) {
+  const el = document.getElementById('deck-preview');
+  if (!el || el.style.display !== 'block' || !ev) return;
+  const w = 150, h = 260, pad = 18;
+  let x = ev.clientX + pad, y = ev.clientY - h / 2;
+  if (x + w > window.innerWidth) x = ev.clientX - w - pad;           // flip to the left near the edge
+  y = Math.max(8, Math.min(y, window.innerHeight - h - 8));
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
+}
+
+function hideCardHover() {
+  const el = document.getElementById('deck-preview');
+  if (el) el.style.display = 'none';
+}
+
 function canRemoveCard() {
   return draftState.deck.length > MIN_DECK_SIZE;
 }
@@ -599,8 +642,9 @@ function deckPickerHtml(onPick, rowExtra) {
     .map(({ c, i }) => {
       const pts = c.points >= 0 ? `+${c.points}` : `${c.points}`;
       const extra = rowExtra ? rowExtra(c) : { html: pts, disabled: false };
-      return `<div class="deck-list-row" ${extra.disabled ? 'style="padding:6px 8px;opacity:0.4;cursor:default;"'
-                                                         : `onclick="${onPick}(${i})" style="cursor:pointer;padding:6px 8px;"`}>
+      return `<div class="deck-list-row" onmouseenter="showCardHover(${i}, event)" onmousemove="moveCardHover(event)" onmouseleave="hideCardHover()"
+        ${extra.disabled ? 'style="padding:6px 8px;opacity:0.4;cursor:default;"'
+                         : `onclick="hideCardHover();${onPick}(${i})" style="cursor:pointer;padding:6px 8px;"`}>
         <span class="deck-list-count" style="color:${catColor(c.cat)}">${catIcon(c.cat)}</span>
         <span class="deck-list-name">${c.name}${c._upgraded ? ' ★' : ''}</span>
         <span style="font-size:7px;color:var(--dim);">${extra.html}</span>
