@@ -162,7 +162,8 @@ function startRound() {
   state.lastHop           = {};
   state.roastTokens       = 0;
   state.roastSafe         = 0;
-  state.roastThreshold    = 5 + (hasRelic('roaster') ? 2 : 0);
+  state.roastThreshold    = 5 + (hasRelic('roaster') ? 2 : 0) + (activeBreweryAt() === 'stouthouse' ? 3 : 0);
+  state.garageUsedRound   = false;
   state.hopBackUsed       = false;
   state.abilityUsed       = false;
   state.abilityTargeting  = false;

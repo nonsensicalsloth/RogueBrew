@@ -111,7 +111,10 @@ function showTitleScreen() {
   if (btn)  btn.style.display  = has ? '' : 'none';
   if (info) info.textContent   = has ? savedRunSummary() : '';
   const colEl = document.getElementById('title-collection');
-  if (colEl) colEl.textContent = `Collection: ${collectionCount()}/${CARD_POOL.length} cards`;
+  if (colEl) {
+    const p = loadProfile();
+    colEl.textContent = `Collection: ${collectionCount()}/${CARD_POOL.length} cards · Breweries: ${BREWERIES.filter(isBreweryUnlocked).length}/${BREWERIES.length} · Runs: ${p.runs} · Wins: ${p.wins}`;
+  }
 }
 
 // ── Deck manager screen ──
@@ -363,6 +366,7 @@ function startRunWithDeck(slotIndex) {
     alert(`A starting deck needs exactly ${DECK_SIZE} cards (this one has ${valid.length}). Edit it first!`); return;
   }
   draftState.deckIndex = slotIndex;
+  const deckNameForStats = deck.name;
   draftState.deck = deck.cards.filter(id => getCardDef(id)).map(id => ({ ...getCardDef(id) }));
 
   // Init map state
@@ -383,6 +387,7 @@ function startRunWithDeck(slotIndex) {
     notice:      '',
   };
   generateMap();
+  mapState.stats = newRunStats(deckNameForStats);
 
   // Go to brewery select first
   setScreen('brewery-screen');
@@ -390,7 +395,24 @@ function startRunWithDeck(slotIndex) {
 }
 
 function selectBrewery(id) {
-  draftState.brewery = BREWERIES.find(b => b.id === id);
+  const b = BREWERIES.find(x => x.id === id);
+  if (!b || !isBreweryUnlocked(b)) return;
+  draftState.brewery = b;
+  mapState.stats = newRunStats(mapState.stats && mapState.stats.deckName);
+  // Some breweries change what the map is made of (Taproom, Contract Brewer)
+  generateMap();
+  // Garage Brewer run perk: random commons, random equipment, lower Reputation
+  if (id === 'garage') {
+    const commons = CARD_POOL.filter(c => c.rarity === 'common');
+    const ids = [];
+    while (ids.length < DECK_SIZE) {
+      const c = commons[Math.floor(Math.random() * commons.length)];
+      if (ids.filter(x => x === c.id).length < MAX_COPIES) ids.push(c.id);
+    }
+    draftState.deck = ids.map(cid => ({ ...getCardDef(cid) }));
+    mapState.relics = shuffle(RELICS).slice(0, 2).map(r => r.id);
+    mapState.rep = GARAGE_REP; mapState.maxRep = GARAGE_REP;
+  }
   // Wild Cellar run perk: lower Reputation ceiling
   if (id === 'wildcellar') { mapState.rep = WILD_START_REP; mapState.maxRep = WILD_START_REP; }
   showMapScreen();

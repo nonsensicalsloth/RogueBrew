@@ -161,9 +161,17 @@ function assignNodeTypes(act, actNodes) {
       parents.forEach(p => { if (NO_REPEAT.includes(p.type)) banned.add(p.type); });
       // Siblings: other children of my parents that already have a type
       parents.forEach(p => childrenOf(p).forEach(c => { if (c !== node && c.type) banned.add(c.type); }));
-      node.type = weightedPick(NODE_WEIGHTS, banned);
+      node.type = weightedPick(nodeWeights(), banned);
     }
   }
+}
+
+// Brewery run perks that change the map
+function nodeWeights() {
+  const w = { ...NODE_WEIGHTS };
+  if (runBrewery() === 'taproom')  w.shop   = Math.round(w.shop * 1.6);
+  if (runBrewery() === 'contract') w.collab = 8;
+  return w;
 }
 
 function weightedPick(weights, banned) {
@@ -435,6 +443,11 @@ function generateMapOffer(kind = 'normal') {
     const options = left.filter(c => c.rarity === rarity);
     offer.push({ ...options[Math.floor(Math.random() * options.length)] });
   }
+  // Stout House run perk: always at least one roasty card on offer
+  if (runBrewery() === 'stouthouse' && offer.length && !offer.some(c => c.tags && c.tags.includes('roasty'))) {
+    const roasty = pool.filter(c => c.tags && c.tags.includes('roasty') && !offer.some(o => o.id === c.id));
+    if (roasty.length) offer[offer.length - 1] = { ...roasty[Math.floor(Math.random() * roasty.length)] };
+  }
   return offer;
 }
 
@@ -495,6 +508,7 @@ function showMapShop(node) {
   if (um) um.textContent = '';
   shopInventory   = generateShopInventory();
   shopRemovalUsed = false;
+  shopHalfUsed    = false;
   shopRemoving    = false;
   renderMapShop();
 }
@@ -539,7 +553,7 @@ function renderMapShop() {
   const el = document.getElementById('map-shop-items');
   document.getElementById('shop-gold').textContent = `💰 ${mapState.gold} gold`;
   el.innerHTML = shopInventory.map((c, i) => {
-    const canAfford = mapState.gold >= c.price;
+    const canAfford = mapState.gold >= shopPrice(c);
     const full      = draftState.deck.length >= MAX_DECK_SIZE;
     const maxed     = copiesInDeck(c.id) >= MAX_COPIES;
     const disabled  = !canAfford || full || maxed;
@@ -555,24 +569,32 @@ function renderMapShop() {
       <div class="card-tags-row">${tagHtml(c.tags)}</div>
       <div class="card-effect-text">${c.desc || ''}</div>
       <div class="card-restrict">${lane}${rarityLabel(c)}</div>
-      <div class="shop-price ${canAfford ? '' : 'cant-afford'}">💰 ${c.price}</div>
+      <div class="shop-price ${canAfford ? '' : 'cant-afford'}">💰 ${shopPrice(c) < c.price ? `<s style="opacity:0.5">${c.price}</s> ${shopPrice(c)}` : c.price}</div>
       ${isOwned(c.id) ? '' : '<div class="unlock-badge">🔓 UNLOCKS FOREVER</div>'}
     </div>`;
   }).join('');
 }
 
+// Taproom run perk: the first purchase in each shop is half price
+let shopHalfUsed = false;
+function shopPrice(c) {
+  return runBrewery() === 'taproom' && !shopHalfUsed ? Math.ceil(c.price / 2) : c.price;
+}
+
 function buyCard(idx) {
   const card = shopInventory[idx];
   if (!card) return;
-  if (mapState.gold < card.price) return;
+  if (mapState.gold < shopPrice(card)) return;
   if (draftState.deck.length >= MAX_DECK_SIZE) return;
   if (copiesInDeck(card.id) >= MAX_COPIES) return;
-  mapState.gold -= card.price;
+  mapState.gold -= shopPrice(card);
   const bought = { ...card };
   delete bought.price;
   draftState.deck.push(bought);
   shopInventory.splice(idx, 1);
   const isNew = unlockCard(card.id);
+  if (isNew) trackUnlock(card.name);
+  if (runBrewery() === 'taproom') shopHalfUsed = true;
   renderMapShop();
   if (isNew) {
     const msg = document.getElementById('shop-unlock-msg');
@@ -955,6 +977,7 @@ function onBattleWin(node) {
   mapState.gold += goldReward;
   addLog(`Victory! +${goldReward} gold earned.`, 'player');
 
+  trackBattleWin(node, goldReward);
   if (node.type === 'boss') {
     if (mapState.act < 2) {
       healRep(BOSS_HEAL);
@@ -989,6 +1012,7 @@ function healRep(amount) {
 function onBattleLoss() {
   const node = state.currentNode;
   if (!node || node.type === 'boss') {
+    trackBattleLoss(true);
     showRunLoss('The judges crowned your rival. The boss must be beaten.');
     return;
   }
@@ -996,6 +1020,7 @@ function onBattleLoss() {
   const gap  = sc.e - sc.p;
   const loss = repDamage(gap);
   mapState.rep -= loss;
+  trackBattleLoss(mapState.rep <= 0);
   if (mapState.rep <= 0) {
     mapState.rep = 0;
     showRunLoss(`Your reputation hit zero after losing to ${state.rivalName} by ${gap}.`);
@@ -1052,19 +1077,13 @@ function showActTransition(goldReward) {
 function showRunWin() {
   clearRun();
   setScreen('run-win-screen');
-  document.getElementById('run-win-deck').textContent =
-    `Final deck: ${draftState.deck.length} cards`;
-  document.getElementById('run-win-gold').textContent =
-    `Gold remaining: ${mapState.gold}`;
+  showRunSummary(true);
 }
 
 function showRunLoss(reason) {
   clearRun();
   setScreen('run-loss-screen');
-  document.getElementById('run-loss-deck').textContent =
-    reason || `You had ${draftState.deck.length} cards`;
-  document.getElementById('run-loss-act').textContent =
-    `Fell in Act ${mapState.act + 1} with ${draftState.deck.length} cards`;
+  showRunSummary(false, reason);
 }
 
 // ── Start a run ──

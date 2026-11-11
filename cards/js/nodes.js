@@ -127,6 +127,12 @@ function collabPick(i) {
 function collabTrade(idx) {
   const given = draftState.deck[idx];
   if (!given || !collabState.pick) return;
+  // Contract Brewer run perk: keep your card, gain theirs
+  if (runBrewery() === 'contract') {
+    draftState.deck.push({ ...collabState.pick });
+    finishSpecial(`Contract terms: you keep ${given.name} and gain ${collabState.pick.name}. 🤝`);
+    return;
+  }
   draftState.deck.splice(idx, 1, { ...collabState.pick });
   finishSpecial(`Traded ${given.name} for ${collabState.pick.name}. Cheers! 🍻`);
 }

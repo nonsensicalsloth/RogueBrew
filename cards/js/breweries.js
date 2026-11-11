@@ -31,7 +31,46 @@ const BREWERIES = [
     perk:    'Start with 80 max Reputation. Events offer an extra wild option.',
     unlocked: true,
   },
+
+  // ── Unlocked by playing ──
+  {
+    id: 'taproom', name: 'Taproom', icon: '🍻', subtitle: 'Money talks.',
+    passive: 'Adjuncts you play get +2.',
+    ability: { name: 'Pour a Pint', cost: 1, desc: 'Choose any card on your board. It gets +4.' },
+    perk:    'More shops on the map, and your first purchase in each shop is half price.',
+    unlock:  { text: 'Win a run.', test: p => p.wins >= 1 },
+  },
+  {
+    id: 'stouthouse', name: 'Stout House', icon: '☕', subtitle: 'Darker is better.',
+    passive: 'Your roast limit is 3 higher.',
+    ability: { name: 'Roast It', cost: 1, desc: 'Remove 1 roast token. Your best roasty card gets +6.' },
+    perk:    'Every card offer includes at least one roasty card.',
+    unlock:  { text: 'Beat 5 bosses (across all runs).', test: p => p.bossesBeaten >= 5 },
+  },
+  {
+    id: 'contract', name: 'Contract Brewer', icon: '🤝', subtitle: 'Borrow everything.',
+    passive: 'Process cards cost 1 less.',
+    ability: { name: 'Reverse-Engineer', cost: 2, desc: "Copy the rival's highest-scoring card on its board into your hand." },
+    perk:    'More Collab Brew rooms, and collabs let you keep your card instead of trading it away.',
+    unlock:  { text: 'Win runs with 2 different breweries.', test: p => Object.keys(p.winsBy).filter(k => p.winsBy[k] > 0).length >= 2 },
+  },
+  {
+    id: 'garage', name: 'Garage Brewer', icon: '🏚', subtitle: 'Hard mode. Make it work.',
+    passive: 'None. You make do.',
+    ability: { name: 'Improvise', cost: 0, desc: 'Once per round: discard your hand and draw that many new cards.' },
+    perk:    'Your deck is 15 random commons, you start with 2 random pieces of equipment, and 70 max Reputation.',
+    unlock:  { text: 'Win 3 runs.', test: p => p.wins >= 3 },
+  },
 ];
+
+const GARAGE_REP = 70;
+
+// Starting breweries are always open; the rest unlock from your profile (or playtest mode)
+function isBreweryUnlocked(b) {
+  if (b.unlocked) return true;
+  if (typeof loadCollection === 'function' && loadCollection().unlockAll) return true;
+  return !!(b.unlock && typeof loadProfile === 'function' && b.unlock.test(loadProfile()));
+}
 
 const WILD_START_REP   = 80;
 const WILD_ABILITY_REP = 5;
@@ -46,6 +85,9 @@ function activeBrewery() {
   if (typeof state === 'undefined' || !state || !state.currentNode) return null;
   return runBrewery();
 }
+
+// Same as activeBrewery, usable while a battle is being set up
+function activeBreweryAt() { return activeBrewery(); }
 
 function breweryDef() {
   return BREWERIES.find(b => b.id === activeBrewery()) || null;
@@ -69,6 +111,13 @@ function abilityStatus() {
   if (b.id === 'hophouse' && !state.pDeck.length && !state.pDiscard.some(c => c.cat !== 'token'))
     return { ok: false, reason: 'Nothing left to draw' };
   if (b.id === 'wildcellar' && state.wildUsedRound)    return { ok: false, reason: 'Already used this round' };
+  if (b.id === 'taproom' && !LANES.some(l => state.field[l].p.some(c => c.cat !== 'token')))
+    return { ok: false, reason: 'No card on your board' };
+  if (b.id === 'stouthouse' && getRoast('p') <= 0)     return { ok: false, reason: 'No roast to use' };
+  if (b.id === 'contract' && !LANES.some(l => state.field[l].e.some(c => c.cat !== 'token')))
+    return { ok: false, reason: 'Nothing on the rival board to copy' };
+  if (b.id === 'garage' && state.garageUsedRound)      return { ok: false, reason: 'Already used this round' };
+  if (b.id === 'garage' && !state.pHand.some(c => !isContamination(c))) return { ok: false, reason: 'No cards in hand' };
   if (b.id === 'wildcellar' && (typeof mapState === 'undefined' || !mapState || mapState.rep <= WILD_ABILITY_REP))
     return { ok: false, reason: 'Not enough Reputation' };
   return { ok: true, reason: '' };
@@ -112,6 +161,49 @@ function useAbility() {
       return;
     }
 
+    case 'taproom':
+      state.abilityTargeting = true;
+      addLog('Pour a Pint: click any card on your board.', 'player');
+      render();
+      return;
+
+    case 'stouthouse': {
+      removeRoast('p', 1);
+      const roasty = LANES.flatMap(l => state.field[l].p.filter(c => c.tags && c.tags.includes('roasty')).map(c => ({ c, l })));
+      if (roasty.length) {
+        const best = roasty.reduce((a, x) => effectivePoints(x.c, x.l, 'p') > effectivePoints(a.c, a.l, 'p') ? x : a);
+        best.c.points += 6;
+        addLog(`Roast It: −1 roast, ${best.c.name} +6!`, 'player');
+      } else addLog('Roast It: −1 roast.', 'player');
+      finishAbility(b);
+      return;
+    }
+
+    case 'contract': {
+      const theirs = LANES.flatMap(l => state.field[l].e.filter(c => c.cat !== 'token').map(c => ({ c, l })));
+      const best = theirs.reduce((a, x) => effectivePoints(x.c, x.l, 'e') > effectivePoints(a.c, a.l, 'e') ? x : a);
+      const copy = { ...(getCardDef(best.c.id) || best.c) };
+      state.pHand.push(copy);
+      state.newCards = state.newCards || new Set();
+      state.newCards.add(copy);
+      addLog(`Reverse-Engineer: copied ${copy.name} into your hand.`, 'player');
+      finishAbility(b);
+      return;
+    }
+
+    case 'garage': {
+      const keep = state.pHand.filter(isContamination);
+      const toss = state.pHand.filter(c => !isContamination(c));
+      state.pDiscard.push(...toss);
+      state.pHand = keep;
+      drawForPlayer(toss.length);
+      state.garageUsedRound = true;
+      addLog(`Improvise: tossed ${toss.length} card(s) and drew fresh.`, 'player');
+      checkContaminationInHand('p');
+      finishAbility(b);
+      return;
+    }
+
     case 'wildcellar':
       mapState.rep -= WILD_ABILITY_REP;
       state.wildUsedRound = true;
@@ -128,6 +220,12 @@ function abilityPickTarget(lane, idx) {
   const b = breweryDef();
   if (!b || !state.abilityTargeting) return;
   const card = state.field[lane].p[idx];
+  if (b.id === 'taproom' && card && card.cat !== 'token') {
+    card.points += 4;
+    addLog(`Pour a Pint: ${card.name} +4!`, 'player');
+    finishAbility(b);
+    return;
+  }
   if (b.id === 'lagerhaus' && card && lane === 'cold' && card.cat === 'yeast') {
     card.points += 5;
     addLog(`Cold Condition: ${card.name} +5!`, 'player');
@@ -139,6 +237,7 @@ function abilityPickTarget(lane, idx) {
 function isAbilityTarget(c, lane) {
   if (!state.abilityTargeting) return false;
   const id = activeBrewery();
+  if (id === 'taproom') return c.cat !== 'token';
   return id === 'lagerhaus' && lane === 'cold' && c.cat === 'yeast';
 }
 
@@ -146,14 +245,14 @@ function isAbilityTarget(c, lane) {
 
 function breweryCardHtml(b) {
   return `
-    <div class="brewery-card ${b.unlocked ? '' : 'locked'}" onclick="${b.unlocked ? `selectBrewery('${b.id}')` : 'void(0)'}">
+    <div class="brewery-card ${isBreweryUnlocked(b) ? '' : 'locked'}" onclick="${isBreweryUnlocked(b) ? `selectBrewery('${b.id}')` : 'void(0)'}">
       <div class="brewery-icon">${b.icon}</div>
       <div class="brewery-name">${b.name}</div>
       <div class="brewery-sub">${b.subtitle}</div>
-      ${b.unlocked ? `
+      ${isBreweryUnlocked(b) ? `
         <div class="brewery-tier"><span>PASSIVE</span>${b.passive}</div>
         <div class="brewery-tier"><span>ABILITY · ${b.ability.name} (${b.ability.cost})</span>${b.ability.desc}</div>
         <div class="brewery-tier"><span>RUN PERK</span>${b.perk}</div>`
-      : '<div class="brewery-bonus">🔒 LOCKED</div>'}
+      : `<div class="brewery-bonus">🔒 LOCKED</div><div class="brewery-tier"><span>TO UNLOCK</span>${b.unlock ? b.unlock.text : ''}</div>`}
     </div>`;
 }

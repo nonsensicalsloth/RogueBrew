@@ -227,16 +227,14 @@
 <!-- ===== RUN WIN ===== -->
 <div id="run-win-screen" class="screen">
   <div class="run-win-title">YOU ARE THE<br>CHAMPION!</div>
-  <div style="font-size:8px;color:var(--dim);" id="run-win-deck"></div>
-  <div style="font-size:8px;color:var(--gold);" id="run-win-gold"></div>
+  <div id="run-win-summary" class="run-summary"></div>
   <button class="btn btn-gold" style="margin-top:16px;" onclick="showTitleScreen()">MAIN MENU</button>
 </div>
 
 <!-- ===== RUN LOSS ===== -->
 <div id="run-loss-screen" class="screen">
   <div class="run-loss-title">BATCH FAILED.</div>
-  <div style="font-size:8px;color:var(--dim);" id="run-loss-deck"></div>
-  <div style="font-size:8px;color:var(--dim);" id="run-loss-act"></div>
+  <div id="run-loss-summary" class="run-summary"></div>
   <button class="btn btn-primary" style="margin-top:16px;" onclick="showTitleScreen()">MAIN MENU</button>
 </div>
 
@@ -340,6 +338,7 @@
 <script src="js/save.js"></script>
 <script src="js/collection.js"></script>
 <script src="js/howto.js"></script>
+<script src="js/progress.js"></script>
 <script src="js/deck.js"></script>
 <script src="js/draft.js"></script>
 <script src="js/effects.js"></script>

@@ -71,7 +71,9 @@ const HOWTO_CONTENT = {
       `Greyed-out cards with a 🔒 aren't in your collection yet (see <b>Collecting Cards</b>).`,
     ]) +
     hbox('Choose a brewery', hp(`When you start a run you pick a brewery. Each has a <b>passive</b> bonus, a once-per-turn <b>ability</b> button in battle, and a <b>run perk</b>. Any deck works with any brewery.`) +
-      hli(BREWERIES.filter(b => b.unlocked).map(b => `${b.icon} <b>${b.name}</b>: ${b.subtitle}`))),
+      hli(BREWERIES.map(b => isBreweryUnlocked(b)
+        ? `${b.icon} <b>${b.name}</b>: ${b.subtitle}`
+        : `🔒 <b>${b.name}</b>: ${b.unlock.text}`))),
 
   cards: () =>
     `<div class="howto-split"><div class="howto-example">${exampleCard('cascade')}</div><div>` +
@@ -159,6 +161,8 @@ const HOWTO_CONTENT = {
         `Upgrade or remove cards at rest stops and shops. A lean deck draws its best cards more often. You can't go below ${MIN_DECK_SIZE} cards.`,
         `Beat an act boss to choose a piece of <b>brewing equipment</b>, a permanent bonus for the run.`,
       ])) +
+    hbox('After each run',
+      hp(`A summary shows how far you got, your best score, what you unlocked, and your final deck. Wins and bosses beaten count toward <b>unlocking new breweries</b>.`)) +
     hbox('Saving',
       hp(`Your run saves automatically. Close the game and pick <b>▶ CONTINUE RUN</b> on the title screen to carry on. A battle you leave will restart from the beginning.`)),
 

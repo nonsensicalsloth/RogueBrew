@@ -27,6 +27,8 @@ function getEffectiveCost(c) {
   // Hop House ability: a scouted hop costs 1 less on the turn it was drawn
   const scout = c._scoutKey && c._scoutKey === abilityKey() ? 1 : 0;
   let discount = state.nextCardDiscount || 0;
+  // Contract Brewer passive: process cards cost 1 less
+  if (c.cat === 'process' && activeBrewery() === 'contract') discount += 1;
   if (c.cat === 'yeast') discount += (state.nextYeastDiscount || 0);
   if (c.cat === 'hop')   discount += (state.nextHopDiscount   || 0);
   return Math.max(0, c.cost - discount - scout);
@@ -86,6 +88,10 @@ function resolvePlay(c, lane, who) {
   // Brewery passives (map runs only)
   if (who === 'p' && c.cat !== 'token') {
     const brew = activeBrewery();
+    if (brew === 'taproom' && c.cat === 'adjunct') {
+      c.points += 2;
+      addLog(`Taproom: ${c.name} +2 (adjunct).`, 'player');
+    }
     if (brew === 'lagerhaus' && c.tags && c.tags.includes('crisp')) {
       c.points += 1;
       addLog(`Lagerhaus: ${c.name} +1 (crisp).`, 'player');

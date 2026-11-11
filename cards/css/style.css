@@ -662,3 +662,16 @@ body::after {
 .deck-preview { position:fixed; z-index:1000; display:none; pointer-events:none; width:150px; }
 .deck-preview .card { width:130px; margin:12px auto 0; box-shadow:0 6px 24px rgba(0,0,0,0.6); }
 .deck-preview-notes { margin-top:6px; font-size:7px; line-height:1.8; color:var(--gold); text-align:center; background:var(--bg2); border:1px solid var(--border); padding:4px; }
+
+/* ── End-of-run summary ── */
+#run-win-screen, #run-loss-screen { overflow-y:auto; padding:20px 12px; }
+.run-summary { width:100%; max-width:560px; margin-top:10px; }
+.sum-unlock { font-size:9px; color:var(--gold); text-align:center; border:2px solid var(--gold); padding:8px; margin-bottom:10px; animation: mapPulse 1.4s ease-in-out infinite; }
+.sum-reason { font-size:8px; color:var(--dim); text-align:center; margin-bottom:10px; line-height:1.8; }
+.sum-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(165px, 1fr)); gap:6px; margin-bottom:10px; }
+.sum-stat { background:var(--bg2); border:1px solid var(--border); padding:6px 8px; display:flex; justify-content:space-between; gap:8px; font-size:7px; }
+.sum-stat span { color:var(--dim); }
+.sum-stat b { color:var(--text); text-align:right; }
+.sum-line { font-size:7px; line-height:1.9; color:var(--text); margin:4px 0; }
+.sum-deck-title { font-size:8px; color:var(--gold); margin:12px 0 6px; }
+.sum-deck { max-height:220px; overflow-y:auto; }
