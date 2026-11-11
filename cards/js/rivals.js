@@ -17,8 +17,8 @@ const LOCAL_RIVALS = [
     cards:['2row','2row','2row','paleale','paleale','crystal40','crystal40','cascade','cascade','centennial',
            'chico','chico','caramun','oats','maltodex'] },
   { id:'pub', name:'Corner Pub Brewery', style:'English bitter',
-    cards:['marisotter','2row','paleale','paleale','crystal40','crystal20','ekg','oats','englishale','paleale',
-           'victory','biscuit','oats','caramun','crystal20'] },
+    cards:['marisotter','fuggle','paleale','paleale','crystal40','crystal20','ekg','oats','englishale','paleale',
+           'victory','biscuit','oats','caramun','brownmalt'] },
   { id:'lagerclub', name:'Weekend Lager Club', style:'lager',
     cards:['pilsner','pilsner','pilsner','vienna','vienna','saaz','saaz','hallertau','hallertau','kolsch','kolsch',
            'tettnang','munich','crystal10','czechlager'] },
@@ -31,7 +31,7 @@ const CRAFT_RIVALS = [
            'passionfr','drunkcellar'] },
   { id:'blackkettle', name:'Black Kettle Stoutworks', style:'stout',
     cards:['marisotter','marisotter','2row','2row','choc','choc','roastedbar','carafaII','carafaII','carafaIII','midnightw',
-           'midnightw','debittered','oats','oats','lactose','lactose','coffee','coldbrewcof','vanilla','englishale','englishale',
+           'midnightw','brownmalt','oats','oats','lactose','lactose','coffee','coldbrewcof','vanilla','englishale','englishale',
            'magnum','magnum','badbatch'] },
   { id:'stwort', name:'Abbey of St. Wort', style:'Belgian',
     cards:['pilsner','pilsner','pilsner','munich','munich','candisugarcl','candisugarcl','candisugarab','candisugarab',
@@ -39,15 +39,15 @@ const CRAFT_RIVALS = [
            'hallertau','hallertau','tettnang','inspector'] },
   { id:'pinepellet', name:'Pine & Pellet Co.', style:'West Coast',
     cards:['2row','2row','2row','2row','crystal10','crystal10','carapils','paleale','cascade','cascade','centennial',
-           'chinook','columbus','simcoe','crystal40','magnum','chico','chico','vienna','citrazest','hopthief','amarillo','crystal20'] },
+           'chinook','columbus','simcoe','crystal40','magnum','chico','chico','vienna','citrazest','hopthief','amarillo','summit'] },
   { id:'kuhlhaus', name:'Kühlhaus Lagerei', style:'lager',
-    cards:['pilsner','pilsner','pilsner','floorpilsner','floorpilsner','vienna','vienna','saaz','saaz','saaz','hallertau',
-           'hallertau','tettnang','tettnang','hallblanc','w3470','w3470','czechlager','czechlager','kolsch','coldcrash',
-           'ricehulls','qc'] },
+    cards:['pilsner','pilsner','pilsner','floorpilsner','floorpilsner','vienna','vienna','saaz','saaz','2row','hallertau',
+           'hallertau','tettnang','tettnang','hallblanc','w3470','paleale','czechlager','czechlager','kolsch','coldcrash',
+           'yeastnutrient','munich'] },
   { id:'tartcellars', name:'Tart Cellars', style:'sour',
     cards:['pilsner','pilsner','wheatwhite','wheatwhite','goldenprom','lacto','lacto','sourvisiae','sourvisiae','sourvisiae',
            'raspberry','raspberry','cherry','vanilla','passionfr','passionfr','blueberry','phantasm','cosmicpunch','honey',
-           'crosscontam','saaz','hallertau','vanillabn','raspberry'] },   // a touch of aged noble hops, like a real sour
+           'crosscontam','saaz','hallertau','oakfoeder','raspberry'] },   // a touch of aged noble hops, like a real sour
 ];
 
 // Two possible bosses per act; one is picked when the map is generated

@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'retag 1 (Nov 12)';
+const CARDS_VERSION = 'payoffs 1 (Nov 12)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -213,6 +213,20 @@ const CARD_POOL = [
   // Engineered strains
   { id:'sourvisiae', name:'Sourvisiae',         cat:'yeast', lane:'cold', points:6,  cost:2, tags:['sour','crisp','clean'],       desc:'+2 per turn. Clean sour, no contamination. On play: +2 per fruity or tropical card and +2 per hop (not hop-sensitive).' },
   { id:'cosmicpunch',name:'Cosmic Punch',       cat:'yeast', lane:'cold', points:6,  cost:2, tags:['fruity','hazy','thiol'],      desc:'+2 per turn. On play: +2 per hop on your cold side. Thiol release: every thiol card on your board gets +6 (Phantasm +12), including ones played later.' },
+
+  // ══════════════════════════════════════════════════════════════
+  // ── FLAVOUR PAYOFFS ── cards that reward the less-used tags
+  // ══════════════════════════════════════════════════════════════
+  { id:'brownmalt',   name:'Brown Malt',     cat:'malt',    lane:'hot',  points:12, cost:2, tags:['toasty','malty'],  desc:'+3 pts for each other toasty card on your hot side.' },
+  { id:'honeymalt',   name:'Honey Malt',     cat:'malt',    lane:'hot',  points:7,  cost:1, tags:['sweet'],           desc:'Balances bitterness: +3 pts for each bitter card on your board.' },
+  { id:'ryemalt',     name:'Rye Malt',       cat:'malt',    lane:'hot',  points:12, cost:2, tags:['spicy','bready'],  desc:'+3 pts for each other bready card on your hot side.' },
+  { id:'fuggle',      name:'Fuggle',         cat:'hop',     lane:'both', points:7,  cost:1, tags:['earthy','floral'], desc:'+3 pts for each other earthy card on your board.' },
+  { id:'summit',      name:'Summit',         cat:'hop',     lane:'both', points:13, cost:2, tags:['bitter','dank'],   desc:'+3 pts for each other piney or dank card on your board.' },
+  { id:'elderflower', name:'Elderflower',    cat:'adjunct', lane:'both', points:7,  cost:1, tags:['floral','sweet'],  desc:'+3 pts for each other floral card on your board.' },
+  { id:'brutenzyme',  name:'Brut Enzyme',    cat:'adjunct', lane:'both', points:12,  cost:2, tags:['dry'],             desc:'Ferments bone dry: every other dry card on your board gets +3.' },
+  { id:'flakedrice',  name:'Flaked Rice',    cat:'adjunct', lane:'hot',  points:7,  cost:1, tags:['neutral','crisp'], desc:'+2 pts for each other neutral or crisp card on your hot side.' },
+  { id:'yeastnutrient', name:'Yeast Nutrient', cat:'adjunct', lane:'cold', points:6, cost:1, tags:['clean'],         desc:'Every clean yeast on your cold side gets +4.' },
+  { id:'oakfoeder',   name:'Oak Foeder',     cat:'adjunct', lane:'cold', points:20, cost:3, tags:['oaky','funky'],    desc:'Wild cultures thrive in oak: every other funky or sour card on your cold side gets +5.' },
 ];
 
 // ── Default deck composition (30 cards) ──
@@ -228,6 +242,7 @@ const RARE_CARDS = [
   'crystal75','crystal80','crystal120','coffee','aromatic','melanoidin','biscuit','victory','blackmalt',
   'heritage','spelt','buckwheat',
   'award','doublebatch','inspector','barreltrans',
+  'oakfoeder',
 ];
 const UNCOMMON_CARDS = [
   'floorpilsner','darkmunich','expwheat','expilsner','crystal50','crystal60','specialb','carafaIII',
@@ -236,6 +251,7 @@ const UNCOMMON_CARDS = [
   'filtration','heatkill','recipetweak','hopthief','crosscontam','badbatch','dryhop','kettletrans','fermlog',
   'hallblanc','strata','talus','nectaron','cryo','hopoil',
   'london3','barbarian','abbey','brett','sourvisiae',
+  'summit','brutenzyme','yeastnutrient',
 ];
 const RARITY_NAMES = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare' };
 CARD_POOL.forEach(c => {

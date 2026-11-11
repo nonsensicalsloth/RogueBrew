@@ -1123,6 +1123,77 @@ function applyCardEffect(card, lane, who) {
       // Flat score cards — no effect needed
       break;
 
+
+    // ══ FLAVOUR PAYOFFS ══
+    case 'brownmalt': {
+      const n = countOthers('toasty', who, card, 'hot');
+      card.points += n * 3;
+      addLog(`Brown Malt: +${n * 3} pts (${n} toasty cards).`, 'player');
+      break;
+    }
+
+    case 'honeymalt': {
+      const n = countOthers('bitter', who, card);
+      card.points += n * 3;
+      addLog(`Honey Malt: +${n * 3} pts (${n} bitter cards balanced).`, 'player');
+      break;
+    }
+
+    case 'ryemalt': {
+      const n = countOthers('bready', who, card, 'hot');
+      card.points += n * 3;
+      addLog(`Rye Malt: +${n * 3} pts (${n} bready cards).`, 'player');
+      break;
+    }
+
+    case 'fuggle': {
+      const n = countOthers('earthy', who, card);
+      card.points += n * 3;
+      addLog(`Fuggle: +${n * 3} pts (${n} earthy cards).`, 'player');
+      break;
+    }
+
+    case 'summit': {
+      const n = allMine.filter(c => c !== card && c.tags && (c.tags.includes('piney') || c.tags.includes('dank'))).length;
+      card.points += n * 3;
+      addLog(`Summit: +${n * 3} pts (${n} piney/dank cards).`, 'player');
+      break;
+    }
+
+    case 'elderflower': {
+      const n = countOthers('floral', who, card);
+      card.points += n * 3;
+      addLog(`Elderflower: +${n * 3} pts (${n} floral cards).`, 'player');
+      break;
+    }
+
+    case 'brutenzyme': {
+      const isDry = c => c !== card && c.tags && c.tags.includes('dry');
+      const n = buffLaneCards('hot', who, 3, isDry) + buffLaneCards('cold', who, 3, isDry);
+      addLog(`Brut Enzyme: +3 to ${n} dry card(s).`, 'player');
+      break;
+    }
+
+    case 'flakedrice': {
+      const n = hotCards.filter(c => c !== card && c.tags && (c.tags.includes('neutral') || c.tags.includes('crisp'))).length;
+      card.points += n * 2;
+      addLog(`Flaked Rice: +${n * 2} pts (${n} neutral/crisp cards).`, 'player');
+      break;
+    }
+
+    case 'yeastnutrient': {
+      const n = buffLaneCards('cold', who, 4, c => c.cat === 'yeast' && c.tags && c.tags.includes('clean'));
+      addLog(`Yeast Nutrient: +4 to ${n} clean yeast(s).`, 'player');
+      break;
+    }
+
+    case 'oakfoeder': {
+      const wild = c => c !== card && c.tags && (c.tags.includes('funky') || c.tags.includes('sour'));
+      const n = buffLaneCards('cold', who, 5, wild);
+      addLog(`Oak Foeder: +5 to ${n} funky/sour card(s).`, 'player');
+      break;
+    }
+
     // ══ HOPS ══
 
     // Noble & European
