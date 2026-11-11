@@ -1359,9 +1359,7 @@ function applyCardEffect(card, lane, who) {
       const hops  = countCat('hop', who);
       const bases = hotCards.filter(c => BASE_MALT_IDS.includes(c.id)).length;
       card.points += hops + bases;
-      const dirty = coldCards.some(c => c.tags && (c.tags.includes('funky') || c.tags.includes('sour')));
-      if (!dirty) card.points += 6;
-      addLog(`Chico: +${hops + bases} (hops + base malts)${dirty ? '' : ' +6 clean bonus'}.`, 'player');
+      addLog(`Cal Ale: +${hops + bases} (hops + base malts).`, 'player');
       break;
     }
 
@@ -1369,7 +1367,6 @@ function applyCardEffect(card, lane, who) {
       const hops = countCat('hop', who);
       card.points += hops * 2;
       addLog(`Barbarian: +${hops * 2} pts (${hops} hops).`, 'player');
-      if (hops >= 3) drawFor(who, 1);
       break;
     }
 
