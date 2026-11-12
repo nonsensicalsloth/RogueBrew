@@ -174,8 +174,26 @@ function removeFirstToken(who, tokenId = null, lane = null) {
   return null;
 }
 
-function removeSugarClot(who) {
-  return removeFirstToken(who, 'sugar_clot', 'hot') || removeFirstToken(who, 'sugar_clot8', 'hot');
+// ── Stuck Mash ──
+// Sticky grains (oats, wheat, rye, spelt) gum up the mash. With STUCK_MASH_AT or more
+// sticky cards on your hot side and no Rice Hulls there, a Stuck Mash token (−8) appears.
+// Rice Hulls clear it and prevent it; cleanup cards (SIP, CIP, Fining) remove it too.
+const STUCK_MASH_AT = 3;
+
+function stickyCount(who) {
+  return getLaneCards('hot', who).filter(c => c.tags && c.tags.includes('sticky')).length;
+}
+function hasRiceHulls(who) {
+  return getLaneCards('hot', who).some(c => c.id === 'ricehulls');
+}
+function isMashStuck(who) {
+  return getLaneCards('hot', who).some(c => c.id === 'stuckmash');
+}
+
+function checkStuckMash(who) {
+  if (stickyCount(who) < STUCK_MASH_AT || hasRiceHulls(who) || isMashStuck(who)) return;
+  getLaneCards('hot', who).push(createToken('stuckmash'));
+  addLog(`🥣 ${who === 'p' ? 'Your' : "Rival's"} mash is stuck! Too many sticky grains — Stuck Mash (−8). Rice Hulls fix it.`, who === 'p' ? 'warn' : 'enemy');
 }
 
 function removeAllTokens(who, tokenId) {
@@ -795,12 +813,7 @@ function applyCardEffect(card, lane, who) {
     case 'crystal80': {
       const roast80 = getRoast(who);
       card.points = roast80 * 8 + (card.points - getCardDef('crystal80').points);
-      if (roast80 < 3) {
-        state.field.hot[who].push(createToken('sugar_clot'));
-        addLog(`Crystal 80: ${roast80} roast × 8 = ${card.points} pts. Not roasty enough — Sugar Clot added!`, 'warn');
-      } else {
-        addLog(`Crystal 80: ${roast80} roast × 8 = ${card.points} pts!`, 'player');
-      }
+      addLog(`Crystal 80: ${roast80} roast × 8 = ${card.points} pts!`, 'player');
       break;
     }
 
@@ -939,8 +952,9 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'ricehulls':
-      state.nextCardDiscount = (state.nextCardDiscount || 0) + 1;
-      addLog('Rice Hulls: next card costs 1 less.', 'player');
+      if (isPlayer) state.nextCardDiscount = (state.nextCardDiscount || 0) + 1;
+      if (isMashStuck(who)) { removeAllTokens(who, 'stuckmash'); addLog('Rice Hulls: stuck mash freed!', 'player'); }
+      addLog('Rice Hulls: next card costs 1 less, and your mash can\'t get stuck while they\'re in.', 'player');
       break;
 
     case 'buckwheat': {
@@ -1206,6 +1220,7 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'brutenzyme': {
+      if (isMashStuck(who)) { removeAllTokens(who, 'stuckmash'); addLog('Brut Enzyme: broke down the stuck mash!', 'player'); }
       const isDry = c => c !== card && c.tags && c.tags.includes('dry');
       const n = buffLaneCards('hot', who, 3, isDry) + buffLaneCards('cold', who, 3, isDry);
       addLog(`Brut Enzyme: +3 to ${n} dry card(s).`, 'player');
@@ -1471,7 +1486,6 @@ function applyCardEffect(card, lane, who) {
     case 'saison': {
       const n = allMine.filter(c => c !== card && c.tags && ['belgian','spicy','dry'].some(t => c.tags.includes(t))).length;
       card.points += n * 2;
-      removeSugarClot(who);
       addLog(`Saison: +${n * 2} pts (${n} belgian/spicy/dry cards).`, 'player');
       break;
     }

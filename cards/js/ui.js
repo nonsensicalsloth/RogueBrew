@@ -215,6 +215,17 @@ function render() {
     roastEl.style.color = burnt ? 'var(--red)' : effective >= threshold - 1 ? 'var(--orange)' : roast > 0 ? 'var(--gold)' : 'var(--dim)';
     roastEl.title = `Each roast token gives every roasty card +${ROAST_POWER}. Reach ${threshold} and your beer is Burnt: hot side scores half. Midnight Wheat roast is safe.`;
   }
+  // Mash meter: sticky grains on your hot side
+  const mashEl = document.getElementById('mash-pill');
+  if (mashEl) {
+    const n = state.phase === 'play' || state.phase === 'between' ? stickyCount('p') : 0;
+    const stuck = isMashStuck('p'), hulls = hasRiceHulls('p');
+    mashEl.style.display = n > 0 || stuck ? '' : 'none';
+    mashEl.textContent = stuck ? 'MASH STUCK! −8' : hulls ? `MASH ${n} STICKY · HULLS IN` : `MASH ${n}/${STUCK_MASH_AT} STICKY`;
+    mashEl.style.color = stuck ? 'var(--red)' : hulls ? 'var(--green)' : n >= STUCK_MASH_AT - 1 ? 'var(--orange)' : 'var(--dim)';
+    mashEl.title = `Sticky grains (oats, wheat, rye, spelt) gum up the mash. ${STUCK_MASH_AT}+ on your hot side without Rice Hulls = Stuck Mash (−8).`;
+  }
+
   const discountMsg = (state.nextCardDiscount || 0) > 0 ? ` ★-${state.nextCardDiscount}` : '';
   document.getElementById('hand-lbl').textContent =
     state.phase === 'mulligan'

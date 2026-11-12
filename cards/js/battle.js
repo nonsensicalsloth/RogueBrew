@@ -112,10 +112,9 @@ function resolvePlay(c, lane, who) {
   // Haze Lord boss: its hops get +3
   if (who === 'e' && c.cat === 'hop' && state.rivalTrait === 'juicebomb') c.points += 3;
 
-  // Any hop in the boil clears one Sugar Clot
-  if (c.cat === 'hop' && lane === 'hot') removeSugarClot(who);
 
   applyCardEffect(c, lane, who);
+  if (c.tags && c.tags.includes('sticky') && lane === 'hot') checkStuckMash(who);
   applyThiolOnPlay(c, who);
   trackLastHop(c, who);
   trackLastMalt(c, who);

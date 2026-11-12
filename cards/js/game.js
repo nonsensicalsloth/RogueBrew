@@ -215,7 +215,7 @@ function endRound() {
     .concat(state.field.cold.p.filter(c => c._award));
 
   LANES.forEach(l => {
-    // Tokens (Haze, Body, Sugar Clots, Contamination...) leave the game at round end
+    // Tokens (Haze, Body, Stuck Mash, Contamination...) leave the game at round end
     state.pDiscard.push(...state.field[l].p.filter(c => !c._victory && c.cat !== 'token'));
     state.eDiscard.push(...state.field[l].e.filter(c => c.cat !== 'token'));
     state.field[l].p = [];

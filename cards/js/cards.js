@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'spent grain 1 (Nov 13)';
+const CARDS_VERSION = 'stuck mash 1 (Nov 13)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -16,11 +16,11 @@ const CARD_POOL = [
   { id:'goldenprom',  name:'Golden Promise',        cat:'malt', lane:'hot', points:18, cost:2, tags:['sweet'],           desc:'No effect, big base score.' },
   { id:'vienna',      name:'Vienna Malt',           cat:'malt', lane:'hot', points:10,  cost:2, tags:['malty','toasty'],          desc:'Increases base score of all other malts on your hot side by +2.' },
   { id:'munich',      name:'Munich Malt',           cat:'malt', lane:'hot', points:18, cost:2, tags:['malty'],           desc:'No effect, big base score.' },
-  { id:'wheatwhite',  name:'White Wheat Malt',      cat:'malt', lane:'hot', points:8,  cost:1, tags:['bready','hazy'],          desc:'Add a Body card (0 cost, +5 pts) to your hand when played.' },
+  { id:'wheatwhite',  name:'White Wheat Malt',      cat:'malt', lane:'hot', points:8,  cost:1, tags:['bready','hazy','sticky'],          desc:'Add a Body card (0 cost, +5 pts) to your hand when played.' },
   { id:'expilsner',   name:'Extra Pale Pilsner',    cat:'malt', lane:'hot', points:12, cost:2, tags:['crisp'],           desc:'Your next hop this round gets +2 pts.' },
   { id:'floorpilsner',name:'Floor Malted Pilsner',  cat:'malt', lane:'hot', points:19, cost:3, tags:['crisp'],           desc:'If no crystal or dark malts on hot side, +10 bonus pts.' },
   { id:'darkmunich',  name:'Dark Munich',           cat:'malt', lane:'hot', points:19, cost:3, tags:['bready','toasty'], desc:'Each crystal malt already on your hot side gets +4 pts.' },
-  { id:'expwheat',    name:'Extra Pale Wheat',      cat:'malt', lane:'hot', points:12, cost:2, tags:['bready','crisp'], desc:'Your next hop this round gets +3 pts.' },
+  { id:'expwheat',    name:'Extra Pale Wheat',      cat:'malt', lane:'hot', points:12, cost:2, tags:['bready','crisp','sticky'], desc:'Your next hop this round gets +3 pts.' },
   { id:'paleale',     name:'Pale Ale Malt',         cat:'malt', lane:'hot', points:11, cost:1, tags:['biscuity'],        desc:'No effect. A touch richer than 2-Row.' },
   { id:'heritage',    name:'Local Grown Heritage',  cat:'malt', lane:'hot', points:13, cost:3, tags:['nuanced'],         desc:'With another nuanced card on your board, it scores double its printed points.' },
 
@@ -36,7 +36,7 @@ const CARD_POOL = [
   { id:'crystal75',  name:'Crystal 75',    cat:'malt', lane:'hot', points:16, cost:4, tags:['sweet','toasty'],          desc:'+4 pts for each other card on your hot side.' },
 
   // ── Dark Crystal (explosive but dangerous) ──
-  { id:'crystal80',  name:'Crystal 80',    cat:'malt', lane:'hot', points:18, cost:2, tags:['sweet','roasty'],          desc:'Score = roast tokens x8. With fewer than 3 roast, adds a Sugar Clot (-10 pts) to your hot side.' },
+  { id:'crystal80',  name:'Crystal 80',    cat:'malt', lane:'hot', points:18, cost:2, tags:['sweet','roasty'],          desc:'Score = roast tokens x8.' },
   { id:'crystal120', name:'Crystal 120',   cat:'malt', lane:'hot', points:12, cost:2, tags:['sweet','roasty'],          desc:'Choose a crystal malt on your hot side. Crystal 120 absorbs it and gains double its points.' },
 
   // ── Specialty / Mid-range ──
@@ -64,7 +64,7 @@ const CARD_POOL = [
   // ── Adjuncts ──
 
   // Carried over
-  { id:'oats',       name:'Flaked Oats',     cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['smooth','hazy'],               desc:'If played next to a dark malt, double that malt\'s base score.' },
+  { id:'oats',       name:'Flaked Oats',     cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['smooth','hazy','sticky'],               desc:'If played next to a dark malt, double that malt\'s base score.' },
   { id:'coffee',     name:'Coffee Beans',    cat:'adjunct', lane:'both', points:12, cost:4, tags:['toasty','roasty'],       desc:'Doubles every dark malt on your hot side.' },
   { id:'maltodex',   name:'Maltodextrin',    cat:'adjunct', lane:'hot', points:6,  cost:1, tags:['smooth'],               desc:'Your next card costs 2 less.' },
   { id:'lactose',    name:'Lactose',         cat:'adjunct', lane:'hot', points:12,  cost:2, tags:['sweet','smooth'],                desc:'Removes 2 roast tokens.' },
@@ -86,11 +86,11 @@ const CARD_POOL = [
   { id:'marshm',     name:'Marshmallow',     cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['sweet','smooth'],       desc:'All other smooth cards on your board get +2 pts.' },
 
   // Grain/texture adjuncts
-  { id:'flakedwheat',name:'Flaked Wheat',    cat:'adjunct', lane:'hot', points:6,  cost:1, tags:['smooth','bready','hazy'],      desc:'Adds a Haze token to your hand.' },
-  { id:'flakedrye',  name:'Flaked Rye',      cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['dry','spicy'],          desc:'Next yeast card costs 1 less.' },
+  { id:'flakedwheat',name:'Flaked Wheat',    cat:'adjunct', lane:'hot', points:6,  cost:1, tags:['smooth','bready','hazy','sticky'],      desc:'Adds a Haze token to your hand.' },
+  { id:'flakedrye',  name:'Flaked Rye',      cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['dry','spicy','sticky'],          desc:'Next yeast card costs 1 less.' },
   { id:'flakedcorn', name:'Flaked Corn',     cat:'adjunct', lane:'hot', points:6,  cost:1, tags:['neutral','crisp'],      desc:'If 3+ neutral cards on board, +10 pts.' },
-  { id:'ricehulls',  name:'Rice Hulls',      cat:'adjunct', lane:'hot', points:2,  cost:0, tags:['neutral'],              desc:'Free play. Next card costs 1 less.' },
-  { id:'spelt',      name:'Spelt',           cat:'adjunct', lane:'hot', points:10, cost:2, tags:['bready','nuanced'],     desc:'With another nuanced card on your board, it scores double its printed points.' },
+  { id:'ricehulls',  name:'Rice Hulls',      cat:'adjunct', lane:'hot', points:4,  cost:0, tags:['neutral'],              desc:'Next card costs 1 less. Clears a Stuck Mash, and your mash cannot get stuck while Rice Hulls are on your hot side.' },
+  { id:'spelt',      name:'Spelt',           cat:'adjunct', lane:'hot', points:10, cost:2, tags:['bready','nuanced','sticky'],     desc:'With another nuanced card on your board, it scores double its printed points.' },
   { id:'buckwheat',  name:'Buckwheat',       cat:'adjunct', lane:'hot', points:9,  cost:2, tags:['dry','nuanced'],        desc:'Nuanced: double printed points with another nuanced card. If 2+ nuanced cards are on your board, draw 1.' },
 
   // Belgian adjuncts
@@ -203,7 +203,7 @@ const CARD_POOL = [
 
   // Belgian & wheat
   { id:'abbey',      name:'Abbey Ale',          cat:'yeast', lane:'cold', points:9,  cost:3, tags:['fruity','spicy','belgian'],    desc:'+2 per turn. On play: +3 per belgian card and +2 per sweet card on your hot side.' },
-  { id:'saison',     name:'Saison',             cat:'yeast', lane:'cold', points:6,  cost:2, tags:['dry','spicy','belgian'], desc:'+2 per turn. On play: +2 per belgian, spicy, or dry card. Ferments bone dry — removes a Sugar Clot.' },
+  { id:'saison',     name:'Saison',             cat:'yeast', lane:'cold', points:6,  cost:2, tags:['dry','spicy','belgian'], desc:'+2 per turn. On play: +2 per belgian, spicy, or dry card.' },
   { id:'hefeweizen', name:'Hefeweizen',         cat:'yeast', lane:'cold', points:6,  cost:2, tags:['fruity','spicy','hazy'],    desc:'+2 per turn. On play: +3 per bready, fruity, or spicy card on your board (banana and clove).' },
 
   // Wild & sour
@@ -227,11 +227,11 @@ const CARD_POOL = [
   { id:'peatmalt',    name:'Peated Malt',    cat:'malt',    lane:'hot',  points:8,  cost:1, tags:['roasty','earthy'], desc:'Smoke them out: give the rival 2 roast tokens.' },
   { id:'brownmalt',   name:'Brown Malt',     cat:'malt',    lane:'hot',  points:12, cost:2, tags:['toasty','malty'],  desc:'+3 pts for each other toasty card on your hot side.' },
   { id:'honeymalt',   name:'Honey Malt',     cat:'malt',    lane:'hot',  points:7,  cost:1, tags:['sweet'],           desc:'Balances bitterness: +3 pts for each bitter card on your board.' },
-  { id:'ryemalt',     name:'Rye Malt',       cat:'malt',    lane:'hot',  points:12, cost:2, tags:['spicy','bready'],  desc:'+3 pts for each other bready card on your hot side.' },
+  { id:'ryemalt',     name:'Rye Malt',       cat:'malt',    lane:'hot',  points:12, cost:2, tags:['spicy','bready','sticky'],  desc:'+3 pts for each other bready card on your hot side.' },
   { id:'fuggle',      name:'Fuggle',         cat:'hop',     lane:'both', points:7,  cost:1, tags:['earthy','floral'], desc:'+3 pts for each other earthy card on your board.' },
   { id:'summit',      name:'Summit',         cat:'hop',     lane:'both', points:13, cost:2, tags:['bitter','dank'],   desc:'+3 pts for each other piney or dank card on your board.' },
   { id:'elderflower', name:'Elderflower',    cat:'adjunct', lane:'both', points:7,  cost:1, tags:['floral','sweet'],  desc:'+3 pts for each other floral card on your board.' },
-  { id:'brutenzyme',  name:'Brut Enzyme',    cat:'adjunct', lane:'both', points:12,  cost:2, tags:['dry'],             desc:'Ferments bone dry: every other dry card on your board gets +3.' },
+  { id:'brutenzyme',  name:'Brut Enzyme',    cat:'adjunct', lane:'both', points:12,  cost:2, tags:['dry'],             desc:'Ferments bone dry: every other dry card on your board gets +3. Breaks up a Stuck Mash.' },
   { id:'flakedrice',  name:'Flaked Rice',    cat:'adjunct', lane:'hot',  points:7,  cost:1, tags:['neutral','crisp'], desc:'+2 pts for each other neutral or crisp card on your hot side.' },
   { id:'yeastnutrient', name:'Yeast Nutrient', cat:'adjunct', lane:'cold', points:6, cost:1, tags:['clean'],         desc:'Every clean yeast on your cold side gets +4.' },
   { id:'oakfoeder',   name:'Oak Foeder',     cat:'adjunct', lane:'cold', points:20, cost:3, tags:['oaky','funky'],    desc:'Wild cultures thrive in oak: every other funky or sour card on your cold side gets +5.' },
@@ -310,12 +310,11 @@ function buildEnemyDeck() {
 
 // ── Token Cards (generated during play, not draftable) ──
 const TOKEN_CARDS = [
-  { id:'sugar_clot',  name:'Sugar Clot',   cat:'token', lane:'hot',  points:-10, cost:0, tags:['roasty'], desc:'Negative points. Removed when a hop card is played on hot side.' },
-  { id:'sugar_clot8', name:'Sugar Clot',   cat:'token', lane:'hot',  points:-8,  cost:0, tags:['roasty'], desc:'Negative points. Removed when a hop card is played on hot side.' },
   { id:'body',        name:'Body',         cat:'token', lane:'hot',  points:5,   cost:0, tags:['smooth'], desc:'Simple +5 pts. Created by White Wheat Malt and Coconut.' },
   { id:'haze',        name:'Haze',         cat:'token', lane:'both', points:4,   cost:1, tags:['hazy'],   desc:'When played, +2 pts to every hop on the same side. Stays in play as a hazy token.' },
   { id:'contamination', name:'Contamination',  cat:'token', lane:'cold', points:-10, cost:0, tags:['funky'],  desc:'Auto-plays to cold side when drawn. Interrupts your turn but costs 0.' },
   { id:'crowd_fav',     name:'Crowd Favorite', cat:'token', lane:'hot',  points:10,  cost:0, tags:[],         desc:'Festival rivals start each round with the crowd on their side.' },
+  { id:'stuckmash',   name:'Stuck Mash',   cat:'token', lane:'hot',  points:-8,  cost:0, tags:[],         desc:'Too many sticky grains. Rice Hulls, Brut Enzyme, SIP Rinse, CIP Cycle or Fining Agent clear it.' },
   { id:'contam_soft',   name:'Contamination',  cat:'token', lane:'cold', points:-5,  cost:0, tags:['funky'],  desc:'Softened Contamination (a clean yeast outcompeted it). Auto-plays to cold side when drawn.' },
 ];
 

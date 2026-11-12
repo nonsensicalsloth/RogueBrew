@@ -160,6 +160,7 @@
 .tag-dank     { color: #558b2f; border-color: #558b2f; }
 .tag-tropical { color: #ffb74d; border-color: #ffb74d; }
 .tag-floral   { color: #f8bbd0; border-color: #f8bbd0; }
+.tag-sticky   { color: #d7ccc8; border-color: #a1887f; border-style: dashed; }
 .tag-oaky     { color: #bcaaa4; border-color: #8d6e63; font-weight: bold; }
 .tag-thiol    { color: #ea80fc; border-color: #ea80fc; font-weight: bold; }
 

@@ -118,6 +118,8 @@ const HOWTO_CONTENT = {
       ])) +
     hbox('🍺 Complete Beer',
       hp(`You can't brew beer without malt, hops and yeast. Have at least one <b>malt, hop and yeast</b> on your board for <b>+${COMPLETE_BEER_BONUS}</b>. Add an <b>adjunct</b> too for a Specialty Beer: <b>+${SPECIALTY_BEER_BONUS}</b> more. The info bar shows what you're missing.`)) +
+    hbox('🥣 Stuck Mash',
+      hp(`${tag('sticky')} grains (oats, wheat, rye, spelt) gum up the mash. With <b>${STUCK_MASH_AT} or more on your hot side</b> and no Rice Hulls, your mash gets stuck: a <b>−8 Stuck Mash</b> token appears. <b>Rice Hulls</b> clear it and stop it happening; Brut Enzyme and the cleanup cards also clear it. The MASH meter in the info bar counts your sticky grains.`)) +
     hbox('🔥 Roast (push your luck)',
       hp(`Dark malts add <b>roast tokens</b>. Every roast token gives <b>each of your ${tag('roasty')} cards +${ROAST_POWER}</b>, so stouts get stronger as roast builds. But reach your roast limit (normally 5) and your beer is <b>Burnt</b>: your hot side scores half. The sweet spot is one under the limit.`) +
       hli([`Carafa and Cold Brew raise your limit. De-bittered Black and Lactose remove roast. Midnight Wheat adds roast that never burns.`,
