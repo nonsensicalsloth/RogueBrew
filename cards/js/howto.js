@@ -110,8 +110,8 @@ const HOWTO_CONTENT = {
     hp(`Building around a few tags that feed each other is how big scores happen.`) +
     hbox('Special tags',
       hli([
-        `${tag('c-hop')} Two or more c-hops on the <b>same side</b> each score <b>double</b>.`,
-        `${tag('nuanced')} Two or more nuanced cards <b>multiply</b> each other (up to ×3).`,
+        `${tag('c-hop')} Two or more c-hops on the <b>same side</b> each score <b>+50%</b> of their printed points.`,
+        `${tag('nuanced')} With two or more nuanced cards, each scores <b>double</b> its printed points.`,
         `${tag('noble')} The classic lager hops. Lager yeasts reward them.`,
         `${tag('thiol')} Hidden tropical flavour that a thiol-releasing yeast unlocks for a big bonus.`,
         `${tag('oaky')} Barrel-aged cards. Barrel Transfer loves them.`,

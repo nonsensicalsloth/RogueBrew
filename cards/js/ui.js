@@ -10,9 +10,9 @@
 function fieldCardHtml(c, lane, who, idx) {
   const target = who === 'p' && isBoardTarget(c, lane);
   const mult = synergyMultiplier(c, lane, who);
-  const pts  = c.points * mult;
+  const pts  = effectivePoints(c, lane, who);
   const sign = pts >= 0 ? '+' : '';
-  return `<div class="field-card ${who}${pts < 0 ? ' field-card-neg' : ''}${target ? ' field-card-target' : ''}" ${target ? `onclick="event.stopPropagation();pickBoardTarget('${lane}', ${idx})"` : ''} title="${c.name}: ${c.points} pts${mult > 1 ? ` × ${mult} synergy = ${pts}` : ''}">
+  return `<div class="field-card ${who}${pts < 0 ? ' field-card-neg' : ''}${target ? ' field-card-target' : ''}" ${target ? `onclick="event.stopPropagation();pickBoardTarget('${lane}', ${idx})"` : ''} title="${c.name}: ${c.points} pts${pts !== c.points ? ` + ${pts - c.points} synergy = ${pts}` : ''}">
     <div class="field-card-name">${c.name}</div>
     <div class="field-card-pts">${sign}${pts}${mult > 1 ? `<span class="field-card-mult"> ×${mult}</span>` : ''}</div>
   </div>`;

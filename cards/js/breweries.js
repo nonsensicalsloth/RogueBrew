@@ -13,7 +13,7 @@ const BREWERIES = [
   {
     id: 'lagerhaus', name: 'Lagerhaus', icon: '🍺', subtitle: 'Patience and consistency.',
     passive: 'Crisp cards you play get +1.',
-    ability: { name: 'Cold Condition', cost: 1, desc: 'Choose a yeast on your cold side. It gains +5.' },
+    ability: { name: 'Cold Condition', cost: 1, desc: 'Choose a yeast on your cold side. It gains +3.' },
     perk:    'Rest-stop upgrades give +8 instead of +5.',
     unlocked: true,
   },
@@ -227,8 +227,8 @@ function abilityPickTarget(lane, idx) {
     return;
   }
   if (b.id === 'lagerhaus' && card && lane === 'cold' && card.cat === 'yeast') {
-    card.points += 5;
-    addLog(`Cold Condition: ${card.name} +5!`, 'player');
+    card.points += 3;
+    addLog(`Cold Condition: ${card.name} +3!`, 'player');
     finishAbility(b);
   }
 }

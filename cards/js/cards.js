@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'payoffs 2 (Nov 12)';
+const CARDS_VERSION = 'balance 6 (Nov 13)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -10,7 +10,7 @@ const CARDS_VERSION = 'payoffs 2 (Nov 12)';
 const CARD_POOL = [
   // ── Base Malts ──
   { id:'2row',        name:'2-Row Malt',           cat:'malt', lane:'hot', points:10, cost:1, tags:['neutral'],         desc:'No effect.' },
-  { id:'pilsner',     name:'Pilsner Malt',          cat:'malt', lane:'hot', points:8,  cost:1, tags:['crisp'],           desc:'If it is the first card you play this turn, draw 1.' },
+  { id:'pilsner',     name:'Pilsner Malt',          cat:'malt', lane:'hot', points:8,  cost:1, tags:['crisp'],           desc:'The first Pilsner Malt you play each round draws 1 card.' },
   { id:'6row',        name:'6-Row Malt',            cat:'malt', lane:'hot', points:6,  cost:1, tags:['neutral'],          desc:'Next card you play this turn costs 1 less.' },
   { id:'marisotter',  name:'Maris Otter',           cat:'malt', lane:'hot', points:12, cost:2, tags:['biscuity'],        desc:'If you have 3+ combined crystal/dark malts on hot side, +8 pts.' },
   { id:'goldenprom',  name:'Golden Promise',        cat:'malt', lane:'hot', points:18, cost:2, tags:['sweet'],           desc:'No effect, big base score.' },
@@ -22,7 +22,7 @@ const CARD_POOL = [
   { id:'darkmunich',  name:'Dark Munich',           cat:'malt', lane:'hot', points:19, cost:3, tags:['bready','toasty'], desc:'Each crystal malt already on your hot side gets +4 pts.' },
   { id:'expwheat',    name:'Extra Pale Wheat',      cat:'malt', lane:'hot', points:12, cost:2, tags:['bready','crisp'], desc:'Your next hop this round gets +3 pts.' },
   { id:'paleale',     name:'Pale Ale Malt',         cat:'malt', lane:'hot', points:11, cost:1, tags:['biscuity'],        desc:'No effect. A touch richer than 2-Row.' },
-  { id:'heritage',    name:'Local Grown Heritage',  cat:'malt', lane:'hot', points:15, cost:3, tags:['nuanced'],         desc:'Nuanced cards multiply each other.' },
+  { id:'heritage',    name:'Local Grown Heritage',  cat:'malt', lane:'hot', points:13, cost:3, tags:['nuanced'],         desc:'With another nuanced card on your board, it scores double its printed points.' },
 
   // ── Light Crystal (multiply cheap cards) ──
   { id:'crystal10',  name:'Crystal 10',    cat:'malt', lane:'hot', points:6,  cost:1, tags:['sweet'],           desc:'All other cost-1 cards on your hot side get +3 pts.' },
@@ -90,8 +90,8 @@ const CARD_POOL = [
   { id:'flakedrye',  name:'Flaked Rye',      cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['dry','spicy'],          desc:'Next yeast card costs 1 less.' },
   { id:'flakedcorn', name:'Flaked Corn',     cat:'adjunct', lane:'hot', points:6,  cost:1, tags:['neutral','crisp'],      desc:'If 3+ neutral cards on board, +10 pts.' },
   { id:'ricehulls',  name:'Rice Hulls',      cat:'adjunct', lane:'hot', points:2,  cost:0, tags:['neutral'],              desc:'Free play. Next card costs 1 less.' },
-  { id:'spelt',      name:'Spelt',           cat:'adjunct', lane:'hot', points:12, cost:2, tags:['bready','nuanced'],     desc:'Nuanced cards multiply each other.' },
-  { id:'buckwheat',  name:'Buckwheat',       cat:'adjunct', lane:'hot', points:10,  cost:2, tags:['dry','nuanced'],        desc:'If 2+ nuanced cards on board, draw 1 card.' },
+  { id:'spelt',      name:'Spelt',           cat:'adjunct', lane:'hot', points:10, cost:2, tags:['bready','nuanced'],     desc:'With another nuanced card on your board, it scores double its printed points.' },
+  { id:'buckwheat',  name:'Buckwheat',       cat:'adjunct', lane:'hot', points:9,  cost:2, tags:['dry','nuanced'],        desc:'Nuanced: double printed points with another nuanced card. If 2+ nuanced cards are on your board, draw 1.' },
 
   // Belgian adjuncts
   { id:'candisugarcl', name:'Clear Candi Sugar',  cat:'adjunct', lane:'hot', points:6,  cost:1, tags:['sweet','belgian'],            desc:'+3 pts for each Belgian yeast on cold side.' },
@@ -107,7 +107,7 @@ const CARD_POOL = [
   { id:'coldbrewcof',name:'Cold Brew Coffee',cat:'adjunct', lane:'both', points:21, cost:3, tags:['toasty','roasty','smooth'], desc:'Adds 1 roast token. Roast penalty threshold +1.' },
   { id:'chili',      name:'Chili Pepper',    cat:'adjunct', lane:'both', points:8,  cost:2, tags:['spicy','dry'],          desc:'Turn up the heat: the rival\'s highest-scoring card loses 6 pts.' },
   { id:'cinnamon',   name:'Cinnamon',        cat:'adjunct', lane:'hot', points:10,  cost:2, tags:['spicy','sweet'],        desc:'+3 pts for each other sweet card on your hot side.' },
-  { id:'phantasm',   name:'Phantasm',        cat:'adjunct', lane:'hot', points:6,  cost:1, tags:['fruity','thiol'],       desc:'Grape-derived bound thiols. A thiol-releasing yeast unlocks +12.' },
+  { id:'phantasm',   name:'Phantasm',        cat:'adjunct', lane:'hot', points:6,  cost:1, tags:['fruity','thiol'],       desc:'Grape-derived bound thiols. A thiol-releasing yeast unlocks +8.' },
 
   // ── Process Cards ──
 
@@ -129,10 +129,10 @@ const CARD_POOL = [
 
   // Row manipulation (your side)
   { id:'dryhop',       name:'Dry Hop Addition',  cat:'process', lane:'cold', points:14, cost:2, tags:[],   desc:'Move your last hot side hop to the cold side. It keeps its points and triggers its dry hop bonus.' },
-  { id:'kettletrans',  name:'Whirlpool',   cat:'process', lane:'hot',  points:0,  cost:1, tags:[],           desc:'Every hop on your hot side gets +4. Draw 1.' },
+  { id:'kettletrans',  name:'Whirlpool',   cat:'process', lane:'hot',  points:0,  cost:1, tags:[],           desc:'Every hop on your hot side gets +2. Draw 1.' },
   { id:'doublebatch',  name:'Double Batch',      cat:'process', lane:'both', points:0,  cost:2, tags:[],           desc:'Copy the last card you played and add a second instance to the same lane. Draw 1.' },
   { id:'barreltrans',  name:'Barrel Transfer',   cat:'process', lane:'cold', points:12, cost:3, tags:[],  desc:'The highest scoring card on your cold side gets +50% pts (+100% if it is oaky).' },
-  { id:'recipetweak',  name:'Recipe Tweak',      cat:'process', lane:'both', points:0,  cost:1, tags:[],         desc:'Choose any card on your board and return it to your hand (reset to base). Your next card costs 1 less. Draw 1.' },
+  { id:'recipetweak',  name:'Recipe Tweak',      cat:'process', lane:'both', points:0,  cost:1, tags:[],         desc:'Choose any card on your board and return it to your hand. It loses bonuses gained this battle, but keeps upgrades and aging. Your next card costs 1 less. Draw 1.' },
 
   // Scoring/multiplier process cards
   { id:'qc',           name:'Quality Control',   cat:'process', lane:'both', points:0,  cost:1, tags:[],   desc:'If your total score is higher than the rival\'s, +14 pts. Otherwise, draw 1.' },
@@ -158,10 +158,10 @@ const CARD_POOL = [
   { id:'magnum',     name:'Magnum',             cat:'hop', lane:'hot',  points:16, cost:2, tags:['bitter','clean'],              desc:'Boil only. Clean bittering backbone: every other hop on your board gets +2.' },
 
   // West Coast — the C-hops still double each other
-  { id:'cascade',    name:'Cascade',            cat:'hop', lane:'both', points:10, cost:1, tags:['citrus','floral','c-hop'],      desc:'If another c-hop is on the same lane, all c-hops there score double.' },
-  { id:'centennial', name:'Centennial',         cat:'hop', lane:'both', points:12, cost:2, tags:['citrus','floral','bitter','c-hop'],      desc:'If another c-hop is on the same lane, all c-hops there score double.' },
-  { id:'chinook',    name:'Chinook',            cat:'hop', lane:'both', points:10, cost:2, tags:['bitter','piney','spicy','c-hop'],       desc:'C-hop doubling. Boil (hot side): +4.' },
-  { id:'columbus',   name:'Columbus',           cat:'hop', lane:'both', points:14, cost:3, tags:['bitter','dank','spicy','c-hop'],        desc:'C-hop doubling. Adds 1 roast token to the rival.' },
+  { id:'cascade',    name:'Cascade',            cat:'hop', lane:'both', points:10, cost:1, tags:['citrus','floral','c-hop'],      desc:'With another c-hop on the same side, all c-hops there score +50% of their printed points.' },
+  { id:'centennial', name:'Centennial',         cat:'hop', lane:'both', points:12, cost:2, tags:['citrus','floral','bitter','c-hop'],      desc:'With another c-hop on the same side, all c-hops there score +50% of their printed points.' },
+  { id:'chinook',    name:'Chinook',            cat:'hop', lane:'both', points:10, cost:2, tags:['bitter','piney','spicy','c-hop'],       desc:'C-hop (+50% with another c-hop on its side). Boil (hot side): +4.' },
+  { id:'columbus',   name:'Columbus',           cat:'hop', lane:'both', points:14, cost:3, tags:['bitter','dank','spicy','c-hop'],        desc:'C-hop (+50% with another c-hop on its side). Adds 1 roast token to the rival.' },
   { id:'simcoe',     name:'Simcoe',             cat:'hop', lane:'both', points:12, cost:2, tags:['piney','dank','fruity'],        desc:'Dry hop (cold side): draw 1 card.' },
 
   // Modern American
@@ -176,10 +176,10 @@ const CARD_POOL = [
 
   // Southern Hemisphere
   { id:'galaxy',     name:'Galaxy',             cat:'hop', lane:'both', points:16, cost:2, tags:['tropical','fruity','citrus'],       desc:'+8 if 2+ hazy cards are on your board.' },
-  { id:'nelson',     name:'Nelson Sauvin',      cat:'hop', lane:'both', points:14, cost:3, tags:['fruity','nuanced','thiol'], desc:'Nuanced cards multiply each other. Thiol.' },
+  { id:'nelson',     name:'Nelson Sauvin',      cat:'hop', lane:'both', points:12, cost:3, tags:['fruity','nuanced','thiol'], desc:'Nuanced (double printed points with another nuanced card). Thiol.' },
   { id:'motueka',    name:'Motueka',            cat:'hop', lane:'both', points:12, cost:2, tags:['citrus','earthy'],               desc:'+2 for each other citrus card on your board.' },
   { id:'nectaron',   name:'Nectaron',           cat:'hop', lane:'both', points:16, cost:2, tags:['tropical','fruity','citrus'],       desc:'+3 for each other NZ hop on your board (Nelson, Motueka, Riwaka).' },
-  { id:'riwaka',     name:'Riwaka',             cat:'hop', lane:'both', points:16, cost:3, tags:['citrus','tropical','thiol'],        desc:'Dry hop (cold side): +6. Thiol.' },
+  { id:'riwaka',     name:'Riwaka',             cat:'hop', lane:'both', points:14, cost:3, tags:['citrus','tropical','thiol'],        desc:'Dry hop (cold side): +6. Thiol.' },
 
   // Hop products
   { id:'cryo',       name:'Cryo Hops',          cat:'hop', lane:'both', points:14, cost:2, tags:[],                         desc:'Concentrated lupulin. Copies the flavor tags of the last hop you played. Your next hop costs 1 less.' },
@@ -212,7 +212,7 @@ const CARD_POOL = [
 
   // Engineered strains
   { id:'sourvisiae', name:'Sourvisiae',         cat:'yeast', lane:'cold', points:6,  cost:2, tags:['sour','crisp','clean'],       desc:'+2 per turn. Clean sour, no contamination. On play: +2 per fruity or tropical card and +2 per hop (not hop-sensitive).' },
-  { id:'cosmicpunch',name:'Cosmic Punch',       cat:'yeast', lane:'cold', points:6,  cost:2, tags:['fruity','hazy','thiol'],      desc:'+2 per turn. On play: +2 per hop on your cold side. Thiol release: every thiol card on your board gets +6 (Phantasm +12), including ones played later.' },
+  { id:'cosmicpunch',name:'Cosmic Punch',       cat:'yeast', lane:'cold', points:6,  cost:2, tags:['fruity','hazy','thiol'],      desc:'+2 per turn. On play: +2 per hop on your cold side. Thiol release: every thiol card on your board gets +6 (Phantasm +8), including ones played later.' },
 
   // ══════════════════════════════════════════════════════════════
   // ── FLAVOUR PAYOFFS ── cards that reward the less-used tags
@@ -305,7 +305,7 @@ const TOKEN_CARDS = [
   { id:'sugar_clot',  name:'Sugar Clot',   cat:'token', lane:'hot',  points:-10, cost:0, tags:['roasty'], desc:'Negative points. Removed when a hop card is played on hot side.' },
   { id:'sugar_clot8', name:'Sugar Clot',   cat:'token', lane:'hot',  points:-8,  cost:0, tags:['roasty'], desc:'Negative points. Removed when a hop card is played on hot side.' },
   { id:'body',        name:'Body',         cat:'token', lane:'hot',  points:5,   cost:0, tags:['smooth'], desc:'Simple +5 pts. Created by White Wheat Malt and Coconut.' },
-  { id:'haze',        name:'Haze',         cat:'token', lane:'both', points:4,   cost:1, tags:['hazy'],   desc:'When played, +3 pts to all hops currently on your board. Stays in play as a hazy token.' },
+  { id:'haze',        name:'Haze',         cat:'token', lane:'both', points:4,   cost:1, tags:['hazy'],   desc:'When played, +2 pts to every hop on the same side. Stays in play as a hazy token.' },
   { id:'contamination', name:'Contamination',  cat:'token', lane:'cold', points:-10, cost:0, tags:['funky'],  desc:'Auto-plays to cold side when drawn. Interrupts your turn but costs 0.' },
   { id:'crowd_fav',     name:'Crowd Favorite', cat:'token', lane:'hot',  points:10,  cost:0, tags:[],         desc:'Festival rivals start each round with the crowd on their side.' },
   { id:'contam_soft',   name:'Contamination',  cat:'token', lane:'cold', points:-5,  cost:0, tags:['funky'],  desc:'Softened Contamination (a clean yeast outcompeted it). Auto-plays to cold side when drawn.' },

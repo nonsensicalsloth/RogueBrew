@@ -206,7 +206,7 @@ function hasThiolYeast(who) {
 // Thiol cards get a one-time bonus when a thiol-releasing yeast is (or arrives) on the cold side.
 function releaseThiol(c) {
   if (c._thiolReleased) return;
-  const bonus = c.id === 'phantasm' ? 12 : 6;
+  const bonus = c.id === 'phantasm' ? 8 : 6;
   c.points += bonus;
   c._thiolReleased = true;
   addLog(`Thiols released: ${c.name} +${bonus}!`, 'player');
@@ -311,7 +311,10 @@ function returnToHand(c, lane, who) {
   const list = state.field[lane][who];
   const i = list.indexOf(c);
   if (i >= 0) list.splice(i, 1);
-  const fresh = { ...(getCardDef(c.id) || c) };
+  // Back to how the card is in your deck: bonuses gained this battle are lost,
+  // but run upgrades and barrel aging stay (same rebuild used for saved runs)
+  const fresh = typeof refreshRunCard === 'function' ? refreshRunCard(c) : { ...(getCardDef(c.id) || c) };
+  delete fresh._barrelReturn;
   (who === 'p' ? state.pHand : state.eHand).push(fresh);
   return fresh;
 }
@@ -370,10 +373,12 @@ function applyCardEffect(card, lane, who) {
     // ── Tier 1: Simple ──
 
     case 'pilsner':
-      // If first card played this turn, draw 1
-      if (!state.cardsThisTurn || state.cardsThisTurn[who] === 0) {
+      // Only the first Pilsner each round draws (several used to be a draw engine)
+      state.pilsnerDrew = state.pilsnerDrew || {};
+      if (!state.pilsnerDrew[who]) {
+        state.pilsnerDrew[who] = true;
         drawFor(who, 1);
-        addLog('Pilsner Malt: first card this turn — drew 1 card.', 'player');
+        addLog('Pilsner Malt: first Pilsner this round — drew 1 card.', 'player');
       }
       break;
 
@@ -1034,8 +1039,8 @@ function applyCardEffect(card, lane, who) {
 
     case 'kettletrans': {
       // Whirlpool: every hop on your hot side gets +3
-      const n = buffLaneCards('hot', who, 4, c => c.cat === 'hop');
-      addLog(`Whirlpool: +4 to ${n} hop(s) on hot side.`, 'player');
+      const n = buffLaneCards('hot', who, 2, c => c.cat === 'hop');
+      addLog(`Whirlpool: +2 to ${n} hop(s) on hot side.`, 'player');
       break;
     }
 
@@ -1490,8 +1495,10 @@ function applyCardEffect(card, lane, who) {
       // Buff all hops currently on the board
       const allHops = [...getLaneCards('hot', who), ...getLaneCards('cold', who)]
         .filter(c => c.cat === 'hop');
-      allHops.forEach(h => { h.points += 3; });
-      addLog(`Haze: +3 pts to ${allHops.length} hop(s) on board!`, 'player');
+      // Haze only clouds the side it's poured on
+      const sideHops = allHops.filter(h => getLaneCards(lane, who).includes(h));
+      sideHops.forEach(h => { h.points += 2; });
+      addLog(`Haze: +2 pts to ${sideHops.length} hop(s) on ${LANE_NAMES[lane]}.`, 'player');
       break;
     }
 
@@ -1514,30 +1521,45 @@ function synergyMultiplier(c, lane, who) {
   let m = 1;
   if (c.tags.includes('c-hop')) {
     const cHops = getLaneCards(lane, who).filter(x => x.tags && x.tags.includes('c-hop')).length;
-    if (cHops >= 2) m *= 2;
+    if (cHops >= 2) m *= CHOP_MULT;
   }
   if (c.tags.includes('nuanced')) {
     const nuanced = getAllOnField(who).filter(x => x.cat !== 'token' && x.tags && x.tags.includes('nuanced')).length;
-    if (nuanced >= 2) m *= Math.min(nuanced, 3);
+    if (nuanced >= 2) m *= NUANCED_MULT;
   }
   return m;
 }
 
+const CHOP_MULT    = 1.5;   // c-hops sharing a side
+const NUANCED_MULT = 2;     // two or more nuanced cards on your board
+
+// A card's "printed" points for this run: card + upgrades + barrel aging (not battle buffs)
+function printedPoints(c) {
+  const d = getCardDef(c.id);
+  if (!d) return c.points;
+  return d.points + (c._upgraded ? (c._upgradeBonus || REST_UPGRADE) : 0) + (c._barrelAged ? BARREL_BONUS : 0);
+}
+
+// Synergy multiplies the card's printed points only. Bonuses gained in battle
+// (Haze, Magnum, Whirlpool...) are added once, so they can't snowball.
 function effectivePoints(c, lane, who) {
-  return c.points * synergyMultiplier(c, lane, who);
+  const m = synergyMultiplier(c, lane, who);
+  if (m === 1) return c.points;
+  const base = Math.max(0, Math.min(printedPoints(c), c.points));
+  return Math.floor(c.points + base * (m - 1));
 }
 
 // These just announce the synergy; the math lives in synergyMultiplier
 function applyNuancedSynergy(who) {
   const n = getAllOnField(who).filter(c => c.cat !== 'token' && c.tags && c.tags.includes('nuanced')).length;
   if (n < 2) return;
-  addLog(`Nuanced synergy! ${n} nuanced cards — each scores x${Math.min(n, 3)}${n > 3 ? ' (max)' : ''}.`, who === 'p' ? 'player' : 'enemy');
+  addLog(`Nuanced synergy! ${n} nuanced cards — each scores double its printed points.`, who === 'p' ? 'player' : 'enemy');
 }
 
 function applyCHopSynergy(lane, who) {
   const n = getLaneCards(lane, who).filter(c => c.tags && c.tags.includes('c-hop')).length;
   if (n < 2) return;
-  addLog(`C-Hop synergy! ${n} c-hops on ${LANE_NAMES[lane]} — each scores double.`, who === 'p' ? 'player' : 'enemy');
+  addLog(`C-Hop synergy! ${n} c-hops on ${LANE_NAMES[lane]} — each scores +50%.`, who === 'p' ? 'player' : 'enemy');
 }
 
 // ── Per-turn persistent effects ──
@@ -1553,7 +1575,7 @@ function applyTurnEffects(who) {
     if (state.noGrowth && state.noGrowth.has(c)) return;      // Heat Kill
 
     if (c.id === 'brett') {
-      c.points += 3 + (isPlayer && hasRelic('glycol') ? 1 : 0);
+      c.points += 3 + (isPlayer && hasRelic('glycol') && state.turn % 2 === 0 ? 1 : 0);
       if (Math.random() < 0.5) {
         if (isPlayer) addLog('Brettanomyces: +3 pts — and it got loose in the cellar...', 'warn');
         shuffleIntoRemainingDeck(who, 'contamination');
@@ -1563,7 +1585,8 @@ function applyTurnEffects(who) {
       return;
     }
 
-    const chill = isPlayer ? (hasRelic('glycol') ? 1 : 0)
+    // Glycol Chiller: +1 extra on even turns
+    const chill = isPlayer ? (hasRelic('glycol') && state.turn % 2 === 0 ? 1 : 0)
                            : (state.rivalTrait === 'patience' ? 2 : 0);
     c.points += 2 + chill;
     if (isPlayer) addLog(`${c.name}: +${2 + chill} pts (accumulating).`, 'player');

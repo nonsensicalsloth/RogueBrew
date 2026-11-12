@@ -81,7 +81,7 @@ function initGame(opts = {}) {
   if (opts.rival) {
     addLog(`⚔ ${opts.rival.name} (${opts.rival.style})${opts.rival.traitName ? ` — ${opts.rival.traitName}: ${opts.rival.traitDesc}` : ''}`, 'enemy');
   }
-  drawCards(5, state.pDeck, state.pHand);
+  drawCards(hasRelic('recipebook') ? 6 : 5, state.pDeck, state.pHand);   // Recipe Book: 1 extra opening card
   drawCards(5, state.eDeck, state.eHand);
   render();
 }
@@ -169,6 +169,7 @@ function startRound() {
   state.abilityTargeting  = false;
   state.firstHopBonusUsed = false;
   state.wildUsedRound     = false;
+  state.pilsnerDrew       = {};
   state.noGrowth          = new Set();
   state.cardTargeting     = null;
   state.eRoastTokens      = 0;

@@ -10,14 +10,14 @@
 //   recipebook  → game.js toggleMulligan
 
 const RELICS = [
-  { id:'glycol',     name:'Glycol Chiller',    icon:'❄️', desc:'Your yeast gains +1 extra point each turn.' },
+  { id:'glycol',     name:'Glycol Chiller',    icon:'❄️', desc:'Your yeast gains +1 extra point every other turn.' },
   { id:'hopback',    name:'Hop Back',          icon:'🫖', desc:'Your first hop each round costs 0.' },
   { id:'grainmill',  name:'Grain Mill',        icon:'⚙️', desc:'Draw 1 extra card at the start of each round.' },
   { id:'fermenter',  name:'Second Fermenter',  icon:'🛢️', desc:'Your max budget is 6 instead of 5.' },
   { id:'microscope', name:'Lab Microscope',    icon:'🔬', desc:'Contamination that lands on your board is always softened to −5.' },
   { id:'roaster',    name:'Coffee Roaster',    icon:'☕', desc:'Your roast threshold starts 2 higher.' },
   { id:'hopcannon',  name:'Hop Cannon',        icon:'🌿', desc:'Hops you play on your cold side get +2.' },
-  { id:'recipebook', name:'Recipe Book',       icon:'📖', desc:'Mulligan up to 3 cards instead of 2.' },
+  { id:'recipebook', name:'Recipe Book',       icon:'📖', desc:'Start each battle with 1 extra card, and mulligan up to 3 instead of 2.' },
 ];
 
 function getRelic(id) {
