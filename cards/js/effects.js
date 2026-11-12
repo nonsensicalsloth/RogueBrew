@@ -178,7 +178,7 @@ function removeFirstToken(who, tokenId = null, lane = null) {
 // Sticky grains (oats, wheat, rye, spelt) gum up the mash. With STUCK_MASH_AT or more
 // sticky cards on your hot side and no Rice Hulls there, a Stuck Mash token (−8) appears.
 // Rice Hulls clear it and prevent it; cleanup cards (SIP, CIP, Fining) remove it too.
-const STUCK_MASH_AT = 3;
+const STUCK_MASH_AT = 4;
 
 function stickyCount(who) {
   return getLaneCards('hot', who).filter(c => c.tags && c.tags.includes('sticky')).length;
