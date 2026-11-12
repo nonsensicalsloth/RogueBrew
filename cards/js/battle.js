@@ -10,8 +10,8 @@ function selectCard(idx) {
   if (!c || getEffectiveCost(c) > state.budget - state.budgetUsed) return;
   // While Contamination is in hand, it's the only card you can pick
   if (playerMustPlayContamination() && !isContamination(c)) return;
-  // Finish choosing a target for the last card first
-  if (cardTargetingActive()) return;
+  // Finish choosing for the last card first
+  if (pendingChoiceActive()) return;
   selectedCard = (selectedCard === idx) ? null : idx;
   render();
 }
@@ -36,7 +36,7 @@ function getEffectiveCost(c) {
 
 function playToLane(lane) {
   if (selectedCard === null) return;
-  if (cardTargetingActive()) return;
+  if (pendingChoiceActive()) return;
   const c = state.pHand[selectedCard];
   if (!c) return;
 
@@ -70,7 +70,7 @@ function playToLane(lane) {
 }
 
 // Process cards that already draw on their own don't get the extra cantrip draw
-const CANTRIP_EXEMPT = ['drunkcellar', 'drunkbrewer', 'inspector'];
+const CANTRIP_EXEMPT = ['drunkcellar', 'drunkbrewer', 'inspector', 'grainout', 'trubdump', 'yeastharvest'];
 
 // ── Shared play resolution (player and rival) ──
 // Places the card, runs its effect and synergies, then tidies up.
@@ -147,7 +147,7 @@ function resolvePlay(c, lane, who) {
 }
 
 function endTurn() {
-  if (cardTargetingActive()) { addLog('Choose a target for your card first.', 'warn'); render(); return; }
+  if (pendingChoiceActive()) { addLog('Finish choosing for your card first.', 'warn'); render(); return; }
   state.abilityTargeting = false;
   if (playerMustPlayContamination()) {
     addLog('⚠ You must pour the Contamination before ending your turn.', 'warn');

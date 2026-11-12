@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'roast 1 (Nov 13)';
+const CARDS_VERSION = 'spent grain 1 (Nov 13)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -217,6 +217,13 @@ const CARD_POOL = [
   // ══════════════════════════════════════════════════════════════
   // ── FLAVOUR PAYOFFS ── cards that reward the less-used tags
   // ══════════════════════════════════════════════════════════════
+  // ── SPENT GRAIN ── cards that fill and use your discard pile
+  { id:'grainout',      name:'Grain Out',       cat:'process', lane:'both', points:0,  cost:0, tags:[],                 desc:'Discard a card from your hand, then draw 2.' },
+  { id:'trubdump',      name:'Trub Dump',       cat:'process', lane:'both', points:0,  cost:1, tags:[],                 desc:'Look at the top 3 cards of your deck. Keep one in your hand and discard the other two.' },
+  { id:'yeastharvest',  name:'Yeast Harvest',   cat:'process', lane:'cold', points:0,  cost:1, tags:[],                 desc:'Choose a yeast in your discard pile and return it to your hand. It costs 0 this turn. If there is none, draw 1.' },
+  { id:'secondrunnings',name:'Second Runnings', cat:'malt',    lane:'hot',  points:6,  cost:2, tags:['malty'],          desc:'Brew the most recent malt in your discard pile again, for free. If there is none, +8 pts instead.' },
+  { id:'spentbread',    name:'Spent Grain Bread',cat:'adjunct',lane:'both', points:6,  cost:1, tags:['bready'],         desc:'+2 pts for each card in your discard pile.' },
+  { id:'solera',        name:'Solera',          cat:'adjunct', lane:'cold', points:16, cost:3, tags:['oaky','smooth'],  desc:'Old beer blended with new: +2 pts for each card in your discard pile.' },
   { id:'peatmalt',    name:'Peated Malt',    cat:'malt',    lane:'hot',  points:8,  cost:1, tags:['roasty','earthy'], desc:'Smoke them out: give the rival 2 roast tokens.' },
   { id:'brownmalt',   name:'Brown Malt',     cat:'malt',    lane:'hot',  points:12, cost:2, tags:['toasty','malty'],  desc:'+3 pts for each other toasty card on your hot side.' },
   { id:'honeymalt',   name:'Honey Malt',     cat:'malt',    lane:'hot',  points:7,  cost:1, tags:['sweet'],           desc:'Balances bitterness: +3 pts for each bitter card on your board.' },
@@ -243,7 +250,7 @@ const RARE_CARDS = [
   'crystal75','crystal80','crystal120','coffee','aromatic','melanoidin','biscuit','victory','blackmalt',
   'heritage','spelt','buckwheat',
   'award','doublebatch','inspector','barreltrans',
-  'oakfoeder',
+  'oakfoeder','solera',
 ];
 const UNCOMMON_CARDS = [
   'floorpilsner','darkmunich','expwheat','expilsner','crystal50','crystal60','specialb','carafaIII',
@@ -252,7 +259,7 @@ const UNCOMMON_CARDS = [
   'filtration','heatkill','recipetweak','hopthief','crosscontam','badbatch','dryhop','kettletrans','fermlog',
   'hallblanc','strata','talus','nectaron','cryo','hopoil',
   'london3','barbarian','abbey','brett','sourvisiae',
-  'summit','brutenzyme','yeastnutrient','peatmalt',
+  'summit','brutenzyme','yeastnutrient','peatmalt','yeastharvest','secondrunnings',
 ];
 const RARITY_NAMES = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare' };
 CARD_POOL.forEach(c => {

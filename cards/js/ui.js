@@ -75,6 +75,11 @@ function renderHand() {
       if (isSel) cls.push('selected-card');
       if (mustPour && isContamination(c)) cls.push('must-play');
       if (state.newCards && state.newCards.has(c)) cls.push('card-new');
+      // Grain Out: click a card in your hand to discard it
+      if (state.handTargeting && canAct) {
+        if (isContamination(c)) return cardHtml(c, i, 'disabled', 'card-disabled', cost, formulaPreview(c));
+        return cardHtml(c, i, 'view', 'hand-target', cost, formulaPreview(c)).replace('onclick="void(0)"', `onclick="handPickTarget(${i})"`);
+      }
       return cardHtml(c, i, ok ? 'play' : 'disabled', cls.join(' '), cost, formulaPreview(c));
     }).join('');
   }
@@ -107,9 +112,9 @@ function renderActions() {
 
   if (state.phase === 'mulligan') {
     el.innerHTML = `<button class="btn btn-primary" onclick="confirmMulligan()">CONFIRM MULLIGAN (${state.mulSel.length})</button>`;
-  } else if (state.phase === 'play' && state.playerTurn && cardTargetingActive()) {
+  } else if (state.phase === 'play' && state.playerTurn && pendingChoiceActive()) {
     el.innerHTML = `<button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;">END TURN</button>
-      <span style="font-size:7px;color:var(--gold);margin-left:8px">▲ ${CARD_TARGETS[state.cardTargeting.kind].prompt}</span>`;
+      <span style="font-size:7px;color:var(--gold);margin-left:8px">▲ ${pendingChoicePrompt()}</span>`;
   } else if (state.phase === 'play' && state.playerTurn && playerMustPlayContamination()) {
     el.innerHTML = `<button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;">END TURN</button>
       <span style="font-size:7px;color:var(--red);margin-left:8px">⚠ POUR THE CONTAMINATION ONTO YOUR COLD SIDE FIRST</span>`;
@@ -253,6 +258,14 @@ function render() {
   const bDef = breweryDef();
   const bIcon = bDef ? `<span class="relic-icon" title="${bDef.name} — Passive: ${bDef.passive} | Ability: ${bDef.ability.name}: ${bDef.ability.desc}">${bDef.icon}</span>` : '';
   if (relicBar) relicBar.innerHTML = state.currentNode ? bIcon + relicIconsHtml() : '';
+
+  // Choosing from the top of your deck / your discard pile
+  const pickEl = document.getElementById('battle-picker');
+  if (pickEl) {
+    const show = state.phase === 'play' && state.playerTurn && state.battlePicker;
+    pickEl.style.display = show ? '' : 'none';
+    pickEl.innerHTML = show ? battlePickerHtml() : '';
+  }
 
   // What the rival is about to do (committed plan)
   const intentEl = document.getElementById('rival-intent');

@@ -138,6 +138,7 @@ const HOWTO_CONTENT = {
         `Some cards ask you to <b>choose a card on your board</b>. Valid choices glow gold.`,
         `Your brewery <b>ability button</b> sits next to End Turn. You can use it once per turn.`,
         `Rivals can fight back: removing your best card, scorching it with chili, or contaminating you.`,
+        `<b>Your discard pile</b> (the spent grain) holds used process cards and anything you discard. Cards like Grain Out and Trub Dump fill it on purpose; Spent Grain Bread, Solera, Yeast Harvest and Second Runnings cash it in. The DISCRD counter by your deck shows how many cards are in it.`,
       ])) +
     hbox('💀 Boss judgings',
       hp(`Bosses are <b>best of 3 rounds</b>, each judged differently: <b>👃 Aroma</b> (cold side ×2), <b>👅 Flavor</b> (hot side ×2), then <b>🏆 Overall Impression</b>. Cards left in your hand carry into the next round. Each boss also has a signature rule; hover the boss on the map to see it.`)),

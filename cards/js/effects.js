@@ -1135,6 +1135,26 @@ function applyCardEffect(card, lane, who) {
       break;
 
 
+    // ══ SPENT GRAIN ══
+    case 'grainout':       startGrainOut(card, who);     break;
+    case 'trubdump':       startTrubDump(card, who);     break;
+    case 'yeastharvest':   startYeastHarvest(card, who); break;
+    case 'secondrunnings': secondRunnings(card, who);    break;
+
+    case 'spentbread': {
+      const n = discardOf(who).filter(c => c.cat !== 'token').length;
+      card.points += n * 2;
+      addLog(`Spent Grain Bread: +${n * 2} pts (${n} cards in discard).`, 'player');
+      break;
+    }
+
+    case 'solera': {
+      const n = discardOf(who).filter(c => c.cat !== 'token').length;
+      card.points += n * 2;
+      addLog(`Solera: +${n * 2} pts (${n} cards in discard).`, 'player');
+      break;
+    }
+
     case 'peatmalt': {
       const opp = isPlayer ? 'e' : 'p';
       addRoastToken(opp, 2);

@@ -675,3 +675,10 @@ body::after {
 .sum-line { font-size:7px; line-height:1.9; color:var(--text); margin:4px 0; }
 .sum-deck-title { font-size:8px; color:var(--gold); margin:12px 0 6px; }
 .sum-deck { max-height:220px; overflow-y:auto; }
+
+/* ── Spent grain choices ── */
+.battle-picker { border:2px solid var(--gold); background:var(--bg2); padding:8px 10px; margin:6px 0; }
+.battle-picker-title { font-size:7px; color:var(--gold); margin-bottom:8px; }
+.battle-picker-cards { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; padding-top:8px; }
+.battle-picker-cards .card { cursor:pointer; }
+.card.hand-target { border-color:var(--gold) !important; box-shadow:0 0 10px var(--gold); cursor:pointer; }
