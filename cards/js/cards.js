@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'balance 6 (Nov 13)';
+const CARDS_VERSION = 'roast 1 (Nov 13)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -217,6 +217,7 @@ const CARD_POOL = [
   // ══════════════════════════════════════════════════════════════
   // ── FLAVOUR PAYOFFS ── cards that reward the less-used tags
   // ══════════════════════════════════════════════════════════════
+  { id:'peatmalt',    name:'Peated Malt',    cat:'malt',    lane:'hot',  points:8,  cost:1, tags:['roasty','earthy'], desc:'Smoke them out: give the rival 2 roast tokens.' },
   { id:'brownmalt',   name:'Brown Malt',     cat:'malt',    lane:'hot',  points:12, cost:2, tags:['toasty','malty'],  desc:'+3 pts for each other toasty card on your hot side.' },
   { id:'honeymalt',   name:'Honey Malt',     cat:'malt',    lane:'hot',  points:7,  cost:1, tags:['sweet'],           desc:'Balances bitterness: +3 pts for each bitter card on your board.' },
   { id:'ryemalt',     name:'Rye Malt',       cat:'malt',    lane:'hot',  points:12, cost:2, tags:['spicy','bready'],  desc:'+3 pts for each other bready card on your hot side.' },
@@ -251,7 +252,7 @@ const UNCOMMON_CARDS = [
   'filtration','heatkill','recipetweak','hopthief','crosscontam','badbatch','dryhop','kettletrans','fermlog',
   'hallblanc','strata','talus','nectaron','cryo','hopoil',
   'london3','barbarian','abbey','brett','sourvisiae',
-  'summit','brutenzyme','yeastnutrient',
+  'summit','brutenzyme','yeastnutrient','peatmalt',
 ];
 const RARITY_NAMES = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare' };
 CARD_POOL.forEach(c => {

@@ -46,7 +46,7 @@ function deepClone(v, seen = new Map()) {
   return out;
 }
 
-const RIVAL_ATTACKS = new Set(['chili', 'inspector', 'badbatch', 'crosscontam', 'hopthief', 'columbus', 'drunkcellar', 'drunkbrewer']);
+const RIVAL_ATTACKS = new Set(['peatmalt', 'chili', 'inspector', 'badbatch', 'crosscontam', 'hopthief', 'columbus', 'drunkcellar', 'drunkbrewer']);
 
 function lanesFor(c) {
   if (c.lane !== 'both') return [c.lane];

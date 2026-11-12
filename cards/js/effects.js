@@ -29,14 +29,20 @@ function formulaPreview(c, who = 'p') {
   if (!def) return null;
   const earned = c.points - def.points;                  // upgrades, aging, etc.
   const hotNow = getLaneCards('hot', who).filter(x => x.cat !== 'token').length;
+  // Roasty cards: show the roast bonus they'd have once played (counting roast they add)
+  const roastyLive = () => {
+    if (!(c.tags && c.tags.includes('roasty'))) return null;
+    const r = getRoast(who) + (ROAST_ADDS[c.id] || 0) + (c.id === 'midnightw' ? 1 : 0);
+    return { points: c.points + ROAST_POWER * r, note: `now: ${r} roast` };
+  };
   switch (c.id) {
     case 'crystal80': {
       const r = getRoast(who);
-      return { points: r * 8 + earned, note: `now: ${r} roast` };
+      return { points: r * 8 + earned + ROAST_POWER * r, note: `now: ${r} roast` };
     }
     case 'specialb': {
       const r = getRoast(who);
-      return { points: c.points + r * 6, note: `now: ${r} roast` };
+      return { points: c.points + r * 6 + ROAST_POWER * r, note: `now: ${r} roast` };
     }
     case 'biscuit': {
       const rows = hotNow + 1;                            // counts itself once played
@@ -49,7 +55,7 @@ function formulaPreview(c, who = 'p') {
       return { points: c.points * (n + 1), note: `now: ${n} in discard` };
     }
   }
-  return null;
+  return roastyLive();
 }
 
 // Like countTag, but never counts the card itself
@@ -89,7 +95,7 @@ function addRoastToken(who, amount = 1) {
   const whose = who === 'p' ? 'you' : 'rival';
   addLog(`🔥 +${amount} roast (${whose}): ${state[k.t]}/${getRoastThreshold(who)}`, who === 'p' ? 'warn' : 'enemy');
   if (effective >= getRoastThreshold(who)) {
-    addLog(`⚠ ROAST OVERLOAD (${whose})! Hot side score halved!`, who === 'p' ? 'warn' : 'enemy');
+    addLog(`🔥 BURNT (${whose})! Too much roast — hot side scores half.`, who === 'p' ? 'warn' : 'enemy');
   }
 }
 
@@ -1129,6 +1135,13 @@ function applyCardEffect(card, lane, who) {
       break;
 
 
+    case 'peatmalt': {
+      const opp = isPlayer ? 'e' : 'p';
+      addRoastToken(opp, 2);
+      addLog(`Peated Malt: smoke drifts over — ${isPlayer ? 'rival' : 'you'} +2 roast!`, isPlayer ? 'player' : 'warn');
+      break;
+    }
+
     // ══ FLAVOUR PAYOFFS ══
     case 'brownmalt': {
       const n = countOthers('toasty', who, card, 'hot');
@@ -1533,6 +1546,21 @@ function synergyMultiplier(c, lane, who) {
 const CHOP_MULT    = 1.5;   // c-hops sharing a side
 const NUANCED_MULT = 2;     // two or more nuanced cards on your board
 
+// ── Roast power ──
+// Every roast token you hold (safe roast included) gives each of your roasty cards
+// +ROAST_POWER. Push toward your roast limit for big dark beers, but reach it and
+// your beer is Burnt: the hot side scores half.
+const ROAST_POWER = 2;
+
+function roastBonus(c, who) {
+  return c.tags && c.tags.includes('roasty') && c.cat !== 'token' ? ROAST_POWER * getRoast(who) : 0;
+}
+
+function isBurnt(who) {
+  const k = roastKeys(who);
+  return (state[k.t] || 0) - (state[k.s] || 0) >= (state[k.th] || 5);
+}
+
 // A card's "printed" points for this run: card + upgrades + barrel aging (not battle buffs)
 function printedPoints(c) {
   const d = getCardDef(c.id);
@@ -1543,10 +1571,11 @@ function printedPoints(c) {
 // Synergy multiplies the card's printed points only. Bonuses gained in battle
 // (Haze, Magnum, Whirlpool...) are added once, so they can't snowball.
 function effectivePoints(c, lane, who) {
+  const roast = roastBonus(c, who);
   const m = synergyMultiplier(c, lane, who);
-  if (m === 1) return c.points;
+  if (m === 1) return c.points + roast;
   const base = Math.max(0, Math.min(printedPoints(c), c.points));
-  return Math.floor(c.points + base * (m - 1));
+  return Math.floor(c.points + base * (m - 1)) + roast;
 }
 
 // These just announce the synergy; the math lives in synergyMultiplier

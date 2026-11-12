@@ -114,11 +114,7 @@ function getBudget(turn, who = 'p') {
 // ── Scoring ──
 function laneScore(lane, who) {
   let score = state.field[lane][who].reduce((s, c) => s + effectivePoints(c, lane, who), 0);
-  if (lane === 'hot') {
-    const k = roastKeys(who);
-    const roast = (state[k.t] || 0) - (state[k.s] || 0);
-    if (roast >= (state[k.th] || 5)) score = Math.floor(score / 2);
-  }
+  if (lane === 'hot' && isBurnt(who)) score = Math.floor(score / 2);
   return score * laneMultiplier(lane);
 }
 // ── Complete Beer bonus ──
@@ -162,7 +158,7 @@ function startRound() {
   state.lastHop           = {};
   state.roastTokens       = 0;
   state.roastSafe         = 0;
-  state.roastThreshold    = 5 + (hasRelic('roaster') ? 2 : 0) + (activeBreweryAt() === 'stouthouse' ? 3 : 0);
+  state.roastThreshold    = 5 + (hasRelic('roaster') ? 2 : 0) + (activeBreweryAt() === 'stouthouse' ? STOUT_HOUSE_LIMIT : 0);
   state.garageUsedRound   = false;
   state.hopBackUsed       = false;
   state.abilityUsed       = false;
@@ -193,7 +189,7 @@ function startRound() {
     state.field.hot.e.push(fav);
     addLog(`${state.rivalBonusName}: rival starts with +${state.rivalBonus}.`, 'enemy');
   }
-  if (state.rivalTrait === 'roastmaster') state.eRoastThreshold = 10;
+  if (state.rivalTrait === 'roastmaster') state.eRoastThreshold = 7;
   drawCards(hasRelic('grainmill') ? 2 : 1, state.pDeck, state.pHand);
   drawCards(1, state.eDeck, state.eHand);
   planRivalTurn();

@@ -201,8 +201,14 @@ function render() {
   const roastEl   = document.getElementById('roast-tracker');
   const roastCnt  = document.getElementById('roast-count');
   if (roastEl && roastCnt) {
-    roastCnt.textContent = `${roast}/${threshold}${eRoast > 0 ? ` | rival:${eRoast}/${state.eRoastThreshold || 5}` : ''}`;
-    roastEl.style.color  = roast >= threshold ? 'var(--red)' : roast >= threshold - 1 ? 'var(--orange)' : 'var(--dim)';
+    const burnt = state.phase && isBurnt('p');
+    const power = ROAST_POWER * roast;
+    roastCnt.textContent = burnt
+      ? `${roast}/${threshold} · BURNT! hot side ½`
+      : `${roast}/${threshold}${roast > 0 ? ` · roasty +${power}` : ''}${eRoast > 0 ? ` | rival ${eRoast}/${state.eRoastThreshold || 5}${isBurnt('e') ? ' BURNT' : ''}` : ''}`;
+    const effective = roast - (state.roastSafe || 0);
+    roastEl.style.color = burnt ? 'var(--red)' : effective >= threshold - 1 ? 'var(--orange)' : roast > 0 ? 'var(--gold)' : 'var(--dim)';
+    roastEl.title = `Each roast token gives every roasty card +${ROAST_POWER}. Reach ${threshold} and your beer is Burnt: hot side scores half. Midnight Wheat roast is safe.`;
   }
   const discountMsg = (state.nextCardDiscount || 0) > 0 ? ` ★-${state.nextCardDiscount}` : '';
   document.getElementById('hand-lbl').textContent =

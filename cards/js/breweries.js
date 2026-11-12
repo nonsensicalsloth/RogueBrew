@@ -42,8 +42,8 @@ const BREWERIES = [
   },
   {
     id: 'stouthouse', name: 'Stout House', icon: '☕', subtitle: 'Darker is better.',
-    passive: 'Your roast limit is 3 higher.',
-    ability: { name: 'Roast It', cost: 1, desc: 'Remove 1 roast token. Your best roasty card gets +6.' },
+    passive: 'Your roast limit is 1 higher.',
+    ability: { name: 'Roast It', cost: 1, desc: 'Gain 1 roast token. Your best roasty card gets +3.' },
     perk:    'Every card offer includes at least one roasty card.',
     unlock:  { text: 'Beat 5 bosses (across all runs).', test: p => p.bossesBeaten >= 5 },
   },
@@ -64,6 +64,8 @@ const BREWERIES = [
 ];
 
 const GARAGE_REP = 70;
+const ROAST_IT_BONUS = 3;
+const STOUT_HOUSE_LIMIT = 1;
 
 // Starting breweries are always open; the rest unlock from your profile (or playtest mode)
 function isBreweryUnlocked(b) {
@@ -113,7 +115,7 @@ function abilityStatus() {
   if (b.id === 'wildcellar' && state.wildUsedRound)    return { ok: false, reason: 'Already used this round' };
   if (b.id === 'taproom' && !LANES.some(l => state.field[l].p.some(c => c.cat !== 'token')))
     return { ok: false, reason: 'No card on your board' };
-  if (b.id === 'stouthouse' && getRoast('p') <= 0)     return { ok: false, reason: 'No roast to use' };
+  if (b.id === 'stouthouse' && isBurnt('p'))           return { ok: false, reason: 'Already Burnt' };
   if (b.id === 'contract' && !LANES.some(l => state.field[l].e.some(c => c.cat !== 'token')))
     return { ok: false, reason: 'Nothing on the rival board to copy' };
   if (b.id === 'garage' && state.garageUsedRound)      return { ok: false, reason: 'Already used this round' };
@@ -168,13 +170,14 @@ function useAbility() {
       return;
 
     case 'stouthouse': {
-      removeRoast('p', 1);
+      // Darker is better: push your roast up a notch (risky!)
+      addRoastToken('p', 1);
       const roasty = LANES.flatMap(l => state.field[l].p.filter(c => c.tags && c.tags.includes('roasty')).map(c => ({ c, l })));
       if (roasty.length) {
         const best = roasty.reduce((a, x) => effectivePoints(x.c, x.l, 'p') > effectivePoints(a.c, a.l, 'p') ? x : a);
-        best.c.points += 6;
-        addLog(`Roast It: −1 roast, ${best.c.name} +6!`, 'player');
-      } else addLog('Roast It: −1 roast.', 'player');
+        best.c.points += ROAST_IT_BONUS;
+        addLog(`Roast It: +1 roast, ${best.c.name} +${ROAST_IT_BONUS}!`, 'player');
+      } else addLog('Roast It: +1 roast.', 'player');
       finishAbility(b);
       return;
     }
