@@ -215,15 +215,16 @@ function render() {
     roastEl.style.color = burnt ? 'var(--red)' : effective >= threshold - 1 ? 'var(--orange)' : roast > 0 ? 'var(--gold)' : 'var(--dim)';
     roastEl.title = `Each roast token gives every roasty card +${ROAST_POWER}. Reach ${threshold} and your beer is Burnt: hot side scores half. Midnight Wheat roast is safe.`;
   }
-  // Mash meter: sticky grains on your hot side
+  // Mash meter: how many sticky grains are in a row at the end of your hot side
   const mashEl = document.getElementById('mash-pill');
   if (mashEl) {
-    const n = state.phase === 'play' || state.phase === 'between' ? stickyCount('p') : 0;
-    const stuck = isMashStuck('p'), hulls = hasRiceHulls('p');
-    mashEl.style.display = n > 0 || stuck ? '' : 'none';
-    mashEl.textContent = stuck ? 'MASH STUCK! −8' : hulls ? `MASH ${n} STICKY · HULLS IN` : `MASH ${n}/${STUCK_MASH_AT} STICKY`;
-    mashEl.style.color = stuck ? 'var(--red)' : hulls ? 'var(--green)' : n >= STUCK_MASH_AT - 1 ? 'var(--orange)' : 'var(--dim)';
-    mashEl.title = `Sticky grains (oats, wheat, rye, spelt) gum up the mash. ${STUCK_MASH_AT}+ on your hot side without Rice Hulls = Stuck Mash (−8).`;
+    const inPlay = state.phase === 'play' || state.phase === 'between';
+    const run = inPlay ? trailingSticky('p') : 0;
+    const stuck = inPlay && isMashStuck('p');
+    mashEl.style.display = run > 0 || stuck ? '' : 'none';
+    mashEl.textContent = stuck ? 'MASH STUCK! −8' : `MASH ${run}/${CLUMP_SIZE} IN A ROW`;
+    mashEl.style.color = stuck ? 'var(--red)' : run >= CLUMP_SIZE - 1 ? 'var(--orange)' : 'var(--dim)';
+    mashEl.title = `Sticky grains clump: ${CLUMP_SIZE} in a row on your hot side = Stuck Mash (−8). Play something else in between, like a base malt or Rice Hulls.`;
   }
 
   const discountMsg = (state.nextCardDiscount || 0) > 0 ? ` ★-${state.nextCardDiscount}` : '';

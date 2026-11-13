@@ -174,26 +174,36 @@ function removeFirstToken(who, tokenId = null, lane = null) {
   return null;
 }
 
-// ── Stuck Mash ──
-// Sticky grains (oats, wheat, rye, spelt) gum up the mash. With STUCK_MASH_AT or more
-// sticky cards on your hot side and no Rice Hulls there, a Stuck Mash token (−8) appears.
-// Rice Hulls clear it and prevent it; cleanup cards (SIP, CIP, Fining) remove it too.
-const STUCK_MASH_AT = 4;
+// ── Stuck Mash (clumping) ──
+// Sticky grains (oats, wheat, rye, spelt) clump when packed together. Three sticky
+// cards IN A ROW on your hot side stick the mash: a Stuck Mash token (−8) appears.
+// Anything played between them (a base malt, a crystal, Rice Hulls...) keeps the
+// grain bed loose. Rice Hulls also clear a Stuck Mash.
+const CLUMP_SIZE = 3;
 
-function stickyCount(who) {
-  return getLaneCards('hot', who).filter(c => c.tags && c.tags.includes('sticky')).length;
+function isSticky(c) { return !!(c && c.tags && c.tags.includes('sticky')); }
+
+// Length of the sticky run at the end of your hot side (what your next play extends)
+function trailingSticky(who) {
+  const lane = getLaneCards('hot', who);
+  let n = 0;
+  for (let i = lane.length - 1; i >= 0 && isSticky(lane[i]); i--) n++;
+  return n;
 }
-function hasRiceHulls(who) {
-  return getLaneCards('hot', who).some(c => c.id === 'ricehulls');
+
+function hasClump(who) {
+  let run = 0;
+  for (const c of getLaneCards('hot', who)) { run = isSticky(c) ? run + 1 : 0; if (run >= CLUMP_SIZE) return true; }
+  return false;
 }
-function isMashStuck(who) {
-  return getLaneCards('hot', who).some(c => c.id === 'stuckmash');
-}
+
+function stickyCount(who) { return getLaneCards('hot', who).filter(isSticky).length; }
+function isMashStuck(who) { return getLaneCards('hot', who).some(c => c.id === 'stuckmash'); }
 
 function checkStuckMash(who) {
-  if (stickyCount(who) < STUCK_MASH_AT || hasRiceHulls(who) || isMashStuck(who)) return;
+  if (!hasClump(who) || isMashStuck(who)) return;
   getLaneCards('hot', who).push(createToken('stuckmash'));
-  addLog(`🥣 ${who === 'p' ? 'Your' : "Rival's"} mash is stuck! Too many sticky grains — Stuck Mash (−8). Rice Hulls fix it.`, who === 'p' ? 'warn' : 'enemy');
+  addLog(`🥣 ${who === 'p' ? 'Your' : "Rival's"} sticky grains clumped — Stuck Mash (−8)! Space them out, or add Rice Hulls.`, who === 'p' ? 'warn' : 'enemy');
 }
 
 function removeAllTokens(who, tokenId) {
@@ -954,7 +964,7 @@ function applyCardEffect(card, lane, who) {
     case 'ricehulls':
       if (isPlayer) state.nextCardDiscount = (state.nextCardDiscount || 0) + 1;
       if (isMashStuck(who)) { removeAllTokens(who, 'stuckmash'); addLog('Rice Hulls: stuck mash freed!', 'player'); }
-      addLog('Rice Hulls: next card costs 1 less, and your mash can\'t get stuck while they\'re in.', 'player');
+      addLog('Rice Hulls: next card costs 1 less.', 'player');
       break;
 
     case 'buckwheat': {
