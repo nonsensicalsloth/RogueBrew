@@ -84,7 +84,7 @@ function planSmart(budget) {
   for (let step = 0; step < 8; step++) {
     let best = null;
     for (const c of sim.eHand) {
-      if ((c.cat === 'token' && c.points < 0) || c.cost > remaining) continue;   // Haze and Body tokens are worth playing
+      if ((c.cat === 'token' && c.points < 0) || c.cost > remaining) continue;   // helpful tokens (like Haze) are worth playing
       for (const lane of lanesFor(c)) {
         const r = evaluatePlay(sim, c._uid, lane);
         if (r && (!best || r.value > best.value || (r.value === best.value && c.cost < best.card.cost))) {
@@ -135,7 +135,7 @@ function executeRivalPlan() {
   let remaining = getBudget(state.turn, 'e');
   let played = 0;
   for (const step of plan) {
-    // Cards created during the turn (like a Body token from Coconut) are matched by name
+    // Cards created during the turn (like a Haze token from Mango) are matched by name
     const i = step.uid !== undefined
       ? state.eHand.findIndex(c => c._uid === step.uid)
       : state.eHand.findIndex(c => c.id === step.id);

@@ -40,18 +40,6 @@ function reshuffleDiscard(deck) {
   return true;
 }
 
-// Move all field cards to discard at end of round.
-// Hand cards are NOT discarded between rounds.
-function clearField(field, pDiscard, eDiscard) {
-  const LANES = ['hot', 'cold'];
-  LANES.forEach(l => {
-    pDiscard.push(...field[l].p);
-    eDiscard.push(...field[l].e);
-    field[l].p = [];
-    field[l].e = [];
-  });
-}
-
 // Move hand cards back into deck (mulligan).
 function mulliganCards(indices, hand, deck) {
   // Remove highest indices first to avoid shifting problems

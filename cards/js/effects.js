@@ -823,7 +823,7 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'specialb': {
-      // Special B: a safer roast payoff (base 6, no Sugar Clot). Crystal 80 is the high-risk one.
+      // Special B: a safer roast payoff (base 6). Crystal 80 is the bigger swing.
       const roastSB = getRoast(who);
       card.points += roastSB * 6;
       addLog(`Special B: 6 + ${roastSB} roast × 6 = ${card.points} pts!`, 'player');
