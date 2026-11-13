@@ -422,11 +422,6 @@ function applyCardEffect(card, lane, who) {
       addLog('6-Row Malt: next card costs 1 less.', 'player');
       break;
 
-    case 'wheatwhite':
-      addToHand(who, 'body');
-      addLog('White Wheat: Body token added to hand.', 'player');
-      break;
-
     case 'mango':
     case 'flakedwheat':
       addToHand(who, 'haze');
@@ -934,11 +929,6 @@ function applyCardEffect(card, lane, who) {
       break;
     }
 
-    case 'coconut':
-      addToHand(who, 'body');
-      addLog('Coconut: Body token added to hand.', 'player');
-      break;
-
     case 'honey': {
       // Free-if-first is handled in getEffectiveCost
       const floral = allMine.filter(c => c !== card && c.tags && c.tags.includes('floral')).length;
@@ -1245,8 +1235,8 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'yeastnutrient': {
-      const n = buffLaneCards('cold', who, 4, c => c.cat === 'yeast' && c.tags && c.tags.includes('clean'));
-      addLog(`Yeast Nutrient: +4 to ${n} clean yeast(s).`, 'player');
+      const n = buffLaneCards('cold', who, 3, c => c.cat === 'yeast');
+      addLog(`Yeast Nutrient: +3 to ${n} yeast(s).`, 'player');
       break;
     }
 

@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'clumping 1 (Nov 13)';
+const CARDS_VERSION = 'clumping 2 (Nov 13)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -16,7 +16,7 @@ const CARD_POOL = [
   { id:'goldenprom',  name:'Golden Promise',        cat:'malt', lane:'hot', points:18, cost:2, tags:['sweet'],           desc:'No effect, big base score.' },
   { id:'vienna',      name:'Vienna Malt',           cat:'malt', lane:'hot', points:10,  cost:2, tags:['malty','toasty'],          desc:'Increases base score of all other malts on your hot side by +2.' },
   { id:'munich',      name:'Munich Malt',           cat:'malt', lane:'hot', points:18, cost:2, tags:['malty'],           desc:'No effect, big base score.' },
-  { id:'wheatwhite',  name:'White Wheat Malt',      cat:'malt', lane:'hot', points:9,  cost:1, tags:['bready','hazy','sticky'],          desc:'Add a Body card (0 cost, +5 pts) to your hand when played.' },
+  { id:'wheatwhite',  name:'White Wheat Malt',      cat:'malt', lane:'hot', points:12,  cost:1, tags:['bready','hazy','sticky'],          desc:'Adds soft, full body. No other effect.' },
   { id:'expilsner',   name:'Extra Pale Pilsner',    cat:'malt', lane:'hot', points:12, cost:2, tags:['crisp'],           desc:'Your next hop this round gets +2 pts.' },
   { id:'floorpilsner',name:'Floor Malted Pilsner',  cat:'malt', lane:'hot', points:19, cost:3, tags:['crisp'],           desc:'If no crystal or dark malts on hot side, +10 bonus pts.' },
   { id:'darkmunich',  name:'Dark Munich',           cat:'malt', lane:'hot', points:19, cost:3, tags:['bready','toasty'], desc:'Each crystal malt already on your hot side gets +4 pts.' },
@@ -79,7 +79,7 @@ const CARD_POOL = [
 
   // Sweet/pastry adjuncts
   { id:'vanilla',    name:'Vanilla',         cat:'adjunct', lane:'both', points:12, cost:2, tags:['sweet','smooth'],       desc:'All other sweet cards on your board get +2 pts.' },
-  { id:'coconut',    name:'Coconut',         cat:'adjunct', lane:'both', points:10,  cost:2, tags:['sweet','smooth'],       desc:'Adds a Body token to your hand.' },
+  { id:'coconut',    name:'Coconut',         cat:'adjunct', lane:'both', points:13,  cost:2, tags:['sweet','smooth'],       desc:'Rich, creamy body. No other effect.' },
   { id:'cacaonibs',  name:'Cacao Nibs',      cat:'adjunct', lane:'both', points:19, cost:3, tags:['roasty','bitter'],       desc:'Adds 1 roast token. If Chocolate Malt on hot side, score double.' },
   { id:'honey',      name:'Honey',           cat:'adjunct', lane:'hot', points:12, cost:2, tags:['sweet','floral'],        desc:'Costs 0 if it is your first adjunct this round. +3 per floral card on your board.' },
   { id:'maple',      name:'Maple Syrup',     cat:'adjunct', lane:'hot', points:12, cost:2, tags:['sweet','malty'],        desc:'+4 pts for each other malty card on your hot side.' },
@@ -233,7 +233,7 @@ const CARD_POOL = [
   { id:'elderflower', name:'Elderflower',    cat:'adjunct', lane:'both', points:7,  cost:1, tags:['floral','sweet'],  desc:'+3 pts for each other floral card on your board.' },
   { id:'brutenzyme',  name:'Brut Enzyme',    cat:'adjunct', lane:'both', points:12,  cost:2, tags:['dry'],             desc:'Ferments bone dry: every other dry card on your board gets +3. Breaks up a Stuck Mash.' },
   { id:'flakedrice',  name:'Flaked Rice',    cat:'adjunct', lane:'hot',  points:7,  cost:1, tags:['neutral','crisp'], desc:'+2 pts for each other neutral or crisp card on your hot side.' },
-  { id:'yeastnutrient', name:'Yeast Nutrient', cat:'adjunct', lane:'cold', points:6, cost:1, tags:['clean'],         desc:'Every clean yeast on your cold side gets +4.' },
+  { id:'yeastnutrient', name:'Yeast Nutrient', cat:'adjunct', lane:'cold', points:8, cost:1, tags:['clean'],         desc:'Every yeast on your cold side gets +3.' },
   { id:'oakfoeder',   name:'Oak Foeder',     cat:'adjunct', lane:'cold', points:20, cost:3, tags:['oaky','funky'],    desc:'Wild cultures thrive in oak: every other funky or sour card on your cold side gets +5.' },
 ];
 
@@ -310,7 +310,6 @@ function buildEnemyDeck() {
 
 // ── Token Cards (generated during play, not draftable) ──
 const TOKEN_CARDS = [
-  { id:'body',        name:'Body',         cat:'token', lane:'hot',  points:5,   cost:0, tags:['smooth'], desc:'Simple +5 pts. Created by White Wheat Malt and Coconut.' },
   { id:'haze',        name:'Haze',         cat:'token', lane:'both', points:4,   cost:1, tags:['hazy'],   desc:'When played, +2 pts to every hop on the same side. Stays in play as a hazy token.' },
   { id:'contamination', name:'Contamination',  cat:'token', lane:'cold', points:-10, cost:0, tags:['funky'],  desc:'Auto-plays to cold side when drawn. Interrupts your turn but costs 0.' },
   { id:'crowd_fav',     name:'Crowd Favorite', cat:'token', lane:'hot',  points:10,  cost:0, tags:[],         desc:'Festival rivals start each round with the crowd on their side.' },
