@@ -73,6 +73,10 @@ function refreshRunCard(c) {
     fresh.tags.push('oaky');
     fresh._barrelAged = true;
   }
+  if (c._victoryBonus) {
+    fresh.points += c._victoryBonus;
+    fresh._victoryBonus = c._victoryBonus;
+  }
   if (c._barrelReturn !== undefined) fresh._barrelReturn = c._barrelReturn;
   return fresh;
 }

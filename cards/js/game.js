@@ -7,7 +7,7 @@ const LANE_NAMES = { hot: 'Hot side', cold: 'Cold side' };
 let state = {};
 
 // Transient flags that should never carry from one battle into the next
-const BATTLE_FLAGS = ['_basePoints','_thiolReleased','_victory','_award','_locked','_noMultiplier','_mixedFerm'];
+const BATTLE_FLAGS = ['_basePoints','_thiolReleased','_victory','_award','_locked','_noMultiplier','_mixedFerm','_deckIdx'];
 
 function freshCopy(c) {
   const copy = { ...c, tags: [...(c.tags || [])] };
@@ -26,7 +26,7 @@ function initGame(opts = {}) {
   const isBoss = node ? node.type === 'boss' : false;
 
   const pDeck = shuffle(draftState.deck.length > 0
-    ? draftState.deck.map(freshCopy)
+    ? draftState.deck.map((c, i) => Object.assign(freshCopy(c), { _deckIdx: i }))
     : buildDefaultDeck());
   const eDeck = shuffle(opts.rivalDeck ? opts.rivalDeck.map(freshCopy) : buildEnemyDeck());
 
@@ -50,7 +50,8 @@ function initGame(opts = {}) {
     roundWins:        [],
     mulSel:           [],
     logs:             [],
-    victoryCards:     [],
+    victoryWins:      [],   // deck indexes of Victory Malts on board for a round you won
+    awardWon:         false,
     maxRounds:        node ? (isBoss ? 3 : 1) : 3,
     currentNode:      node,
     isBoss,
@@ -177,8 +178,7 @@ function startRound() {
   state.nextYeastDiscount = 0;
   state.nextHopDiscount   = 0;
   state.pendingHopBuff    = 0;
-  state.field           = { hot: { p: [...(state.victoryCards || [])], e: [] }, cold: { p: [], e: [] } };
-  state.victoryCards    = [];
+  state.field           = { hot: { p: [], e: [] }, cold: { p: [], e: [] } };
   state.judging = judgingFor(state.round);
   addLog(`▶ Round ${state.round} begins! Budget: ${state.budget}`);
   if (state.judging) addLog(`${state.judging.icon} Judging: ${state.judging.name} — ${state.judging.desc}.`, 'sys');
@@ -207,34 +207,21 @@ function endRound() {
   else if (es > ps) { state.roundWins.push('enemy');  addLog(`✗ Rival wins round ${state.round}.`, 'enemy'); }
   else              { state.roundWins.push('draw');   addLog('— Draw!'); }
 
-  // Handle Victory Malt — keep on board if player won this round
-  const victoryCards = state.field.hot.p.filter(c => c._victory);
-  // If you didn't win, Victory Malt goes to the discard like everything else
-  if (!(ps > es)) victoryCards.forEach(c => delete c._victory);
-  const awardCards   = state.field.hot.p.filter(c => c._award)
-    .concat(state.field.cold.p.filter(c => c._award));
+  // Victory Malt / Award Entry — remember them if you won this round with them on your board
+  if (ps > es) {
+    LANES.forEach(l => state.field[l].p.forEach(c => {
+      if (c.id === 'victory' && c._deckIdx !== undefined && !state.victoryWins.includes(c._deckIdx)) state.victoryWins.push(c._deckIdx);
+      if (c.id === 'award') state.awardWon = true;
+    }));
+  }
 
   LANES.forEach(l => {
-    // Tokens (Haze, Body, Stuck Mash, Contamination...) leave the game at round end
-    state.pDiscard.push(...state.field[l].p.filter(c => !c._victory && c.cat !== 'token'));
+    // Tokens (Haze, Stuck Mash, Contamination...) leave the game at round end
+    state.pDiscard.push(...state.field[l].p.filter(c => c.cat !== 'token'));
     state.eDiscard.push(...state.field[l].e.filter(c => c.cat !== 'token'));
     state.field[l].p = [];
     state.field[l].e = [];
   });
-
-  // Award Entry — draw 3 if player won
-  if (ps > es && awardCards.length > 0) {
-    drawCards(3, state.pDeck, state.pHand);
-    addLog('Award Entry: you won the round — drew 3 cards!', 'player');
-  }
-
-  // Victory Malt — store for next round start
-  if (ps > es && victoryCards.length > 0) {
-    state.victoryCards = victoryCards;
-    addLog(`Victory Malt: carries over to next round!`, 'player');
-  } else {
-    state.victoryCards = [];
-  }
 
   const pw = state.roundWins.filter(x => x === 'player').length;
   const ew = state.roundWins.filter(x => x === 'enemy').length;

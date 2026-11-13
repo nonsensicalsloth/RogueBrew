@@ -4,6 +4,7 @@
 //   Trub Dump        look at your top 3 cards: keep one, discard the other two
 //   Yeast Harvest    take a yeast back from your discard pile; it costs 0 this turn
 //   Second Runnings  play the top malt of your discard pile for free
+//   Grain Bill Review  look at your next 5 cards, put a malt from among them into your hand
 //   Spent Grain Bread / Solera  score from what's in your discard pile
 //
 // Two kinds of choice live here (cards on the board use effects.js targeting):
@@ -92,7 +93,35 @@ const BATTLE_PICKS = {
     handOf(who).push(fresh);
     addLog(`Yeast Harvest: ${fresh.name} back in hand, free to pitch this turn.`, who === 'p' ? 'player' : 'enemy');
   },
+  // Take the chosen malt out of the deck; the rest stay on top in the same order
+  grainreview(cards, i, who) {
+    const pick = cards[i];
+    const deck = deckOf(who);
+    const k = deck.indexOf(pick);
+    if (k >= 0) deck.splice(k, 1);
+    handOf(who).push(pick);
+    if (who === 'p' && state.newCards) state.newCards.add(pick);
+    addLog(`Grain Bill Review: pulled ${pick.name} into hand.`, who === 'p' ? 'player' : 'enemy');
+  },
 };
+
+const GRAIN_REVIEW_DEPTH = 5;
+
+function grainBillReview(who) {
+  const deck = deckOf(who);
+  if (deck.length < GRAIN_REVIEW_DEPTH) reshuffleDiscard(deck);
+  const top   = deck.slice(0, GRAIN_REVIEW_DEPTH);
+  const malts = top.filter(c => c.cat === 'malt');
+  const tag   = who === 'p' ? 'player' : 'enemy';
+  if (who === 'p') addLog(`Grain Bill Review: next ${top.length} — ${top.map(c => c.name).join(', ') || 'deck empty'}`, 'player');
+  if (!malts.length) { drawFor(who, 1); addLog('Grain Bill Review: no malt in sight — drew 1 instead.', tag); return; }
+  if (who === 'e' || malts.length === 1) {
+    const best = malts.reduce((bi, c, k) => c.points > malts[bi].points ? k : bi, 0);
+    BATTLE_PICKS.grainreview(malts, best, who);
+    return;
+  }
+  openBattlePicker('grainreview', 'GRAIN BILL REVIEW: CHOOSE A MALT TO PUT IN YOUR HAND', malts, null);
+}
 
 function startTrubDump(src, who) {
   const deck = deckOf(who);
@@ -131,6 +160,7 @@ function secondRunnings(src, who) {
     pile.splice(k, 1);
     const fresh = typeof refreshRunCard === 'function' ? refreshRunCard(c) : { ...(getCardDef(c.id) || c) };
     delete fresh._barrelReturn;
+    if (c._deckIdx !== undefined) fresh._deckIdx = c._deckIdx;
     const lane = fresh.lane === 'cold' ? 'cold' : 'hot';
     addLog(`Second Runnings: ${fresh.name} brewed again from the spent grain!`, who === 'p' ? 'player' : 'enemy');
     resolvePlay(fresh, lane, who);

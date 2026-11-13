@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'clumping 2 (Nov 13)';
+const CARDS_VERSION = 'victory & taproom (Nov 13)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -45,7 +45,7 @@ const CARD_POOL = [
   { id:'melanoidin', name:'Melanoidin',    cat:'malt', lane:'hot', points:14, cost:2, tags:['malty','toasty'],          desc:'Scores ×2 with 1 copy in your discard pile, ×3 with 2, and so on. Its value cannot be reduced by other cards.' },
   { id:'aromatic',   name:'Aromatic Malt', cat:'malt', lane:'hot', points:14, cost:2, tags:['malty','bready'],          desc:'Copies the on-play effect of the last malt you played this round.' },
   { id:'biscuit',    name:'Biscuit Malt',  cat:'malt', lane:'hot', points:3,  cost:2, tags:['biscuity','toasty'],       desc:'Scores 3 × the number of cards on your hot side (including itself). Cannot benefit from multipliers.' },
-  { id:'victory',    name:'Victory Malt',  cat:'malt', lane:'hot', points:18, cost:3, tags:['biscuity','toasty'],       desc:'If you win the round this was played in, it stays on the board next round instead of discarding.' },
+  { id:'victory',    name:'Victory Malt',  cat:'malt', lane:'hot', points:16, cost:3, tags:['biscuity','toasty'],       desc:'If this is on your board when you win a battle, it gets +3 for the rest of the run.' },
   { id:'caramun',    name:'Caramunich',    cat:'malt', lane:'hot', points:17, cost:2, tags:['sweet','toasty'],          desc:'No effect, but sweet and toasty for synergies.' },
 
   // ── Dark Malts ──
@@ -137,9 +137,9 @@ const CARD_POOL = [
   // Scoring/multiplier process cards
   { id:'qc',           name:'Quality Control',   cat:'process', lane:'both', points:0,  cost:1, tags:[],   desc:'If your total score is higher than the rival\'s, +14 pts. Otherwise, draw 1.' },
   { id:'tasting',      name:'Tasting Notes',     cat:'process', lane:'both', points:0,  cost:0, tags:[],         desc:"Reveal rival's hand for this turn." },
-  { id:'award',        name:'Award Entry',       cat:'process', lane:'both', points:28, cost:4, tags:[],  desc:'If you win this round, draw 3 cards.' },
+  { id:'award',        name:'Award Entry',       cat:'process', lane:'both', points:26, cost:4, tags:[],  desc:'If this is on your board when you win a battle, gain 25 gold.' },
   { id:'pilotbatch',   name:'Pilot Batch',       cat:'process', lane:'hot',  points:8,  cost:2, tags:[],         desc:'Draw 2 cards when played.' },
-  { id:'grainreview',  name:'Grain Bill Review', cat:'process', lane:'hot',  points:0,  cost:0, tags:[],           desc:'Reveal the top 3 cards of your deck. Draw 1.' },
+  { id:'grainreview',  name:'Grain Bill Review', cat:'process', lane:'hot',  points:0,  cost:0, tags:[],           desc:'Look at your next 5 cards. Put a malt from among them into your hand.' },
   { id:'fermlog',      name:'Fermentation Log',  cat:'process', lane:'cold', points:0,  cost:1, tags:[],           desc:'+3 pts to every other card on your cold side. Draw 1.' },
 
   // ══════════════════════════════════════════════════════════════

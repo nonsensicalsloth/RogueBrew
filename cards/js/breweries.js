@@ -36,7 +36,7 @@ const BREWERIES = [
   {
     id: 'taproom', name: 'Taproom', icon: '🍻', subtitle: 'Money talks.',
     passive: 'Adjuncts you play get +2.',
-    ability: { name: 'Pour a Pint', cost: 1, desc: 'Choose any card on your board. It gets +4.' },
+    ability: { name: 'Sell a Pint', cost: 1, desc: `Once per turn: gain 6 gold.` },
     perk:    'More shops on the map, and your first purchase in each shop is half price.',
     unlock:  { text: 'Win a run.', test: p => p.wins >= 1 },
   },
@@ -113,8 +113,8 @@ function abilityStatus() {
   if (b.id === 'hophouse' && !state.pDeck.length && !state.pDiscard.some(c => c.cat !== 'token'))
     return { ok: false, reason: 'Nothing left to draw' };
   if (b.id === 'wildcellar' && state.wildUsedRound)    return { ok: false, reason: 'Already used this round' };
-  if (b.id === 'taproom' && !LANES.some(l => state.field[l].p.some(c => c.cat !== 'token')))
-    return { ok: false, reason: 'No card on your board' };
+  if (b.id === 'taproom' && (!state.currentNode || typeof mapState === 'undefined' || !mapState))
+    return { ok: false, reason: 'Only during a run' };
   if (b.id === 'stouthouse' && isBurnt('p'))           return { ok: false, reason: 'Already Burnt' };
   if (b.id === 'contract' && !LANES.some(l => state.field[l].e.some(c => c.cat !== 'token')))
     return { ok: false, reason: 'Nothing on the rival board to copy' };
@@ -124,6 +124,8 @@ function abilityStatus() {
     return { ok: false, reason: 'Not enough Reputation' };
   return { ok: true, reason: '' };
 }
+
+const SELL_PINT_GOLD = 6;
 
 function finishAbility(b) {
   state.budgetUsed += b.ability.cost;
@@ -164,9 +166,10 @@ function useAbility() {
     }
 
     case 'taproom':
-      state.abilityTargeting = true;
-      addLog('Pour a Pint: click any card on your board.', 'player');
-      render();
+      mapState.gold += SELL_PINT_GOLD;
+      state.pintsSold = (state.pintsSold || 0) + 1;
+      addLog(`Sell a Pint: +${SELL_PINT_GOLD} gold (💰 ${mapState.gold}).`, 'player');
+      finishAbility(b);
       return;
 
     case 'stouthouse': {
@@ -223,12 +226,6 @@ function abilityPickTarget(lane, idx) {
   const b = breweryDef();
   if (!b || !state.abilityTargeting) return;
   const card = state.field[lane].p[idx];
-  if (b.id === 'taproom' && card && card.cat !== 'token') {
-    card.points += 4;
-    addLog(`Pour a Pint: ${card.name} +4!`, 'player');
-    finishAbility(b);
-    return;
-  }
   if (b.id === 'lagerhaus' && card && lane === 'cold' && card.cat === 'yeast') {
     card.points += 3;
     addLog(`Cold Condition: ${card.name} +3!`, 'player');
@@ -240,7 +237,6 @@ function abilityPickTarget(lane, idx) {
 function isAbilityTarget(c, lane) {
   if (!state.abilityTargeting) return false;
   const id = activeBrewery();
-  if (id === 'taproom') return c.cat !== 'token';
   return id === 'lagerhaus' && lane === 'cold' && c.cat === 'yeast';
 }
 

@@ -70,7 +70,7 @@ function playToLane(lane) {
 }
 
 // Process cards that already draw on their own don't get the extra cantrip draw
-const CANTRIP_EXEMPT = ['drunkcellar', 'drunkbrewer', 'inspector', 'grainout', 'trubdump', 'yeastharvest'];
+const CANTRIP_EXEMPT = ['drunkcellar', 'drunkbrewer', 'inspector', 'grainout', 'trubdump', 'yeastharvest','grainreview'];
 
 // ── Shared play resolution (player and rival) ──
 // Places the card, runs its effect and synergies, then tidies up.

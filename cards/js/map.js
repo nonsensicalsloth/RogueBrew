@@ -629,6 +629,7 @@ function showCardHover(idx, ev) {
   const notes = [];
   if (c._upgraded)   notes.push(`★ Upgraded (+${c._upgradeBonus || REST_UPGRADE})`);
   if (c._barrelAged) notes.push(`🛢 Barrel-aged (+${BARREL_BONUS}, oaky)`);
+  if (c._victoryBonus) notes.push(`🏅 Victories (+${c._victoryBonus})`);
   if (def && c.points !== def.points && !notes.length) notes.push(`Printed: ${def.points} pts`);
   const el = deckPreviewEl();
   el.innerHTML = cardHtml(c, idx, 'view') + (notes.length ? `<div class="deck-preview-notes">${notes.join('<br>')}</div>` : '');
@@ -971,12 +972,31 @@ function showFinalJudging() {
 // ── Battle result handlers ──
 // Called from game.js when a battle ends
 
+// Victory Malt / Award Entry payoffs when you win a battle
+const VICTORY_GROWTH = 3;
+const AWARD_GOLD     = 25;
+
+function applyBattleWinCards() {
+  (state.victoryWins || []).forEach(i => {
+    const c = draftState.deck[i];
+    if (!c || c.id !== 'victory') return;
+    c._victoryBonus = (c._victoryBonus || 0) + VICTORY_GROWTH;
+    c.points += VICTORY_GROWTH;
+    addLog(`🏅 Victory Malt grows: now ${c.points} pts for the rest of the run!`, 'player');
+  });
+  if (state.awardWon) {
+    mapState.gold += AWARD_GOLD;
+    addLog(`🏆 Award Entry: your winning beer takes a medal — +${AWARD_GOLD} gold!`, 'player');
+  }
+}
+
 function onBattleWin(node) {
   // Gold reward scaled to rival size
   const goldReward = Math.floor(node.rivalSize * 2 + Math.random() * 20);
   mapState.gold += goldReward;
   addLog(`Victory! +${goldReward} gold earned.`, 'player');
 
+  applyBattleWinCards();
   trackBattleWin(node, goldReward);
   if (node.type === 'boss') {
     if (mapState.act < 2) {

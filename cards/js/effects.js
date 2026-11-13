@@ -349,6 +349,7 @@ function returnToHand(c, lane, who) {
   // but run upgrades and barrel aging stay (same rebuild used for saved runs)
   const fresh = typeof refreshRunCard === 'function' ? refreshRunCard(c) : { ...(getCardDef(c.id) || c) };
   delete fresh._barrelReturn;
+  if (c._deckIdx !== undefined) fresh._deckIdx = c._deckIdx;
   (who === 'p' ? state.pHand : state.eHand).push(fresh);
   return fresh;
 }
@@ -884,9 +885,8 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'victory':
-      // Victory malt persistence handled in endRound — flag it here
-      card._victory = true;
-      addLog('Victory Malt: will stay on board if you win this round!', 'player');
+      // Run growth handled in endRound / onBattleWin (+VICTORY_GROWTH if you win the battle)
+      if (isPlayer) addLog(`Victory Malt: win this battle and it grows +${VICTORY_GROWTH} for the rest of the run!`, 'player');
       break;
 
     case 'crystal120':
@@ -1070,7 +1070,7 @@ function applyCardEffect(card, lane, who) {
         addLog("Double Batch: can't copy a process card.", 'sys');
       } else if (state.lastPlayedCard && state.lastPlayedLane) {
         const copy = { ...state.lastPlayedCard };
-        delete copy._basePoints; delete copy._victory; delete copy._award;
+        delete copy._basePoints; delete copy._deckIdx;
         state.field[state.lastPlayedLane][who].push(copy);
         addLog(`Double Batch: copied ${copy.name} to ${LANE_NAMES[state.lastPlayedLane]}!`, 'player');
       } else {
@@ -1106,16 +1106,11 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'award':
-      card._award = true;
-      addLog('Award Entry: draw 3 if you win this round!', 'player');
+      if (isPlayer) addLog(`Award Entry: win this battle for +${AWARD_GOLD} gold!`, 'player');
       break;
 
     case 'grainreview':
-      // Just log top 3 cards so player knows what's coming
-      if (isPlayer) {
-        const top3 = state.pDeck.slice(0, 3).map(c => c.name).join(', ');
-        addLog(`Grain Bill Review: next 3 cards — ${top3 || 'deck empty'}`, 'player');
-      }
+      grainBillReview(who);
       break;
 
 
@@ -1599,7 +1594,8 @@ function isBurnt(who) {
 function printedPoints(c) {
   const d = getCardDef(c.id);
   if (!d) return c.points;
-  return d.points + (c._upgraded ? (c._upgradeBonus || REST_UPGRADE) : 0) + (c._barrelAged ? BARREL_BONUS : 0);
+  return d.points + (c._upgraded ? (c._upgradeBonus || REST_UPGRADE) : 0) + (c._barrelAged ? BARREL_BONUS : 0)
+       + (c._victoryBonus || 0);
 }
 
 // Synergy multiplies the card's printed points only. Bonuses gained in battle
