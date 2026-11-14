@@ -12,7 +12,8 @@ function fieldCardHtml(c, lane, who, idx) {
   const mult = synergyMultiplier(c, lane, who);
   const pts  = effectivePoints(c, lane, who);
   const sign = pts >= 0 ? '+' : '';
-  return `<div class="field-card ${who}${pts < 0 ? ' field-card-neg' : ''}${target ? ' field-card-target' : ''}" ${target ? `onclick="event.stopPropagation();pickBoardTarget('${lane}', ${idx})"` : ''} title="${c.name}: ${c.points} pts${pts !== c.points ? ` + ${pts - c.points} synergy = ${pts}` : ''}">
+  const fx   = juiceCardAttrs(c);
+  return `<div class="field-card ${who}${pts < 0 ? ' field-card-neg' : ''}${target ? ' field-card-target' : ''}${fx.cls}"${fx.attrs} ${target ? `onclick="event.stopPropagation();pickBoardTarget('${lane}', ${idx})"` : ''} title="${c.name}: ${c.points} pts${pts !== c.points ? ` + ${pts - c.points} synergy = ${pts}` : ''}">
     <div class="field-card-name">${c.name}</div>
     <div class="field-card-pts">${sign}${pts}${mult > 1 ? `<span class="field-card-mult"> ×${mult}</span>` : ''}</div>
   </div>`;
@@ -49,8 +50,8 @@ ${fieldCardHtml(c, l, 'e')}`).join('')
       }
     }
 
-    document.getElementById(l === 'hot' ? 'hs-p' : 'cs-p').textContent = laneScore(l, 'p') + ' pts';
-    document.getElementById(l === 'hot' ? 'hs-e' : 'cs-e').textContent = laneScore(l, 'e') + ' pts';
+    juiceCount(document.getElementById(l === 'hot' ? 'hs-p' : 'cs-p'), laneScore(l, 'p'), v => v + ' pts');
+    juiceCount(document.getElementById(l === 'hot' ? 'hs-e' : 'cs-e'), laneScore(l, 'e'), v => v + ' pts');
   });
 }
 
@@ -126,8 +127,14 @@ function renderActions() {
     const next = judgingFor(state.round);
     el.innerHTML = `<button class="btn btn-gold" onclick="startNextRound()">▶ START ROUND ${state.round}${next ? ` — ${next.icon} ${next.name.toUpperCase()}` : ''}</button>
       ${next ? `<span style="font-size:7px;color:var(--dim);margin-left:8px">${next.desc}</span>` : ''}`;
+  } else if (state.phase === 'tally') {
+    el.innerHTML = `<div class="status-tag">THE JUDGES ARE TASTING...</div>`;
   } else if (state.phase === 'end') {
-    el.innerHTML = `<button class="btn btn-gold" onclick="initGame()">PLAY AGAIN</button>`;
+    el.innerHTML = `<button class="btn btn-gold" onclick="replayBattle()">PLAY AGAIN</button>`;
+  }
+  // Test brews can be stopped at any time
+  if (state.testDeck && state.phase !== 'end') {
+    el.innerHTML += ` <button class="btn btn-danger" onclick="endTestBrew()">✕ STOP TEST</button>`;
   }
 }
 
@@ -151,6 +158,20 @@ function renderLog() {
 }
 
 function showOverlay(pw, ew) {
+  const btns = document.getElementById('ov-buttons');
+  if (state.testDeck) {
+    const s = state.lastRoundScore ? state.lastRoundScore.p : totalScore('p');
+    document.getElementById('ov-title').textContent = 'TEST BREW DONE';
+    document.getElementById('ov-title').style.color = 'var(--gold)';
+    document.getElementById('ov-sub').textContent   = `Your beer scored ${s} points in ${MAX_TURNS} turns.`;
+    document.getElementById('ov-wins').textContent  = 'The dummy never plays a card, so this is your deck on its own.';
+    if (btns) btns.innerHTML = `<button class="btn btn-gold" onclick="startTestBrew()">TEST AGAIN</button>
+      <button class="btn btn-primary" onclick="endTestBrew()">← BACK TO BUILDER</button>`;
+    document.getElementById('overlay').classList.remove('hidden');
+    return;
+  }
+  if (btns) btns.innerHTML = `<button class="btn btn-gold" onclick="replayBattle()">PLAY AGAIN</button>
+      <button class="btn btn-primary" onclick="showTitleScreen()">MAIN MENU</button>`;
   const won = pw > ew, draw = pw === ew;
   document.getElementById('ov-title').textContent = won ? 'YOU WIN!' : draw ? 'DRAW!' : 'RIVAL WINS.';
   document.getElementById('ov-title').style.color = won ? 'var(--gold)' : draw ? 'var(--dim)' : 'var(--enemy)';
@@ -162,8 +183,8 @@ function showOverlay(pw, ew) {
 function render() {
   const ps = totalScore('p'), es = totalScore('e');
 
-  document.getElementById('player-score').textContent = ps;
-  document.getElementById('enemy-score').textContent  = es;
+  juiceCount(document.getElementById('player-score'), ps);
+  juiceCount(document.getElementById('enemy-score'),  es);
 
   const sb_p = document.getElementById('score-player');
   const sb_e = document.getElementById('score-enemy');
@@ -197,7 +218,8 @@ function render() {
     state.phase === 'play'      ? (state.playerTurn
                                     ? (state.ePassed ? 'YOUR TURN — RIVAL PASSED' : 'YOUR TURN')
                                     : 'RIVAL TURN') :
-    state.phase === 'between'   ? 'BETWEEN ROUNDS' : 'GAME OVER';
+    state.phase === 'between'   ? 'BETWEEN ROUNDS' :
+    state.phase === 'tally'     ? 'JUDGING...'     : 'GAME OVER';
 
   // Roast tracker
   const roast     = state.roastTokens || 0;
@@ -298,9 +320,13 @@ function render() {
       : '';
   }
 
+  juiceMeters(roastEl, mashEl);
+  juiceBeforeField();
   renderField();
   renderHand();
   renderActions();
   renderRoundWins();
   renderLog();
+  juiceAfterField();
+  juiceMoments();
 }

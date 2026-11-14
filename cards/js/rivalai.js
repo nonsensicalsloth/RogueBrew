@@ -130,25 +130,50 @@ function planRivalTurn() {
 }
 
 // Called when you end your turn: play exactly what was announced
-function executeRivalPlan() {
-  const plan = state.rivalPlan || [];
-  let remaining = getBudget(state.turn, 'e');
-  let played = 0;
-  for (const step of plan) {
+function rivalPlanCtx() {
+  return { plan: state.rivalPlan || [], k: 0, remaining: getBudget(state.turn, 'e'), played: 0 };
+}
+
+// Plays the next playable step of the plan. Returns true if a card was played.
+function rivalPlanStep(ctx) {
+  while (ctx.k < ctx.plan.length) {
+    const step = ctx.plan[ctx.k++];
     // Cards created during the turn are matched by name
     const i = step.uid !== undefined
       ? state.eHand.findIndex(c => c._uid === step.uid)
       : state.eHand.findIndex(c => c.id === step.id);
     if (i < 0) continue;
     const c = state.eHand[i];
-    if (c.cost > remaining) continue;
+    if (c.cost > ctx.remaining) continue;
     state.eHand.splice(i, 1);
-    remaining -= c.cost;
+    ctx.remaining -= c.cost;
     enemyPlayCard(c, step.lane);
-    played++;
+    ctx.played++;
+    return true;
   }
+  return false;
+}
+
+function executeRivalPlan() {
+  const ctx = rivalPlanCtx();
+  while (ctx.k < ctx.plan.length) rivalPlanStep(ctx);
   state.rivalPlan = null;
-  return played;
+  return ctx.played;
+}
+
+// Same plan, one card at a time with a pause between, so the player can watch it land
+function executeRivalPlanStepwise(done) {
+  const ctx = rivalPlanCtx();
+  const battle = state;
+  const tick = () => {
+    if (state !== battle || state.phase !== 'play') return;   // battle ended or left
+    const did = rivalPlanStep(ctx);
+    if (did) render();
+    if (did && ctx.k < ctx.plan.length) { setTimeout(tick, RIVAL_PLAY_DELAY); return; }
+    state.rivalPlan = null;
+    done(ctx.played);
+  };
+  tick();
 }
 
 // ── Intent display ──

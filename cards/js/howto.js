@@ -63,7 +63,7 @@ const HOWTO_CONTENT = {
     ]),
 
   deck: () =>
-    hp(`Before a run, build a deck in <b>Build Deck</b>.`) +
+    hp(`Before a run, build a deck in <b>Build Deck</b>. Hit <b>🎯 Test Brew</b> to try it for one round against a dummy that never plays.`) +
     hli([
       `A starting deck is exactly <b>${DECK_SIZE} cards</b>, with up to <b>${MAX_COPIES} copies</b> of any card.`,
       `You can save <b>${MAX_DECKS} decks</b> and give each a name, like "Hazy IPA" or "Imperial Stout".`,

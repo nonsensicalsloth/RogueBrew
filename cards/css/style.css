@@ -682,3 +682,151 @@ body::after {
 .battle-picker-cards { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; padding-top:8px; }
 .battle-picker-cards .card { cursor:pointer; }
 .card.hand-target { border-color:var(--gold) !important; box-shadow:0 0 10px var(--gold); cursor:pointer; }
+
+/* ══════════════ JUICE (js/juice.js) ══════════════ */
+#juice-layer { position: fixed; inset: 0; pointer-events: none; z-index: 400; overflow: hidden; }
+
+/* Cards landing on the board */
+.field-card { position: relative; }
+.field-card.fc-enter { animation: fcEnter 420ms cubic-bezier(.2,1.5,.4,1) both; }
+@keyframes fcEnter {
+  0%   { transform: translateY(-16px) scale(1.45); opacity: 0; filter: brightness(2); }
+  55%  { opacity: 1; }
+  100% { transform: none; filter: none; }
+}
+.field-card.e.fc-enter { animation-name: fcEnterRival; }
+@keyframes fcEnterRival {
+  0%   { transform: translateY(16px) scale(1.45); opacity: 0; filter: brightness(2); }
+  55%  { opacity: 1; }
+  100% { transform: none; filter: none; }
+}
+.field-card.fc-up   { animation: fcUp 650ms ease-out both; }
+.field-card.fc-down { animation: fcDown 650ms ease-out both; }
+@keyframes fcUp {
+  0%   { transform: scale(1); }
+  25%  { transform: scale(1.2); box-shadow: 0 0 12px #69f0ae; border-color: #69f0ae; }
+  100% { transform: scale(1); box-shadow: none; }
+}
+@keyframes fcDown {
+  0%, 100% { transform: none; }
+  15% { transform: translateX(-3px); box-shadow: 0 0 12px #ff5252; border-color: #ff5252; }
+  30% { transform: translateX(3px); }
+  45% { transform: translateX(-2px); }
+  60% { transform: translateX(1px); box-shadow: none; }
+}
+
+/* Floating +N / −N */
+.floater {
+  position: fixed; transform: translate(-50%, 0);
+  font-family: 'Press Start 2P', monospace; font-size: 10px; font-weight: bold;
+  text-shadow: 0 0 4px #000, 1px 1px 0 #000;
+  animation: floatUp 1000ms ease-out both; white-space: nowrap;
+}
+.floater.up   { color: #69f0ae; }
+.floater.down { color: #ff5252; }
+@keyframes floatUp {
+  0%   { transform: translate(-50%, 4px) scale(.5); opacity: 0; }
+  15%  { transform: translate(-50%, -6px) scale(1.35); opacity: 1; }
+  70%  { opacity: 1; }
+  100% { transform: translate(-50%, -38px) scale(1); opacity: 0; }
+}
+
+/* Card flying from the hand */
+.fly-ghost { position: fixed; transform-origin: center; }
+.fly-ghost > .card { width: 100% !important; height: 100%; margin: 0; box-shadow: 0 0 18px var(--gold); }
+
+/* Numbers that tick */
+.num-up   { animation: numPopUp 450ms ease-out; }
+.num-down { animation: numPopDown 450ms ease-out; }
+@keyframes numPopUp   { 30% { transform: scale(1.25); color: #69f0ae; } }
+@keyframes numPopDown { 30% { transform: scale(1.15); color: #ff5252; } }
+.score-val, .lane-score { display: inline-block; }
+.score-box.lead-pop { animation: leadPop 600ms ease-out; }
+@keyframes leadPop { 30% { transform: scale(1.12); box-shadow: 0 0 20px var(--gold); } }
+
+/* Banners */
+.juice-banner {
+  position: fixed; left: 50%; top: 40%;
+  font-family: 'Press Start 2P', monospace; font-size: 16px; text-align: center;
+  padding: 14px 24px; background: rgba(10,10,20,0.92); border: 3px solid;
+  white-space: nowrap; animation: bannerIn 1300ms ease both;
+}
+.juice-banner small { display: block; font-size: 7px; margin-top: 8px; color: var(--text); opacity: .85; }
+.banner-gold   { color: var(--gold);   border-color: var(--gold);   box-shadow: 0 0 30px rgba(255,215,0,.35); }
+.banner-red    { color: #ff5252;       border-color: #ff5252;       box-shadow: 0 0 30px rgba(255,82,82,.4); }
+.banner-orange { color: var(--orange); border-color: var(--orange); box-shadow: 0 0 30px rgba(255,152,0,.35); }
+.banner-enemy  { color: var(--enemy);  border-color: var(--enemy);  font-size: 9px; }
+@keyframes bannerIn {
+  0%   { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+  12%  { transform: translate(-50%, -50%) scale(0.95); opacity: 1; }
+  18%  { transform: translate(-50%, -50%) scale(1.03); }
+  24%  { transform: translate(-50%, -50%) scale(1); }
+  80%  { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -62%) scale(0.96); opacity: 0; }
+}
+
+.juice-banner.banner-out { animation: bannerOut 220ms ease-in both !important; }
+@keyframes bannerOut { to { transform: translate(-50%, -80%) scale(.9); opacity: 0; } }
+
+/* Shake */
+.shake { animation: shake 420ms ease-in-out; }
+@keyframes shake {
+  0%, 100% { transform: none; }
+  15% { transform: translate(-5px, 1px) rotate(-.4deg); }
+  30% { transform: translate(5px, -1px) rotate(.4deg); }
+  45% { transform: translate(-4px, 0); }
+  60% { transform: translate(3px, 1px); }
+  80% { transform: translate(-1px, 0); }
+}
+
+/* Roast and mash meters */
+#roast-tracker { transition: box-shadow .3s, border-color .3s; }
+#roast-tracker.roast-warm   { border-color: var(--gold); box-shadow: 0 0 6px rgba(255,215,0,.35); }
+#roast-tracker.roast-danger { border-color: var(--orange); animation: roastDanger .7s ease-in-out infinite; }
+#roast-tracker.roast-burnt  { border-color: #ff5252; background: rgba(255,82,82,.15); animation: roastBurnt 1.2s ease-in-out infinite; }
+@keyframes roastDanger {
+  0%, 100% { box-shadow: 0 0 4px var(--orange); transform: none; }
+  25% { transform: translateX(-1px); }
+  50% { box-shadow: 0 0 14px var(--orange); transform: translateX(1px); }
+}
+@keyframes roastBurnt { 0%, 100% { box-shadow: 0 0 6px #ff5252; } 50% { box-shadow: 0 0 18px #ff5252; } }
+#mash-pill.mash-danger { animation: roastDanger .8s ease-in-out infinite; border-color: var(--orange); }
+
+/* End-of-round tally */
+.tally-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.78); z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+  animation: tallyFade 250ms ease both;
+}
+.tally-overlay.hidden { display: none; }
+@keyframes tallyFade { from { opacity: 0; } }
+.tally-box {
+  background: var(--bg2); border: 3px solid var(--gold); padding: 20px 24px;
+  min-width: 320px; max-width: 92vw; text-align: center; cursor: pointer;
+  box-shadow: 0 0 40px rgba(255,215,0,0.25);
+  animation: tallyIn 350ms cubic-bezier(.2,1.4,.4,1) both;
+}
+@keyframes tallyIn { from { transform: scale(.85) translateY(10px); opacity: 0; } }
+.tally-title { font-size: 10px; color: var(--gold); margin-bottom: 6px; }
+.tally-cat   { font-size: 7px; color: var(--dim); margin-bottom: 10px; }
+.tally-grid  { display: grid; grid-template-columns: 1fr 70px 70px; gap: 8px 10px; align-items: center; margin: 10px 0 14px; }
+.tally-head  { font-size: 7px; color: var(--dim); }
+.tally-head.you   { color: var(--player); }
+.tally-head.rival { color: var(--enemy); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tally-label { font-size: 7px; text-align: left; color: var(--text); }
+.tally-label small { display: block; font-size: 5px; color: #ff5252; margin-top: 2px; }
+.tally-num   { font-size: 11px; }
+.tally-num.you   { color: var(--player); }
+.tally-num.rival { color: var(--enemy); }
+.tally-label, .tally-num { opacity: 0; transform: translateX(-8px); transition: opacity .25s, transform .25s; }
+.tally-label.shown, .tally-num.shown { opacity: 1; transform: none; }
+.tally-total { border-top: 1px solid var(--border); padding-top: 8px; font-size: 13px; }
+.tally-label.tally-total { font-size: 8px; color: var(--gold); }
+.tally-num.tally-winner { color: var(--gold); text-shadow: 0 0 10px var(--gold); animation: numPopUp 500ms ease-out; }
+.tally-stamp { font-size: 11px; margin: 6px 0 12px; opacity: 0; transform: scale(2.5) rotate(-6deg); }
+.tally-stamp.shown { opacity: 1; transform: rotate(-3deg); transition: transform 300ms cubic-bezier(.2,1.6,.4,1), opacity 200ms; }
+.tally-stamp.stamp-win  { color: var(--gold); text-shadow: 0 0 12px rgba(255,215,0,.6); }
+.tally-stamp.stamp-lose { color: var(--enemy); }
+.tally-stamp.stamp-draw { color: var(--dim); }
+.tally-continue { opacity: 0; pointer-events: none; transition: opacity .3s; }
+.tally-continue.shown { opacity: 1; pointer-events: auto; }

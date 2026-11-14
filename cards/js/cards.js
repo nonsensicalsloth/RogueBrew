@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'card cleanup (Nov 14)';
+const CARDS_VERSION = 'juice (Nov 14)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:

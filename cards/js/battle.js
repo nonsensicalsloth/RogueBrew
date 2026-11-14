@@ -54,6 +54,7 @@ function playToLane(lane) {
   }
 
   // Remove from hand, place on field
+  juiceFlyStart(selectedCard, c);
   state.pHand.splice(selectedCard, 1);
   state.budgetUsed += effectiveCost;
 
@@ -181,21 +182,26 @@ function enemyTurn() {
   if (state.phase !== 'play') return;
   // Capture the log lines from this rival turn so the player sees a summary
   const logMark = state.logs[0];
-  setTimeout(() => {
-    const i = state.logs.indexOf(logMark);
-    state.rivalSummary = state.logs.slice(0, i < 0 ? state.logs.length : i)
-      .filter(l => l.type === 'enemy' || l.type === 'warn').map(l => l).reverse();
-    render();
-  }, 350);
-  if (state.ePassed) { setTimeout(() => advanceTurn(), 300); return; }
+  const finish = () => {
+    setTimeout(() => advanceTurn(), 300);
+    setTimeout(() => {
+      const i = state.logs.indexOf(logMark);
+      state.rivalSummary = state.logs.slice(0, i < 0 ? state.logs.length : i)
+        .filter(l => l.type === 'enemy' || l.type === 'warn').map(l => l).reverse();
+      render();
+    }, 350);
+  };
+  if (state.ePassed) { finish(); return; }
 
   // Play the plan the rival committed to (shown as its intent during your turn)
   if (!state.rivalPlan) planRivalTurn();
-  const played = executeRivalPlan();
-  if (!played) addLog('Rival holds back this turn.', 'enemy');
-
-  // Stop if completely out of cards
-  if (state.eHand.length === 0 && state.eDeck.length === 0 && state.eDiscard.length === 0) enemyPass('out of ingredients');
-
-  setTimeout(() => advanceTurn(), 300);
+  const after = played => {
+    if (!played) addLog('Rival holds back this turn.', 'enemy');
+    // Stop if completely out of cards
+    if (state.eHand.length === 0 && state.eDeck.length === 0 && state.eDiscard.length === 0) enemyPass('out of ingredients');
+    finish();
+  };
+  // With animations on, the rival plays its cards one at a time so you can follow along
+  if (juiceOn()) executeRivalPlanStepwise(after);
+  else after(executeRivalPlan());
 }

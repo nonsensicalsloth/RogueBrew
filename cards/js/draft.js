@@ -119,8 +119,18 @@ function showTitleScreen() {
 
 // ── Deck manager screen ──
 
-function showDeckManager() {
+// mode 'play' (Start Game): pick a deck for a run.  mode 'build' (Build Deck): edit and test decks.
+let deckManagerMode = 'play';
+
+function showDeckManager(mode) {
+  if (mode) deckManagerMode = mode;
   setScreen('deck-manager-screen');
+  const title = document.getElementById('deck-manager-title');
+  const sub   = document.getElementById('deck-manager-sub');
+  if (title) title.textContent = deckManagerMode === 'build' ? 'BUILD YOUR DECKS' : 'CHOOSE A DECK';
+  if (sub)   sub.textContent   = deckManagerMode === 'build'
+    ? `Build up to ${MAX_DECKS} decks of ${DECK_SIZE} cards. Test them against the dummy before a run.`
+    : `Pick the deck you want to start a run with.`;
   renderDeckManager();
 }
 
@@ -141,9 +151,9 @@ function renderDeckManager() {
         ${deckLockedCards(deck.cards).length ? `<div class="deck-slot-locked">🔒 Uses ${deckLockedCards(deck.cards).length} card(s) you don't own yet — edit to replace them.</div>` : ''}
         <div class="deck-slot-actions">
           <button class="btn btn-primary" onclick="openBuilder(${i})">EDIT</button>
-          ${deck.cards.filter(id => getCardDef(id)).length === DECK_SIZE && !deckLockedCards(deck.cards).length
-            ? `<button class="btn btn-gold" onclick="startRunWithDeck(${i})">▶ USE</button>`
-            : `<button class="btn btn-gold" style="opacity:0.4;cursor:not-allowed;" title="Needs ${DECK_SIZE} cards">▶ USE</button>`}
+          ${deckManagerMode === 'build' ? '' : deck.cards.filter(id => getCardDef(id)).length === DECK_SIZE && !deckLockedCards(deck.cards).length
+            ? `<button class="btn btn-gold" onclick="startRunWithDeck(${i})">▶ START RUN</button>`
+            : `<button class="btn btn-gold" style="opacity:0.4;cursor:not-allowed;" title="Needs ${DECK_SIZE} cards">▶ START RUN</button>`}
           <button class="btn btn-danger"  onclick="deleteDeck(${i})">✕</button>
         </div>`;
     } else {
@@ -462,4 +472,36 @@ function renderDeckReview() {
           </div>`).join('')}
       </div>
     </div>`).join('');
+}
+
+
+// ── Test brew: try the deck you're building against a dummy that never plays ──
+
+const TEST_MIN_CARDS = 5;
+
+function startTestBrew() {
+  const cards = builderState.cards.filter(id => getCardDef(id)).map(id => ({ ...getCardDef(id) }));
+  if (cards.length < TEST_MIN_CARDS) {
+    showBuilderMsg(`Add at least ${TEST_MIN_CARDS} cards to test.`, 'warn');
+    return;
+  }
+  const nameEl = document.getElementById('deck-name-input');
+  if (nameEl) builderState.name = nameEl.value || builderState.name;
+  setScreen('game-screen');
+  initGame({ playerDeck: cards, testDummy: true });
+}
+
+function endTestBrew() {
+  document.getElementById('overlay').classList.add('hidden');
+  const t = document.getElementById('tally-overlay');
+  if (t) t.classList.add('hidden');
+  if (state) state.phase = 'end';
+  setScreen('builder-screen');
+  renderBuilder();
+}
+
+// The PLAY AGAIN button: test brews restart the test, practice games start over
+function replayBattle() {
+  if (state && state.testDeck) startTestBrew();
+  else initGame();
 }

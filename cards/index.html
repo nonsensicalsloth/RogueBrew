@@ -26,10 +26,9 @@
     <button class="btn btn-gold" id="continue-run-btn" style="display:none" onclick="continueRun()">▶ CONTINUE RUN</button>
     <div id="continue-run-info" style="font-size:7px;color:var(--dim);text-align:center;"></div>
     <div id="title-collection" style="font-size:7px;color:var(--gold);text-align:center;"></div>
-    <button class="btn btn-gold"    onclick="showDeckManager()">▶ START GAME</button>
-    <button class="btn btn-primary" onclick="showDeckManager()">🃏 BUILD DECK</button>
+    <button class="btn btn-gold"    onclick="showDeckManager('play')">▶ START GAME</button>
+    <button class="btn btn-primary" onclick="showDeckManager('build')">🃏 BUILD DECK</button>
     <button class="btn btn-primary" onclick="showHowTo(0)">📖 HOW TO PLAY</button>
-    <button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;">🔒 RELICS</button>
   </div>
 </div>
 
@@ -45,8 +44,8 @@
 <!-- ===== DECK MANAGER ===== -->
 <div id="deck-manager-screen" class="screen">
   <div style="text-align:center;margin-bottom:16px;">
-    <div class="wortcraft-title" style="font-size:14px;margin-bottom:6px;">YOUR DECKS</div>
-    <div style="font-size:8px;color:var(--dim);">Build up to 3 decks. Pick one to start a run.</div>
+    <div class="wortcraft-title" style="font-size:14px;margin-bottom:6px;" id="deck-manager-title">YOUR DECKS</div>
+    <div style="font-size:8px;color:var(--dim);" id="deck-manager-sub">Build up to 3 decks. Pick one to start a run.</div>
   </div>
   <div id="deck-slots" style="display:flex;flex-direction:column;gap:12px;max-width:480px;margin:0 auto;width:100%;"></div>
   <div id="collection-footer" style="text-align:center;margin-top:14px;"></div>
@@ -67,6 +66,7 @@
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
       <button class="btn btn-gold"    onclick="saveBuilderDeck()">SAVE</button>
+      <button class="btn btn-primary" onclick="startTestBrew()" title="Play one round against a dummy that never plays a card">🎯 TEST BREW</button>
       <button class="btn btn-primary" onclick="showDeckManager()">← BACK</button>
     </div>
   </div>
@@ -321,12 +321,18 @@
     <div class="overlay-title" id="ov-title">YOU WIN!</div>
     <div class="overlay-sub"   id="ov-sub"></div>
     <div class="overlay-wins"  id="ov-wins"></div>
-    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px;">
-      <button class="btn btn-gold"    onclick="initGame()">PLAY AGAIN</button>
+    <div id="ov-buttons" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px;">
+      <button class="btn btn-gold"    onclick="replayBattle()">PLAY AGAIN</button>
       <button class="btn btn-primary" onclick="showTitleScreen()">MAIN MENU</button>
     </div>
   </div>
 </div>
+
+<!-- ===== ROUND TALLY (juice.js) ===== -->
+<div class="tally-overlay hidden" id="tally-overlay">
+  <div class="tally-box" id="tally-box"></div>
+</div>
+<div id="juice-layer"></div>
 
 <!-- Scripts — order matters -->
 <script src="js/cards.js"></script>
@@ -347,6 +353,7 @@
 <script src="js/effects.js"></script>
 <script src="js/game.js"></script>
 <script src="js/battle.js"></script>
+<script src="js/juice.js"></script>
 <script src="js/ui.js"></script>
 <script>
   showTitleScreen();

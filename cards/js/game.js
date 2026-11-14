@@ -25,10 +25,12 @@ function initGame(opts = {}) {
   const node   = opts.node || null;
   const isBoss = node ? node.type === 'boss' : false;
 
-  const pDeck = shuffle(draftState.deck.length > 0
+  const pDeck = shuffle(opts.playerDeck ? opts.playerDeck.map(freshCopy)
+    : draftState.deck.length > 0
     ? draftState.deck.map((c, i) => Object.assign(freshCopy(c), { _deckIdx: i }))
     : buildDefaultDeck());
-  const eDeck = shuffle(opts.rivalDeck ? opts.rivalDeck.map(freshCopy) : buildEnemyDeck());
+  const eDeck = opts.testDummy ? []
+    : shuffle(opts.rivalDeck ? opts.rivalDeck.map(freshCopy) : buildEnemyDeck());
 
   state = {
     phase:      'mulligan',
@@ -52,12 +54,13 @@ function initGame(opts = {}) {
     logs:             [],
     victoryWins:      [],   // deck indexes of Victory Malts on board for a round you won
     awardWon:         false,
-    maxRounds:        node ? (isBoss ? 3 : 1) : 3,
+    maxRounds:        node ? (isBoss ? 3 : 1) : opts.testDummy ? 1 : 3,
+    testDeck:         opts.testDummy ? opts.playerDeck : null,
     currentNode:      node,
     isBoss,
     rivalBonus:       opts.rivalBonus || 0,
     rivalBonusName:   opts.rivalBonusName || 'Crowd Favorite',
-    rivalName:        opts.rival ? opts.rival.name : 'Rival Brewery',
+    rivalName:        opts.testDummy ? 'Test Dummy' : opts.rival ? opts.rival.name : 'Rival Brewery',
     rivalTrait:       opts.rival ? opts.rival.trait || null : null,
     hopBackUsed:      false,
     ePassed:          false,
@@ -194,6 +197,15 @@ function startRound() {
 }
 
 function endRound() {
+  // Show the judges' tally first (board still on the table), then carry on
+  if (!state._tallied && juiceOn() && document.getElementById('tally-overlay')) {
+    state._tallied = true;
+    state.phase = 'tally';
+    render();
+    showRoundTally(() => endRound());
+    return;
+  }
+  state._tallied = false;
   const ps = totalScore('p'), es = totalScore('e');
   state.lastRoundScore = { p: ps, e: es };
   ['p', 'e'].forEach(w => {
