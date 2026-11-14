@@ -32,7 +32,7 @@ function formulaPreview(c, who = 'p') {
   // Roasty cards: show the roast bonus they'd have once played (counting roast they add)
   const roastyLive = () => {
     if (!(c.tags && c.tags.includes('roasty'))) return null;
-    const r = getRoast(who) + (ROAST_ADDS[c.id] || 0) + (c.id === 'midnightw' ? 1 : 0);
+    const r = getRoast(who) + (ROAST_ADDS[c.id] || 0);
     return { points: c.points + ROAST_POWER * r, note: `now: ${r} roast` };
   };
   switch (c.id) {
@@ -224,6 +224,10 @@ function drawForPlayer(n) {
   return drawn;
 }
 
+// 2-Row is the brewhouse workhorse: it counts as two base malts
+function baseMaltCount(cards) {
+  return cards.reduce((n, c) => n + (BASE_MALT_IDS.includes(c.id) ? (c.id === '2row' ? 2 : 1) : 0), 0);
+}
 const BASE_MALT_IDS = ['2row','pilsner','6row','marisotter','goldenprom','vienna','munich','wheatwhite',
   'expilsner','floorpilsner','darkmunich','expwheat','paleale','heritage'];
 const NZ_HOPS = ['nelson','motueka','riwaka','nectaron'];
@@ -286,14 +290,10 @@ function applyDryHopBonus(card, who) {
       card.points += 4;
       addLog('Hallertau Blanc: dry hopped — +4 pts!', 'player');
       break;
-    case 'simcoe':
-      drawFor(who, 1);
-      addLog('Simcoe: dry hopped — drew 1 card.', 'player');
-      break;
     case 'talus': {
-      const n = buffLaneCards('hot', who, 2, c => c.tags && c.tags.includes('hazy'))
-              + buffLaneCards('cold', who, 2, c => c.tags && c.tags.includes('hazy'));
-      addLog(`Talus: dry hopped — +2 to ${n} hazy card(s).`, 'player');
+      const ok = c => c !== card && c.tags && (c.tags.includes('citrus') || c.tags.includes('piney'));
+      const n = buffLaneCards('hot', who, 2, ok) + buffLaneCards('cold', who, 2, ok);
+      addLog(`Talus: dry hopped — +2 to ${n} citrus/piney card(s).`, 'player');
       break;
     }
     case 'riwaka':
@@ -306,6 +306,8 @@ function applyDryHopBonus(card, who) {
 // ══ Choosing a card on your board ══
 // Some cards ask you to pick one of your board cards after they resolve
 // (Filtration, Recipe Tweak, Crystal 120). The rival picks automatically.
+const DRY_HOP_BONUS = 5;
+
 const CARD_TARGETS = {
   filtration: {
     prompt: 'FILTRATION: CHOOSE A YEAST TO RETURN TO YOUR HAND',
@@ -325,6 +327,18 @@ const CARD_TARGETS = {
       returnToHand(t.c, t.lane, who);
       if (who === 'p') state.nextCardDiscount = (state.nextCardDiscount || 0) + 1;
       addLog(`Recipe Tweak: ${t.c.name} back to hand. Next card costs 1 less.`, who === 'p' ? 'player' : 'enemy');
+    },
+  },
+  dryhop: {
+    prompt: 'DRY HOP ADDITION: CHOOSE A HOP ON YOUR HOT SIDE TO MOVE COLD',
+    ok:     (c, lane) => lane === 'hot' && c.cat === 'hop' && c.lane !== 'hot',
+    aiPick: list => list.reduce((a, b) => b.c.points > a.c.points ? b : a),
+    pick(t, who) {
+      const hot = state.field.hot[who];
+      hot.splice(hot.indexOf(t.c), 1);
+      state.field.cold[who].push(t.c);
+      t.c.points += DRY_HOP_BONUS;
+      addLog(`Dry Hop Addition: ${t.c.name} moved to the cold side, +${DRY_HOP_BONUS}!`, who === 'p' ? 'player' : 'enemy');
     },
   },
   crystal120: {
@@ -408,12 +422,10 @@ function applyCardEffect(card, lane, who) {
     // ── Tier 1: Simple ──
 
     case 'pilsner':
-      // Only the first Pilsner each round draws (several used to be a draw engine)
-      state.pilsnerDrew = state.pilsnerDrew || {};
-      if (!state.pilsnerDrew[who]) {
-        state.pilsnerDrew[who] = true;
+      // Opening the brew day with it draws a card (cardsThisTurn counts after effects)
+      if (!(state.cardsThisTurn && state.cardsThisTurn[who])) {
         drawFor(who, 1);
-        addLog('Pilsner Malt: first Pilsner this round — drew 1 card.', 'player');
+        addLog('Pilsner Malt: first card this turn — drew 1.', who === 'p' ? 'player' : 'enemy');
       }
       break;
 
@@ -424,10 +436,12 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'mango':
-    case 'flakedwheat':
-      addToHand(who, 'haze');
-      addLog(`${card.name}: Haze token added to hand.`, 'player');
+    case 'flakedwheat': {
+      const side = card.id === 'flakedwheat' ? 'hot' : lane;
+      const n = buffLaneCards(side, who, 2, c => c.cat === 'hop');
+      addLog(`${card.name}: +2 to ${n} hop(s) on ${LANE_NAMES[side]}.`, who === 'p' ? 'player' : 'enemy');
       break;
+    }
 
     case 'pilotbatch':
       drawFor(who, 2);
@@ -445,7 +459,7 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'sip':
-      if (!removeFirstToken(who, null, 'hot')) addLog('SIP Rinse: nothing to clean on hot side.', 'sys');
+      if (!removeFirstToken(who, null, 'hot')) addLog('Sanitize: nothing to clean on hot side.', 'sys');
       break;
 
     case 'fining': {
@@ -460,9 +474,8 @@ function applyCardEffect(card, lane, who) {
       removeAllTokens(who, 'contamination');
       removeAllTokens(who, 'contam_soft');
       const yeasts = getLaneCards('cold', who).filter(c => c.cat === 'yeast');
-      state.noGrowth = state.noGrowth || new Set();
-      yeasts.forEach(y => { y.points += 5; state.noGrowth.add(y); });
-      addLog(`Heat Kill: Contamination cleared. ${yeasts.length} yeast(s) +5, but they stop growing this round.`, 'player');
+      yeasts.forEach(y => { y.points += 5; y._heatKilled = true; });
+      addLog(`Heat Kill: Contamination cleared. ${yeasts.length} yeast(s) +5, but they never grow again.`, 'player');
       break;
     }
 
@@ -490,8 +503,8 @@ function applyCardEffect(card, lane, who) {
     // ── Tier 2: Board reading ──
 
     case 'crystal10':
-      buffLaneCards('hot', who, 3, c => c !== card && c.cost <= 1 && c.cat !== 'token');
-      addLog('Crystal 10: +3 to all cost-1 hot side cards.', 'player');
+      LANES.forEach(l => buffLaneCards(l, who, 3, c => c !== card && c.cost <= 1 && c.cat !== 'token'));
+      addLog('Crystal 10: +3 to all other cost-1 cards on your board.', 'player');
       break;
 
     case 'crystal20':
@@ -505,7 +518,7 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'crystal40': {
-      const baseMalts = hotCards.filter(c => BASE_MALT_IDS.includes(c.id)).length;
+      const baseMalts = baseMaltCount(hotCards);
       card.points += baseMalts * 2;
       addLog(`Crystal 40: +${baseMalts * 2} pts (${baseMalts} base malts).`, 'player');
       break;
@@ -524,7 +537,7 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'crystal60': {
-      const baseMalts = hotCards.filter(c => BASE_MALT_IDS.includes(c.id)).length;
+      const baseMalts = baseMaltCount(hotCards);
       card.points += baseMalts * 3;
       addLog(`Crystal 60: +${baseMalts * 3} pts (${baseMalts} base malts).`, 'player');
       break;
@@ -568,7 +581,8 @@ function applyCardEffect(card, lane, who) {
     case 'expilsner':
       // Buff hops played AFTER this card
       state.pendingHopBuff = (state.pendingHopBuff || 0) + 2;
-      addLog('Extra Pale Pilsner: your next hop this round gets +2 pts.', 'player');
+      if (isPlayer) state.nextHopDiscount = (state.nextHopDiscount || 0) + 1;
+      addLog('Extra Pale Pilsner: your next hop costs 1 less and gets +2 pts.', 'player');
       break;
 
     case 'expwheat':
@@ -666,12 +680,12 @@ function applyCardEffect(card, lane, who) {
       // Adds +8 to OPPONENT's cold side, caster draws 2
       if (isPlayer) {
         state.field.cold.e.push({ id:'drunk_bonus', name:'Drunk Bonus', cat:'token', lane:'cold', points:8, cost:0, tags:[] });
-        drawForPlayer(2);
-        addLog('Drunk Cellarman: +8 to rival cold side, you draw 2!', 'player');
+        drawForPlayer(3);
+        addLog('Drunk Cellarman: +8 to rival cold side, you draw 3!', 'player');
       } else {
         state.field.cold.p.push({ id:'drunk_bonus', name:'Drunk Bonus', cat:'token', lane:'cold', points:8, cost:0, tags:[] });
-        drawCards(2, state.eDeck, state.eHand);
-        addLog('Rival plays Drunk Cellarman: +8 to YOUR cold side, rival draws 2!', 'enemy');
+        drawCards(3, state.eDeck, state.eHand);
+        addLog('Rival plays Drunk Cellarman: +8 to YOUR cold side, rival draws 3!', 'enemy');
       }
       break;
 
@@ -679,12 +693,12 @@ function applyCardEffect(card, lane, who) {
       // Adds +8 to OPPONENT's hot side, caster draws 2
       if (isPlayer) {
         state.field.hot.e.push({ id:'drunk_bonus', name:'Drunk Bonus', cat:'token', lane:'hot', points:8, cost:0, tags:[] });
-        drawForPlayer(2);
-        addLog('Drunk Brewer: +8 to rival hot side, you draw 2!', 'player');
+        drawForPlayer(3);
+        addLog('Drunk Brewer: +8 to rival hot side, you draw 3!', 'player');
       } else {
         state.field.hot.p.push({ id:'drunk_bonus', name:'Drunk Bonus', cat:'token', lane:'hot', points:8, cost:0, tags:[] });
-        drawCards(2, state.eDeck, state.eHand);
-        addLog('Rival plays Drunk Brewer: +8 to YOUR hot side, rival draws 2!', 'enemy');
+        drawCards(3, state.eDeck, state.eHand);
+        addLog('Rival plays Drunk Brewer: +8 to YOUR hot side, rival draws 3!', 'enemy');
       }
       break;
 
@@ -789,10 +803,11 @@ function applyCardEffect(card, lane, who) {
       break;
     }
 
-    case 'midnightw':
-      addSafeRoast(who, 1);
-      addLog('Midnight Wheat: +1 roast (safe, no penalty).', 'player');
+    case 'midnightw': {
+      const n = buffLaneCards('hot', who, 3, c => c !== card && c.tags && c.tags.includes('roasty') && c.cat !== 'token');
+      addLog(`Midnight Wheat: dark color without the roast — +3 to ${n} roasty card(s).`, who === 'p' ? 'player' : 'enemy');
       break;
+    }
 
     case 'debittered':
       if (removeRoast(who, 1)) addLog('De-bittered Black: removed 1 roast. Total: ' + getRoast(who), 'player');
@@ -1041,21 +1056,10 @@ function applyCardEffect(card, lane, who) {
       break;
     }
 
-    case 'dryhop': {
-      // Move a hop from hot side to cold side
-      const hotHops = getLaneCards('hot', who).filter(c => c.cat === 'hop');
-      if (hotHops.length > 0) {
-        const hop = hotHops[hotHops.length - 1];
-        const hi  = getLaneCards('hot', who).indexOf(hop);
-        getLaneCards('hot', who).splice(hi, 1);
-        getLaneCards('cold', who).push(hop);
-        addLog(`Dry Hop: moved ${hop.name} to cold side!`, 'player');
-        applyDryHopBonus(hop, who);
-      } else {
-        addLog('Dry Hop: no hops on hot side to move.', 'player');
-      }
+    case 'dryhop':
+      // You choose a hop on your hot side; it moves to the cold side with +DRY_HOP_BONUS
+      startCardTargeting('dryhop', card, who);
       break;
-    }
 
     case 'kettletrans': {
       // Whirlpool: every hop on your hot side gets +3
@@ -1215,7 +1219,6 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'brutenzyme': {
-      if (isMashStuck(who)) { removeAllTokens(who, 'stuckmash'); addLog('Brut Enzyme: broke down the stuck mash!', 'player'); }
       const isDry = c => c !== card && c.tags && c.tags.includes('dry');
       const n = buffLaneCards('hot', who, 3, isDry) + buffLaneCards('cold', who, 3, isDry);
       addLog(`Brut Enzyme: +3 to ${n} dry card(s).`, 'player');
@@ -1301,7 +1304,8 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'simcoe':
-      if (lane === 'cold') applyDryHopBonus(card, who);
+      drawFor(who, 1);
+      addLog('Simcoe: drew 1 card.', who === 'p' ? 'player' : 'enemy');
       break;
 
     // Modern American
@@ -1405,7 +1409,7 @@ function applyCardEffect(card, lane, who) {
     // Clean ale
     case 'chico': {
       const hops  = countCat('hop', who);
-      const bases = hotCards.filter(c => BASE_MALT_IDS.includes(c.id)).length;
+      const bases = baseMaltCount(hotCards);
       card.points += hops + bases;
       addLog(`Cal Ale: +${hops + bases} (hops + base malts).`, 'player');
       break;
@@ -1501,10 +1505,10 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'lacto': {
-      const bitter = countTag('bitter', who);
-      const delta  = 6 - bitter * 4;
+      const hotHops = getLaneCards('hot', who).filter(c => c.cat === 'hop').length;
+      const delta   = 6 - hotHops * 4;
       card.points += delta;
-      addLog(`Lactobacillus: ${bitter} bitter card(s) — ${delta >= 0 ? '+' : ''}${delta} pts.`, bitter > 1 ? 'warn' : 'player');
+      addLog(`Lactobacillus: ${hotHops} hop(s) on hot side — ${delta >= 0 ? '+' : ''}${delta} pts.`, hotHops > 1 ? 'warn' : 'player');
       shuffleIntoRemainingDeck(who, 'contamination');
       break;
     }
@@ -1533,16 +1537,6 @@ function applyCardEffect(card, lane, who) {
 
     // ── Tokens: on-play effects ──
 
-    case 'haze': {
-      // Buff all hops currently on the board
-      const allHops = [...getLaneCards('hot', who), ...getLaneCards('cold', who)]
-        .filter(c => c.cat === 'hop');
-      // Haze only clouds the side it's poured on
-      const sideHops = allHops.filter(h => getLaneCards(lane, who).includes(h));
-      sideHops.forEach(h => { h.points += 2; });
-      addLog(`Haze: +2 pts to ${sideHops.length} hop(s) on ${LANE_NAMES[lane]}.`, 'player');
-      break;
-    }
 
     default:
       break;
@@ -1631,7 +1625,7 @@ function applyTurnEffects(who) {
 
   coldCards.forEach(c => {
     if (c.cat !== 'yeast' || NO_ACCUMULATION.includes(c.id)) return;
-    if (state.noGrowth && state.noGrowth.has(c)) return;      // Heat Kill
+    if (c._heatKilled) return;                                 // Heat Kill
 
     if (c.id === 'brett') {
       c.points += 3 + (isPlayer && hasRelic('glycol') && state.turn % 2 === 0 ? 1 : 0);

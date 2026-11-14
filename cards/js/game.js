@@ -7,7 +7,7 @@ const LANE_NAMES = { hot: 'Hot side', cold: 'Cold side' };
 let state = {};
 
 // Transient flags that should never carry from one battle into the next
-const BATTLE_FLAGS = ['_basePoints','_thiolReleased','_victory','_award','_locked','_noMultiplier','_mixedFerm','_deckIdx'];
+const BATTLE_FLAGS = ['_basePoints','_thiolReleased','_victory','_award','_locked','_noMultiplier','_mixedFerm','_deckIdx','_heatKilled'];
 
 function freshCopy(c) {
   const copy = { ...c, tags: [...(c.tags || [])] };
@@ -166,8 +166,6 @@ function startRound() {
   state.abilityTargeting  = false;
   state.firstHopBonusUsed = false;
   state.wildUsedRound     = false;
-  state.pilsnerDrew       = {};
-  state.noGrowth          = new Set();
   state.cardTargeting     = null;
   state.eRoastTokens      = 0;
   state.eRoastSafe        = 0;
