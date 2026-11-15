@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'simple lagering (Nov 15)';
+const CARDS_VERSION = 'tuning pass (Nov 15)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -10,7 +10,7 @@ const CARDS_VERSION = 'simple lagering (Nov 15)';
 const CARD_POOL = [
   // ── Base Malts ──
   { id:'2row',        name:'2-Row Malt',           cat:'malt', lane:'hot', points:10, cost:1, tags:['neutral'],         desc:'Counts as two base malts.' },
-  { id:'pilsner',     name:'Pilsner Malt',          cat:'malt', lane:'hot', points:6,  cost:1, tags:['crisp'],           desc:'If this is the first card you play this turn, draw 1.' },
+  { id:'pilsner',     name:'Pilsner Malt',          cat:'malt', lane:'hot', points:7,  cost:1, tags:['crisp'],           desc:'If this is the first card you play this turn, draw 1.' },
   { id:'6row',        name:'6-Row Malt',            cat:'malt', lane:'hot', points:6,  cost:1, tags:['neutral'],          desc:'Next card you play this turn costs 1 less.' },
   { id:'marisotter',  name:'Maris Otter',           cat:'malt', lane:'hot', points:12, cost:2, tags:['biscuity'],        desc:'If you have 3+ combined crystal/dark malts on hot side, +8 pts.' },
   { id:'goldenprom',  name:'Golden Promise',        cat:'malt', lane:'hot', points:18, cost:2, tags:['sweet'],           desc:'' },
@@ -20,12 +20,12 @@ const CARD_POOL = [
   { id:'expilsner',   name:'Extra Pale Pilsner',    cat:'malt', lane:'hot', points:12, cost:2, tags:['crisp'],           desc:'Your next hop this round costs 1 less and gets +2.' },
   { id:'floorpilsner',name:'Floor Malted Pilsner',  cat:'malt', lane:'hot', points:19, cost:3, tags:['crisp'],           desc:'If no crystal or dark malts on hot side, +10 bonus pts.' },
   { id:'darkmunich',  name:'Dark Munich',           cat:'malt', lane:'hot', points:19, cost:3, tags:['bready','toasty'], desc:'Each crystal malt already on your hot side gets +4 pts.' },
-  { id:'expwheat',    name:'Extra Pale Wheat',      cat:'malt', lane:'hot', points:14, cost:2, tags:['bready','crisp','sticky'], desc:'Your next hop this round gets +3 pts.' },
+  { id:'expwheat',    name:'Extra Pale Wheat',      cat:'malt', lane:'hot', points:15, cost:2, tags:['bready','crisp','sticky'], desc:'Your next hop this round gets +3 pts.' },
   { id:'paleale',     name:'Pale Ale Malt',         cat:'malt', lane:'hot', points:11, cost:1, tags:['biscuity'],        desc:'' },
   { id:'heritage',    name:'Local Grown Heritage',  cat:'malt', lane:'hot', points:13, cost:3, tags:['nuanced'],         desc:'With another nuanced card on your board, it scores double its printed points.' },
 
   // ── Light Crystal (multiply cheap cards) ──
-  { id:'crystal10',  name:'Crystal 10',    cat:'malt', lane:'hot', points:6,  cost:1, tags:['sweet'],           desc:'All other cost-1 cards on your board get +3.' },
+  { id:'crystal10',  name:'Crystal 10',    cat:'malt', lane:'hot', points:8,  cost:1, tags:['sweet'],           desc:'All other cost-1 cards on your board get +3.' },
   { id:'crystal20',  name:'Crystal 20',    cat:'malt', lane:'hot', points:8,  cost:1, tags:['sweet'],           desc:'All other cost-1 cards on your hot side get +4 pts.' },
   { id:'crystal30',  name:'Crystal 30',    cat:'malt', lane:'hot', points:12, cost:2, tags:['sweet'],                   desc:'All cost-1 cards on your hot side get +5 pts.' },
 
@@ -36,7 +36,7 @@ const CARD_POOL = [
   { id:'crystal75',  name:'Crystal 75',    cat:'malt', lane:'hot', points:16, cost:4, tags:['sweet','toasty'],          desc:'+4 pts for each other card on your hot side.' },
 
   // ── Dark Crystal (explosive but dangerous) ──
-  { id:'crystal80',  name:'Crystal 80',    cat:'malt', lane:'hot', points:18, cost:2, tags:['sweet','roasty'],          desc:'Score = roast tokens x8.' },
+  { id:'crystal80',  name:'Crystal 80',    cat:'malt', lane:'hot', points:18, cost:2, tags:['sweet','roasty'],          desc:'Score = roast tokens x6.' },
   { id:'crystal120', name:'Crystal 120',   cat:'malt', lane:'hot', points:12, cost:2, tags:['sweet','roasty'],          desc:'Choose a crystal malt on your hot side. Crystal 120 absorbs it and gains double its points.' },
 
   // ── Specialty / Mid-range ──
@@ -50,7 +50,7 @@ const CARD_POOL = [
 
   // ── Dark Malts ──
   { id:'choc',        name:'Chocolate Malt',   cat:'malt', lane:'hot', points:21, cost:3, tags:['toasty','roasty'],  desc:'Adds 1 roast token.' },
-  { id:'patent',      name:'Black Patent',     cat:'malt', lane:'hot', points:20, cost:2, tags:['roasty'],           desc:'Adds 2 roast tokens.' },
+  { id:'patent',      name:'Black Patent',     cat:'malt', lane:'hot', points:17, cost:2, tags:['roasty'],           desc:'Adds 2 roast tokens.' },
   { id:'roastedbar',  name:'Roasted Barley',   cat:'malt', lane:'hot', points:21, cost:3, tags:['roasty','dry'],     desc:'Adds 2 roast tokens. If 3+ roast tokens total, +10 bonus pts.' },
   { id:'carafaI',     name:'Carafa I',         cat:'malt', lane:'hot', points:14, cost:2, tags:['roasty','smooth'],  desc:'Adds 1 roast token. Roast penalty threshold increases by 1.' },
   { id:'carafaII',    name:'Carafa II',        cat:'malt', lane:'hot', points:21, cost:3, tags:['roasty','smooth'],  desc:'Adds 1 roast token. Roast penalty threshold increases by 1.' },
@@ -73,7 +73,7 @@ const CARD_POOL = [
   // Fruit adjuncts
   { id:'raspberry',  name:'Raspberries',     cat:'adjunct', lane:'both', points:12, cost:2, tags:['sweet','fruity'],       desc:'+2 pts for each other sweet card on your hot side.' },
   { id:'cherry',     name:'Cherries',        cat:'adjunct', lane:'both', points:12, cost:2, tags:['sweet','fruity'],       desc:'If 2+ dark malts are on your hot side, +8 pts.' },
-  { id:'mango',      name:'Mango',           cat:'adjunct', lane:'both', points:7,  cost:1, tags:['sweet','tropical','hazy'],desc:'Every hop on the same side gets +2.' },
+  { id:'mango',      name:'Mango',           cat:'adjunct', lane:'both', points:9,  cost:1, tags:['sweet','tropical','hazy'],desc:'Every hop on the same side gets +3.' },
   { id:'passionfr',  name:'Passion Fruit',   cat:'adjunct', lane:'both', points:12, cost:2, tags:['tropical','fruity'],       desc:'Every hop on your cold side gets +2.' },
   { id:'blueberry',  name:'Blueberry',       cat:'adjunct', lane:'both', points:12,  cost:2, tags:['sweet','fruity'],       desc:'If played after a crystal malt, score double.' },
   { id:'bloodorange',name:'Blood Orange',    cat:'adjunct', lane:'both', points:12, cost:2, tags:['citrus','fruity'],      desc:'If you have a citrus hop on cold side, +6 pts.' },
@@ -87,7 +87,7 @@ const CARD_POOL = [
   { id:'marshm',     name:'Marshmallow',     cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['sweet','smooth'],       desc:'All other smooth cards on your board get +2 pts.' },
 
   // Grain/texture adjuncts
-  { id:'flakedwheat',name:'Flaked Wheat',    cat:'adjunct', lane:'hot', points:9,  cost:1, tags:['smooth','bready','hazy','sticky'],      desc:'Every hop on your hot side gets +2.' },
+  { id:'flakedwheat',name:'Flaked Wheat',    cat:'adjunct', lane:'hot', points:9,  cost:1, tags:['smooth','bready','hazy','sticky'],      desc:'Every hop on your hot side gets +3.' },
   { id:'flakedrye',  name:'Flaked Rye',      cat:'adjunct', lane:'hot', points:9,  cost:1, tags:['dry','spicy','sticky'],          desc:'Next yeast card costs 1 less.' },
   { id:'flakedcorn', name:'Flaked Corn',     cat:'adjunct', lane:'hot', points:6,  cost:1, tags:['neutral','crisp'],      desc:'If 3+ neutral cards on board, +10 pts.' },
   { id:'ricehulls',  name:'Rice Hulls',      cat:'adjunct', lane:'hot', points:4,  cost:0, tags:['neutral'],              desc:'Next card costs 1 less. Clears a Stuck Mash, and breaks up sticky grain when played between them.' },
@@ -95,13 +95,13 @@ const CARD_POOL = [
   { id:'buckwheat',  name:'Buckwheat',       cat:'adjunct', lane:'hot', points:9,  cost:2, tags:['dry','nuanced'],        desc:'Nuanced: double printed points with another nuanced card. If 2+ nuanced cards are on your board, draw 1.' },
 
   // Belgian adjuncts
-  { id:'candisugarcl', name:'Clear Candi Sugar',  cat:'adjunct', lane:'hot', points:6,  cost:1, tags:['sweet','belgian'],            desc:'+3 pts for each Belgian yeast on cold side.' },
-  { id:'candisugarab', name:'Amber Candi Sugar',  cat:'adjunct', lane:'hot', points:12,  cost:2, tags:['sweet','belgian','toasty'],   desc:'+4 pts for each Belgian yeast on your cold side.' },
-  { id:'candisugardk', name:'Dark Candi Sugar',   cat:'adjunct', lane:'hot', points:12, cost:2, tags:['sweet','belgian','roasty'],   desc:'+5 pts for each Belgian yeast on your cold side.' },
-  { id:'coriander',   name:'Coriander',           cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['spicy','belgian'],            desc:'If a Belgian yeast is on your cold side, +8 pts.' },
+  { id:'candisugarcl', name:'Clear Candi Sugar',  cat:'adjunct', lane:'hot', points:6,  cost:1, tags:['sweet','belgian'],            desc:'+2 pts for each Belgian yeast on cold side.' },
+  { id:'candisugarab', name:'Amber Candi Sugar',  cat:'adjunct', lane:'hot', points:12,  cost:2, tags:['sweet','belgian','toasty'],   desc:'+3 pts for each Belgian yeast on your cold side.' },
+  { id:'candisugardk', name:'Dark Candi Sugar',   cat:'adjunct', lane:'hot', points:12, cost:2, tags:['sweet','belgian','roasty'],   desc:'+4 pts for each Belgian yeast on your cold side.' },
+  { id:'coriander',   name:'Coriander',           cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['spicy','belgian'],            desc:'If a Belgian yeast is on your cold side, +6 pts.' },
   { id:'orangepeel',  name:'Orange Peel',         cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['citrus','belgian','fruity'],  desc:'Every other citrus and belgian card on your board gets +2.' },
   { id:'grainspara',  name:'Grains of Paradise',  cat:'adjunct', lane:'hot', points:12, cost:2, tags:['spicy','belgian','dry'],      desc:'If 3+ belgian tagged cards on board, +12 pts.' },
-  { id:'cardamom',    name:'Cardamom',             cat:'adjunct', lane:'hot', points:10,  cost:2, tags:['spicy','sweet','belgian'],    desc:'+3 pts for each other sweet card and each other spicy card on your board.' },
+  { id:'cardamom',    name:'Cardamom',             cat:'adjunct', lane:'hot', points:10,  cost:2, tags:['spicy','sweet','belgian'],    desc:'+2 pts for each other sweet card and each other spicy card on your board.' },
   { id:'citrazest',  name:'Grapefruit Zest',      cat:'adjunct', lane:'hot', points:8, cost:1, tags:['citrus','bitter'],      desc:'Your next hop costs 0.' },
   { id:'vanillabn',  name:'Vanilla Bean',    cat:'adjunct', lane:'both', points:17, cost:3, tags:['sweet','smooth'],       desc:'All other sweet cards on your board get +3 pts.' },
   { id:'toastedcoc', name:'Toasted Coconut', cat:'adjunct', lane:'both', points:12, cost:2, tags:['sweet','toasty'],       desc:'If another sweet card and a toasty card are on your hot side, +8 pts.' },
@@ -158,24 +158,24 @@ const CARD_POOL = [
   { id:'ekg',        name:'East Kent Goldings', cat:'hop', lane:'both', points:14, cost:2, tags:['earthy','floral','spicy'],             desc:'+8 if a biscuity malt is on your hot side.' },
 
   // Bittering
-  { id:'magnum',     name:'Magnum',             cat:'hop', lane:'hot',  points:16, cost:2, tags:['bitter','clean'],              desc:'Every other hop on your board gets +2.' },
+  { id:'magnum',     name:'Magnum',             cat:'hop', lane:'hot',  points:17, cost:2, tags:['bitter','clean'],              desc:'Every other hop on your board gets +2.' },
 
   // West Coast — the C-hops still double each other
   { id:'cascade',    name:'Cascade',            cat:'hop', lane:'both', points:10, cost:1, tags:['citrus','floral','c-hop'],      desc:'With another c-hop on the same side, all c-hops there score +50% of their printed points.' },
-  { id:'centennial', name:'Centennial',         cat:'hop', lane:'both', points:12, cost:2, tags:['citrus','floral','bitter','c-hop'],      desc:'With another c-hop on the same side, all c-hops there score +50% of their printed points.' },
+  { id:'centennial', name:'Centennial',         cat:'hop', lane:'both', points:14, cost:2, tags:['citrus','floral','bitter','c-hop'],      desc:'With another c-hop on the same side, all c-hops there score +50% of their printed points.' },
   { id:'chinook',    name:'Chinook',            cat:'hop', lane:'both', points:10, cost:2, tags:['bitter','piney','spicy','c-hop'],       desc:'C-hop (+50% with another c-hop on its side). Boil (hot side): +4.' },
-  { id:'columbus',   name:'Columbus',           cat:'hop', lane:'both', points:14, cost:3, tags:['bitter','dank','spicy','c-hop'],        desc:'C-hop (+50% with another c-hop on its side). Adds 1 roast token to the rival.' },
-  { id:'simcoe',     name:'Simcoe',             cat:'hop', lane:'both', points:12, cost:2, tags:['piney','dank','fruity'],        desc:'Draw 1 card.' },
+  { id:'columbus',   name:'Columbus',           cat:'hop', lane:'both', points:18, cost:3, tags:['bitter','dank','spicy','c-hop'],        desc:'C-hop (+50% with another c-hop on its side). Adds 1 roast token to the rival.' },
+  { id:'simcoe',     name:'Simcoe',             cat:'hop', lane:'both', points:15, cost:2, tags:['piney','dank','fruity'],        desc:'Draw 1 card.' },
 
   // Modern American
-  { id:'citra',      name:'Citra',              cat:'hop', lane:'both', points:12, cost:2, tags:['citrus','tropical'],               desc:'Draw a card when played.' },
+  { id:'citra',      name:'Citra',              cat:'hop', lane:'both', points:15, cost:2, tags:['citrus','tropical'],               desc:'Draw a card when played.' },
   { id:'mosaic',     name:'Mosaic',             cat:'hop', lane:'both', points:14, cost:2, tags:['fruity','tropical','piney'],                desc:'+2 for each other hop variety on your board.' },
   { id:'strata',     name:'Strata',             cat:'hop', lane:'both', points:19, cost:3, tags:['dank','fruity','tropical'],         desc:'+3 for each other dank or tropical card on your board.' },
   { id:'idaho7',     name:'Idaho 7',            cat:'hop', lane:'both', points:14, cost:2, tags:['tropical','piney','earthy'],       desc:'+6 if both a tropical and a piney card are on your board.' },
   { id:'talus',      name:'Talus',              cat:'hop', lane:'both', points:14, cost:2, tags:['citrus','piney','earthy'],     desc:'Dry hop (cold side): every other citrus or piney card on your board gets +2.' },
   { id:'sabro',      name:'Sabro',              cat:'hop', lane:'both', points:14, cost:2, tags:['tropical','citrus','smooth'],     desc:'All other smooth cards on your board get +2.' },
   { id:'eldorado',   name:'El Dorado',          cat:'hop', lane:'both', points:14, cost:2, tags:['fruity','sweet'],               desc:'+2 for each sweet adjunct on your hot side.' },
-  { id:'amarillo',   name:'Amarillo',           cat:'hop', lane:'both', points:14, cost:2, tags:['citrus','floral'],              desc:'+2 for each fruity adjunct on your hot side.' },
+  { id:'amarillo',   name:'Amarillo',           cat:'hop', lane:'both', points:18, cost:2, tags:['citrus','floral'],              desc:'+2 for each fruity adjunct on your hot side.' },
 
   // Southern Hemisphere
   { id:'galaxy',     name:'Galaxy',             cat:'hop', lane:'both', points:16, cost:2, tags:['tropical','fruity','citrus'],       desc:'+8 if 2+ hazy cards are on your board.' },
@@ -186,7 +186,7 @@ const CARD_POOL = [
 
   // Hop products
   { id:'cryo',       name:'Cryo Hops',          cat:'hop', lane:'both', points:14, cost:2, tags:[],                         desc:'Copies the flavor tags of the last hop you played. Your next hop costs 1 less.' },
-  { id:'hopoil',     name:'Hop Oil',            cat:'hop', lane:'both', points:6,  cost:1, tags:[],                         desc:'Copies the flavor tags of the last hop you played. Every hop on your cold side gets +3.' },
+  { id:'hopoil',     name:'Hop Oil',            cat:'hop', lane:'both', points:8,  cost:1, tags:[],                         desc:'Copies the flavor tags of the last hop you played. Every hop on your cold side gets +3.' },
 
   // ══════════════════════════════════════════════════════════════
   // ── YEAST ── (all gain +2 pts per turn on the field unless noted)
@@ -195,7 +195,7 @@ const CARD_POOL = [
   // Clean ale
   { id:'chico',      name:'Cal Ale',            cat:'yeast', lane:'cold', points:6,  cost:2, tags:['crisp','clean'],              desc:'+2 per turn. On play: +1 per hop and per base malt on your board.' },
   { id:'barbarian',  name:'Barbarian',          cat:'yeast', lane:'cold', points:6,  cost:2, tags:['fruity','clean'],             desc:'+2 per turn. On play: +2 per hop on your board.' },
-  { id:'london3',    name:'London Ale III',     cat:'yeast', lane:'cold', points:6,  cost:2, tags:['hazy','smooth','fruity'],     desc:'+2 per turn. On play: biotransformation — every hop on your cold side gets +3. +2 per hazy card.' },
+  { id:'london3',    name:'London Ale III',     cat:'yeast', lane:'cold', points:6,  cost:2, tags:['hazy','smooth','fruity'],     desc:'+2 per turn. On play: biotransformation — every hop on your cold side gets +4. +2 per hazy card.' },
   { id:'englishale', name:'English Ale',        cat:'yeast', lane:'cold', points:6,  cost:2, tags:['fruity','malty'],          desc:'+2 per turn. On play: +3 per biscuity, malty, or earthy card on your board.' },
   { id:'kveik',      name:'Voss Kveik',         cat:'yeast', lane:'cold', points:17, cost:3, tags:['fruity','dry'],               desc:'Doesn\'t grow. On play: +2 per hop on your board.' },
 

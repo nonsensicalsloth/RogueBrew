@@ -235,7 +235,7 @@ function render() {
       : `${roast}/${threshold}${roast > 0 ? ` · roasty +${power}` : ''}${eRoast > 0 ? ` | rival ${eRoast}/${state.eRoastThreshold || 5}${isBurnt('e') ? ' BURNT' : ''}` : ''}`;
     const effective = roast - (state.roastSafe || 0);
     roastEl.style.color = burnt ? 'var(--red)' : effective >= threshold - 1 ? 'var(--orange)' : roast > 0 ? 'var(--gold)' : 'var(--dim)';
-    roastEl.title = `Each roast token gives every roasty card +${ROAST_POWER}. Reach ${threshold} and your beer is Burnt: hot side scores half. Midnight Wheat roast is safe.`;
+    roastEl.title = `Each roast token gives every roasty card +${ROAST_POWER}. Reach ${threshold} and your beer is Burnt: hot side scores half.`;
   }
   // Mash meter: how many sticky grains are in a row at the end of your hot side
   const mashEl = document.getElementById('mash-pill');

@@ -38,7 +38,7 @@ function formulaPreview(c, who = 'p') {
   switch (c.id) {
     case 'crystal80': {
       const r = getRoast(who);
-      return { points: r * 8 + earned + ROAST_POWER * r, note: `now: ${r} roast` };
+      return { points: r * 6 + earned + ROAST_POWER * r, note: `now: ${r} roast` };
     }
     case 'specialb': {
       const r = getRoast(who);
@@ -456,7 +456,7 @@ function applyCardEffect(card, lane, who) {
     case 'mango':
     case 'flakedwheat': {
       const side = card.id === 'flakedwheat' ? 'hot' : lane;
-      const n = buffLaneCards(side, who, 2, c => c.cat === 'hop');
+      const n = buffLaneCards(side, who, 3, c => c.cat === 'hop');
       addLog(`${card.name}: +2 to ${n} hop(s) on ${LANE_NAMES[side]}.`, who === 'p' ? 'player' : 'enemy');
       break;
     }
@@ -754,25 +754,25 @@ function applyCardEffect(card, lane, who) {
     // ── Belgian adjuncts ──
     case 'candisugarcl': {
       const belgYeasts = getLaneCards('cold', who).filter(c => c.tags && c.tags.includes('belgian')).length;
-      card.points += belgYeasts * 3;
+      card.points += belgYeasts * 2;
       addLog(`Clear Candi Sugar: +${belgYeasts * 3} pts (${belgYeasts} belgian yeasts).`, 'player');
       break;
     }
     case 'candisugarab': {
       const belgYeastsAB = getLaneCards('cold', who).filter(c => c.tags && c.tags.includes('belgian')).length;
-      card.points += belgYeastsAB * 4;
+      card.points += belgYeastsAB * 3;
       addLog(`Amber Candi Sugar: +${belgYeastsAB * 4} pts.`, 'player');
       break;
     }
     case 'candisugardk': {
       const belgYeastsDK = getLaneCards('cold', who).filter(c => c.tags && c.tags.includes('belgian')).length;
-      card.points += belgYeastsDK * 5;
+      card.points += belgYeastsDK * 4;
       addLog(`Dark Candi Sugar: +${belgYeastsDK * 5} pts.`, 'player');
       break;
     }
     case 'coriander': {
       const hasBelgYeast = getLaneCards('cold', who).some(c => c.cat === 'yeast' && c.tags && c.tags.includes('belgian'));
-      if (hasBelgYeast) { card.points += 8; addLog('Coriander: Belgian yeast present — +8 pts!', 'player'); }
+      if (hasBelgYeast) { card.points += 6; addLog('Coriander: Belgian yeast present — +8 pts!', 'player'); }
       break;
     }
     case 'orangepeel': {
@@ -789,7 +789,7 @@ function applyCardEffect(card, lane, who) {
     case 'cardamom': {
       const sweetCount  = countOthers('sweet', who, card);
       const spicyCount  = countOthers('spicy', who, card);
-      card.points += (sweetCount + spicyCount) * 3;
+      card.points += (sweetCount + spicyCount) * 2;
       addLog(`Cardamom: +${sweetCount} sweet, +${spicyCount} spicy cards × 3 = +${(sweetCount + spicyCount) * 3} pts.`, 'player');
       break;
     }
@@ -861,7 +861,7 @@ function applyCardEffect(card, lane, who) {
 
     case 'crystal80': {
       const roast80 = getRoast(who);
-      card.points = roast80 * 8 + (card.points - getCardDef('crystal80').points);
+      card.points = roast80 * 6 + (card.points - getCardDef('crystal80').points);
       addLog(`Crystal 80: ${roast80} roast × 8 = ${card.points} pts!`, 'player');
       break;
     }
@@ -1451,7 +1451,7 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'london3': {
-      const n = buffLaneCards('cold', who, 3, c => c.cat === 'hop');
+      const n = buffLaneCards('cold', who, 4, c => c.cat === 'hop');
       const hazy = countTag('hazy', who) - 1; // don't count itself
       card.points += hazy * 2;
       addLog(`London Ale III: biotransformed ${n} cold side hop(s) +3, +${hazy * 2} from hazy cards.`, 'player');
@@ -1601,7 +1601,7 @@ const NUANCED_MULT = 2;     // two or more nuanced cards on your board
 // Every roast token you hold (safe roast included) gives each of your roasty cards
 // +ROAST_POWER. Push toward your roast limit for big dark beers, but reach it and
 // your beer is Burnt: the hot side scores half.
-const ROAST_POWER = 2;
+const ROAST_POWER = 1;
 
 function roastBonus(c, who) {
   return c.tags && c.tags.includes('roasty') && c.cat !== 'token' ? ROAST_POWER * getRoast(who) : 0;
