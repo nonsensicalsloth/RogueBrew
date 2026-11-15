@@ -156,7 +156,7 @@ function endTurn() {
   }
   selectedCard = null;
   // Whatever budget you didn't spend goes into the lagering tank
-  if (state.phase === 'play') gainLagering('p', state.budget - state.budgetUsed);
+  if (state.phase === 'play') gainLagering('p', lagerableBudget('p', state.budget - state.budgetUsed));
   state.newCards = new Set();
   state.rivalSummary = [];
   state.playerTurn = false;

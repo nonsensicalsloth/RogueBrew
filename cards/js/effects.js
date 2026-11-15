@@ -57,8 +57,8 @@ function formulaPreview(c, who = 'p') {
   }
   const roasty = roastyLive();
   if (roasty) return roasty;
-  // Crisp cards: show the Lagering bonus they'd get on the board
-  if (c.tags && c.tags.includes('crisp') && lagering(who) > 0) {
+  // Lager yeasts: show the Lagering bonus they'd get on the board
+  if (isLagerYeast(c) && lagering(who) > 0) {
     return { points: c.points + lagerBonus(c, who), note: `now: ${lagering(who)} lagering` };
   }
   if (c.id === 'coldcrash' && c._chilled) return { points: c.points, note: `chilled ${c._chilled} turn(s)` };
@@ -519,8 +519,8 @@ function applyCardEffect(card, lane, who) {
       addLog(`Cold Crash: chilled for ${card._chilled || 0} turn(s) — ${card.points} pts.`, isPlayer ? 'player' : 'enemy');
       break;
 
-    case 'acidmalt':   giveAcid(other(who), 1); break;
-    case 'kettlesour': giveAcid(other(who), 4); break;
+    case 'acidmalt':   giveAcid(other(who), 2); break;
+    case 'kettlesour': giveAcid(other(who), 5); break;
     case 'lacticacid': {
       const a = acidOn(other(who));
       if (a > 0) giveAcid(other(who), a);
@@ -1539,7 +1539,7 @@ function applyCardEffect(card, lane, who) {
     case 'lacto': {
       // Hops hold Lactobacillus back
       const hotHops = getLaneCards('hot', who).filter(c => c.cat === 'hop').length;
-      const acid    = Math.max(0, 3 - hotHops);
+      const acid    = Math.max(0, 4 - hotHops);
       if (acid) giveAcid(other(who), acid);
       else addLog('Lactobacillus: too many hops — no Acid.', 'warn');
       break;
@@ -1628,13 +1628,22 @@ function printedPoints(c) {
 // (Haze, Magnum, Whirlpool...) are added once, so they can't snowball.
 // ── Lagering ──
 // Budget you leave unspent at the end of a turn becomes Lagering (up to LAGER_MAX).
-// Every crisp card on your board scores +LAGER_POWER per Lagering.
+// Every crisp yeast (the lager yeasts) on your board scores +LAGER_POWER per Lagering.
+// (Per-card for every crisp card was far too strong: lager decks are almost all crisp.)
 const LAGER_POWER = 2;
 const LAGER_MAX   = 10;
 
 const other = who => (who === 'p' ? 'e' : 'p');
 
 function lagering(who) { return (state.lager && state.lager[who]) || 0; }
+
+// Only budget you deliberately held back counts: up to the total cost of the cards
+// still in your hand (an empty hand can't lager anything)
+function lagerableBudget(who, leftover) {
+  const hand = who === 'p' ? state.pHand : state.eHand;
+  const held = hand.filter(c => c.cat !== 'token').reduce((s, c) => s + (c.cost || 0), 0);
+  return Math.max(0, Math.min(leftover, held));
+}
 
 function gainLagering(who, n) {
   if (!n || n <= 0) return;
@@ -1645,8 +1654,10 @@ function gainLagering(who, n) {
   if (got > 0) addLog(`🧊 ${who === 'p' ? 'You' : 'Rival'} left ${n} budget in the tank — Lagering ${state.lager[who]}/${LAGER_MAX}.`, who === 'p' ? 'player' : 'enemy');
 }
 
+const isLagerYeast = c => c.cat === 'yeast' && c.tags && c.tags.includes('crisp');
+
 function lagerBonus(c, who) {
-  return c.cat !== 'token' && c.tags && c.tags.includes('crisp') ? lagering(who) * LAGER_POWER : 0;
+  return isLagerYeast(c) ? lagering(who) * LAGER_POWER : 0;
 }
 
 // ── Acidity ──

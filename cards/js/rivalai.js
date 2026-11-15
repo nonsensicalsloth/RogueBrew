@@ -96,11 +96,23 @@ function planSmart(budget) {
       }
     }
     if (!best || best.value <= 0) break;
+    // Lager rivals hold budget back when the tank is worth more than the play
+    if (best.value < best.card.cost * rivalBankValue(sim)) break;
     plan.push(planEntry(best.card, best.lane, best.gain));
     remaining -= best.card.cost;
     sim = best.sim;
   }
   return plan;
+}
+
+// What one point of unspent budget is worth to the rival as Lagering
+function rivalBankValue(sim) {
+  return withState(sim, () => {
+    if (state.turn >= MAX_TURNS || lagering('e') >= LAGER_MAX) return 0;
+    // Each banked budget gives every lager yeast (out now or coming from hand) +LAGER_POWER
+    const yeasts = [...state.field.hot.e, ...state.field.cold.e, ...state.eHand].filter(isLagerYeast).length;
+    return LAGER_POWER * yeasts;
+  });
 }
 
 // Simple plan: the old habits. Biggest affordable cards first, sensible lanes, no self-overload
@@ -161,7 +173,7 @@ function executeRivalPlan() {
   const ctx = rivalPlanCtx();
   while (ctx.k < ctx.plan.length) rivalPlanStep(ctx);
   state.rivalPlan = null;
-  gainLagering('e', ctx.remaining);
+  gainLagering('e', lagerableBudget('e', ctx.remaining));
   return ctx.played;
 }
 
@@ -175,7 +187,7 @@ function executeRivalPlanStepwise(done) {
     if (did) render();
     if (did && ctx.k < ctx.plan.length) { setTimeout(tick, RIVAL_PLAY_DELAY); return; }
     state.rivalPlan = null;
-    gainLagering('e', ctx.remaining);
+    gainLagering('e', lagerableBudget('e', ctx.remaining));
     done(ctx.played);
   };
   tick();
