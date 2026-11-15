@@ -62,6 +62,8 @@ function evaluatePlay(sim, uid, lane) {
     const i = state.eHand.findIndex(c => c._uid === uid);
     if (i < 0) return null;
     const card = state.eHand[i];
+    const turnsLeft = MAX_TURNS - state.turn;
+    const acidBefore = acidFutureDamage('p', turnsLeft);
     const gapBefore  = scoreGap();
     const ownBefore  = totalScore('e');
     const handBefore = state.eHand.length;
@@ -69,8 +71,9 @@ function evaluatePlay(sim, uid, lane) {
     resolvePlay(card, lane, 'e');
     let value = scoreGap() - gapBefore;
     // Things a one-step look can't see:
-    const turnsLeft = MAX_TURNS - state.turn;
     if (card.cat === 'yeast' && card.id !== 'kveik') value += 2 * turnsLeft;      // it grows every turn
+    value += acidFutureDamage('p', turnsLeft) - acidBefore;                       // Acid keeps eating
+    if (card.id === 'coldcrash') value -= COLD_CRASH_GROWTH * turnsLeft;          // better to let it chill
     value += 6 * Math.max(0, state.eHand.length - (handBefore - 1));              // cards drawn
     return { value, gain: totalScore('e') - ownBefore, sim: state };
   });
@@ -158,6 +161,7 @@ function executeRivalPlan() {
   const ctx = rivalPlanCtx();
   while (ctx.k < ctx.plan.length) rivalPlanStep(ctx);
   state.rivalPlan = null;
+  gainLagering('e', ctx.remaining);
   return ctx.played;
 }
 
@@ -171,6 +175,7 @@ function executeRivalPlanStepwise(done) {
     if (did) render();
     if (did && ctx.k < ctx.plan.length) { setTimeout(tick, RIVAL_PLAY_DELAY); return; }
     state.rivalPlan = null;
+    gainLagering('e', ctx.remaining);
     done(ctx.played);
   };
   tick();

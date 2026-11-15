@@ -97,9 +97,9 @@ const COLLAB_BREWERIES = [
   { name:'Fog Lantern Brewing',  style:'hazy',       ids:['london3','oats','flakedwheat','citra','galaxy','mosaic','nectaron','talus','mango','hopoil','cosmicpunch'] },
   { name:'Abbey of St. Wort',    style:'Belgian',    ids:['abbey','saison','candisugarcl','candisugarab','candisugardk','coriander','orangepeel','grainspara','cardamom'] },
   { name:'Black Kettle Stoutworks', style:'stout',   ids:['choc','patent','roastedbar','carafaIII','midnightw','coffee','coldbrewcof','cacaonibs','lactose','vanilla'] },
-  { name:'Kühlhaus Lagerei',     style:'lager',      ids:['pilsner','floorpilsner','saaz','hallertau','tettnang','w3470','czechlager','kolsch','vienna','hallblanc'] },
+  { name:'Kühlhaus Lagerei',     style:'lager',      ids:['pilsner','floorpilsner','saaz','hallertau','tettnang','w3470','czechlager','kolsch','vienna','hallblanc','coldcrash'] },
   { name:'Pine & Pellet Co.',    style:'West Coast', ids:['cascade','centennial','chinook','columbus','simcoe','magnum','chico','crystal10','2row'] },
-  { name:'Tart Cellars',         style:'sour',       ids:['lacto','sourvisiae','brett','raspberry','cherry','passionfr','blueberry','phantasm'] },
+  { name:'Tart Cellars',         style:'sour',       ids:['lacto','sourvisiae','brett','pedio','acidmalt','kettlesour','lacticacid','raspberry','cherry','passionfr','blueberry','phantasm'] },
 ];
 
 let collabState = { brewery: null, offer: [], pick: null };

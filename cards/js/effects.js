@@ -55,7 +55,14 @@ function formulaPreview(c, who = 'p') {
       return { points: c.points * (n + 1), note: `now: ${n} in discard` };
     }
   }
-  return roastyLive();
+  const roasty = roastyLive();
+  if (roasty) return roasty;
+  // Crisp cards: show the Lagering bonus they'd get on the board
+  if (c.tags && c.tags.includes('crisp') && lagering(who) > 0) {
+    return { points: c.points + lagerBonus(c, who), note: `now: ${lagering(who)} lagering` };
+  }
+  if (c.id === 'coldcrash' && c._chilled) return { points: c.points, note: `chilled ${c._chilled} turn(s)` };
+  return null;
 }
 
 // Like countTag, but never counts the card itself
@@ -309,6 +316,19 @@ function applyDryHopBonus(card, who) {
 const DRY_HOP_BONUS = 5;
 
 const CARD_TARGETS = {
+  pedio: {
+    prompt: 'PEDIOCOCCUS: CHOOSE A FRUIT ON YOUR BOARD TO EAT',
+    ok:     c => isFruit(c),
+    aiPick: list => list.reduce((a, b) => b.c.points > a.c.points ? b : a),
+    pick(t, who, eater) {
+      const lane  = state.field[t.lane][who];
+      lane.splice(lane.indexOf(t.c), 1);
+      (who === 'p' ? state.pDiscard : state.eDiscard).push(t.c);
+      const gain = Math.round(t.c.points * 1.5);
+      if (eater) eater.points += gain;
+      addLog(`Pediococcus eats the ${t.c.name}: +${gain}!`, who === 'p' ? 'player' : 'enemy');
+    },
+  },
   filtration: {
     prompt: 'FILTRATION: CHOOSE A YEAST TO RETURN TO YOUR HAND',
     ok:     (c, lane) => lane === 'cold' && c.cat === 'yeast',
@@ -495,10 +515,22 @@ function applyCardEffect(card, lane, who) {
       addLog('Fermentation Log: +2 pts to all cold side cards.', 'player');
       break;
 
-    case 'coldcrash': {
-      if (removeFirstToken(who, null, 'cold')) addLog('Cold Crash: cleared a token from cold side.', 'player');
+    case 'coldcrash':
+      addLog(`Cold Crash: chilled for ${card._chilled || 0} turn(s) — ${card.points} pts.`, isPlayer ? 'player' : 'enemy');
+      break;
+
+    case 'acidmalt':   giveAcid(other(who), 1); break;
+    case 'kettlesour': giveAcid(other(who), 4); break;
+    case 'lacticacid': {
+      const a = acidOn(other(who));
+      if (a > 0) giveAcid(other(who), a);
+      else addLog('Lactic Acid: no Acid to double yet.', 'sys');
       break;
     }
+    case 'pedio':
+      giveAcid(other(who), 2);
+      startCardTargeting('pedio', card, who);
+      break;
 
     // ── Tier 2: Board reading ──
 
@@ -1505,20 +1537,20 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'lacto': {
+      // Hops hold Lactobacillus back
       const hotHops = getLaneCards('hot', who).filter(c => c.cat === 'hop').length;
-      const delta   = 6 - hotHops * 4;
-      card.points += delta;
-      addLog(`Lactobacillus: ${hotHops} hop(s) on hot side — ${delta >= 0 ? '+' : ''}${delta} pts.`, hotHops > 1 ? 'warn' : 'player');
-      shuffleIntoRemainingDeck(who, 'contamination');
+      const acid    = Math.max(0, 3 - hotHops);
+      if (acid) giveAcid(other(who), acid);
+      else addLog('Lactobacillus: too many hops — no Acid.', 'warn');
       break;
     }
 
     // Engineered strains
     case 'sourvisiae': {
       const fruity = allMine.filter(c => c.tags && (c.tags.includes('fruity') || c.tags.includes('tropical'))).length;
-      const hops   = countCat('hop', who);
-      card.points += fruity * 2 + hops * 2;
-      addLog(`Sourvisiae: +${fruity * 2} fruity, +${hops * 2} hops — clean sour.`, 'player');
+      card.points += fruity * 2;
+      giveAcid(other(who), 2);
+      addLog(`Sourvisiae: +${fruity * 2} from fruit.`, isPlayer ? 'player' : 'enemy');
       break;
     }
 
@@ -1594,8 +1626,72 @@ function printedPoints(c) {
 
 // Synergy multiplies the card's printed points only. Bonuses gained in battle
 // (Haze, Magnum, Whirlpool...) are added once, so they can't snowball.
+// ── Lagering ──
+// Budget you leave unspent at the end of a turn becomes Lagering (up to LAGER_MAX).
+// Every crisp card on your board scores +LAGER_POWER per Lagering.
+const LAGER_POWER = 2;
+const LAGER_MAX   = 10;
+
+const other = who => (who === 'p' ? 'e' : 'p');
+
+function lagering(who) { return (state.lager && state.lager[who]) || 0; }
+
+function gainLagering(who, n) {
+  if (!n || n <= 0) return;
+  state.lager = state.lager || { p: 0, e: 0 };
+  const before = state.lager[who];
+  state.lager[who] = Math.min(LAGER_MAX, before + n);
+  const got = state.lager[who] - before;
+  if (got > 0) addLog(`🧊 ${who === 'p' ? 'You' : 'Rival'} left ${n} budget in the tank — Lagering ${state.lager[who]}/${LAGER_MAX}.`, who === 'p' ? 'player' : 'enemy');
+}
+
+function lagerBonus(c, who) {
+  return c.cat !== 'token' && c.tags && c.tags.includes('crisp') ? lagering(who) * LAGER_POWER : 0;
+}
+
+// ── Acidity ──
+// Acid sits on a brewery (state.acid.p = Acid on YOU). At the start of each turn their
+// best lane loses points equal to their Acid (an Acid Burn token), then Acid drops by 1.
+function acidOn(who) { return (state.acid && state.acid[who]) || 0; }
+
+function giveAcid(victim, n) {
+  if (!n || n <= 0) return;
+  state.acid = state.acid || { p: 0, e: 0 };
+  state.acid[victim] += n;
+  addLog(`🍋 ${victim === 'e' ? 'Rival' : 'You'} +${n} Acid (now ${state.acid[victim]}).`, victim === 'e' ? 'player' : 'enemy');
+}
+
+// Total points the Acid on `who` will still eat this round
+function acidFutureDamage(who, turnsLeft) {
+  let a = acidOn(who), dmg = 0;
+  for (let t = 0; t < turnsLeft && a > 0; t++, a--) dmg += a;
+  return dmg;
+}
+
+function tickAcid(who) {
+  const a = acidOn(who);
+  if (a <= 0) return;
+  const lane = laneScore('hot', who) >= laneScore('cold', who) ? 'hot' : 'cold';
+  let burn = state.field[lane][who].find(c => c.id === 'acidburn');
+  if (!burn) { burn = createToken('acidburn'); state.field[lane][who].push(burn); }
+  burn.points -= a;
+  state.acid[who] = a - 1;
+  addLog(`🍋 Acid eats ${a} from ${who === 'p' ? 'your' : "the rival's"} ${LANE_NAMES[lane].toLowerCase()} (Acid now ${a - 1}).`, who === 'p' ? 'warn' : 'player');
+}
+
+// ── Cold Crash: gets better the longer it sits in your hand ──
+const COLD_CRASH_GROWTH = 3;
+function chillHands() {
+  [state.pHand, state.eHand].forEach(h => h.forEach(c => {
+    if (c.id === 'coldcrash') { c.points += COLD_CRASH_GROWTH; c._chilled = (c._chilled || 0) + 1; }
+  }));
+}
+
+// Fruit Pediococcus can eat
+const isFruit = c => c.cat === 'adjunct' && c.tags && (c.tags.includes('fruity') || c.tags.includes('tropical'));
+
 function effectivePoints(c, lane, who) {
-  const roast = roastBonus(c, who);
+  const roast = roastBonus(c, who) + lagerBonus(c, who);
   const m = synergyMultiplier(c, lane, who);
   if (m === 1) return c.points + roast;
   const base = Math.max(0, Math.min(printedPoints(c), c.points));

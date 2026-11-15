@@ -42,11 +42,11 @@ const CRAFT_RIVALS = [
            'chinook','columbus','simcoe','crystal40','magnum','chico','chico','vienna','citrazest','hopthief','amarillo','summit'] },
   { id:'kuhlhaus', name:'Kühlhaus Lagerei', style:'lager',
     cards:['pilsner','pilsner','pilsner','floorpilsner','floorpilsner','vienna','vienna','saaz','saaz','2row','hallertau',
-           'hallertau','tettnang','tettnang','hallblanc','w3470','paleale','czechlager','czechlager','kolsch','coldcrash',
+           'hallertau','tettnang','tettnang','hallblanc','w3470','coldcrash','czechlager','czechlager','kolsch','coldcrash',
            'yeastnutrient','munich'] },
   { id:'tartcellars', name:'Tart Cellars', style:'sour',
-    cards:['pilsner','pilsner','wheatwhite','wheatwhite','goldenprom','lacto','lacto','sourvisiae','sourvisiae','sourvisiae',
-           'raspberry','raspberry','cherry','vanilla','passionfr','passionfr','blueberry','phantasm','cosmicpunch','honey',
+    cards:['pilsner','acidmalt','wheatwhite','wheatwhite','acidmalt','lacto','lacto','sourvisiae','sourvisiae','pedio',
+           'raspberry','raspberry','cherry','kettlesour','passionfr','passionfr','blueberry','phantasm','cosmicpunch','lacticacid',
            'crosscontam','saaz','hallertau','oakfoeder','raspberry'] },   // a touch of aged noble hops, like a real sour
 ];
 

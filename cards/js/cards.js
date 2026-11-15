@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'juice (Nov 14)';
+const CARDS_VERSION = 'lagering & acidity (Nov 14)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -57,6 +57,7 @@ const CARD_POOL = [
   { id:'carafaIII',   name:'Carafa III',       cat:'malt', lane:'hot', points:22, cost:3, tags:['roasty','smooth'],  desc:'Adds 2 roast tokens. Roast penalty threshold increases by 1.' },
   { id:'blackmalt',   name:'Black Malt',       cat:'malt', lane:'hot', points:18, cost:2, tags:['roasty','toasty'],  desc:'Adds 2 roast tokens. An adjacent crystal malt scores double.' },
   { id:'palechoc',    name:'Pale Chocolate',   cat:'malt', lane:'hot', points:16, cost:2, tags:['toasty','roasty'],  desc:'Adds 1 roast token.' },
+  { id:'acidmalt',    name:'Acidulated Malt',       cat:'malt', lane:'hot', points:7,  cost:1, tags:['sour'],            desc:'Give the rival 1 Acid.' },
   { id:'midnightw',   name:'Midnight Wheat',   cat:'malt', lane:'hot', points:16, cost:3, tags:['roasty','smooth'],  desc:'Adds no roast. Every other roasty card on your hot side gets +3.' },
   { id:'debittered',  name:'De-bittered Black',cat:'malt', lane:'hot', points:16, cost:2, tags:['roasty','smooth'],  desc:'Removes 1 roast token when played.' },
   { id:'smokedmalt',  name:'Smoked Malt',      cat:'malt', lane:'hot', points:14, cost:2, tags:['roasty','dry'],     desc:'Adds 1 roast token. All other roasty cards on your hot side get +2 pts.' },
@@ -117,7 +118,9 @@ const CARD_POOL = [
   { id:'heatkill',     name:'Heat Kill',         cat:'process', lane:'cold', points:0,  cost:2, tags:[],           desc:'Remove all Contamination from your cold side. Each yeast there gets +5 but never grows again. Draw 1.' },
   { id:'filtration',   name:'Filtration',        cat:'process', lane:'cold', points:0,  cost:2, tags:[],           desc:'Destroy every negative card on your cold side, then choose a yeast there to return to your hand. It costs 0 this turn. Draw 1.' },
   { id:'fining',       name:'Fining Agent',      cat:'process', lane:'both',  points:0,  cost:1, tags:[],  desc:'Remove one negative token from your board. Every yeast on your cold side gets +2. Draw 1.' },
-  { id:'coldcrash',    name:'Cold Crash',        cat:'process', lane:'cold', points:14,  cost:2, tags:[],   desc:'Scores points and clears one negative token from your cold side.' },
+  { id:'coldcrash',    name:'Cold Crash',        cat:'process', lane:'cold', points:4,  cost:1, tags:['crisp'],   desc:'Gets +3 for each turn it spends in your hand.' },
+  { id:'kettlesour',   name:'Kettle Sour',       cat:'process', lane:'hot', points:4,  cost:2, tags:[],   desc:'Give the rival 4 Acid.' },
+  { id:'lacticacid',   name:'Lactic Acid',       cat:'process', lane:'both', points:0,  cost:1, tags:[],   desc:"Double the rival's Acid." },
 
   // Disruption (enemy side)
   { id:'drunkcellar',  name:'Drunk Cellarman',   cat:'process', lane:'cold', points:0,  cost:1, tags:[],           desc:'Gives the rival +8 on their cold side, but you draw 3 cards.' },
@@ -208,10 +211,11 @@ const CARD_POOL = [
 
   // Wild & sour
   { id:'brett',      name:'Brettanomyces',      cat:'yeast', lane:'cold', points:6,  cost:2, tags:['funky','dry'],                desc:'+3 per turn. On play: +3 per sweet card on your hot side. Each turn, 50% chance to shuffle Contamination into your deck.' },
-  { id:'lacto',      name:'Lactobacillus',      cat:'yeast', lane:'cold', points:6,  cost:1, tags:['sour','crisp'],               desc:'+2 per turn. On play: +6, but −4 for each hop on your hot side. Shuffles 1 Contamination into your deck.' },
+  { id:'lacto',      name:'Lactobacillus',      cat:'yeast', lane:'cold', points:6,  cost:1, tags:['sour','crisp'],               desc:'+2 per turn. On play: give the rival 3 Acid, minus 1 for each hop on your hot side.' },
+  { id:'pedio',      name:'Pediococcus',        cat:'yeast', lane:'cold', points:4,  cost:2, tags:['sour','funky'],               desc:'+2 per turn. On play: eat a fruit on your board. This gets 1.5× its points. Give the rival 2 Acid.' },
 
   // Engineered strains
-  { id:'sourvisiae', name:'Sourvisiae',         cat:'yeast', lane:'cold', points:6,  cost:2, tags:['sour','crisp','clean'],       desc:'+2 per turn. On play: +2 per fruity or tropical card and +2 per hop on your board.' },
+  { id:'sourvisiae', name:'Sourvisiae',         cat:'yeast', lane:'cold', points:6,  cost:2, tags:['sour','crisp','clean'],       desc:'+2 per turn. On play: give the rival 2 Acid. +2 per fruity or tropical card on your board.' },
   { id:'cosmicpunch',name:'Cosmic Punch',       cat:'yeast', lane:'cold', points:6,  cost:2, tags:['fruity','hazy','thiol'],      desc:'+2 per turn. On play: +2 per hop on your cold side. Thiol release: every thiol card on your board gets +6 (Phantasm +8), including ones played later.' },
 
   // ══════════════════════════════════════════════════════════════
@@ -250,7 +254,7 @@ const RARE_CARDS = [
   'crystal75','crystal80','crystal120','coffee','aromatic','melanoidin','biscuit','victory','blackmalt',
   'heritage','spelt','buckwheat',
   'award','doublebatch','inspector','barreltrans',
-  'oakfoeder','solera',
+  'oakfoeder','solera','lacticacid',
 ];
 const UNCOMMON_CARDS = [
   'floorpilsner','darkmunich','expwheat','expilsner','crystal50','crystal60','specialb','carafaIII',
@@ -258,7 +262,7 @@ const UNCOMMON_CARDS = [
   'cacaonibs','coldbrewcof','vanillabn','toastedcoc','maple','honey','cardamom','grainspara','candisugardk','citrazest',
   'filtration','heatkill','recipetweak','hopthief','crosscontam','badbatch','dryhop','kettletrans','fermlog',
   'hallblanc','strata','talus','nectaron','cryo','hopoil',
-  'london3','barbarian','abbey','brett','sourvisiae',
+  'london3','barbarian','abbey','brett','sourvisiae','pedio','kettlesour',
   'summit','brutenzyme','yeastnutrient','peatmalt','yeastharvest','secondrunnings',
 ];
 const RARITY_NAMES = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare' };
@@ -312,6 +316,7 @@ function buildEnemyDeck() {
 const TOKEN_CARDS = [
   { id:'contamination', name:'Contamination',  cat:'token', lane:'cold', points:-10, cost:0, tags:['funky'],  desc:'Auto-plays to cold side when drawn. Interrupts your turn but costs 0.' },
   { id:'crowd_fav',     name:'Crowd Favorite', cat:'token', lane:'hot',  points:10,  cost:0, tags:[],         desc:'Festival rivals start each round with the crowd on their side.' },
+  { id:'acidburn',    name:'Acid Burn',    cat:'token', lane:'cold', points:0,   cost:0, tags:['sour'],   desc:'Points eaten away by the rival\'s Acid. Sanitize, CIP Cycle or Fining Agent clear it.' },
   { id:'stuckmash',   name:'Stuck Mash',   cat:'token', lane:'hot',  points:-8,  cost:0, tags:[],         desc:'Three sticky grains in a row clumped. Rice Hulls, Sanitize, CIP Cycle or Fining Agent clear it.' },
   { id:'contam_soft',   name:'Contamination',  cat:'token', lane:'cold', points:-5,  cost:0, tags:['funky'],  desc:'Softened Contamination (a clean yeast outcompeted it). Auto-plays to cold side when drawn.' },
 ];
