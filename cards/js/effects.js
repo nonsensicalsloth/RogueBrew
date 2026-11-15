@@ -57,11 +57,9 @@ function formulaPreview(c, who = 'p') {
   }
   const roasty = roastyLive();
   if (roasty) return roasty;
-  // Lager yeasts: show the Lagering bonus they'd get on the board
-  if (isLagerYeast(c) && lagering(who) > 0) {
-    return { points: c.points + lagerBonus(c, who), note: `now: ${lagering(who)} lagering` };
+  if (isCrisp(c) && lagering(who) > 0) {
+    return { points: c.points + lagering(who) * lagerPower(who), note: `+${lagering(who) * lagerPower(who)} lagering` };
   }
-  if (c.id === 'coldcrash' && c._chilled) return { points: c.points, note: `chilled ${c._chilled} turn(s)` };
   return null;
 }
 
@@ -515,9 +513,7 @@ function applyCardEffect(card, lane, who) {
       addLog('Fermentation Log: +2 pts to all cold side cards.', 'player');
       break;
 
-    case 'coldcrash':
-      addLog(`Cold Crash: chilled for ${card._chilled || 0} turn(s) — ${card.points} pts.`, isPlayer ? 'player' : 'enemy');
-      break;
+    case 'coldcrash':  addLagering(who, COLD_CRASH_LAGER, 'Cold Crash'); break;
 
     case 'acidmalt':   giveAcid(other(who), 2); break;
     case 'kettlesour': giveAcid(other(who), 5); break;
@@ -1626,39 +1622,42 @@ function printedPoints(c) {
 
 // Synergy multiplies the card's printed points only. Bonuses gained in battle
 // (Haze, Magnum, Whirlpool...) are added once, so they can't snowball.
-// ── Lagering ──
-// Budget you leave unspent at the end of a turn becomes Lagering (up to LAGER_MAX).
-// Every crisp yeast (the lager yeasts) on your board scores +LAGER_POWER per Lagering.
-// (Per-card for every crisp card was far too strong: lager decks are almost all crisp.)
-const LAGER_POWER = 2;
-const LAGER_MAX   = 10;
-
 const other = who => (who === 'p' ? 'e' : 'p');
 
-function lagering(who) { return (state.lager && state.lager[who]) || 0; }
+// ── Lagering ──
+// Budget you don't spend by the end of your turn becomes Lagering (up to LAGER_MAX).
+// The next crisp card you play gets +LAGER_POWER per Lagering, and that empties it.
+const LAGER_POWER      = 3;
+const LAGER_MAX        = 10;
+const COLD_CRASH_LAGER = 3;
 
-// Only budget you deliberately held back counts: up to the total cost of the cards
-// still in your hand (an empty hand can't lager anything)
-function lagerableBudget(who, leftover) {
-  const hand = who === 'p' ? state.pHand : state.eHand;
-  const held = hand.filter(c => c.cat !== 'token').reduce((s, c) => s + (c.cost || 0), 0);
-  return Math.max(0, Math.min(leftover, held));
+const isCrisp = c => c && c.cat !== 'token' && c.tags && c.tags.includes('crisp');
+function lagering(who) { return (state.lager && state.lager[who]) || 0; }
+function lagerPower(who) {
+  return LAGER_POWER + (who === 'p' && typeof activeBrewery === 'function' && activeBrewery() === 'lagerhaus' ? 1 : 0);
 }
 
-function gainLagering(who, n) {
+function addLagering(who, n, source) {
   if (!n || n <= 0) return;
   state.lager = state.lager || { p: 0, e: 0 };
   const before = state.lager[who];
   state.lager[who] = Math.min(LAGER_MAX, before + n);
-  const got = state.lager[who] - before;
-  if (got > 0) addLog(`🧊 ${who === 'p' ? 'You' : 'Rival'} left ${n} budget in the tank — Lagering ${state.lager[who]}/${LAGER_MAX}.`, who === 'p' ? 'player' : 'enemy');
+  if (state.lager[who] > before) {
+    addLog(`🧊 ${source ? source + ': ' : ''}${who === 'p' ? 'Lagering' : 'Rival Lagering'} ${state.lager[who]} — next crisp card +${state.lager[who] * lagerPower(who)}.`, who === 'p' ? 'player' : 'enemy');
+  }
 }
 
-const isLagerYeast = c => c.cat === 'yeast' && c.tags && c.tags.includes('crisp');
-
-function lagerBonus(c, who) {
-  return isLagerYeast(c) ? lagering(who) * LAGER_POWER : 0;
+// Called when a card is played: a crisp card drinks the whole tank
+function consumeLagering(c, who) {
+  const n = lagering(who);
+  if (!n || !isCrisp(c)) return;
+  const bonus = n * lagerPower(who);
+  c.points += bonus;
+  state.lager[who] = 0;
+  addLog(`🧊 ${c.name} was lagering: +${bonus}!`, who === 'p' ? 'player' : 'enemy');
+  if (who === 'p' && typeof juiceBanner === 'function') juiceBanner(`🧊 LAGERED +${bonus}`, 'gold', 1100);
 }
+
 
 // ── Acidity ──
 // Acid sits on a brewery (state.acid.p = Acid on YOU). At the start of each turn their
@@ -1690,19 +1689,11 @@ function tickAcid(who) {
   addLog(`🍋 Acid eats ${a} from ${who === 'p' ? 'your' : "the rival's"} ${LANE_NAMES[lane].toLowerCase()} (Acid now ${a - 1}).`, who === 'p' ? 'warn' : 'player');
 }
 
-// ── Cold Crash: gets better the longer it sits in your hand ──
-const COLD_CRASH_GROWTH = 3;
-function chillHands() {
-  [state.pHand, state.eHand].forEach(h => h.forEach(c => {
-    if (c.id === 'coldcrash') { c.points += COLD_CRASH_GROWTH; c._chilled = (c._chilled || 0) + 1; }
-  }));
-}
-
 // Fruit Pediococcus can eat
 const isFruit = c => c.cat === 'adjunct' && c.tags && (c.tags.includes('fruity') || c.tags.includes('tropical'));
 
 function effectivePoints(c, lane, who) {
-  const roast = roastBonus(c, who) + lagerBonus(c, who);
+  const roast = roastBonus(c, who);
   const m = synergyMultiplier(c, lane, who);
   if (m === 1) return c.points + roast;
   const base = Math.max(0, Math.min(printedPoints(c), c.points));

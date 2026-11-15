@@ -179,8 +179,8 @@ function startRound() {
   state.nextYeastDiscount = 0;
   state.nextHopDiscount   = 0;
   state.pendingHopBuff    = 0;
-  state.lager             = { p: 0, e: 0 };
   state.acid              = { p: 0, e: 0 };
+  state.lager             = { p: 0, e: 0 };
   state.field           = { hot: { p: [], e: [] }, cold: { p: [], e: [] } };
   state.judging = judgingFor(state.round);
   addLog(`▶ Round ${state.round} begins! Budget: ${state.budget}`);
@@ -273,10 +273,9 @@ function advanceTurn() {
     shuffleIntoRemainingDeck('p', 'contamination');
   }
 
-  // Acid eats into the beer, Cold Crash keeps chilling in hand
+  // Acid eats into the beer
   tickAcid('p');
   tickAcid('e');
-  chillHands();
 
   // Persistent effects keep working whether or not you've passed (yeast keeps fermenting)
   applyTurnEffects('p');

@@ -93,10 +93,6 @@ function resolvePlay(c, lane, who) {
       c.points += 2;
       addLog(`Taproom: ${c.name} +2 (adjunct).`, 'player');
     }
-    if (brew === 'lagerhaus' && c.tags && c.tags.includes('crisp')) {
-      c.points += 1;
-      addLog(`Lagerhaus: ${c.name} +1 (crisp).`, 'player');
-    }
     if (brew === 'hophouse' && c.cat === 'hop' && !state.firstHopBonusUsed) {
       c.points += 2;
       state.firstHopBonusUsed = true;
@@ -114,6 +110,7 @@ function resolvePlay(c, lane, who) {
   if (who === 'e' && c.cat === 'hop' && state.rivalTrait === 'juicebomb') c.points += 3;
 
 
+  consumeLagering(c, who);
   applyCardEffect(c, lane, who);
   if (c.tags && c.tags.includes('sticky') && lane === 'hot') checkStuckMash(who);
   applyThiolOnPlay(c, who);
@@ -155,8 +152,8 @@ function endTurn() {
     return;
   }
   selectedCard = null;
-  // Whatever budget you didn't spend goes into the lagering tank
-  if (state.phase === 'play') gainLagering('p', lagerableBudget('p', state.budget - state.budgetUsed));
+  // Whatever budget you didn't spend goes into Lagering for your next crisp card
+  if (state.phase === 'play') addLagering('p', state.budget - state.budgetUsed);
   state.newCards = new Set();
   state.rivalSummary = [];
   state.playerTurn = false;

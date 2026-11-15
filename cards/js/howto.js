@@ -125,8 +125,7 @@ const HOWTO_CONTENT = {
       hli([`Carafa and Cold Brew raise your limit. De-bittered Black and Lactose remove roast. Midnight Wheat boosts roasty cards without adding roast.`,
            `Columbus and Peated Malt give the <b>rival</b> roast. Push a rival over the edge, but careful: roast also powers their roasty cards.`])) +
     hbox('🧊 Lagering (patience pays)',
-      hp(`Budget you <b>hold back</b> at the end of your turn goes into the tank as <b>Lagering</b> (up to ${LAGER_MAX}). It only counts up to the total cost of the cards still in your hand, so you have to actually be holding something. Every ${tag('crisp')} <b>yeast</b> on your board gets <b>+${LAGER_POWER} per Lagering</b>, even one you play later. Lager decks win by holding back and letting the tank fill.`) +
-      hli([`<b>Cold Crash</b> gets +${COLD_CRASH_GROWTH} for every turn it waits in your hand. Hold it, then drop it late.`])) +
+      hp(`Budget you <b>don't spend</b> by the end of your turn becomes <b>Lagering</b> (up to ${LAGER_MAX}). The next ${tag('crisp')} card you play gets <b>+${LAGER_POWER} per Lagering</b>, and that empties it. Cheap lager decks turn their spare budget into one big pour.`)) +
     hbox('🍋 Acidity (sours attack)',
       hp(`Sour cards give the rival <b>Acid</b>. At the start of each turn, Acid eats that many points from the rival's best lane (an <b>Acid Burn</b>), then drops by 1. So 5 Acid eats 5 + 4 + 3 + 2 + 1 = 15 points. Play it early!`) +
       hli([`<b>Lactic Acid</b> doubles the rival's Acid. Hops hold back <b>Lactobacillus</b>.`,

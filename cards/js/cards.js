@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'balance pass (Nov 15)';
+const CARDS_VERSION = 'simple lagering (Nov 15)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -118,7 +118,7 @@ const CARD_POOL = [
   { id:'heatkill',     name:'Heat Kill',         cat:'process', lane:'cold', points:0,  cost:2, tags:[],           desc:'Remove all Contamination from your cold side. Each yeast there gets +5 but never grows again. Draw 1.' },
   { id:'filtration',   name:'Filtration',        cat:'process', lane:'cold', points:0,  cost:2, tags:[],           desc:'Destroy every negative card on your cold side, then choose a yeast there to return to your hand. It costs 0 this turn. Draw 1.' },
   { id:'fining',       name:'Fining Agent',      cat:'process', lane:'both',  points:0,  cost:1, tags:[],  desc:'Remove one negative token from your board. Every yeast on your cold side gets +2. Draw 1.' },
-  { id:'coldcrash',    name:'Cold Crash',        cat:'process', lane:'cold', points:4,  cost:1, tags:['crisp'],   desc:'Gets +3 for each turn it spends in your hand.' },
+  { id:'coldcrash',    name:'Cold Crash',        cat:'process', lane:'cold', points:3,  cost:1, tags:[],   desc:'Add 3 Lagering.' },
   { id:'kettlesour',   name:'Kettle Sour',       cat:'process', lane:'hot', points:4,  cost:2, tags:[],   desc:'Give the rival 5 Acid.' },
   { id:'lacticacid',   name:'Lactic Acid',       cat:'process', lane:'both', points:0,  cost:1, tags:[],   desc:"Double the rival's Acid." },
 

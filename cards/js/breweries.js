@@ -12,7 +12,7 @@
 const BREWERIES = [
   {
     id: 'lagerhaus', name: 'Lagerhaus', icon: '🍺', subtitle: 'Patience and consistency.',
-    passive: 'Crisp cards you play get +1.',
+    passive: 'Lagering gives +4 per budget instead of +3.',
     ability: { name: 'Cold Condition', cost: 1, desc: 'Choose a yeast on your cold side. It gains +3.' },
     perk:    'Rest-stop upgrades give +8 instead of +5.',
     unlocked: true,

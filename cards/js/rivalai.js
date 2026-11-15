@@ -73,7 +73,6 @@ function evaluatePlay(sim, uid, lane) {
     // Things a one-step look can't see:
     if (card.cat === 'yeast' && card.id !== 'kveik') value += 2 * turnsLeft;      // it grows every turn
     value += acidFutureDamage('p', turnsLeft) - acidBefore;                       // Acid keeps eating
-    if (card.id === 'coldcrash') value -= COLD_CRASH_GROWTH * turnsLeft;          // better to let it chill
     value += 6 * Math.max(0, state.eHand.length - (handBefore - 1));              // cards drawn
     return { value, gain: totalScore('e') - ownBefore, sim: state };
   });
@@ -96,23 +95,11 @@ function planSmart(budget) {
       }
     }
     if (!best || best.value <= 0) break;
-    // Lager rivals hold budget back when the tank is worth more than the play
-    if (best.value < best.card.cost * rivalBankValue(sim)) break;
     plan.push(planEntry(best.card, best.lane, best.gain));
     remaining -= best.card.cost;
     sim = best.sim;
   }
   return plan;
-}
-
-// What one point of unspent budget is worth to the rival as Lagering
-function rivalBankValue(sim) {
-  return withState(sim, () => {
-    if (state.turn >= MAX_TURNS || lagering('e') >= LAGER_MAX) return 0;
-    // Each banked budget gives every lager yeast (out now or coming from hand) +LAGER_POWER
-    const yeasts = [...state.field.hot.e, ...state.field.cold.e, ...state.eHand].filter(isLagerYeast).length;
-    return LAGER_POWER * yeasts;
-  });
 }
 
 // Simple plan: the old habits. Biggest affordable cards first, sensible lanes, no self-overload
@@ -173,7 +160,8 @@ function executeRivalPlan() {
   const ctx = rivalPlanCtx();
   while (ctx.k < ctx.plan.length) rivalPlanStep(ctx);
   state.rivalPlan = null;
-  gainLagering('e', lagerableBudget('e', ctx.remaining));
+  addLagering('e', ctx.remaining);
+  
   return ctx.played;
 }
 
@@ -187,7 +175,7 @@ function executeRivalPlanStepwise(done) {
     if (did) render();
     if (did && ctx.k < ctx.plan.length) { setTimeout(tick, RIVAL_PLAY_DELAY); return; }
     state.rivalPlan = null;
-    gainLagering('e', lagerableBudget('e', ctx.remaining));
+    
     done(ctx.played);
   };
   tick();

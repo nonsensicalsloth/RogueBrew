@@ -108,7 +108,7 @@ function abilityButtonHtml() {
 function renderActions() {
   const el   = document.getElementById('actions');
   const hint = selectedCard !== null
-    ? '<span style="font-size:7px;color:var(--gold);margin-left:8px">▲ CLICK YOUR LANE TO PLAY</span>'
+    ? `<span style="font-size:7px;color:var(--gold);margin-left:8px">▲ CLICK YOUR LANE TO PLAY</span>`
     : '';
 
   if (state.phase === 'mulligan') {
@@ -249,16 +249,17 @@ function render() {
     mashEl.title = `Sticky grains clump: ${CLUMP_SIZE} in a row on your hot side = Stuck Mash (−8). Play something else in between, like a base malt or Rice Hulls.`;
   }
 
-  // Lagering: unspent budget makes crisp cards score more
+  // Lagering: unspent budget waiting for your next crisp card
   const lagerEl = document.getElementById('lager-pill');
   if (lagerEl) {
-    const inPlay = state.phase === 'play' || state.phase === 'between' || state.phase === 'tally';
-    const mine = inPlay ? lagering('p') : 0, theirs = inPlay ? lagering('e') : 0;
-    lagerEl.style.display = mine || theirs ? '' : 'none';
-    lagerEl.textContent = `🧊 LAGERING ${mine}/${LAGER_MAX}${mine ? ` · lager yeast +${mine * LAGER_POWER}` : ''}${theirs ? ` | rival ${theirs}` : ''}`;
-    lagerEl.style.color = mine ? '#81d4fa' : 'var(--dim)';
-    lagerEl.title = `Budget you hold back at the end of your turn becomes Lagering (max ${LAGER_MAX}), up to the total cost of the cards still in your hand. Every crisp yeast on your board gets +${LAGER_POWER} per Lagering.`;
+    const inPlay = state.phase === 'play';
+    const mine = inPlay ? lagering('p') : 0;
+    lagerEl.style.display = mine ? '' : 'none';
+    lagerEl.textContent = `🧊 LAGERING ${mine} · next crisp card +${mine * lagerPower('p')}`;
+    lagerEl.style.color = '#81d4fa';
+    lagerEl.title = `Budget you don't spend becomes Lagering (max ${LAGER_MAX}). The next crisp card you play gets +${lagerPower('p')} per Lagering, then it empties.`;
   }
+
   // Acid: eats a brewery's best lane at the start of each turn, then drops by 1
   const acidEl = document.getElementById('acid-pill');
   if (acidEl) {

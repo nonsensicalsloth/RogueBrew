@@ -49,8 +49,9 @@ function juiceId(c) {
 function juiceBeforeField() {
   if (!juiceOn() || !state || !state.field) return;
   const now = juiceNow();
-  LANES.forEach(l => ['p', 'e'].forEach(w => state.field[l][w].forEach(c => {
-    const pts  = effectivePoints(c, l, w);
+  const all = [];
+  LANES.forEach(l => ['p', 'e'].forEach(w => state.field[l][w].forEach(c => all.push([c, effectivePoints(c, l, w)]))));
+  all.forEach(([c, pts]) => {
     const prev = _jSeen.get(c);
     if (prev === undefined)  _jFx.set(c, { cls: 'fc-enter', t0: now });
     else if (prev !== pts) {
@@ -58,7 +59,7 @@ function juiceBeforeField() {
       _jFloaters.push({ card: c, delta: pts - prev });
     }
     _jSeen.set(c, pts);
-  })));
+  });
 }
 
 // Extra class + attributes for one field card. Animations that are already running keep
