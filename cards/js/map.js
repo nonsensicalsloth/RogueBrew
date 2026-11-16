@@ -555,7 +555,7 @@ function renderMapDraft() {
     </div>`;
   }).join('');
   document.getElementById('map-draft-count').textContent =
-    `${draftState.deck.length} / ${MAX_DECK_SIZE} cards`;
+    `🃏 ${draftState.deck.length}/${MAX_DECK_SIZE}`;
 }
 
 // ── Shop node ──
@@ -729,9 +729,9 @@ function deckPickerHtml(onPick, rowExtra) {
       return `<div class="deck-list-row" onmouseenter="showCardHover(${i}, event)" onmousemove="moveCardHover(event)" onmouseleave="hideCardHover()"
         ${extra.disabled ? 'style="padding:6px 8px;opacity:0.4;cursor:default;"'
                          : `onclick="hideCardHover();${onPick}(${i})" style="cursor:pointer;padding:6px 8px;"`}>
-        <span class="deck-list-count" style="color:${catColor(c.cat)}">${catIcon(c.cat)}</span>
+        <span class="deck-list-art">${cardArtMini(c)}</span>
         <span class="deck-list-name">${c.name}${c._upgraded ? ' ★' : ''}</span>
-        <span style="font-size:7px;color:var(--dim);">${extra.html}</span>
+        <span class="deck-list-extra">${extra.html}</span>
       </div>`;
     }).join('');
 }
@@ -966,10 +966,13 @@ function showMapRest(node) {
   document.getElementById('rest-sub').textContent = 'Take a breather. Choose one:';
   const removeOk = canRemoveCard();
   const missing  = mapState.maxRep - mapState.rep;
-  document.getElementById('rest-choices').innerHTML = `
-    <button class="btn btn-gold" ${missing > 0 ? 'onclick="restRecover()"' : 'style="opacity:0.4;cursor:not-allowed;"'}>😌 RECOVER<br><span style="font-size:6px;">${missing > 0 ? `+${Math.min(REST_HEAL, missing)} reputation (⭐ ${mapState.rep}/${mapState.maxRep})` : 'reputation is full'}</span></button>
-    <button class="btn btn-gold" onclick="renderMapRest('upgrade')">⬆ UPGRADE A CARD<br><span style="font-size:6px;">+${restUpgradeAmount()} pts for the rest of the run</span></button>
-    <button class="btn btn-primary" ${removeOk ? `onclick="renderMapRest('remove')"` : 'style="opacity:0.4;cursor:not-allowed;"'}>🧹 REMOVE A CARD<br><span style="font-size:6px;">${removeOk ? 'trim your deck for free' : `deck is at minimum (${MIN_DECK_SIZE})`}</span></button>`;
+  const opt = (ok, onclick, label, note) => ok
+    ? `<button class="btn btn-primary" onclick="${onclick}"><span>${label}</span><small>${note}</small></button>`
+    : `<button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;"><span>${label}</span><small>${note}</small></button>`;
+  document.getElementById('rest-choices').innerHTML =
+    opt(missing > 0, 'restRecover()', '😌 Recover', missing > 0 ? `+${Math.min(REST_HEAL, missing)} reputation (⭐ ${mapState.rep}/${mapState.maxRep})` : 'reputation is full') +
+    opt(true, "renderMapRest('upgrade')", '⬆ Upgrade a card', `+${restUpgradeAmount()} pts for the rest of the run`) +
+    opt(removeOk, "renderMapRest('remove')", '🧹 Remove a card', removeOk ? 'trim your deck for free' : `deck is at minimum (${MIN_DECK_SIZE})`);
   document.getElementById('rest-confirm').innerHTML =
     `<button class="btn btn-primary" onclick="showMapScreen()">Skip</button>`;
 }
@@ -1131,7 +1134,7 @@ function onBattleLoss() {
   document.getElementById('lost-detail').textContent =
     gap > 0 ? `${state.rivalName} beat you ${sc.e} to ${sc.p} (by ${gap}).` : `A tie with ${state.rivalName}, the judges weren't impressed.`;
   document.getElementById('lost-rep').textContent =
-    `−${loss} Reputation  ·  ⭐ ${mapState.rep}/${mapState.maxRep} left`;
+    `⭐ −${loss} reputation · ${mapState.rep}/${mapState.maxRep} left`;
 }
 
 let rewardOffer = [];
@@ -1174,10 +1177,10 @@ function showActTransition(goldReward) {
   const nextBoss = nextBossNode && getRivalDef(nextBossNode.rival);
   document.getElementById('act-transition-next').textContent =
     `Next: ${ACT_NAMES[mapState.act + 1]}${nextBoss ? ` · Boss: ${nextBoss.name}` : ''}`;
-  document.getElementById('act-transition-deck').textContent =
-    `Your deck: ${draftState.deck.length} cards`;
-  document.getElementById('act-transition-gold').textContent =
-    `Gold: ${mapState.gold}  ·  ⭐ ${mapState.rep}/${mapState.maxRep} (boss win: +${BOSS_HEAL} reputation)`;
+  document.getElementById('act-transition-deck').textContent = `🃏 ${draftState.deck.length}`;
+  document.getElementById('act-transition-gold').textContent = `💰 ${mapState.gold}`;
+  document.getElementById('act-transition-rep').textContent  = `⭐ ${mapState.rep}/${mapState.maxRep}`;
+  document.getElementById('act-transition-note').textContent = `Beating the boss restored ${BOSS_HEAL} reputation.`;
   saveRun({ screen: 'act', gold: goldReward });
 }
 

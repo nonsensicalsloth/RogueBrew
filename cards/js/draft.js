@@ -166,9 +166,9 @@ function renderDeckManager() {
   const col = loadCollection();
   const foot = document.getElementById('collection-footer');
   if (foot) foot.innerHTML = `
-    <div style="font-size:8px;color:var(--gold);">Collection: ${collectionCount()}/${CARD_POOL.length} cards owned</div>
-    <div style="font-size:6px;color:var(--dim);margin:4px 0;">Commons are free. Buy uncommons and rares in shops during runs to unlock them forever. Legendaries come from act 3 challenges.</div>
-    <label style="font-size:6px;color:var(--dim);cursor:pointer;">
+    <div class="res-chips center"><span class="res-chip gold">📚 Collection: ${collectionCount()}/${CARD_POOL.length} cards owned</span></div>
+    <div class="coll-note">Commons are free. Buy uncommons and rares in shops during runs to unlock them forever. Legendaries come from act 3 challenges.</div>
+    <label class="coll-note" style="cursor:pointer;">
       <input type="checkbox" ${col.unlockAll ? 'checked' : ''} onchange="setUnlockAll(this.checked);renderDeckManager();"> Playtest mode: treat every card as owned
     </label>`;
 }
@@ -354,7 +354,8 @@ function renderBuilderDeck() {
     if (!c) return '';
     const n = counts[id];
     return `<div class="deck-list-row">
-      <span class="deck-list-count" style="color:${catColor(c.cat)}">${n}x</span>
+      <span class="deck-list-art">${cardArtMini(c)}</span>
+      <span class="deck-list-count" style="color:${catColor(c.cat)}">${n}×</span>
       <span class="deck-list-name">${c.name}</span>
       <button class="deck-list-remove" onclick="builderRemoveCard('${id}')">−</button>
     </div>`;
@@ -469,9 +470,9 @@ function renderDeckReview() {
       <div class="review-group-cards">
         ${groups[cat].map(c => `
           <div class="review-card cat-${c.cat}">
-            <div class="card-name-banner" style="font-size:5px">${c.name}</div>
-            <div style="font-size:11px;padding:2px;color:${catColor(c.cat)}">+${c.points}</div>
-            <div style="font-size:5px;color:var(--dim);padding:2px;">cost ${c.cost}</div>
+            <div class="review-art">${cardArtMini(c)}</div>
+            <div class="review-name">${c.name}</div>
+            <div class="review-stats"><span style="color:${catColor(c.cat)}">+${c.points}</span> · cost ${c.cost}</div>
           </div>`).join('')}
       </div>
     </div>`).join('');

@@ -80,7 +80,7 @@ function showRelicChoice(goldReward) {
   if (relicOffer.length === 0) { showActTransition(goldReward); return; }
 
   setScreen('relic-screen');
-  document.getElementById('relic-gold').textContent = `+${goldReward} gold earned!`;
+  document.getElementById('relic-gold').innerHTML = `<span class="res-chip gold">💰 +${goldReward} gold</span>`;
   document.getElementById('relic-choices').innerHTML = relicOffer.map((r, i) => `
     <div class="relic-card" onclick="pickRelic(${i})">
       <div class="relic-card-icon">${r.icon}</div>

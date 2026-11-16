@@ -1007,3 +1007,88 @@ body::after {
 .bm-picker { font-family: var(--read-font); font-size: 17px; }
 .bm-picker .bm-level, .bm-picker .bm-btn { font-family: 'Press Start 2P', monospace; font-size: 8px; }
 .bm-desc { font-size: 16px; }
+
+/* ════ Screen polish, part 2: draft, rest, special rooms, equipment, losses, act break, summaries, decks ════ */
+.shelf-msg.bad:not(:empty) { color: var(--red); }
+#map-draft-offer { padding: 18px 0 6px; }
+.res-chip.bad { color: #ff7a7a; border-color: rgba(255,82,82,.6); }
+
+/* Rooms (rest stop, Barrel Room, Lab, Collab Brew, Taproom Night, Supplier Contract) share the event panel */
+#map-special-screen, #map-rest-screen { max-width: 640px; padding-top: 34px; }
+.room-panel #special-body, .room-panel #rest-card-list { margin-top: 4px; }
+.room-panel #special-body > div { justify-content: center; }
+.room-result:not(:empty) { font-family: var(--read-font); font-size: 20px; color: #69f0ae; text-align: center; margin-top: 14px; line-height: 1.2; }
+.rest-panel { border-top-color: #69f0ae; background: radial-gradient(ellipse at 50% 0%, rgba(105,240,174,.08), transparent 70%), var(--bg2); }
+#rest-choices { margin-top: 4px; }
+.room-panel .btn { font-size: 8px; }
+.room-panel .event-options .btn, #rest-choices .btn { font-size: 20px; }
+.room-panel .taproom-breakdown, .taproom-breakdown { font-family: var(--read-font); font-size: 18px; line-height: 1.3; }
+.taproom-total { font-family: var(--read-font); font-size: 20px; }
+
+/* Lists of your cards (rest stop, shop removal, Barrel Room, Lab, deck builder) */
+.deck-list-row { font-family: var(--read-font); font-size: 18px; display: flex; align-items: center; gap: 8px; }
+.deck-list-row:hover { background: rgba(255,255,255,.04); }
+.deck-list-name { flex: 1; font-size: 18px; }
+.deck-list-extra { font-size: 17px; color: var(--dim); }
+.deck-list-art { width: 24px; height: 24px; flex: none; display: inline-flex; }
+.sprite.mini { width: 24px; height: 24px; image-rendering: pixelated; }
+.deck-list-count { font-size: 17px; min-width: 22px; }
+.removal-list, #rest-card-list, #special-body .removal-list { max-height: 360px; overflow-y: auto; border: 1px solid var(--border); background: var(--bg); }
+
+/* Boss equipment */
+#relic-choices { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+.relic-card { width: 170px; padding: 12px 10px 14px; border-radius: 3px; background: radial-gradient(ellipse at 50% 0%, rgba(255,215,0,.08), transparent 70%), var(--bg2); }
+.relic-card-icon { font-size: 30px; }
+.relic-card-name { font-size: 8px; line-height: 1.5; margin: 8px 0 6px; }
+.relic-card-desc { font-family: var(--read-font); font-size: 18px; line-height: 1.15; color: #c5cbe0; }
+
+/* Losing a battle */
+#battle-lost-screen { max-width: 560px; justify-content: flex-start; padding-top: 60px; }
+.loss-panel { border-top-color: var(--red); text-align: center;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,82,82,.10), transparent 70%), var(--bg2); }
+.loss-banner { font-size: 16px; color: var(--red); text-shadow: 0 0 12px rgba(255,82,82,.45); letter-spacing: 2px; margin: 6px 0 14px; }
+.loss-panel .event-desc { text-align: center; }
+.loss-panel .scr-sub { margin-top: 12px; }
+
+/* Between acts */
+#act-transition-screen { max-width: 600px; justify-content: flex-start; padding-top: 60px; }
+.act-panel { border-top-color: var(--gold); text-align: center; background: radial-gradient(ellipse at 50% 0%, rgba(255,215,0,.10), transparent 70%), var(--bg2); }
+.act-panel .event-desc { text-align: center; color: #b3b8ff; }
+
+/* Run summary (win or loss) */
+.run-summary { font-family: var(--read-font); }
+.sum-reason, .sum-line, .sum-unlock { font-family: var(--read-font) !important; font-size: 19px !important; line-height: 1.25; }
+.sum-grid { font-size: 17px; }
+.sum-stat { font-family: var(--read-font); font-size: 18px !important; }
+.sum-deck-title { font-size: 8px; }
+.sum-deck .deck-list-row { font-size: 17px; }
+
+/* Deck manager */
+#deck-slots { display: flex; flex-direction: column; gap: 12px; max-width: 560px; width: 100%; margin: 6px auto 0; }
+.deck-slot { border-radius: 3px; background: linear-gradient(90deg, rgba(108,99,255,.06), transparent 50%), var(--bg2); }
+.deck-slot-name { font-size: 10px; }
+.deck-slot-count, .deck-slot-locked, .deck-slot-empty { font-family: var(--read-font); font-size: 18px !important; }
+.deck-slot-cats { font-family: var(--read-font); font-size: 18px; }
+#collection-footer { font-family: var(--read-font); font-size: 18px; text-align: center; margin-top: 14px; color: #9aa3b8; }
+#collection-footer label { font-size: 17px; }
+
+/* Deck builder */
+.builder-header .res-chip { font-size: 18px; }
+#builder-msg { font-family: var(--read-font); font-size: 18px; }
+.builder-tab { font-size: 8px; }
+.builder-filters, .filter-group { font-family: var(--read-font); font-size: 16px; }
+.filter-group > span { font-family: 'Press Start 2P', monospace; font-size: 7px; color: var(--dim); }
+.builder-deck-head { font-size: 8px; color: var(--gold); margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+.builder-deck-list .deck-list-row { font-size: 17px; padding: 3px 4px; }
+
+/* Recipe review */
+.review-group-label { font-size: 8px; }
+.review-card { font-family: var(--read-font); }
+.coll-note { display: block; font-family: var(--read-font); font-size: 17px; color: #9aa3b8; margin: 8px auto 0; max-width: 560px; }
+.sum-deck-title { font-size: 9px !important; line-height: 1.6; }
+.review-card { width: 104px; padding: 8px 6px; text-align: center; }
+.review-art { display: flex; justify-content: center; }
+.review-art .sprite.mini { width: 32px; height: 32px; }
+.review-name { font-size: 18px; line-height: 1; margin: 4px 0; min-height: 36px; display: flex; align-items: center; justify-content: center; }
+.review-stats { font-size: 17px; color: #9aa3b8; }
+#review-cards { max-width: 820px; margin: 0 auto; width: 100%; }

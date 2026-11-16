@@ -773,6 +773,12 @@ function spriteSvg(shape, base, accent, opts = {}) {
   return (_artCache[key] = `<svg class="sprite" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">${px}</svg>`);
 }
 
+// A small version for lists (deck picker, deck builder)
+function cardArtMini(c) {
+  const { shape, base, accent } = cardArtSpec(c);
+  return spriteSvg(shape, base, accent).replace('class="sprite"', 'class="sprite mini"');
+}
+
 // The art box at the top of a card: sprite plus a faint wash of the card's color behind it
 function cardArtHtml(c) {
   const { shape, base, accent } = cardArtSpec(c);

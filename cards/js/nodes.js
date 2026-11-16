@@ -10,7 +10,10 @@
 
 function showSpecial(title, desc) {
   setScreen('map-special-screen');
-  document.getElementById('special-title').textContent  = title;
+  const t = splitIcon(title);
+  document.getElementById('special-icon').textContent   = t.icon;
+  document.getElementById('special-icon').style.display = t.icon ? '' : 'none';
+  document.getElementById('special-title').textContent  = t.text;
   document.getElementById('special-desc').textContent   = desc;
   document.getElementById('special-body').innerHTML     = '';
   document.getElementById('special-result').textContent = '';

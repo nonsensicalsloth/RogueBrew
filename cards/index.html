@@ -43,13 +43,12 @@
 
 <!-- ===== DECK MANAGER ===== -->
 <div id="deck-manager-screen" class="screen">
-  <div style="text-align:center;margin-bottom:16px;">
-    <div class="wortcraft-title" style="font-size:14px;margin-bottom:6px;" id="deck-manager-title">YOUR DECKS</div>
-    <div style="font-size:8px;color:var(--dim);" id="deck-manager-sub">Build up to 3 decks. Pick one to start a run.</div>
+  <div class="scr-head" style="max-width:560px;">
+    <div><h1 id="deck-manager-title">YOUR DECKS</h1><div class="scr-sub" id="deck-manager-sub">Build up to 3 decks. Pick one to start a run.</div></div>
   </div>
-  <div id="deck-slots" style="display:flex;flex-direction:column;gap:12px;max-width:480px;margin:0 auto;width:100%;"></div>
-  <div id="collection-footer" style="text-align:center;margin-top:14px;"></div>
-  <div style="text-align:center;margin-top:16px;">
+  <div id="deck-slots"></div>
+  <div id="collection-footer"></div>
+  <div class="scr-foot">
     <button class="btn btn-primary" onclick="showTitleScreen()">← BACK</button>
   </div>
 </div>
@@ -61,8 +60,8 @@
       <input id="deck-name-input" type="text" maxlength="24" placeholder="Deck name..."
         style="background:var(--bg2);border:2px solid var(--border);color:var(--text);
                font-family:'Press Start 2P',monospace;font-size:8px;padding:6px 10px;width:160px;">
-      <span style="font-size:8px;color:var(--dim)">Cards: <span id="builder-count">0/15</span></span>
-      <span id="builder-msg" style="font-size:7px;"></span>
+      <span class="res-chip">🃏 <span id="builder-count">0/15</span></span>
+      <span id="builder-msg"></span>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
       <button class="btn btn-gold"    onclick="saveBuilderDeck()">SAVE</button>
@@ -85,9 +84,7 @@
       <div id="builder-card-pool" class="builder-card-pool"></div>
     </div>
     <div class="builder-deck-wrap">
-      <div style="font-size:8px;color:var(--gold);margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:6px;">
-        CURRENT DECK
-      </div>
+      <div class="builder-deck-head">CURRENT DECK</div>
       <div id="builder-deck-list" class="builder-deck-list"></div>
     </div>
   </div>
@@ -106,8 +103,9 @@
 
 <!-- ===== DECK PREVIEW ===== -->
 <div id="review-screen" class="screen">
-  <div class="review-title">YOUR RECIPE</div>
-  <div class="review-sub">Ready to brew?</div>
+  <div class="scr-head">
+    <div><h1>YOUR RECIPE</h1><div class="scr-sub">Ready to brew?</div></div>
+  </div>
   <div id="review-cards"></div>
   <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
     <button class="btn btn-gold"    onclick="startGame()">▶ START RUN</button>
@@ -133,13 +131,15 @@
 
 <!-- ===== MAP DRAFT ===== -->
 <div id="map-draft-screen" class="screen">
-  <div style="text-align:center;margin-bottom:12px;">
-    <div class="wortcraft-title" style="font-size:11px;margin-bottom:6px;">🃏 DRAFT A CARD</div>
-    <div style="font-size:8px;color:var(--dim);" id="map-draft-count"></div>
-    <div style="font-size:7px;color:var(--red);margin-top:4px;" id="map-draft-msg"></div>
+  <div class="scr-head">
+    <div><h1>🃏 DRAFT A CARD</h1><div class="scr-sub">Pick one to add to your deck, or skip.</div></div>
+    <div class="res-chips"><span class="res-chip" id="map-draft-count"></span></div>
   </div>
-  <div id="map-draft-offer"></div>
-  <div style="text-align:center;margin-top:16px;">
+  <div class="shelf">
+    <div id="map-draft-offer"></div>
+    <div class="shelf-msg bad" id="map-draft-msg"></div>
+  </div>
+  <div class="scr-foot">
     <button class="btn btn-primary" onclick="skipMapDraft()">Skip</button>
   </div>
 </div>
@@ -175,30 +175,36 @@
 
 <!-- ===== SPECIAL NODES (barrel, collab, lab, taproom, contract) ===== -->
 <div id="map-special-screen" class="screen">
-  <div class="event-title" id="special-title"></div>
-  <div class="event-desc"  id="special-desc"></div>
-  <div id="special-body"></div>
-  <div class="rest-result" id="special-result"></div>
-  <div id="special-footer"></div>
+  <div class="event-panel room-panel">
+    <div class="event-icon" id="special-icon"></div>
+    <div class="event-title" id="special-title"></div>
+    <div class="event-desc"  id="special-desc"></div>
+    <div id="special-body"></div>
+    <div class="room-result" id="special-result"></div>
+    <div class="scr-foot" id="special-footer"></div>
+  </div>
 </div>
 
 <!-- ===== RELIC REWARD ===== -->
 <div id="relic-screen" class="screen">
-  <div class="reward-title">💀 BOSS DEFEATED!</div>
-  <div id="relic-gold" style="font-size:8px;color:var(--gold);margin-bottom:6px;"></div>
-  <div style="font-size:8px;color:var(--dim);margin-bottom:12px;">Choose a piece of brewing equipment. It stays with you for the rest of the run.</div>
+  <div class="victory-banner">BOSS DEFEATED!</div>
+  <div id="relic-gold" class="res-chips center"></div>
+  <div class="scr-sub center">Choose a piece of brewing equipment. It stays with you for the rest of the run.</div>
   <div id="relic-choices"></div>
 </div>
 
 <!-- ===== REST SCREEN ===== -->
 <div id="map-rest-screen" class="screen">
-  <div class="rest-title">🛌 REST STOP</div>
-  <div class="rest-sub" id="rest-sub">Take a breather. Choose one:</div>
-  <div id="rest-choices" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:12px;"></div>
-  <div id="rest-card-list"></div>
-  <div class="rest-result" id="rest-result"></div>
-  <div id="rest-confirm">
-    <button class="btn btn-primary" onclick="showMapScreen()">Skip upgrade</button>
+  <div class="event-panel room-panel rest-panel">
+    <div class="event-icon">🛌</div>
+    <div class="event-title">REST STOP</div>
+    <div class="event-desc" id="rest-sub">Take a breather. Choose one:</div>
+    <div id="rest-choices" class="event-options"></div>
+    <div id="rest-card-list"></div>
+    <div class="room-result" id="rest-result"></div>
+    <div class="scr-foot" id="rest-confirm">
+      <button class="btn btn-primary" onclick="showMapScreen()">Skip</button>
+    </div>
   </div>
 </div>
 
@@ -215,20 +221,28 @@
 
 <!-- ===== BATTLE LOST (not fatal) ===== -->
 <div id="battle-lost-screen" class="screen">
-  <div class="run-loss-title" style="font-size:16px;">BATCH REJECTED</div>
-  <div id="lost-detail" style="font-size:8px;color:var(--dim);"></div>
-  <div id="lost-rep" style="font-size:10px;color:var(--red);"></div>
-  <div style="font-size:7px;color:var(--dim);max-width:320px;line-height:1.8;">Close losses cost less reputation than blowouts. Rest stops can recover it, and beating a boss restores some too.</div>
-  <button class="btn btn-gold" style="margin-top:12px;" onclick="showMapScreen()">Back to the map →</button>
+  <div class="event-panel loss-panel">
+    <div class="loss-banner">BATCH REJECTED</div>
+    <div class="event-desc" id="lost-detail"></div>
+    <div class="res-chips center"><span class="res-chip bad" id="lost-rep"></span></div>
+    <div class="scr-sub center">Close losses cost less reputation than blowouts. Rest stops can recover it, and beating a boss restores some too.</div>
+    <div class="scr-foot"><button class="btn btn-gold" onclick="showMapScreen()">Back to the map →</button></div>
+  </div>
 </div>
 
 <!-- ===== ACT TRANSITION ===== -->
 <div id="act-transition-screen" class="screen">
-  <div class="wortcraft-title" id="act-transition-title">Act Complete!</div>
-  <div style="font-size:9px;color:var(--accent);" id="act-transition-next"></div>
-  <div style="font-size:8px;color:var(--dim);" id="act-transition-deck"></div>
-  <div style="font-size:8px;color:var(--gold);" id="act-transition-gold"></div>
-  <button class="btn btn-gold" style="margin-top:16px;" onclick="advanceAct()">▶ CONTINUE</button>
+  <div class="event-panel act-panel">
+    <div class="victory-banner" id="act-transition-title">Act Complete!</div>
+    <div class="event-desc" id="act-transition-next"></div>
+    <div class="res-chips center">
+      <span class="res-chip gold" id="act-transition-gold"></span>
+      <span class="res-chip rep" id="act-transition-rep"></span>
+      <span class="res-chip" id="act-transition-deck"></span>
+    </div>
+    <div class="scr-sub center" id="act-transition-note"></div>
+    <div class="scr-foot"><button class="btn btn-gold" onclick="advanceAct()">▶ CONTINUE</button></div>
+  </div>
 </div>
 
 <!-- ===== RUN WIN ===== -->
