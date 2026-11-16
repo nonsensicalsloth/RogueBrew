@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'hop flavors (Nov 16)';
+const CARDS_VERSION = 'contamination tools (Nov 16)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -333,7 +333,7 @@ const TOKEN_CARDS = [
   { id:'mishap',      name:'Brew Day Mishap', cat:'token', lane:'hot', points:-10, cost:0, tags:[],   desc:'Something went wrong. Sanitize, CIP Cycle or Fining Agent clear it.' },
   { id:'acidburn',    name:'Acid Burn',    cat:'token', lane:'cold', points:0,   cost:0, tags:['sour'],   desc:'Points eaten away by the rival\'s Acid. Sanitize, CIP Cycle or Fining Agent clear it.' },
   { id:'stuckmash',   name:'Stuck Mash',   cat:'token', lane:'hot',  points:-8,  cost:0, tags:[],         desc:'Three sticky grains in a row clumped. Rice Hulls, Sanitize, CIP Cycle or Fining Agent clear it.' },
-  { id:'contam_soft',   name:'Contamination',  cat:'token', lane:'cold', points:-5,  cost:0, tags:['funky'],  desc:'Softened Contamination (a clean yeast outcompeted it). Auto-plays to cold side when drawn.' },
+  { id:'contam_soft',   name:'Contamination',  cat:'token', lane:'cold', points:-5,  cost:0, tags:['funky'],  desc:'Softened Contamination, caught early by the right equipment. Must be poured onto your cold side when drawn.' },
 ];
 
 function getTokenDef(id) {

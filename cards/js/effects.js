@@ -1785,14 +1785,14 @@ function applyTurnEffects(who) {
 // ── Contamination auto-play check ──
 // Called at start of player's turn — if a contamination card is in hand, auto-play it
 
-// A clean yeast (or the Lab Microscope) outcompetes Contamination when it lands
+// Only the right tools soften Contamination when it lands: the Lab Microscope or the Wild Cellar.
+// (Getting rid of it takes process cards: Fining Agent, CIP Cycle, Heat Kill.)
 function softenContamination(c, who) {
   if (c.id !== 'contamination') return c;
-  const cleanYeast = getLaneCards('cold', who).some(y => y.cat === 'yeast' && y.tags && y.tags.includes('clean'))
-                  || (who === 'p' && hasRelic('microscope'))
-                  || (who === 'p' && activeBrewery() === 'wildcellar');   // Wild Cellar passive
-  if (!cleanYeast) return c;
-  addLog('A clean yeast outcompetes the Contamination, softened to −5.', who === 'p' ? 'player' : 'enemy');
+  const tool = who === 'p' && hasRelic('microscope') ? 'Lab Microscope'
+             : who === 'p' && activeBrewery() === 'wildcellar' ? 'Wild Cellar' : null;
+  if (!tool) return c;
+  addLog(`${tool}: the Contamination is caught early, softened to −5.`, 'player');
   return createToken('contam_soft');
 }
 

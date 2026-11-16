@@ -143,7 +143,7 @@ const HOWTO_CONTENT = {
     ]) +
     hbox('Things to watch for',
       hli([
-        `⚠️ <b>Contamination</b> goes into your hand when drawn and <b>must be poured onto your cold side</b> before you can do anything else. A clean yeast softens it.`,
+        `⚠️ <b>Contamination</b> goes into your hand when drawn and <b>must be poured onto your cold side</b> before you can do anything else. Fining Agent, CIP Cycle and Heat Kill clean it up.`,
         `Some cards ask you to <b>choose a card on your board</b>. Valid choices glow gold.`,
         `Your brewery <b>ability button</b> sits next to End Turn. You can use it once per turn.`,
         `Rivals can fight back: removing your best card, scorching it with chili, or contaminating you.`,
