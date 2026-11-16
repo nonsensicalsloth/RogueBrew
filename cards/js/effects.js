@@ -1669,7 +1669,7 @@ function printedPoints(c) {
 const other = who => (who === 'p' ? 'e' : 'p');
 
 // ── Lagering ──
-// Budget you don't spend by the end of your turn becomes Lagering (up to LAGER_MAX).
+// Budget you don't spend by the end of your turn becomes Lagering (up to LAGER_MAX), if a crisp card is in hand.
 // The next crisp card you play gets +LAGER_POWER per Lagering, and that empties it.
 const LAGER_POWER      = 3;
 const LAGER_MAX        = 10;
@@ -1689,6 +1689,13 @@ function addLagering(who, n, source) {
   if (state.lager[who] > before) {
     addLog(`🧊 ${source ? source + ': ' : ''}${who === 'p' ? 'Lagering' : 'Rival Lagering'} ${state.lager[who]}, next crisp card +${state.lager[who] * lagerPower(who)}.`, who === 'p' ? 'player' : 'enemy');
   }
+}
+
+// End of turn: unspent budget becomes Lagering, but only if there's a crisp card in hand to use it
+function bankLagering(who, n) {
+  const hand = who === 'p' ? state.pHand : state.eHand;
+  if (!n || n <= 0 || !hand.some(isCrisp)) return;
+  addLagering(who, n);
 }
 
 // Called when a card is played: a crisp card drinks the whole tank

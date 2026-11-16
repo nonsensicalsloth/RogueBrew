@@ -917,3 +917,9 @@ body::after {
 .lchip.lc-warn { animation: roastDanger .8s ease-in-out infinite; }
 .lchip.lc-bad.lc-pulse { animation: roastBurnt 1.2s ease-in-out infinite; background: rgba(255,82,82,.15); }
 .hand-cards > .card { flex-shrink: 0; }
+
+/* Crowded hand: later cards cover earlier ones completely, so stray gems don't float on top */
+.hand-cards.hand-fanned > .card:not(.selected-card):not(.must-play):not(.card-new):not(.mulligan-on) { box-shadow: -6px 0 10px rgba(0,0,0,.55); }
+.hand-cards.hand-fanned > .card:hover,
+.hand-cards.hand-fanned > .card.selected-card { z-index: 100 !important; }
+.hand-cards.hand-fanned > .card:not(:last-child):not(:hover):not(.selected-card) .card-pts-gem { visibility: hidden; }

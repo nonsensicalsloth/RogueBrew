@@ -73,7 +73,12 @@ function fitHand(el) {
   if (!n) return;
   const cw = cards[0].offsetWidth || 90, room = el.clientWidth - 20;
   const gap = n > 1 && room > 0 ? Math.min(14, Math.floor((room - n * cw) / (n - 1))) : 14;
-  for (let i = 0; i < n; i++) cards[i].style.marginLeft = i ? `${gap}px` : '0';
+  // Overlapping: each card sits fully on top of the one before it (gems included); hover or select lifts it
+  el.classList.toggle('hand-fanned', gap < 0);
+  for (let i = 0; i < n; i++) {
+    cards[i].style.marginLeft = i ? `${gap}px` : '0';
+    cards[i].style.zIndex = gap < 0 ? i + 1 : '';
+  }
 }
 
 function renderHand() {
@@ -279,8 +284,8 @@ function render() {
     });
     // Lagering: waits in your hand for the next crisp card
     const lag = lagering('p');
-    if (lag) chip('hand', 'lc-lager', `🧊 lagering ${lag} · next crisp card +${lag * lagerPower('p')}`,
-      `Budget you don't spend becomes Lagering (max ${LAGER_MAX}). The next crisp card you play gets +${lagerPower('p')} per Lagering, then it empties.`);
+    if (lag) chip('hand', 'lc-lager', (state.pHand.some(isCrisp) ? `🧊 lagering ${lag} · next crisp card +${lag * lagerPower('p')}` : `🧊 lagering ${lag} · waiting for a crisp card (+${lag * lagerPower('p')})`),
+      `Unspent budget becomes Lagering (max ${LAGER_MAX}) if you end your turn with a crisp card in hand. The next crisp card you play gets +${lagerPower('p')} per Lagering, then it empties.`);
   }
   Object.entries(chipsFor).forEach(([k, list]) => {
     const el = document.getElementById(k === 'hand' ? 'hand-chips' : `chips-${k}`);

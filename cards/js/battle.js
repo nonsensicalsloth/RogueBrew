@@ -163,7 +163,7 @@ function endTurn() {
   }
   selectedCard = null;
   // Whatever budget you didn't spend goes into Lagering for your next crisp card
-  if (state.phase === 'play') addLagering('p', state.budget - state.budgetUsed);
+  if (state.phase === 'play') bankLagering('p', state.budget - state.budgetUsed);
   state.newCards = new Set();
   state.rivalSummary = [];
   state.playerTurn = false;

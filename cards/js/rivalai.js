@@ -160,7 +160,7 @@ function executeRivalPlan() {
   const ctx = rivalPlanCtx();
   while (ctx.k < ctx.plan.length) rivalPlanStep(ctx);
   state.rivalPlan = null;
-  addLagering('e', ctx.remaining);
+  bankLagering('e', ctx.remaining);
   
   return ctx.played;
 }
@@ -175,7 +175,7 @@ function executeRivalPlanStepwise(done) {
     if (did) render();
     if (did && ctx.k < ctx.plan.length) { setTimeout(tick, RIVAL_PLAY_DELAY); return; }
     state.rivalPlan = null;
-    
+    bankLagering('e', ctx.remaining);
     done(ctx.played);
   };
   tick();
