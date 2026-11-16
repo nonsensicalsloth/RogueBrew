@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'map variety (Nov 16)';
+const CARDS_VERSION = 'hop flavors (Nov 16)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -169,13 +169,13 @@ const CARD_POOL = [
 
   // Modern American
   { id:'citra',      name:'Citra',              cat:'hop', lane:'both', points:15, cost:2, tags:['citrus','tropical'],               desc:'Draw a card when played.' },
-  { id:'mosaic',     name:'Mosaic',             cat:'hop', lane:'both', points:14, cost:2, tags:['fruity','tropical','piney'],                desc:'+2 for each other hop variety on your board.' },
+  { id:'mosaic',     name:'Mosaic',             cat:'hop', lane:'both', points:14, cost:2, tags:['fruity','tropical','piney'],                desc:'+2 for each other tropical or fruity card on your board.' },
   { id:'strata',     name:'Strata',             cat:'hop', lane:'both', points:19, cost:3, tags:['dank','fruity','tropical'],         desc:'+3 for each other dank or tropical card on your board.' },
   { id:'idaho7',     name:'Idaho 7',            cat:'hop', lane:'both', points:14, cost:2, tags:['tropical','piney','earthy'],       desc:'+6 if both a tropical and a piney card are on your board.' },
   { id:'talus',      name:'Talus',              cat:'hop', lane:'both', points:14, cost:2, tags:['citrus','piney','earthy'],     desc:'Dry hop (cold side): every other citrus or piney card on your board gets +2.' },
   { id:'sabro',      name:'Sabro',              cat:'hop', lane:'both', points:14, cost:2, tags:['tropical','citrus','smooth'],     desc:'All other smooth cards on your board get +2.' },
-  { id:'eldorado',   name:'El Dorado',          cat:'hop', lane:'both', points:14, cost:2, tags:['fruity','sweet'],               desc:'+2 for each sweet adjunct on your hot side.' },
-  { id:'amarillo',   name:'Amarillo',           cat:'hop', lane:'both', points:18, cost:2, tags:['citrus','floral'],              desc:'+2 for each fruity adjunct on your hot side.' },
+  { id:'eldorado',   name:'El Dorado',          cat:'hop', lane:'both', points:14, cost:2, tags:['fruity','tropical','sweet'],               desc:'+2 for each other fruity card on your board.' },
+  { id:'amarillo',   name:'Amarillo',           cat:'hop', lane:'both', points:14, cost:2, tags:['citrus','floral'],              desc:'Every other citrus card on your board gets +2.' },
 
   // Southern Hemisphere
   { id:'galaxy',     name:'Galaxy',             cat:'hop', lane:'both', points:16, cost:2, tags:['tropical','fruity','citrus'],       desc:'+8 if 2+ hazy cards are on your board.' },
@@ -193,7 +193,7 @@ const CARD_POOL = [
   // ══════════════════════════════════════════════════════════════
 
   // Clean ale
-  { id:'chico',      name:'Cal Ale',            cat:'yeast', lane:'cold', points:6,  cost:2, tags:['crisp','clean'],              desc:'+2 per turn. On play: +1 per hop and per base malt on your board.' },
+  { id:'chico',      name:'Cal Ale',            cat:'yeast', lane:'cold', points:6,  cost:2, tags:['crisp','clean'],              desc:'+2 per turn. On play: +2 per citrus, piney or dank card on your board.' },
   { id:'barbarian',  name:'Barbarian',          cat:'yeast', lane:'cold', points:6,  cost:2, tags:['fruity','clean'],             desc:'+2 per turn. On play: +2 per hop on your board.' },
   { id:'london3',    name:'London Ale III',     cat:'yeast', lane:'cold', points:6,  cost:2, tags:['hazy','smooth','fruity'],     desc:'+2 per turn. On play: biotransformation, every hop on your cold side gets +4. +2 per hazy card.' },
   { id:'englishale', name:'English Ale',        cat:'yeast', lane:'cold', points:6,  cost:2, tags:['fruity','malty'],          desc:'+2 per turn. On play: +3 per biscuity, malty, or earthy card on your board.' },

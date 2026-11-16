@@ -1374,9 +1374,10 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'mosaic': {
-      const varieties = new Set(allMine.filter(c => c !== card && c.cat === 'hop').map(c => c.id)).size;
-      card.points += varieties * 2;
-      addLog(`Mosaic: +${varieties * 2} pts (${varieties} hop varieties).`, 'player');
+      // Hazy: rewards tropical and fruity
+      const tf = allMine.filter(c => c !== card && c.tags && (c.tags.includes('tropical') || c.tags.includes('fruity'))).length;
+      card.points += tf * 2;
+      addLog(`Mosaic: +${tf * 2} (${tf} tropical or fruity card(s)).`, who === 'p' ? 'player' : 'enemy');
       break;
     }
 
@@ -1409,16 +1410,17 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'eldorado': {
-      const sweetAdj = hotCards.filter(c => c.cat === 'adjunct' && c.tags && c.tags.includes('sweet')).length;
-      card.points += sweetAdj * 2;
-      addLog(`El Dorado: +${sweetAdj * 2} pts (${sweetAdj} sweet adjuncts).`, 'player');
+      const fr = allMine.filter(c => c !== card && c.tags && c.tags.includes('fruity')).length;
+      card.points += fr * 2;
+      addLog(`El Dorado: +${fr * 2} (${fr} other fruity card(s)).`, who === 'p' ? 'player' : 'enemy');
       break;
     }
 
     case 'amarillo': {
-      const fruityAdj = hotCards.filter(c => c.cat === 'adjunct' && c.tags && c.tags.includes('fruity')).length;
-      card.points += fruityAdj * 2;
-      addLog(`Amarillo: +${fruityAdj * 2} pts (${fruityAdj} fruity adjuncts).`, 'player');
+      // The citrus bridge between West Coast and hazy: lifts every other citrus card
+      const isCitrus = c => c !== card && c.cat !== 'token' && c.tags && c.tags.includes('citrus');
+      const n = buffLaneCards('hot', who, 2, isCitrus) + buffLaneCards('cold', who, 2, isCitrus);
+      addLog(`Amarillo: +2 to ${n} other citrus card(s).`, who === 'p' ? 'player' : 'enemy');
       break;
     }
 
@@ -1467,10 +1469,10 @@ function applyCardEffect(card, lane, who) {
 
     // Clean ale
     case 'chico': {
-      const hops  = countCat('hop', who);
-      const bases = baseMaltCount(hotCards);
-      card.points += hops + bases;
-      addLog(`Cal Ale: +${hops + bases} (hops + base malts).`, 'player');
+      // West Coast yeast: rewards citrus, piney and dank
+      const wc = allMine.filter(c => c !== card && c.tags && ['citrus', 'piney', 'dank'].some(t => c.tags.includes(t))).length;
+      card.points += wc * 2;
+      addLog(`Cal Ale: +${wc * 2} (${wc} citrus, piney or dank card(s)).`, who === 'p' ? 'player' : 'enemy');
       break;
     }
 
