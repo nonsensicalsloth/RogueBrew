@@ -233,3 +233,23 @@
 .card-art .sprite { width: 48px; height: 48px; image-rendering: pixelated; filter: drop-shadow(0 2px 0 rgba(0,0,0,.5)); }
 .card-art .twinkle { animation: artTwinkle 2.4s ease-in-out infinite; }
 @keyframes artTwinkle { 0%, 70%, 100% { opacity: 1; } 80% { opacity: .15; } 90% { opacity: .8; } }
+
+/* ── Board cards: sprite, name, tags, points ── */
+.field-card { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 2px 6px;
+  max-width: 190px; min-width: 120px; padding: 3px 7px 3px 4px; transition: opacity .15s, box-shadow .15s, transform .15s; }
+.field-card-art { display: flex; }
+.field-card-art .sprite.mini { width: 22px; height: 22px; }
+.field-card-main { min-width: 0; }
+.field-card-name { font-size: 15px !important; color: var(--text) !important; margin: 0 !important; line-height: 1; }
+.field-card-tags { display: flex; flex-wrap: wrap; gap: 0 5px; font-family: var(--read-font); font-size: 13px; line-height: 1; margin-top: 1px; }
+.ftag { border: none !important; opacity: .85; }
+.field-card-pts { font-size: 9px; padding-left: 2px; }
+.field-card.field-card-hidden { display: block; min-width: 90px; }
+
+/* Tag highlighting: board cards that match what you're hovering or holding */
+.field-card.tag-match { box-shadow: 0 0 0 1px var(--gold), 0 0 10px rgba(255,215,0,.55); transform: translateY(-2px); }
+.field-card.tag-dim { opacity: .45; }
+.ftag.tag-hit { opacity: 1; text-decoration: underline; text-underline-offset: 2px; font-weight: bold; }
+
+/* Tag words inside card text get their tag's color */
+.card-effect-text .kw, .relic-card-desc .kw { border: none; padding: 0; font-weight: bold; }

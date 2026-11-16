@@ -18,10 +18,42 @@ function fieldCardHtml(c, lane, who, idx) {
   const pts  = effectivePoints(c, lane, who);
   const sign = pts >= 0 ? '+' : '';
   const fx   = juiceCardAttrs(c);
-  return `<div class="field-card ${who}${pts < 0 ? ' field-card-neg' : ''}${target ? ' field-card-target' : ''}${fx.cls}"${fx.attrs} ${target ? `onclick="event.stopPropagation();${session ? `sessionPick('${lane}', ${idx})` : `pickBoardTarget('${lane}', ${idx})`}"` : ''} title="${c.name}: ${c.points} pts${pts !== c.points ? ` + ${pts - c.points} synergy = ${pts}` : ''}">
-    <div class="field-card-name">${c.name}</div>
+  const tags = (c.tags || []);
+  const refs = cardRefTags(c);
+  return `<div class="field-card ${who}${pts < 0 ? ' field-card-neg' : ''}${target ? ' field-card-target' : ''}${fx.cls}"${fx.attrs}
+    data-tags="${tags.join(' ')}" data-refs="${refs.join(' ')}" onmouseenter="tagHoverRefs(this.dataset.refs)" onmouseleave="tagHover(null)"
+    ${target ? `onclick="event.stopPropagation();${session ? `sessionPick('${lane}', ${idx})` : `pickBoardTarget('${lane}', ${idx})`}"` : ''} title="${c.name}: ${c.points} pts${pts !== c.points ? ` + ${pts - c.points} synergy = ${pts}` : ''}${c.desc ? `\n${c.desc.replace(/"/g, '&quot;')}` : ''}">
+    <div class="field-card-art">${cardArtMini(c)}</div>
+    <div class="field-card-main">
+      <div class="field-card-name">${c.name}</div>
+      ${tags.length ? `<div class="field-card-tags">${tags.map(t => `<span class="ftag tag-${t}" data-tag="${t}">${t}</span>`).join('')}</div>` : ''}
+    </div>
     <div class="field-card-pts">${sign}${pts}${mult > 1 ? `<span class="field-card-mult"> ×${mult}</span>` : ''}</div>
   </div>`;
+}
+
+// ── Tag highlighting ──
+// Hover (or select) a card that mentions tags, and your board cards with those tags light up.
+let _hoverRefs = null;
+function tagHover(handIdx) {
+  _hoverRefs = handIdx === null || !state.pHand[handIdx] ? null : cardRefTags(state.pHand[handIdx]);
+  applyTagHighlight();
+}
+function tagHoverRefs(refStr) {
+  _hoverRefs = refStr ? refStr.split(' ') : [];
+  applyTagHighlight();
+}
+function applyTagHighlight() {
+  const sel = typeof selectedCard !== 'undefined' && selectedCard !== null && state.pHand ? state.pHand[selectedCard] : null;
+  const refs = _hoverRefs !== null ? _hoverRefs : sel ? cardRefTags(sel) : [];
+  const on = refs.length > 0;
+  document.querySelectorAll('.field-card.p').forEach(el => {
+    const tags = (el.dataset.tags || '').split(' ');
+    const hit = on && tags.some(t => refs.includes(t));
+    el.classList.toggle('tag-match', hit);
+    el.classList.toggle('tag-dim', on && !hit);
+    el.querySelectorAll('.ftag').forEach(s => s.classList.toggle('tag-hit', on && refs.includes(s.dataset.tag)));
+  });
 }
 
 function renderField() {
@@ -65,6 +97,8 @@ ${fieldCardHtml(c, l, 'e')}`).join('')
     if (rivalHidden()) { const he = document.getElementById(l === 'hot' ? 'hs-e' : 'cs-e'); he._jv = undefined; he.textContent = '?? pts'; }
     else juiceCount(document.getElementById(l === 'hot' ? 'hs-e' : 'cs-e'), laneScore(l, 'e'), v => v + ' pts');
   });
+  _hoverRefs = null;          // the board was redrawn, so any hover is stale; the selected card still counts
+  applyTagHighlight();
 }
 
 // Keep the hand on one row: cards space out normally, then overlap a little once it gets crowded

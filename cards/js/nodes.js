@@ -38,7 +38,7 @@ function specialCardHtml(c, onclick) {
     ${cardArtHtml(c)}
     ${rarityBar(c)}<div class="card-name-banner">${c.name}</div>
     <div class="card-tags-row">${tagHtml(c.tags)}</div>
-    <div class="card-effect-text">${c.desc || ''}</div>
+    <div class="card-effect-text">${richDesc(c.desc)}</div>
     <div class="card-restrict">${lane}${rarityLabel(c)}</div>
   </div>`;
 }

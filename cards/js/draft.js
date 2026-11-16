@@ -20,6 +20,35 @@ function tagHtml(tags) {
   return (tags || []).map(t => `<span class="card-tag tag-${t}">${t}</span>`).join('');
 }
 
+// Every tag used by any card (built once, after the card list loads)
+let _allTags = null;
+function allTags() {
+  if (!_allTags) {
+    _allTags = new Set();
+    [...CARD_POOL, ...(typeof TOKEN_CARDS !== 'undefined' ? TOKEN_CARDS : [])].forEach(c => (c.tags || []).forEach(t => _allTags.add(t)));
+  }
+  return _allTags;
+}
+const _tagRe = {};
+function tagRegex(t) {
+  // whole words only; "dry hop" is a technique, not the dry tag
+  const after = t === 'dry' ? '(?![a-z]|\\s+hop)' : '(?![a-z])';
+  return _tagRe[t] || (_tagRe[t] = new RegExp(`(^|[^a-z-])(${t.replace(/[-]/g, '\\-')})${after}`, 'gi'));
+}
+
+// Tags a card's text talks about ("every other citrus card..."), so we can point at them on the board
+function cardRefTags(c) {
+  const text = (c && c.desc) || '';
+  return [...allTags()].filter(t => tagRegex(t).test(text) && (tagRegex(t).lastIndex = 0, true));
+}
+
+// Card text with tag words colored like their tag
+function richDesc(text) {
+  let out = text || '';
+  allTags().forEach(t => { out = out.replace(tagRegex(t), (m, pre, word) => `${pre}<span class="kw tag-${t}">${word}</span>`); });
+  return out;
+}
+
 // Rarity: a coloured strip under the art, and a label in the footer for uncommon/rare
 function rarityBar(c) {
   const r = c.rarity || 'common';
@@ -42,13 +71,14 @@ function cardHtml(c, i, mode, extra='', shownCost=null, preview=null) {
   if (mode === 'mulligan')   clickFn = `toggleMulligan(${i})`;
   else if (mode === 'play')  clickFn = `selectCard(${i})`;
   else if (mode === 'build') clickFn = `builderAddCard('${c.id}')`;
-  return `<div class="card cat-${c.cat} ${extra}" onclick="${clickFn}">
+  const hover = mode === 'play' ? ` onmouseenter="tagHover(${i})" onmouseleave="tagHover(null)"` : '';
+  return `<div class="card cat-${c.cat} ${extra}" onclick="${clickFn}"${hover}>
     <div class="card-cost-gem${costCls}" ${cost < c.cost ? `title="Normally ${c.cost}"` : ''}>${cost}</div>
     <div class="card-pts-gem${ptsCls}" ${preview ? `title="Printed: ${c.points}"` : ''}>${pts}</div>
     ${cardArtHtml(c)}
     ${rarityBar(c)}<div class="card-name-banner">${c.name}</div>
     <div class="card-tags-row">${tagHtml(c.tags)}</div>
-    <div class="card-effect-text"><span>${c.desc || ''}${nowNote}</span></div>
+    <div class="card-effect-text"><span>${richDesc(c.desc)}${nowNote}</span></div>
     <div class="card-restrict">${lane}${rarityLabel(c)}</div>
   </div>`;
 }
@@ -338,7 +368,7 @@ function renderBuilderCards() {
       ${cardArtHtml(c)}
       ${rarityBar(c)}<div class="card-name-banner">${c.name}</div>
       <div class="card-tags-row">${tagHtml(c.tags)}</div>
-      <div class="card-effect-text">${c.desc || ''}</div>
+      <div class="card-effect-text">${richDesc(c.desc)}</div>
       <div class="card-restrict">${lane}${rarityLabel(c)}</div>
     </div>`;
   }).join('');
