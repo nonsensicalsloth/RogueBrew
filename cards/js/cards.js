@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'new battle layout (Nov 16)';
+const CARDS_VERSION = 'carapils fix (Nov 16)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -40,7 +40,7 @@ const CARD_POOL = [
   { id:'crystal120', name:'Crystal 120',   cat:'malt', lane:'hot', points:12, cost:2, tags:['sweet','roasty'],          desc:'Choose a crystal malt on your hot side. Crystal 120 absorbs it and gains double its points.' },
 
   // ── Specialty / Mid-range ──
-  { id:'carapils',   name:'Carapils',      cat:'malt', lane:'hot', points:6,  cost:1, tags:['smooth'],          desc:'Adjacent cards on hot side each get +3 pts.' },
+  { id:'carapils',   name:'Carapils',      cat:'malt', lane:'hot', points:6,  cost:1, tags:['smooth'],          desc:'Cards next to this on your hot side get +3.' },
   { id:'specialb',   name:'Special B',     cat:'malt', lane:'hot', points:6, cost:2, tags:['sweet','roasty'],          desc:'Score = 6 + roast tokens x6.' },
   { id:'melanoidin', name:'Melanoidin',    cat:'malt', lane:'hot', points:14, cost:2, tags:['malty','toasty'],          desc:'Scores ×2 with 1 copy in your discard pile, ×3 with 2, and so on. Its value cannot be reduced by other cards.' },
   { id:'aromatic',   name:'Aromatic Malt', cat:'malt', lane:'hot', points:14, cost:2, tags:['malty','bready'],          desc:'Copies the on-play effect of the last malt you played this round.' },

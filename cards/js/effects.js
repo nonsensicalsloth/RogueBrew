@@ -917,11 +917,13 @@ function applyCardEffect(card, lane, who) {
     // ── Malts: specialty ──
 
     case 'carapils': {
+      // Carapils itself is a standing bonus (see carapilsBonus). Aromatic copying it gives a one-time +3 to its neighbors.
+      if (!card._aromaticCopy) break;
       const hotList = getLaneCards('hot', who);
       const idx = hotList.indexOf(card);
       const neighbors = [hotList[idx-1], hotList[idx+1]].filter(Boolean);
       neighbors.forEach(n => { if (n.cat !== 'token' && !n._locked) n.points += 3; });
-      if (neighbors.length) addLog(`Carapils: +3 to ${neighbors.length} adjacent card(s).`, 'player');
+      if (neighbors.length) addLog(`Aromatic Malt (as Carapils): +3 to ${neighbors.length} adjacent card(s).`, 'player');
       break;
     }
 
@@ -948,9 +950,9 @@ function applyCardEffect(card, lane, who) {
       } else {
         addLog(`Aromatic Malt: copying ${prev.name}...`, 'player');
         const realId = card.id, realCost = card.cost;
-        card.id = prev.id; card.cost = prev.cost;
+        card.id = prev.id; card.cost = prev.cost; card._aromaticCopy = true;
         applyCardEffect(card, lane, who);
-        card.id = realId; card.cost = realCost;
+        card.id = realId; card.cost = realCost; delete card._aromaticCopy;
       }
       break;
     }
@@ -1738,8 +1740,17 @@ function tickAcid(who) {
 // Fruit Pediococcus can eat
 const isFruit = c => c.cat === 'adjunct' && c.tags && (c.tags.includes('fruity') || c.tags.includes('tropical'));
 
+// Carapils: every card next to it on the hot side gets +3, for as long as they stay neighbors
+const CARAPILS_BONUS = 3;
+function carapilsBonus(c, lane, who) {
+  if (lane !== 'hot' || c.cat === 'token' || c._locked) return 0;
+  const list = getLaneCards('hot', who), i = list.indexOf(c);
+  if (i < 0) return 0;
+  return [list[i - 1], list[i + 1]].filter(n => n && n.id === 'carapils').length * CARAPILS_BONUS;
+}
+
 function effectivePoints(c, lane, who) {
-  const roast = roastBonus(c, who);
+  const roast = roastBonus(c, who) + carapilsBonus(c, lane, who);
   const m = synergyMultiplier(c, lane, who);
   if (m === 1) return rulePoints(c, c.points + roast);
   const base = Math.max(0, Math.min(printedPoints(c), c.points));
