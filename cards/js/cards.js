@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'category highlights (Nov 16)';
+const CARDS_VERSION = '2-row rework (Nov 16)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -9,7 +9,7 @@ const CARDS_VERSION = 'category highlights (Nov 16)';
 
 const CARD_POOL = [
   // ── Base Malts ──
-  { id:'2row',        name:'2-Row Malt',           cat:'malt', lane:'hot', points:10, cost:1, tags:['neutral'],         desc:'Counts as two base malts.' },
+  { id:'2row',        name:'2-Row Malt',           cat:'malt', lane:'hot', points:10, cost:1, tags:['neutral'],         desc:'Every adjunct on your hot side gets +2.' },
   { id:'pilsner',     name:'Pilsner Malt',          cat:'malt', lane:'hot', points:7,  cost:1, tags:['crisp'],           desc:'If this is the first card you play this turn, draw 1.' },
   { id:'6row',        name:'6-Row Malt',            cat:'malt', lane:'hot', points:6,  cost:1, tags:['neutral'],          desc:'Next card you play this turn costs 1 less.' },
   { id:'marisotter',  name:'Maris Otter',           cat:'malt', lane:'hot', points:12, cost:2, tags:['biscuity'],        desc:'If you have 3+ combined crystal/dark malts on hot side, +8 pts.' },

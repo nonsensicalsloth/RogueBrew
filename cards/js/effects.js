@@ -238,9 +238,15 @@ function drawForPlayer(n) {
   return drawn;
 }
 
-// 2-Row is the brewhouse workhorse: it counts as two base malts
 function baseMaltCount(cards) {
-  return cards.reduce((n, c) => n + (BASE_MALT_IDS.includes(c.id) ? (c.id === '2row' ? 2 : 1) : 0), 0);
+  return cards.filter(c => BASE_MALT_IDS.includes(c.id)).length;
+}
+
+// 2-Row has the enzymes to convert adjuncts: every adjunct on your hot side gets +2 per 2-Row there
+const TWO_ROW_BONUS = 2;
+function twoRowBonus(c, lane, who) {
+  if (lane !== 'hot' || c.cat !== 'adjunct' || c._locked) return 0;
+  return getLaneCards('hot', who).filter(n => n.id === '2row').length * TWO_ROW_BONUS;
 }
 const BASE_MALT_IDS = ['2row','pilsner','6row','marisotter','goldenprom','vienna','munich','wheatwhite',
   'expilsner','floorpilsner','darkmunich','expwheat','paleale','heritage'];
@@ -1757,7 +1763,7 @@ function carapilsBonus(c, lane, who) {
 }
 
 function effectivePoints(c, lane, who) {
-  const roast = roastBonus(c, who) + carapilsBonus(c, lane, who);
+  const roast = roastBonus(c, who) + carapilsBonus(c, lane, who) + twoRowBonus(c, lane, who);
   const m = synergyMultiplier(c, lane, who);
   if (m === 1) return rulePoints(c, c.points + roast);
   const base = Math.max(0, Math.min(printedPoints(c), c.points));

@@ -44,7 +44,7 @@ function cardRefTags(c) {
 
 // Everything a card's text cares about, as tokens like "tag:citrus", "cat:hop@cold" or "base@hot".
 // Categories only count when the text clearly scores them ("every hop", "+2 per hop", "each base malt"),
-// not when it just mentions one ("Counts as two base malts", "Your next hop costs 1 less").
+// not when it just mentions one ("Doubles the last base malt", "Your next hop costs 1 less").
 const REF_GROUPS = { base: 'base', crystal: 'crystal', dark: 'dark', nz: 'nz' };
 function cardRefs(c) {
   const text = ((c && c.desc) || '');
