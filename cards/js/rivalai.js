@@ -20,7 +20,7 @@ function tagRivalCards() {
 function rivalIsSmart() {
   const n = state.currentNode;
   if (!n) return true;                                  // practice games
-  return n.type === 'boss' || n.type === 'festival' || n.act > 0;
+  return n.type === 'boss' || n.type === 'festival' || n.act > 0 || bm(4);   // Brewmaster 4
 }
 
 // Run fn with `state` temporarily swapped for a sandbox copy

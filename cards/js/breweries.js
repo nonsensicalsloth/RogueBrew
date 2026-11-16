@@ -265,7 +265,8 @@ function breweryCardHtml(b) {
       ${isBreweryUnlocked(b) ? `
         <div class="brewery-tier"><span>PASSIVE</span>${b.passive}</div>
         <div class="brewery-tier"><span>ABILITY · ${b.ability.name} (${b.ability.cost})</span>${b.ability.desc}</div>
-        <div class="brewery-tier"><span>RUN PERK</span>${b.perk}</div>`
+        <div class="brewery-tier"><span>RUN PERK</span>${b.perk}</div>
+        ${bmPickerHtml(b)}`
       : `<div class="brewery-bonus">🔒 LOCKED</div><div class="brewery-tier"><span>TO UNLOCK</span>${b.unlock ? b.unlock.text : ''}</div>`}
     </div>`;
 }

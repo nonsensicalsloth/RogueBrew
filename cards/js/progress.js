@@ -9,8 +9,8 @@ const PROFILE_KEY = 'wortcraft_profile';
 function loadProfile() {
   try {
     const p = JSON.parse(localStorage.getItem(PROFILE_KEY) || 'null') || {};
-    return { runs: p.runs || 0, wins: p.wins || 0, winsBy: p.winsBy || {}, bossesBeaten: p.bossesBeaten || 0, history: p.history || [] };
-  } catch (e) { return { runs: 0, wins: 0, winsBy: {}, bossesBeaten: 0, history: [] }; }
+    return { runs: p.runs || 0, wins: p.wins || 0, winsBy: p.winsBy || {}, bossesBeaten: p.bossesBeaten || 0, history: p.history || [], levels: p.levels || {} };
+  } catch (e) { return { runs: 0, wins: 0, winsBy: {}, bossesBeaten: 0, history: [], levels: {} }; }
 }
 
 function saveProfile(p) {
@@ -60,6 +60,8 @@ function trackUnlock(name) {
 // ── End of run ──
 
 // Records the run in your profile and returns any breweries it unlocked
+let lastLevelUnlocked = null;
+
 function recordRun(won) {
   const before = BREWERIES.filter(b => isBreweryUnlocked(b)).map(b => b.id);
   const p = loadProfile();
@@ -67,8 +69,9 @@ function recordRun(won) {
   const brew = runBrewery() || 'none';
   p.runs++;
   if (won) { p.wins++; p.winsBy[brew] = (p.winsBy[brew] || 0) + 1; }
+  lastLevelUnlocked = won ? bmRecordWin(p, brew, bmLevel()) : null;
   p.bossesBeaten += s.bossesBeaten;
-  p.history.unshift({ won, brewery: brew, act: mapState.act + 1, deck: draftState.deck.length, best: s.bestScore, at: Date.now() });
+  p.history.unshift({ won, brewery: brew, level: bmLevel(), act: mapState.act + 1, deck: draftState.deck.length, best: s.bestScore, at: Date.now() });
   p.history = p.history.slice(0, 10);
   saveProfile(p);
   return BREWERIES.filter(b => isBreweryUnlocked(b) && !before.includes(b.id));
@@ -87,9 +90,11 @@ function runSummaryHtml(won, reason, newBreweries) {
 
   return `
     ${newBreweries.length ? newBreweries.map(nb => `<div class="sum-unlock">🎉 NEW BREWERY UNLOCKED: ${nb.icon} ${nb.name}</div>`).join('') : ''}
+    ${lastLevelUnlocked && b ? `<div class="sum-unlock">🎖 BREWMASTER ${lastLevelUnlocked} UNLOCKED for ${b.icon} ${b.name}: ${BREWMASTER_LEVELS[lastLevelUnlocked].name}</div>` : ''}
     ${reason ? `<div class="sum-reason">${reason}</div>` : ''}
     <div class="sum-grid">
       ${stat('Brewery', b ? `${b.icon} ${b.name}` : '-')}
+      ${stat('Brewmaster', bmLevel())}
       ${stat('Deck', s.deckName || '-')}
       ${stat('Reached', won ? 'Champion!' : `Act ${mapState.act + 1}`)}
       ${stat('Rooms visited', mapState.nodeCount || 0)}

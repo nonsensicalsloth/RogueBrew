@@ -185,6 +185,9 @@ const HOWTO_CONTENT = {
         `Upgrade or remove cards at rest stops and shops. A lean deck draws its best cards more often. You can't go below ${MIN_DECK_SIZE} cards.`,
         `Beat an act boss to choose a piece of <b>brewing equipment</b>, a permanent bonus for the run. Some boss equipment is marked <b>HAS A CATCH</b>: strong, with a downside. A gold-tier Brew Day Disaster also hands out equipment.`,
       ])) +
+    hbox('🎖 Brewmaster levels',
+      hp(`Win a run with a brewery to unlock <b>Brewmaster 1</b> for that brewery. Each win at your highest level unlocks the next, up to ${BREWMASTER_MAX}. Choose your level on the brewery card when you start a run. Each level keeps everything below it and adds one twist:`) +
+      hli(BREWMASTER_LEVELS.slice(1).map((l, i) => `<b>${i + 1}. ${l.name}</b>: ${l.desc}`))) +
     hbox('After each run',
       hp(`A summary shows how far you got, your best score, what you unlocked, and your final deck. Wins and bosses beaten count toward <b>unlocking new breweries</b>.`)) +
     hbox('Saving',

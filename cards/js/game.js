@@ -105,6 +105,10 @@ function initGame(opts = {}) {
     }
   }
   drawCards(5, state.eDeck, state.eHand);
+  // Brewmaster 9: a Contamination lurks in your deck every battle
+  if (node && bm(9)) { state.pDeck.push(createToken('contamination')); state.pDeck = shuffle(state.pDeck); }
+  // Brewmaster 10: bosses come in with a bigger hand
+  if (isBoss && bm(10)) drawCards(BM_BOSS_CARDS, state.eDeck, state.eHand);
   render();
 }
 

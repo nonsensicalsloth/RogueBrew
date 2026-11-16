@@ -30,7 +30,11 @@ function isDisaster() { return !!(state && state.disaster); }
 
 function disasterTiers() {
   const act = state.currentNode ? state.currentNode.act || 0 : 0;
-  return DISASTER_TIERS[Math.min(2, act)];
+  return disasterTiersFor(act);
+}
+function disasterTiersFor(act) {
+  const extra = bm(7) ? BM_DISASTER_PLUS : 0;   // Brewmaster 7
+  return DISASTER_TIERS[Math.min(2, act)].map(t => t + extra);
 }
 
 function startDisaster(node) {
@@ -212,7 +216,7 @@ function onDisasterEnd(node) {
 let disasterOffer = [];
 
 function showDisasterResult(r) {
-  const [b, s, g] = DISASTER_TIERS[Math.min(2, mapState.act || 0)];
+  const [b, s, g] = disasterTiersFor(mapState.act || 0);
   showSpecial('🔧 BREW DAY DISASTER', `You scored ${r.score}. Targets were 🥉 ${b} · 🥈 ${s} · 🥇 ${g}.`);
   const lines = [`<div class="disaster-result-tier tier-${r.tier}">${TIER_NAMES[r.tier]}</div>`];
   if (r.tier === 0) lines.push(`<div>The batch is a write-off. −${r.rep || DISASTER_FAIL_REP} Reputation.</div>`);

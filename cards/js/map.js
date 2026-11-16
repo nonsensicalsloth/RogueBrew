@@ -260,7 +260,7 @@ function renderMap() {
   const extraEl = document.getElementById('map-extras');
   const bDef = BREWERIES.find(b => b.id === runBrewery());
   const bIcon = bDef ? `<span class="relic-icon" title="${bDef.name} | Passive: ${bDef.passive} | Ability: ${bDef.ability.name}: ${bDef.ability.desc} | Perk: ${bDef.perk}">${bDef.icon}</span>` : '';
-  if (extraEl) extraEl.innerHTML = bIcon + ' ' + extras.join(' ') + ' ' + relicIconsHtml();
+  if (extraEl) extraEl.innerHTML = bIcon + ' ' + bmBadgeHtml() + ' ' + extras.join(' ') + ' ' + relicIconsHtml();
   const noticeEl = document.getElementById('map-notice');
   if (noticeEl) { noticeEl.textContent = mapState.notice || ''; mapState.notice = ''; }
 
@@ -428,6 +428,9 @@ function startMapBattle(node) {
   if (rival && rival.trait === 'regulars') { rivalBonus = 15; rivalBonusName = 'The Regulars'; }
   // Contract Brewing Deal: rivals know you're stretched thin
   if (hasRelicNow('contractdeal')) { rivalBonus += CONTRACT_RIVAL_BONUS; rivalBonusName = rivalBonusName || 'Contract Rumors'; }
+  // Brewmaster 1 (Tough Crowd) and 8 (Headliners)
+  if (bm(1)) { rivalBonus += BM_RIVAL_BONUS; rivalBonusName = rivalBonusName || 'Tough Crowd'; }
+  if (bm(8) && node.type === 'boss') { rivalBonus += BM_BOSS_BONUS; rivalBonusName = rivalBonusName || 'Headliner'; }
   initGame({ rivalDeck, node, rival, rivalBonus, rivalBonusName });
 }
 
@@ -572,7 +575,8 @@ let shopRemovalUsed = false;   // one cleanout per shop visit
 let shopRemoving    = false;   // is the removal picker open?
 
 function getRemovalPrice() {
-  return 50 + 25 * (mapState.removals || 0);
+  const p = 50 + 25 * (mapState.removals || 0);
+  return bm(2) ? Math.ceil(p * BM_SHOP_MULT) : p;   // Brewmaster 2
 }
 
 function renderMapShop() {
@@ -597,7 +601,7 @@ function renderMapShop() {
       <div class="card-tags-row">${tagHtml(c.tags)}</div>
       <div class="card-effect-text">${c.desc || ''}</div>
       <div class="card-restrict">${lane}${rarityLabel(c)}</div>
-      <div class="shop-price ${canAfford ? '' : 'cant-afford'}">💰 ${shopPrice(c) < c.price ? `<s style="opacity:0.5">${c.price}</s> ${shopPrice(c)}` : c.price}</div>
+      <div class="shop-price ${canAfford ? '' : 'cant-afford'}">💰 ${shopPrice(c) < c.price ? `<s style="opacity:0.5">${c.price}</s> ${shopPrice(c)}` : shopPrice(c)}</div>
       ${isOwned(c.id) ? '' : '<div class="unlock-badge">🔓 UNLOCKS FOREVER</div>'}
     </div>`;
   }).join('');
@@ -606,7 +610,8 @@ function renderMapShop() {
 // Taproom run perk: the first purchase in each shop is half price
 let shopHalfUsed = false;
 function shopPrice(c) {
-  return runBrewery() === 'taproom' && !shopHalfUsed ? Math.ceil(c.price / 2) : c.price;
+  const base = bm(2) ? Math.ceil(c.price * BM_SHOP_MULT) : c.price;   // Brewmaster 2
+  return runBrewery() === 'taproom' && !shopHalfUsed ? Math.ceil(base / 2) : base;
 }
 
 function buyCard(idx) {
@@ -1071,7 +1076,7 @@ function onBattleLoss() {
   }
   const sc   = state.lastRoundScore || { p: 0, e: 0 };
   const gap  = sc.e - sc.p;
-  const loss = repDamage(gap);
+  const loss = Math.ceil(repDamage(gap) * (bm(5) ? BM_LOSS_MULT : 1));   // Brewmaster 5
   mapState.rep -= loss;
   trackBattleLoss(mapState.rep <= 0);
   if (mapState.rep <= 0) {
