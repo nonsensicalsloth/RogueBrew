@@ -550,7 +550,7 @@ function renderMapDraft() {
       ${cardArtHtml(c)}
       ${rarityBar(c)}<div class="card-name-banner">${c.name}</div>
       <div class="card-tags-row">${tagHtml(c.tags)}</div>
-      <div class="card-effect-text">${richDesc(c.desc)}</div>
+      <div class="card-effect-text"><span>${richDesc(c.desc)}</span></div>
       <div class="card-restrict">${lane}${rarityLabel(c)}</div>
     </div>`;
   }).join('');
@@ -627,7 +627,7 @@ function renderMapShop() {
       ${cardArtHtml(c)}
       ${rarityBar(c)}<div class="card-name-banner">${c.name}</div>
       <div class="card-tags-row">${tagHtml(c.tags)}</div>
-      <div class="card-effect-text">${richDesc(c.desc)}</div>
+      <div class="card-effect-text"><span>${richDesc(c.desc)}</span></div>
       <div class="card-restrict">${lane}${rarityLabel(c)}</div>
       <div class="shop-price ${canAfford ? '' : 'cant-afford'}">💰 ${shopPrice(c) < c.price ? `<s style="opacity:0.5">${c.price}</s> ${shopPrice(c)}` : shopPrice(c)}</div>
       ${isOwned(c.id) ? '' : '<div class="unlock-badge">🔓 UNLOCKS FOREVER</div>'}
