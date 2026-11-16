@@ -216,3 +216,11 @@
 .card-rarity.rarity-legendary { background: linear-gradient(90deg, #ff6f00, #ffd54f, #ff6f00); box-shadow: 0 0 8px #ff9800; animation: legendShine 2s ease-in-out infinite; }
 .rarity-text.rarity-legendary { color: #ffab40; }
 @keyframes legendShine { 50% { box-shadow: 0 0 14px #ffb74d; } }
+
+
+/* Readable text: pixel font for titles and numbers, VT323 for everything you read */
+.card-effect-text { font-family: var(--read-font) !important; font-size: 14px !important; line-height: 1.05 !important; }
+.card-name-banner { font-family: var(--read-font) !important; font-size: 16px !important; }
+.card-tags-row span, .tag { font-family: var(--read-font) !important; font-size: 13px !important; }
+.card-restrict { font-family: var(--read-font) !important; font-size: 13px !important; }
+.field-card-name { font-family: var(--read-font); font-size: 14px; }

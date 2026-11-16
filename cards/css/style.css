@@ -1,6 +1,6 @@
 /* style.css — layout, board, scoreboard, UI chrome */
 
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -42,7 +42,7 @@ body::after {
   z-index: 9999;
 }
 
-#app { max-width: 640px; margin: 0 auto; padding: 12px 10px; }
+#app { max-width: 720px; margin: 0 auto; padding: 12px 10px; }
 
 /* ── Header ── */
 .game-header {
@@ -171,7 +171,7 @@ body::after {
 .pile-icon { font-size: 14px; margin-bottom: 3px; display: block; }
 .pile-num  { font-size: 10px; color: var(--text); margin-bottom: 2px; }
 .pile-lbl  { font-size: 6px; color: var(--dim); }
-.hand-col  { flex: 1; overflow: visible; }
+.hand-col  { flex: 1; min-width: 0; overflow: visible; }
 .hand-lbl  {
   font-size: 7px;
   color: var(--dim);
@@ -179,7 +179,7 @@ body::after {
   border-bottom: 1px solid var(--border);
   padding-bottom: 4px;
 }
-.hand-cards { display: flex; flex-wrap: wrap; gap: 16px; padding: 12px 10px; }
+.hand-cards { display: flex; flex-wrap: nowrap; gap: 0; padding: 12px 10px; }
 
 /* ── Buttons & actions ── */
 .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; align-items: center; }
@@ -212,10 +212,10 @@ body::after {
   border: 1px solid var(--border);
   padding: 6px 8px;
   min-height: 52px;
-  max-height: 80px;
+  max-height: 96px;
   overflow-y: auto;
 }
-.log-line { font-size: 7px; line-height: 2; padding: 1px 0; border-bottom: 1px solid var(--bg3); }
+.log-line { font-family: var(--read-font); font-size: 17px; line-height: 1.2; padding: 2px 0; border-bottom: 1px solid var(--bg3); }
 .log-line:last-child { border-bottom: none; }
 .log-sys    { color: var(--green); }
 .log-player { color: var(--player); }
@@ -649,7 +649,7 @@ body::after {
 .howto-nav { display:flex; gap:14px; align-items:center; justify-content:center; margin-top:12px; }
 
 /* ── Rival intent ── */
-.rival-intent { display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-size:7px; padding:4px 8px; margin:2px 0 4px;
+.rival-intent { display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-family:var(--read-font); font-size:16px; padding:4px 8px; margin:2px 0 4px;
   border:1px dashed var(--enemy); background:rgba(244,67,54,0.06); }
 .intent-label { color:var(--enemy); }
 .intent-icon { font-size:11px; }
@@ -869,3 +869,51 @@ body::after {
 .bm-btn[disabled] { opacity: 0.3; cursor: not-allowed; }
 .bm-desc { margin-top: 5px; color: var(--dim); font-size: 6px; line-height: 1.5; }
 .bm-badge { color: var(--gold); font-size: 9px; }
+
+
+/* ── Battle layout: slim status, status on the lanes it affects, readable text ── */
+:root { --read-font: 'VT323', monospace; --hot: #cd7f32; --cold: #4fc3f7; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.rep-pill { font-size: 8px; color: var(--gold); cursor: help; }
+
+.status-line { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 8px 18px;
+  margin: 6px 0 4px; font-size: 7px; color: var(--dim); }
+.status-line b { color: var(--text); font-weight: normal; }
+.st-beer { display: inline-flex; gap: 6px; align-items: center; cursor: help; }
+.st-beer span { padding: 2px 5px; border: 1px solid var(--border); border-radius: 2px; }
+.st-beer .ok { border-color: #69f0ae; color: #69f0ae; }
+.st-beer .bonus { border: none; color: var(--gold); padding: 0; }
+.st-chip { font-family: var(--read-font); font-size: 15px; padding: 0 5px; border: 1px solid var(--border); border-radius: 2px; cursor: help; }
+.st-tap { color: var(--dim); } .st-tap.on { color: var(--gold); border-color: rgba(255,215,0,.5); }
+
+.judging-line { display: flex; justify-content: center; flex-wrap: wrap; gap: 2px 14px; margin: 0 auto 8px;
+  text-align: center; font-family: var(--read-font); font-size: 16px; line-height: 1.1; }
+.judging-line > span { cursor: help; }
+.judging-line i { font-style: normal; color: #8a93a8; }
+.jl-cat  { color: var(--gold); }
+.jl-rule { color: #81d4fa; }
+.jl-goal { color: var(--gold); }
+.jl-goal b { font-weight: normal; color: #69f0ae; }
+
+.lane { border-radius: 3px; }
+.lane.hot-lane  { background: linear-gradient(90deg, rgba(205,110,50,.16), rgba(205,110,50,.03) 60%, transparent), var(--bg2); }
+.lane.cold-lane { background: linear-gradient(90deg, rgba(79,195,247,.14), rgba(79,195,247,.03) 60%, transparent), var(--bg2); }
+.lane.hot-lane  .lane-name { color: #ffb37a; }
+.lane.cold-lane .lane-name { color: #8fd8ff; }
+.lane-name { letter-spacing: 1px; }
+
+.lane-chips { letter-spacing: 0; }
+.lchip { font-family: var(--read-font); font-size: 15px; margin-left: 10px; padding: 0 5px; border-radius: 2px;
+  border: 1px solid; cursor: help; white-space: nowrap; }
+.lc-roast { color: #ffb74d; border-color: rgba(255,183,77,.5); }
+.lc-mash  { color: #bcaaa4; border-color: rgba(188,170,164,.5); }
+.lc-acid  { color: #c6ff00; border-color: rgba(198,255,0,.45); }
+.lc-lager { color: #81d4fa; border-color: rgba(129,212,250,.5); }
+.lc-warn  { color: var(--orange); border-color: var(--orange); }
+.lc-bad   { color: #ff7a7a; border-color: rgba(255,82,82,.6); }
+.hand-lbl .lchip { font-size: 14px; }
+
+/* Danger chips pulse so a burnt or stuck beer is hard to miss */
+.lchip.lc-warn { animation: roastDanger .8s ease-in-out infinite; }
+.lchip.lc-bad.lc-pulse { animation: roastBurnt 1.2s ease-in-out infinite; background: rgba(255,82,82,.15); }
+.hand-cards > .card { flex-shrink: 0; }

@@ -67,6 +67,15 @@ ${fieldCardHtml(c, l, 'e')}`).join('')
   });
 }
 
+// Keep the hand on one row: cards space out normally, then overlap a little once it gets crowded
+function fitHand(el) {
+  const cards = el.children, n = cards.length;
+  if (!n) return;
+  const cw = cards[0].offsetWidth || 90, room = el.clientWidth - 20;
+  const gap = n > 1 && room > 0 ? Math.min(14, Math.floor((room - n * cw) / (n - 1))) : 14;
+  for (let i = 0; i < n; i++) cards[i].style.marginLeft = i ? `${gap}px` : '0';
+}
+
 function renderHand() {
   const el  = document.getElementById('hand');
   const rem = state.budget - state.budgetUsed;
@@ -96,6 +105,8 @@ function renderHand() {
       return cardHtml(c, i, ok ? 'play' : 'disabled', cls.join(' '), cost, formulaPreview(c));
     }).join('');
   }
+
+  fitHand(el);
 
   document.getElementById('deck-count').textContent    = state.pDeck.length;
   document.getElementById('discard-count').textContent = state.pDiscard.length;
@@ -219,7 +230,7 @@ function render() {
   if (repPill) {
     const show = state.currentNode && typeof mapState !== 'undefined' && mapState && mapState.maxRep;
     repPill.style.display = show ? '' : 'none';
-    if (show) repPill.textContent = `⭐ ${mapState.rep}/${mapState.maxRep}${state.isBoss ? ' · MUST WIN' : ''}`;
+    if (show) { repPill.textContent = `⭐ ${mapState.rep}/${mapState.maxRep}${state.isBoss ? ' · MUST WIN' : ''}`; repPill.title = 'Reputation. Lose a battle and it drops; hit 0 and the run is over.'; }
   }
   const maxTurnsEl = document.getElementById('max-turns');
   if (maxTurnsEl) maxTurnsEl.textContent = maxTurns();
@@ -237,44 +248,44 @@ function render() {
     state.phase === 'between'   ? 'BETWEEN ROUNDS' :
     state.phase === 'tally'     ? 'JUDGING...'     : 'GAME OVER';
 
-  // Roast tracker
-  const roast     = state.roastTokens || 0;
-  const threshold = state.roastThreshold || 5;
-  const eRoast    = state.eRoastTokens || 0;
-  const roastEl   = document.getElementById('roast-tracker');
-  const roastCnt  = document.getElementById('roast-count');
-  if (roastEl && roastCnt) {
-    const burnt = state.phase && isBurnt('p');
-    const power = ROAST_POWER * roast;
-    roastCnt.textContent = burnt
-      ? `${roast}/${threshold} · BURNT! hot side ½`
-      : `${roast}/${threshold}${roast > 0 ? ` · roasty +${power}` : ''}${eRoast > 0 ? ` | rival ${eRoast}/${state.eRoastThreshold || 5}${isBurnt('e') ? ' BURNT' : ''}` : ''}`;
-    const effective = roast - (state.roastSafe || 0);
-    roastEl.style.color = burnt ? 'var(--red)' : effective >= threshold - 1 ? 'var(--orange)' : roast > 0 ? 'var(--gold)' : 'var(--dim)';
-    roastEl.title = `Each roast token gives every roasty card +${ROAST_POWER}. Reach ${threshold} and your beer is Burnt: hot side scores half.`;
+  // Status chips: each one sits on the lane (or hand) it affects, and only shows when it matters
+  const inPlay = state.phase === 'play' || state.phase === 'between';
+  const chipsFor = { 'hot-p': [], 'cold-p': [], 'hot-e': [], 'cold-e': [], hand: [] };
+  const chip = (where, cls, text, title) => chipsFor[where].push(`<span class="lchip ${cls}" title="${title}">${text}</span>`);
+  if (inPlay) {
+    // Roast: on the hot side, where roasty malts live
+    [['p', state.roastTokens || 0, state.roastThreshold || 5], ['e', state.eRoastTokens || 0, state.eRoastThreshold || 5]].forEach(([w, roast, threshold]) => {
+      if (!roast) return;
+      const burnt = isBurnt(w);
+      const near = w === 'p' && roast - (state.roastSafe || 0) >= threshold - 1;
+      chip(`hot-${w}`, burnt ? 'lc-bad lc-pulse' : near ? 'lc-warn' : 'lc-roast',
+        burnt ? `🔥 BURNT ${roast}/${threshold}: half points` : `🔥 roast ${roast}/${threshold} · roasty +${ROAST_POWER * roast}`,
+        `Each roast token gives every roasty card +${ROAST_POWER}. Reach ${threshold} and the beer is Burnt: hot side scores half.`);
+    });
+    // Stuck mash: sticky grains in a row at the end of your hot side
+    const run = trailingSticky('p'), stuck = isMashStuck('p');
+    if (run > 0 || stuck) chip('hot-p', stuck ? 'lc-bad lc-pulse' : run >= CLUMP_SIZE - 1 ? 'lc-warn' : 'lc-mash',
+      stuck ? '🥣 MASH STUCK −8' : `🥣 sticky ${run}/${CLUMP_SIZE}`,
+      `Sticky grains clump: ${CLUMP_SIZE} in a row on your hot side = Stuck Mash (−8). Play something else in between, like a base malt or Rice Hulls.`);
   }
-  // Mash meter: how many sticky grains are in a row at the end of your hot side
-  const mashEl = document.getElementById('mash-pill');
-  if (mashEl) {
-    const inPlay = state.phase === 'play' || state.phase === 'between';
-    const run = inPlay ? trailingSticky('p') : 0;
-    const stuck = inPlay && isMashStuck('p');
-    mashEl.style.display = run > 0 || stuck ? '' : 'none';
-    mashEl.textContent = stuck ? 'MASH STUCK! −8' : `MASH ${run}/${CLUMP_SIZE} IN A ROW`;
-    mashEl.style.color = stuck ? 'var(--red)' : run >= CLUMP_SIZE - 1 ? 'var(--orange)' : 'var(--dim)';
-    mashEl.title = `Sticky grains clump: ${CLUMP_SIZE} in a row on your hot side = Stuck Mash (−8). Play something else in between, like a base malt or Rice Hulls.`;
+  if (state.phase === 'play') {
+    // Acid: shown on the lane it will eat next turn (that side's best lane)
+    ['p', 'e'].forEach(w => {
+      const a = acidOn(w);
+      if (!a) return;
+      const lane = laneScore('hot', w) >= laneScore('cold', w) ? 'hot' : 'cold';
+      chip(`${lane}-${w}`, w === 'p' ? 'lc-bad' : 'lc-acid', `🍋 acid ${a} · −${a} next turn`,
+        'At the start of each turn, Acid eats that many points from the brewery\'s best lane (an Acid Burn), then drops by 1. The lost points stay gone unless CIP Cycle, Fining Agent or Sanitize (cold side) clears the burn.');
+    });
+    // Lagering: waits in your hand for the next crisp card
+    const lag = lagering('p');
+    if (lag) chip('hand', 'lc-lager', `🧊 lagering ${lag} · next crisp card +${lag * lagerPower('p')}`,
+      `Budget you don't spend becomes Lagering (max ${LAGER_MAX}). The next crisp card you play gets +${lagerPower('p')} per Lagering, then it empties.`);
   }
-
-  // Lagering: unspent budget waiting for your next crisp card
-  const lagerEl = document.getElementById('lager-pill');
-  if (lagerEl) {
-    const inPlay = state.phase === 'play';
-    const mine = inPlay ? lagering('p') : 0;
-    lagerEl.style.display = mine ? '' : 'none';
-    lagerEl.textContent = `🧊 LAGERING ${mine} · next crisp card +${mine * lagerPower('p')}`;
-    lagerEl.style.color = '#81d4fa';
-    lagerEl.title = `Budget you don't spend becomes Lagering (max ${LAGER_MAX}). The next crisp card you play gets +${lagerPower('p')} per Lagering, then it empties.`;
-  }
+  Object.entries(chipsFor).forEach(([k, list]) => {
+    const el = document.getElementById(k === 'hand' ? 'hand-chips' : `chips-${k}`);
+    if (el) el.innerHTML = list.join('');
+  });
 
   // Taproom: Tap List
   const tapEl = document.getElementById('taplist-pill');
@@ -284,21 +295,9 @@ function render() {
     if (on) {
       const n = boardTagCount('p'), pts = tapListPoints('p');
       tapEl.textContent = pts ? `🍻 TAP LIST: ${n} tags, +${pts}` : `🍻 TAP LIST: ${n}/${TAP_LIST_FLOOR + 1} tags`;
+      tapEl.classList.toggle('on', pts > 0);
       tapEl.title = `At judging, +${TAP_LIST_POINTS} for every different tag on your board beyond ${TAP_LIST_FLOOR}.`;
     }
-  }
-
-  // Acid: eats a brewery's best lane at the start of each turn, then drops by 1
-  const acidEl = document.getElementById('acid-pill');
-  if (acidEl) {
-    const inPlay = state.phase === 'play';
-    const onThem = inPlay ? acidOn('e') : 0, onMe = inPlay ? acidOn('p') : 0;
-    acidEl.style.display = onThem || onMe ? '' : 'none';
-    acidEl.innerHTML = [
-      onThem ? `<span style="color:#c6ff00">🍋 RIVAL ACID ${onThem} (−${onThem} next turn)</span>` : '',
-      onMe   ? `<span style="color:var(--red)">🍋 YOUR ACID ${onMe} (−${onMe} next turn)</span>` : '',
-    ].filter(Boolean).join(' | ');
-    acidEl.title = 'At the start of each turn, Acid eats that many points from the brewery\'s best lane (an Acid Burn), then drops by 1. CIP Cycle and Fining Agent clean up the burn, and so does Sanitize on your cold side.';
   }
 
   const discountMsg = (state.nextCardDiscount || 0) > 0 ? ` ★-${state.nextCardDiscount}` : '';
@@ -311,47 +310,56 @@ function render() {
         ? 'GRAIN OUT: CLICK A CARD IN YOUR HAND TO DISCARD IT'
       : playerMustPlayContamination() && state.phase === 'play'
         ? '⚠ CONTAMINATION! CLICK IT, THEN YOUR COLD SIDE'
-        : `YOUR HAND (${state.pHand.length}) · BUDGET: ${state.budget - state.budgetUsed}/${state.budget}${discountMsg}`;
+        : `YOUR HAND (${state.pHand.length})${discountMsg}`;
 
   const rivalNameEl = document.getElementById('rival-name');
   if (rivalNameEl) rivalNameEl.textContent = (state.rivalName || 'Rival Brewery').toUpperCase();
 
   // Judging category for this round
   const ruleEl = document.getElementById('rule-pill');
+  const r = currentRule(), gl = currentGoal(), live = state.phase !== 'end';
   if (ruleEl) {
-    const t = rulePillText();
-    ruleEl.style.display = t && state.phase !== 'end' ? '' : 'none';
-    ruleEl.textContent = t;
+    ruleEl.style.display = r && live ? '' : 'none';
+    ruleEl.innerHTML = r ? `${r.icon} ${r.name.toUpperCase()} <i>${r.desc}</i>` : '';
+    ruleEl.title = rulePillText();
   }
   const goalEl = document.getElementById('goal-pill');
   if (goalEl) {
     const t = goalPillText();
-    goalEl.style.display = t && state.phase !== 'end' ? '' : 'none';
-    goalEl.textContent = t;
+    goalEl.style.display = t && live ? '' : 'none';
+    if (gl) {
+      const act = state.currentNode ? Math.min(2, state.currentNode.act || 0) : 0;
+      const reward = act < 2 ? `+${GOAL_GOLD[act]} gold` : 'legendary card';
+      goalEl.innerHTML = `🎯 CHALLENGE: ${gl.name} <i>${gl.desc}</i> <b>${reward}</b>`;
+    } else goalEl.textContent = '';
+    goalEl.title = t;
   }
   const judgingEl = document.getElementById('judging-pill');
+  const j = state.phase === 'between' ? judgingFor(state.round) : state.judging;
   if (judgingEl) {
-    const j = state.phase === 'between' ? judgingFor(state.round) : state.judging;
     judgingEl.style.display = j ? '' : 'none';
     judgingEl.textContent   = j ? `${j.icon} ${j.name.toUpperCase()}${j.lane ? ` · ${j.lane.toUpperCase()} ×2` : ''}` : '';
   }
+  const jl = document.getElementById('judging-line');
+  if (jl) jl.style.display = (r || gl) && live || j ? '' : 'none';
   LANES.forEach(l => ['p','e'].forEach(w => {
     const m = document.getElementById(`mult-${l}-${w}`);
     if (m) m.textContent = state.phase === 'play' && state.judging && laneMultiplier(l) > 1 ? ' ×2' : '';
   }));
 
-  // Complete Beer indicator
+  // Complete Beer checklist: malt / hop / yeast light up as the beer comes together
   const beerEl = document.getElementById('beer-pill');
   if (beerEl) {
     const show = state.phase === 'play' || state.phase === 'between';
     beerEl.style.display = show ? '' : 'none';
     if (show) {
       const b = beerStatus('p');
-      const mine = b.specialty ? `SPECIALTY BEER +${b.bonus}`
-                 : b.complete  ? `COMPLETE BEER +${b.bonus}`
-                 : `NEED: ${b.missing.join(', ').toUpperCase()}`;
-      beerEl.textContent = mine;
-      beerEl.style.color = b.complete ? 'var(--gold)' : 'var(--dim)';
+      const boxes = ['malt', 'hop', 'yeast'].map(k => {
+        const ok = !b.missing.includes(k);
+        return `<span class="${ok ? 'ok' : ''}">${k.toUpperCase()}${ok ? ' ✓' : ''}</span>`;
+      }).join('');
+      const bonus = b.complete ? `<span class="bonus">${b.specialty ? 'SPECIALTY' : 'COMPLETE'} +${b.bonus}</span>` : '';
+      beerEl.innerHTML = boxes + bonus;
       beerEl.title = `+${COMPLETE_BEER_BONUS} points for a complete beer (malt, hop and yeast). +${SPECIALTY_BEER_BONUS} bonus with an adjunct.`;
     }
   }
@@ -394,7 +402,6 @@ function render() {
       : '';
   }
 
-  juiceMeters(roastEl, mashEl);
   juiceBeforeField();
   renderField();
   renderHand();
