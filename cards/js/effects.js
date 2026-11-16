@@ -477,7 +477,7 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'sip':
-      if (!removeFirstToken(who, null, 'hot')) addLog('Sanitize: nothing to clean on hot side.', 'sys');
+      if (!removeFirstToken(who, null, 'cold')) addLog('Sanitize: nothing to clean on cold side.', 'sys');
       break;
 
     case 'fining': {

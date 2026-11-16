@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'contamination tools (Nov 16)';
+const CARDS_VERSION = 'cold sanitize (Nov 16)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -114,7 +114,7 @@ const CARD_POOL = [
 
   // Cleaning/Removal (your side)
   { id:'cip',          name:'CIP Cycle',        cat:'process', lane:'both', points:0,  cost:2, tags:[],           desc:'Remove every negative token from your board. Draw 1.' },
-  { id:'sip',          name:'Sanitize',         cat:'process', lane:'hot',  points:0,  cost:1, tags:[],           desc:'Remove one negative token from your hot side. Draw 1.' },
+  { id:'sip',          name:'Sanitize',         cat:'process', lane:'cold',  points:0,  cost:1, tags:[],           desc:'Remove one negative token from your cold side. Draw 1.' },
   { id:'heatkill',     name:'Heat Kill',         cat:'process', lane:'cold', points:0,  cost:2, tags:[],           desc:'Remove all Contamination from your cold side. Each yeast there gets +5 but never grows again. Draw 1.' },
   { id:'filtration',   name:'Filtration',        cat:'process', lane:'cold', points:0,  cost:2, tags:[],           desc:'Destroy every negative card on your cold side, then choose a yeast there to return to your hand. It costs 0 this turn. Draw 1.' },
   { id:'fining',       name:'Fining Agent',      cat:'process', lane:'both',  points:0,  cost:1, tags:[],  desc:'Remove one negative token from your board. Every yeast on your cold side gets +2. Draw 1.' },
@@ -330,9 +330,9 @@ const TOKEN_CARDS = [
   { id:'contamination', name:'Contamination',  cat:'token', lane:'cold', points:-10, cost:0, tags:['funky'],  desc:'Auto-plays to cold side when drawn. Interrupts your turn but costs 0.' },
   { id:'crowd_fav',     name:'Crowd Favorite', cat:'token', lane:'hot',  points:10,  cost:0, tags:[],         desc:'Festival rivals start each round with the crowd on their side.' },
   { id:'tartness',    name:'Tartness',     cat:'token', lane:'cold', points:0,   cost:0, tags:['sour'],   desc:'Acidity keeping your beer safe from a brew day disaster.' },
-  { id:'mishap',      name:'Brew Day Mishap', cat:'token', lane:'hot', points:-10, cost:0, tags:[],   desc:'Something went wrong. Sanitize, CIP Cycle or Fining Agent clear it.' },
-  { id:'acidburn',    name:'Acid Burn',    cat:'token', lane:'cold', points:0,   cost:0, tags:['sour'],   desc:'Points eaten away by the rival\'s Acid. Sanitize, CIP Cycle or Fining Agent clear it.' },
-  { id:'stuckmash',   name:'Stuck Mash',   cat:'token', lane:'hot',  points:-8,  cost:0, tags:[],         desc:'Three sticky grains in a row clumped. Rice Hulls, Sanitize, CIP Cycle or Fining Agent clear it.' },
+  { id:'mishap',      name:'Brew Day Mishap', cat:'token', lane:'hot', points:-10, cost:0, tags:[],   desc:'Something went wrong. CIP Cycle or Fining Agent clear it.' },
+  { id:'acidburn',    name:'Acid Burn',    cat:'token', lane:'cold', points:0,   cost:0, tags:['sour'],   desc:'Points eaten away by the rival\'s Acid. CIP Cycle, Fining Agent or (on your cold side) Sanitize clear it.' },
+  { id:'stuckmash',   name:'Stuck Mash',   cat:'token', lane:'hot',  points:-8,  cost:0, tags:[],         desc:'Three sticky grains in a row clumped. Rice Hulls, CIP Cycle or Fining Agent clear it.' },
   { id:'contam_soft',   name:'Contamination',  cat:'token', lane:'cold', points:-5,  cost:0, tags:['funky'],  desc:'Softened Contamination, caught early by the right equipment. Must be poured onto your cold side when drawn.' },
 ];
 

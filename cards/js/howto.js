@@ -119,7 +119,7 @@ const HOWTO_CONTENT = {
     hbox('🍺 Complete Beer',
       hp(`You can't brew beer without malt, hops and yeast. Have at least one <b>malt, hop and yeast</b> on your board for <b>+${COMPLETE_BEER_BONUS}</b>. Add an <b>adjunct</b> too for a Specialty Beer: <b>+${SPECIALTY_BEER_BONUS}</b> more. The info bar shows what you're missing.`)) +
     hbox('🥣 Stuck Mash (sticky grains clump)',
-      hp(`${tag('sticky')} grains (oats, wheat, rye, spelt) score a little extra, but they clump. <b>${CLUMP_SIZE} sticky cards in a row</b> on your hot side stick the mash: a <b>−8 Stuck Mash</b> token appears. Play something else in between, like a base malt or <b>Rice Hulls</b>, to keep the grain bed loose. Rice Hulls and the cleanup cards (Sanitize, CIP Cycle, Fining Agent) also clear a Stuck Mash. The MASH meter shows how many sticky grains are in a row right now.`)) +
+      hp(`${tag('sticky')} grains (oats, wheat, rye, spelt) score a little extra, but they clump. <b>${CLUMP_SIZE} sticky cards in a row</b> on your hot side stick the mash: a <b>−8 Stuck Mash</b> token appears. Play something else in between, like a base malt or <b>Rice Hulls</b>, to keep the grain bed loose. Rice Hulls, CIP Cycle and Fining Agent also clear a Stuck Mash. The MASH meter shows how many sticky grains are in a row right now.`)) +
     hbox('🔥 Roast (push your luck)',
       hp(`Dark malts add <b>roast tokens</b>. Every roast token gives <b>each of your ${tag('roasty')} cards +${ROAST_POWER}</b>, so stouts get stronger as roast builds. But reach your roast limit (normally 5) and your beer is <b>Burnt</b>: your hot side scores half. The sweet spot is one under the limit.`) +
       hli([`Carafa and Cold Brew raise your limit. De-bittered Black and Lactose remove roast. Midnight Wheat boosts roasty cards without adding roast.`,
@@ -130,7 +130,7 @@ const HOWTO_CONTENT = {
       hp(`Sour cards give the rival <b>Acid</b>. At the start of each turn, Acid eats that many points from the rival's best lane (an <b>Acid Burn</b>), then drops by 1. So 5 Acid eats 5 + 4 + 3 + 2 + 1 = 15 points. Play it early!`) +
       hli([`<b>Lactic Acid</b> doubles the rival's Acid. Hops hold back <b>Lactobacillus</b>.`,
            `<b>Pediococcus</b> eats a fruit on your board and gets 1.5× its points.`,
-           `Rivals can sour you too. Sanitize, CIP Cycle and Fining Agent clean up an Acid Burn.`])),
+           `Rivals can sour you too. CIP Cycle and Fining Agent clean up an Acid Burn, and so does Sanitize if it's on your cold side.`])),
 
   battle: () =>
     hli([
@@ -143,7 +143,7 @@ const HOWTO_CONTENT = {
     ]) +
     hbox('Things to watch for',
       hli([
-        `⚠️ <b>Contamination</b> goes into your hand when drawn and <b>must be poured onto your cold side</b> before you can do anything else. Fining Agent, CIP Cycle and Heat Kill clean it up.`,
+        `⚠️ <b>Contamination</b> goes into your hand when drawn and <b>must be poured onto your cold side</b> before you can do anything else. Sanitize, Fining Agent, CIP Cycle and Heat Kill clean it up.`,
         `Some cards ask you to <b>choose a card on your board</b>. Valid choices glow gold.`,
         `Your brewery <b>ability button</b> sits next to End Turn. You can use it once per turn.`,
         `Rivals can fight back: removing your best card, scorching it with chili, or contaminating you.`,

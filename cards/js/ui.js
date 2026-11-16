@@ -286,7 +286,7 @@ function render() {
       onThem ? `<span style="color:#c6ff00">🍋 RIVAL ACID ${onThem} (−${onThem} next turn)</span>` : '',
       onMe   ? `<span style="color:var(--red)">🍋 YOUR ACID ${onMe} (−${onMe} next turn)</span>` : '',
     ].filter(Boolean).join(' | ');
-    acidEl.title = 'At the start of each turn, Acid eats that many points from the brewery\'s best lane (an Acid Burn), then drops by 1. Sanitize, CIP Cycle and Fining Agent clean up the burn.';
+    acidEl.title = 'At the start of each turn, Acid eats that many points from the brewery\'s best lane (an Acid Burn), then drops by 1. CIP Cycle and Fining Agent clean up the burn, and so does Sanitize on your cold side.';
   }
 
   const discountMsg = (state.nextCardDiscount || 0) > 0 ? ` ★-${state.nextCardDiscount}` : '';
