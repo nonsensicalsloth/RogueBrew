@@ -148,7 +148,7 @@ function showLab() {
 function labTransform(idx) {
   const old = draftState.deck[idx];
   if (!old) return;
-  const pool = CARD_POOL.filter(c => c.cat === old.cat && c.id !== old.id && copiesInDeck(c.id) < MAX_COPIES);
+  const pool = CARD_POOL.filter(c => c.cat === old.cat && c.id !== old.id && c.rarity !== 'legendary' && copiesInDeck(c.id) < MAX_COPIES);
   if (!pool.length) { finishSpecial(`The lab couldn't find another ${old.cat} to make.`); return; }
   const neu = { ...pool[Math.floor(Math.random() * pool.length)] };
   draftState.deck.splice(idx, 1, neu);
@@ -184,7 +184,7 @@ function showTaproom() {
     <div>House pour: <span>+${p.base}</span></div>
     <div>${p.hopsYeast} hop &amp; yeast cards × 3: <span>+${p.hopsYeastGold}</span></div>
     <div>${p.signature
-      ? `Signature flavor — ${p.sigTag} (${p.sigCount} cards): <span>+${p.sigGold}</span>`
+      ? `Signature flavor: ${p.sigTag} (${p.sigCount} cards): <span>+${p.sigGold}</span>`
       : `No signature flavor yet (need ${SIGNATURE_MIN}+ cards sharing one): <span>+0</span>`}</div>
     <div class="taproom-total">Total: <span>💰 ${p.total}</span></div>
   </div>`);

@@ -21,7 +21,7 @@
 <div id="title-screen" class="screen">
   <div class="wortcraft-title">WORTCRAFT</div>
   <div class="wortcraft-sub">A Deck Building Brewery Roguelike</div>
-  <div class="wortcraft-version" id="version-label">v0.1 — prototype</div>
+  <div class="wortcraft-version" id="version-label">v0.1 prototype</div>
   <div class="title-buttons">
     <button class="btn btn-gold" id="continue-run-btn" style="display:none" onclick="continueRun()">▶ CONTINUE RUN</button>
     <div id="continue-run-info" style="font-size:7px;color:var(--dim);text-align:center;"></div>
@@ -263,11 +263,13 @@
     </div>
     <div class="info-bar">
       <div class="info-pill">ROUND <span id="round-num">1</span>/<span id="max-rounds">3</span></div>
-      <div class="info-pill">TURN <span id="turn-num">—</span>/<span id="max-turns">8</span></div>
-      <div class="info-pill">BUDGET <span id="budget-rem">—</span></div>
+      <div class="info-pill">TURN <span id="turn-num">-</span>/<span id="max-turns">8</span></div>
+      <div class="info-pill">BUDGET <span id="budget-rem">-</span></div>
       <div class="info-pill" id="beer-pill" style="display:none;"></div>
       <div class="info-pill" id="rep-pill" style="display:none;color:var(--gold);"></div>
       <div class="info-pill" id="judging-pill" style="display:none;color:var(--gold);"></div>
+      <div class="info-pill" id="rule-pill" style="display:none;color:#81d4fa;"></div>
+      <div class="info-pill" id="goal-pill" style="display:none;color:var(--gold);"></div>
       <div class="info-pill" id="mash-pill" style="display:none;"></div>
       <div class="info-pill" id="lager-pill" style="display:none;"></div>
       <div class="info-pill" id="acid-pill" style="display:none;"></div>
@@ -283,21 +285,21 @@
       <div id="rival-intent" class="rival-intent" style="display:none;"></div>
       <div class="lane enemy-lane">
         <div class="lane-header"><span class="lane-name">HOT SIDE<span class="lane-mult" id="mult-hot-e"></span></span><span class="lane-score" id="hs-e">0 pts</span></div>
-        <div class="lane-cards" id="elane-hot"><span class="empty-msg">— empty —</span></div>
+        <div class="lane-cards" id="elane-hot"><span class="empty-msg">empty</span></div>
       </div>
       <div class="lane enemy-lane">
         <div class="lane-header"><span class="lane-name">COLD SIDE<span class="lane-mult" id="mult-cold-e"></span></span><span class="lane-score" id="cs-e">0 pts</span></div>
-        <div class="lane-cards" id="elane-cold"><span class="empty-msg">— empty —</span></div>
+        <div class="lane-cards" id="elane-cold"><span class="empty-msg">empty</span></div>
       </div>
       <hr class="board-divider">
       <div class="board-side-label player">YOUR BREWERY</div>
       <div class="lane player-lane">
         <div class="lane-header"><span class="lane-name">HOT SIDE<span class="lane-mult" id="mult-hot-p"></span></span><span class="lane-score" id="hs-p">0 pts</span></div>
-        <div class="lane-cards" id="plane-hot"><span class="empty-msg">— empty —</span></div>
+        <div class="lane-cards" id="plane-hot"><span class="empty-msg">empty</span></div>
       </div>
       <div class="lane player-lane">
         <div class="lane-header"><span class="lane-name">COLD SIDE<span class="lane-mult" id="mult-cold-p"></span></span><span class="lane-score" id="cs-p">0 pts</span></div>
-        <div class="lane-cards" id="plane-cold"><span class="empty-msg">— empty —</span></div>
+        <div class="lane-cards" id="plane-cold"><span class="empty-msg">empty</span></div>
       </div>
     </div>
     <div id="rival-summary" style="display:none;"></div>
@@ -355,6 +357,9 @@
 <script src="js/effects.js"></script>
 <script src="js/game.js"></script>
 <script src="js/battle.js"></script>
+<script src="js/rules.js"></script>
+<script src="js/goals.js"></script>
+<script src="js/disaster.js"></script>
 <script src="js/juice.js"></script>
 <script src="js/ui.js"></script>
 <script>

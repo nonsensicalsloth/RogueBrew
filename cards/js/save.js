@@ -105,6 +105,11 @@ function continueRun() {
       break;
     }
     case 'relic': showRelicChoice(r.gold || 0); return;
+    case 'disaster': {
+      const relic = r.relic ? RELICS.find(x => x.id === r.relic) : null;
+      showDisasterResult({ score: r.score, tier: r.tier, gold: r.gold, relic, offerKind: r.offerKind });
+      return;
+    }
     case 'act':   showActTransition(r.gold || 0); return;
   }
   showMapScreen();

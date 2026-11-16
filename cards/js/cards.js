@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'tuning pass (Nov 15)';
+const CARDS_VERSION = 'map variety (Nov 16)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -195,7 +195,7 @@ const CARD_POOL = [
   // Clean ale
   { id:'chico',      name:'Cal Ale',            cat:'yeast', lane:'cold', points:6,  cost:2, tags:['crisp','clean'],              desc:'+2 per turn. On play: +1 per hop and per base malt on your board.' },
   { id:'barbarian',  name:'Barbarian',          cat:'yeast', lane:'cold', points:6,  cost:2, tags:['fruity','clean'],             desc:'+2 per turn. On play: +2 per hop on your board.' },
-  { id:'london3',    name:'London Ale III',     cat:'yeast', lane:'cold', points:6,  cost:2, tags:['hazy','smooth','fruity'],     desc:'+2 per turn. On play: biotransformation — every hop on your cold side gets +4. +2 per hazy card.' },
+  { id:'london3',    name:'London Ale III',     cat:'yeast', lane:'cold', points:6,  cost:2, tags:['hazy','smooth','fruity'],     desc:'+2 per turn. On play: biotransformation, every hop on your cold side gets +4. +2 per hazy card.' },
   { id:'englishale', name:'English Ale',        cat:'yeast', lane:'cold', points:6,  cost:2, tags:['fruity','malty'],          desc:'+2 per turn. On play: +3 per biscuity, malty, or earthy card on your board.' },
   { id:'kveik',      name:'Voss Kveik',         cat:'yeast', lane:'cold', points:17, cost:3, tags:['fruity','dry'],               desc:'Doesn\'t grow. On play: +2 per hop on your board.' },
 
@@ -265,9 +265,22 @@ const UNCOMMON_CARDS = [
   'london3','barbarian','abbey','brett','sourvisiae','pedio','kettlesour',
   'summit','brutenzyme','yeastnutrient','peatmalt','yeastharvest','secondrunnings',
 ];
-const RARITY_NAMES = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare' };
+const RARITY_NAMES = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', legendary: 'Legendary' };
+
+// Legendary cards: never offered, sold or transformed. The only way to get one is to beat a
+// hard Judge's Challenge in act 3, which unlocks it in your collection for good.
+const LEGENDARY_CARDS = [
+  { id:'heirloom',    name:'Heirloom Yeast',     cat:'yeast',   lane:'cold', points:10, cost:3, tags:['clean'],            desc:'+3 per turn. Every other yeast on your board grows +1 more each turn.' },
+  { id:'wethop',      name:'Wet Hop Harvest',    cat:'hop',     lane:'both', points:18, cost:3, tags:['floral','fruity'],  desc:'Every other hop on your board gets +4.' },
+  { id:'landrace',    name:'Landrace Barley',    cat:'malt',    lane:'hot',  points:20, cost:2, tags:['nuanced','bready'], desc:'Also counts as an adjunct, for a Specialty Beer.' },
+  { id:'imperial',    name:'Imperial Roast',     cat:'malt',    lane:'hot',  points:16, cost:3, tags:['roasty','chocolate'], desc:'Adds 2 roast. Raises your roast limit by 3.' },
+  { id:'coolship',    name:'Coolship',           cat:'process', lane:'cold', points:6,  cost:2, tags:['sour','funky'],     desc:'Give the rival 1 Acid for each turn left this round.' },
+  { id:'masterblend', name:'Master Blender',     cat:'process', lane:'both', points:0,  cost:2, tags:[],                   desc:'Double the points of your highest-scoring card.' },
+];
+LEGENDARY_CARDS.forEach(c => { CARD_POOL.push(c); });
+
 CARD_POOL.forEach(c => {
-  c.rarity = RARE_CARDS.includes(c.id) ? 'rare' : UNCOMMON_CARDS.includes(c.id) ? 'uncommon' : 'common';
+  c.rarity = LEGENDARY_CARDS.some(l => l.id === c.id) ? 'legendary' : RARE_CARDS.includes(c.id) ? 'rare' : UNCOMMON_CARDS.includes(c.id) ? 'uncommon' : 'common';
 });
 
 const DEFAULT_DECK_IDS = [
@@ -316,6 +329,8 @@ function buildEnemyDeck() {
 const TOKEN_CARDS = [
   { id:'contamination', name:'Contamination',  cat:'token', lane:'cold', points:-10, cost:0, tags:['funky'],  desc:'Auto-plays to cold side when drawn. Interrupts your turn but costs 0.' },
   { id:'crowd_fav',     name:'Crowd Favorite', cat:'token', lane:'hot',  points:10,  cost:0, tags:[],         desc:'Festival rivals start each round with the crowd on their side.' },
+  { id:'tartness',    name:'Tartness',     cat:'token', lane:'cold', points:0,   cost:0, tags:['sour'],   desc:'Acidity keeping your beer safe from a brew day disaster.' },
+  { id:'mishap',      name:'Brew Day Mishap', cat:'token', lane:'hot', points:-10, cost:0, tags:[],   desc:'Something went wrong. Sanitize, CIP Cycle or Fining Agent clear it.' },
   { id:'acidburn',    name:'Acid Burn',    cat:'token', lane:'cold', points:0,   cost:0, tags:['sour'],   desc:'Points eaten away by the rival\'s Acid. Sanitize, CIP Cycle or Fining Agent clear it.' },
   { id:'stuckmash',   name:'Stuck Mash',   cat:'token', lane:'hot',  points:-8,  cost:0, tags:[],         desc:'Three sticky grains in a row clumped. Rice Hulls, Sanitize, CIP Cycle or Fining Agent clear it.' },
   { id:'contam_soft',   name:'Contamination',  cat:'token', lane:'cold', points:-5,  cost:0, tags:['funky'],  desc:'Softened Contamination (a clean yeast outcompeted it). Auto-plays to cold side when drawn.' },

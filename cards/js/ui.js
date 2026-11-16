@@ -8,12 +8,17 @@
 
 // One card on the board: shows what it actually scores, plus any synergy multiplier
 function fieldCardHtml(c, lane, who, idx) {
-  const target = who === 'p' && isBoardTarget(c, lane);
+  // Blind Tasting: the rival's cards stay face down until judging
+  if (who === 'e' && rivalHidden()) {
+    return `<div class="field-card e field-card-hidden" title="Blind Tasting: hidden until judging"><div class="field-card-name">? ? ?</div><div class="field-card-pts">??</div></div>`;
+  }
+  const session = who === 'p' && isSessionTarget(c, lane);
+  const target = who === 'p' && (session || isBoardTarget(c, lane));
   const mult = synergyMultiplier(c, lane, who);
   const pts  = effectivePoints(c, lane, who);
   const sign = pts >= 0 ? '+' : '';
   const fx   = juiceCardAttrs(c);
-  return `<div class="field-card ${who}${pts < 0 ? ' field-card-neg' : ''}${target ? ' field-card-target' : ''}${fx.cls}"${fx.attrs} ${target ? `onclick="event.stopPropagation();pickBoardTarget('${lane}', ${idx})"` : ''} title="${c.name}: ${c.points} pts${pts !== c.points ? ` + ${pts - c.points} synergy = ${pts}` : ''}">
+  return `<div class="field-card ${who}${pts < 0 ? ' field-card-neg' : ''}${target ? ' field-card-target' : ''}${fx.cls}"${fx.attrs} ${target ? `onclick="event.stopPropagation();${session ? `sessionPick('${lane}', ${idx})` : `pickBoardTarget('${lane}', ${idx})`}"` : ''} title="${c.name}: ${c.points} pts${pts !== c.points ? ` + ${pts - c.points} synergy = ${pts}` : ''}">
     <div class="field-card-name">${c.name}</div>
     <div class="field-card-pts">${sign}${pts}${mult > 1 ? `<span class="field-card-mult"> ×${mult}</span>` : ''}</div>
   </div>`;
@@ -30,12 +35,12 @@ function renderField() {
     pe.innerHTML = state.field[l].p.length
       ? state.field[l].p.map((c, i) => `
 ${fieldCardHtml(c, l, 'p', i)}`).join('')
-      : '<span class="empty-msg">— empty —</span>';
+      : '<span class="empty-msg">empty</span>';
 
     ee.innerHTML = state.field[l].e.length
       ? state.field[l].e.map(c => `
 ${fieldCardHtml(c, l, 'e')}`).join('')
-      : '<span class="empty-msg">— empty —</span>';
+      : '<span class="empty-msg">empty</span>';
 
     const playerLane = document.getElementById('plane-' + l).closest('.lane');
     if (playerLane) {
@@ -57,7 +62,8 @@ ${fieldCardHtml(c, l, 'e')}`).join('')
     }
 
     juiceCount(document.getElementById(l === 'hot' ? 'hs-p' : 'cs-p'), laneScore(l, 'p'), v => v + ' pts');
-    juiceCount(document.getElementById(l === 'hot' ? 'hs-e' : 'cs-e'), laneScore(l, 'e'), v => v + ' pts');
+    if (rivalHidden()) { const he = document.getElementById(l === 'hot' ? 'hs-e' : 'cs-e'); he._jv = undefined; he.textContent = '?? pts'; }
+    else juiceCount(document.getElementById(l === 'hot' ? 'hs-e' : 'cs-e'), laneScore(l, 'e'), v => v + ' pts');
   });
 }
 
@@ -102,13 +108,13 @@ function abilityButtonHtml() {
   const b = breweryDef();
   if (!b) return '';
   if (state.abilityTargeting) {
-    return ` <button class="btn btn-gold" onclick="useAbility()">${b.icon} CHOOSE A TARGET — CANCEL</button>`;
+    return ` <button class="btn btn-gold" onclick="useAbility()">${b.icon} CHOOSE A TARGET (CLICK TO CANCEL)</button>`;
   }
   const st = abilityStatus();
   const label = `${b.icon} ${b.ability.name.toUpperCase()} (${b.ability.cost})`;
   return st.ok
     ? ` <button class="btn btn-gold" onclick="useAbility()" title="${b.ability.desc}">${label}</button>`
-    : ` <button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;" title="${b.ability.desc}${st.reason ? ' — ' + st.reason : ''}">${label}</button>`;
+    : ` <button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;" title="${b.ability.desc}${st.reason ? ' (' + st.reason + ')' : ''}">${label}</button>`;
 }
 
 function renderActions() {
@@ -131,8 +137,10 @@ function renderActions() {
     el.innerHTML = `<div class="status-tag">RIVAL BREWING...</div>`;
   } else if (state.phase === 'between') {
     const next = judgingFor(state.round);
-    el.innerHTML = `<button class="btn btn-gold" onclick="startNextRound()">▶ START ROUND ${state.round}${next ? ` — ${next.icon} ${next.name.toUpperCase()}` : ''}</button>
+    el.innerHTML = `<button class="btn btn-gold" onclick="startNextRound()">▶ START ROUND ${state.round}${next ? ` · ${next.icon} ${next.name.toUpperCase()}` : ''}</button>
       ${next ? `<span style="font-size:7px;color:var(--dim);margin-left:8px">${next.desc}</span>` : ''}`;
+  } else if (state.sessionReplace && state.phase === 'play') {
+    el.innerHTML = `<button class="btn btn-primary" onclick="cancelSessionReplace()">CANCEL</button> <span class="status-tag" style="color:var(--gold)">${pendingChoicePrompt()}</span>`;
   } else if (state.phase === 'tally') {
     el.innerHTML = `<div class="status-tag">THE JUDGES ARE TASTING...</div>`;
   } else if (state.phase === 'end') {
@@ -169,7 +177,7 @@ function showOverlay(pw, ew) {
     const s = state.lastRoundScore ? state.lastRoundScore.p : totalScore('p');
     document.getElementById('ov-title').textContent = 'TEST BREW DONE';
     document.getElementById('ov-title').style.color = 'var(--gold)';
-    document.getElementById('ov-sub').textContent   = `Your beer scored ${s} points in ${MAX_TURNS} turns.`;
+    document.getElementById('ov-sub').textContent   = `Your beer scored ${s} points in ${maxTurns()} turns.`;
     document.getElementById('ov-wins').textContent  = 'The dummy never plays a card, so this is your deck on its own.';
     if (btns) btns.innerHTML = `<button class="btn btn-gold" onclick="startTestBrew()">TEST AGAIN</button>
       <button class="btn btn-primary" onclick="endTestBrew()">← BACK TO BUILDER</button>`;
@@ -190,19 +198,21 @@ function render() {
   const ps = totalScore('p'), es = totalScore('e');
 
   juiceCount(document.getElementById('player-score'), ps);
-  juiceCount(document.getElementById('enemy-score'),  es);
+  if (rivalHidden()) { const ee = document.getElementById('enemy-score'); ee._jv = undefined; ee.textContent = '??'; }
+  else juiceCount(document.getElementById('enemy-score'),  es);
 
   const sb_p = document.getElementById('score-player');
   const sb_e = document.getElementById('score-enemy');
   const pt   = document.getElementById('player-lead-tag');
   const et   = document.getElementById('enemy-lead-tag');
 
-  sb_p.classList.toggle('leading', ps > es && ps > 0);
-  sb_e.classList.toggle('leading', es > ps && es > 0);
+  sb_p.classList.toggle('leading', !rivalHidden() && ps > es && ps > 0);
+  sb_e.classList.toggle('leading', !rivalHidden() && es > ps && es > 0);
 
   const diff = Math.abs(ps - es);
-  pt.textContent = (ps > es && diff > 0) ? `▲ +${diff}` : '';
-  et.textContent = (es > ps && diff > 0) ? `▲ +${diff}` : '';
+  // Blind Tasting: don't give away who's ahead
+  pt.textContent = !rivalHidden() && (ps > es && diff > 0) ? `▲ +${diff}` : '';
+  et.textContent = !rivalHidden() && (es > ps && diff > 0) ? `▲ +${diff}` : '';
 
   document.getElementById('round-num').textContent   = state.round;
   const repPill = document.getElementById('rep-pill');
@@ -212,17 +222,17 @@ function render() {
     if (show) repPill.textContent = `⭐ ${mapState.rep}/${mapState.maxRep}${state.isBoss ? ' · MUST WIN' : ''}`;
   }
   const maxTurnsEl = document.getElementById('max-turns');
-  if (maxTurnsEl) maxTurnsEl.textContent = MAX_TURNS;
+  if (maxTurnsEl) maxTurnsEl.textContent = maxTurns();
   const maxRoundsEl = document.getElementById('max-rounds');
   if (maxRoundsEl) maxRoundsEl.textContent = state.maxRounds || 3;
-  document.getElementById('turn-num').textContent   = state.phase === 'play' ? state.turn : '—';
+  document.getElementById('turn-num').textContent   = state.phase === 'play' ? state.turn : '-';
   document.getElementById('budget-rem').textContent = state.phase === 'play'
-    ? `${state.budget - state.budgetUsed}/${state.budget}` : '—';
+    ? `${state.budget - state.budgetUsed}/${state.budget}` : '-';
 
   document.getElementById('phase-label').textContent =
     state.phase === 'mulligan'  ? 'MULLIGAN' :
     state.phase === 'play'      ? (state.playerTurn
-                                    ? (state.ePassed ? 'YOUR TURN — RIVAL PASSED' : 'YOUR TURN')
+                                    ? (state.ePassed ? 'YOUR TURN · RIVAL PASSED' : 'YOUR TURN')
                                     : 'RIVAL TURN') :
     state.phase === 'between'   ? 'BETWEEN ROUNDS' :
     state.phase === 'tally'     ? 'JUDGING...'     : 'GAME OVER';
@@ -284,22 +294,34 @@ function render() {
   if (handCol) handCol.classList.toggle('hand-picking', !!state.handTargeting && state.phase === 'play');
   document.getElementById('hand-lbl').textContent =
     state.phase === 'mulligan'
-      ? `YOUR HAND — SELECT UP TO ${mulliganLimit()} TO SEND BACK`
+      ? `YOUR HAND: SELECT UP TO ${mulliganLimit()} TO SEND BACK`
       : state.handTargeting && state.phase === 'play'
-        ? '🫳 GRAIN OUT — CLICK A CARD IN YOUR HAND TO DISCARD IT'
+        ? 'GRAIN OUT: CLICK A CARD IN YOUR HAND TO DISCARD IT'
       : playerMustPlayContamination() && state.phase === 'play'
         ? '⚠ CONTAMINATION! CLICK IT, THEN YOUR COLD SIDE'
-        : `YOUR HAND (${state.pHand.length}) — BUDGET: ${state.budget - state.budgetUsed}/${state.budget}${discountMsg}`;
+        : `YOUR HAND (${state.pHand.length}) · BUDGET: ${state.budget - state.budgetUsed}/${state.budget}${discountMsg}`;
 
   const rivalNameEl = document.getElementById('rival-name');
   if (rivalNameEl) rivalNameEl.textContent = (state.rivalName || 'Rival Brewery').toUpperCase();
 
   // Judging category for this round
+  const ruleEl = document.getElementById('rule-pill');
+  if (ruleEl) {
+    const t = rulePillText();
+    ruleEl.style.display = t && state.phase !== 'end' ? '' : 'none';
+    ruleEl.textContent = t;
+  }
+  const goalEl = document.getElementById('goal-pill');
+  if (goalEl) {
+    const t = goalPillText();
+    goalEl.style.display = t && state.phase !== 'end' ? '' : 'none';
+    goalEl.textContent = t;
+  }
   const judgingEl = document.getElementById('judging-pill');
   if (judgingEl) {
     const j = state.phase === 'between' ? judgingFor(state.round) : state.judging;
     judgingEl.style.display = j ? '' : 'none';
-    judgingEl.textContent   = j ? `${j.icon} ${j.name.toUpperCase()}${j.lane ? ` — ${j.lane.toUpperCase()} ×2` : ''}` : '';
+    judgingEl.textContent   = j ? `${j.icon} ${j.name.toUpperCase()}${j.lane ? ` · ${j.lane.toUpperCase()} ×2` : ''}` : '';
   }
   LANES.forEach(l => ['p','e'].forEach(w => {
     const m = document.getElementById(`mult-${l}-${w}`);
@@ -324,7 +346,7 @@ function render() {
 
   const relicBar = document.getElementById('relic-bar');
   const bDef = breweryDef();
-  const bIcon = bDef ? `<span class="relic-icon" title="${bDef.name} — Passive: ${bDef.passive} | Ability: ${bDef.ability.name}: ${bDef.ability.desc}">${bDef.icon}</span>` : '';
+  const bIcon = bDef ? `<span class="relic-icon" title="${bDef.name} | Passive: ${bDef.passive} | Ability: ${bDef.ability.name}: ${bDef.ability.desc}">${bDef.icon}</span>` : '';
   if (relicBar) relicBar.innerHTML = state.currentNode ? bIcon + relicIconsHtml() : '';
 
   // Choosing from the top of your deck / your discard pile
@@ -338,9 +360,15 @@ function render() {
   // What the rival is about to do (committed plan)
   const intentEl = document.getElementById('rival-intent');
   if (intentEl) {
-    const show = state.phase === 'play' && state.playerTurn && state.rivalPlan;
-    intentEl.style.display = show ? '' : 'none';
-    intentEl.innerHTML = show ? rivalIntentHtml() : '';
+    if (state.disaster) {
+      const show = state.phase === 'play';
+      intentEl.style.display = show ? '' : 'none';
+      intentEl.innerHTML = show ? disasterPanelHtml() : '';
+    } else {
+      const show = state.phase === 'play' && state.playerTurn && state.rivalPlan && !rivalHidden();
+      intentEl.style.display = show ? '' : 'none';
+      intentEl.innerHTML = show ? rivalIntentHtml() : '';
+    }
   }
 
   // What the rival just did, shown until you end your turn

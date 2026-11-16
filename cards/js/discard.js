@@ -18,13 +18,14 @@ function deckOf(who)    { return who === 'p' ? state.pDeck    : state.eDeck;    
 
 // Anything waiting on the player to choose blocks other actions
 function pendingChoiceActive() {
-  return !!(state && (state.cardTargeting || state.handTargeting || state.battlePicker));
+  return !!(state && (state.cardTargeting || state.handTargeting || state.battlePicker || state.sessionReplace));
 }
 
 function pendingChoicePrompt() {
   if (state.cardTargeting) return CARD_TARGETS[state.cardTargeting.kind].prompt;
   if (state.handTargeting) return 'GRAIN OUT: CHOOSE A CARD IN YOUR HAND TO DISCARD';
   if (state.battlePicker)  return state.battlePicker.prompt;
+  if (state.sessionReplace) return `SESSION BEER CUP: CLICK THE CARD ON YOUR ${state.sessionReplace.lane.toUpperCase()} SIDE TO REPLACE`;
   return '';
 }
 
@@ -32,7 +33,7 @@ function pendingChoicePrompt() {
 
 function startGrainOut(src, who) {
   const hand = handOf(who).filter(c => !isContamination(c));
-  if (!hand.length) { drawFor(who, 2); addLog('Grain Out: nothing to discard — drew 2.', who === 'p' ? 'player' : 'enemy'); return; }
+  if (!hand.length) { drawFor(who, 2); addLog('Grain Out: nothing to discard, drew 2.', who === 'p' ? 'player' : 'enemy'); return; }
   if (who === 'e') {
     const worst = hand.reduce((a, b) => b.points < a.points ? b : a);
     finishGrainOut(worst, 'e');
@@ -113,8 +114,8 @@ function grainBillReview(who) {
   const top   = deck.slice(0, GRAIN_REVIEW_DEPTH);
   const malts = top.filter(c => c.cat === 'malt');
   const tag   = who === 'p' ? 'player' : 'enemy';
-  if (who === 'p') addLog(`Grain Bill Review: next ${top.length} — ${top.map(c => c.name).join(', ') || 'deck empty'}`, 'player');
-  if (!malts.length) { drawFor(who, 1); addLog('Grain Bill Review: no malt in sight — drew 1 instead.', tag); return; }
+  if (who === 'p') addLog(`Grain Bill Review: next ${top.length}: ${top.map(c => c.name).join(', ') || 'deck empty'}`, 'player');
+  if (!malts.length) { drawFor(who, 1); addLog('Grain Bill Review: no malt in sight, drew 1 instead.', tag); return; }
   if (who === 'e' || malts.length === 1) {
     const best = malts.reduce((bi, c, k) => c.points > malts[bi].points ? k : bi, 0);
     BATTLE_PICKS.grainreview(malts, best, who);
@@ -136,12 +137,12 @@ function startTrubDump(src, who) {
     BATTLE_PICKS.trubdump(cards, best, 'e');
     return;
   }
-  openBattlePicker('trubdump', 'TRUB DUMP: KEEP ONE CARD — THE OTHERS GO TO YOUR DISCARD PILE', cards, src);
+  openBattlePicker('trubdump', 'TRUB DUMP: KEEP ONE CARD, THE OTHERS GO TO YOUR DISCARD PILE', cards, src);
 }
 
 function startYeastHarvest(src, who) {
   const yeasts = discardOf(who).filter(c => c.cat === 'yeast');
-  if (!yeasts.length) { drawFor(who, 1); addLog('Yeast Harvest: no yeast in your discard pile — drew 1 instead.', who === 'p' ? 'player' : 'enemy'); return; }
+  if (!yeasts.length) { drawFor(who, 1); addLog('Yeast Harvest: no yeast in your discard pile, drew 1 instead.', who === 'p' ? 'player' : 'enemy'); return; }
   if (who === 'e') {
     const best = yeasts.reduce((bi, c, k) => c.points > yeasts[bi].points ? k : bi, 0);
     BATTLE_PICKS.yeastharvest(yeasts, best, 'e');
@@ -167,7 +168,7 @@ function secondRunnings(src, who) {
     return;
   }
   src.points += 8;
-  addLog('Second Runnings: no malt to rebrew — +8 pts instead.', who === 'p' ? 'player' : 'enemy');
+  addLog('Second Runnings: no malt to rebrew, +8 pts instead.', who === 'p' ? 'player' : 'enemy');
 }
 
 // ── Picker markup (shown above your hand) ──

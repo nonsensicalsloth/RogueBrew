@@ -13,7 +13,15 @@ function selectCard(idx) {
   // Finish choosing for the last card first
   if (pendingChoiceActive()) return;
   selectedCard = (selectedCard === idx) ? null : idx;
+  // Cards that don't care which lane they're in play straight away (no lane click needed)
+  if (selectedCard === idx && isLaneFree(c)) { playToLane(c.lane === 'hot' ? 'hot' : 'cold'); return; }
   render();
+}
+
+// 0-point process cards that can go on either side: the lane makes no difference to them
+const LANE_MATTERS = ['qc', 'doublebatch'];
+function isLaneFree(c) {
+  return c.cat === 'process' && c.lane === 'both' && c.points === 0 && !LANE_MATTERS.includes(c.id);
 }
 
 function getEffectiveCost(c) {
@@ -31,7 +39,7 @@ function getEffectiveCost(c) {
   if (c.cat === 'process' && activeBrewery() === 'contract') discount += 1;
   if (c.cat === 'yeast') discount += (state.nextYeastDiscount || 0);
   if (c.cat === 'hop')   discount += (state.nextHopDiscount   || 0);
-  return Math.max(0, c.cost - discount - scout);
+  return Math.max(0, c.cost + ruleCostMod(c) - discount - scout);
 }
 
 function playToLane(lane) {
@@ -53,6 +61,9 @@ function playToLane(lane) {
     return;
   }
 
+  // Session Beer Cup: a full side means choosing a card to replace first
+  if (sideFull(lane, 'p')) { startSessionReplace(lane); return; }
+
   // Remove from hand, place on field
   juiceFlyStart(selectedCard, c);
   state.pHand.splice(selectedCard, 1);
@@ -64,6 +75,7 @@ function playToLane(lane) {
   if (c.cat === 'hop')   { state.nextHopDiscount = 0; state.nextHopFree = false; state.hopBackUsed = true; }
 
   addLog(`You play ${c.name} (+${c.points}) → ${LANE_NAMES[lane]}`, 'player');
+  trackGoalPlay(c);
   resolvePlay(c, lane, 'p');
 
   selectedCard = null;
@@ -96,7 +108,7 @@ function resolvePlay(c, lane, who) {
     if (brew === 'hophouse' && c.cat === 'hop' && !state.firstHopBonusUsed) {
       c.points += 2;
       state.firstHopBonusUsed = true;
-      addLog(`Hop House: first hop this turn — ${c.name} +2.`, 'player');
+      addLog(`Hop House: first hop this turn, ${c.name} +2.`, 'player');
     }
   }
 
@@ -163,7 +175,7 @@ function endTurn() {
 
 function enemyPass(reason) {
   state.ePassed = true;
-  addLog(`Rival stops brewing this round${reason ? ' — ' + reason : ''}.`, 'enemy');
+  addLog(`Rival stops brewing this round${reason ? ': ' + reason : ''}.`, 'enemy');
 }
 
 // ── Enemy AI ──
@@ -173,12 +185,16 @@ function enemyPass(reason) {
 // Rival decisions live in rivalai.js (planning, intents). This just plays them out.
 function enemyPlayCard(c, laneOverride) {
   const lane = laneOverride || rivalLaneFor(c);
-  addLog(c.cat === 'process' ? `Rival uses ${c.name}!` : `Rival plays ${c.name} (+${c.points}) → ${LANE_NAMES[lane]}`, 'enemy');
+  rivalMakeRoom(lane);
+  if (ruleOn('blind')) addLog(`Rival plays a card → ${LANE_NAMES[lane]} (hidden).`, 'enemy');
+  else addLog(c.cat === 'process' ? `Rival uses ${c.name}!` : `Rival plays ${c.name} (+${c.points}) → ${LANE_NAMES[lane]}`, 'enemy');
   resolvePlay(c, lane, 'e');
 }
 
 function enemyTurn() {
   if (state.phase !== 'play') return;
+  // Brew Day Disaster: nobody across the aisle, Murphy's Law acts at the start of your turn
+  if (state.disaster) { setTimeout(() => advanceTurn(), 250); return; }
   // Capture the log lines from this rival turn so the player sees a summary
   const logMark = state.logs[0];
   const finish = () => {

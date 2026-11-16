@@ -211,3 +211,8 @@
 .card.card-locked { filter: grayscale(0.85); opacity: 0.45; }
 .card-lock-badge { position: absolute; top: 34px; left: 50%; transform: translateX(-50%); font-size: 18px; z-index: 3; }
 .unlock-badge { font-size: 5px; color: var(--gold); text-align: center; padding: 2px 0 3px; }
+
+/* Legendary rarity */
+.card-rarity.rarity-legendary { background: linear-gradient(90deg, #ff6f00, #ffd54f, #ff6f00); box-shadow: 0 0 8px #ff9800; animation: legendShine 2s ease-in-out infinite; }
+.rarity-text.rarity-legendary { color: #ffab40; }
+@keyframes legendShine { 50% { box-shadow: 0 0 14px #ffb74d; } }

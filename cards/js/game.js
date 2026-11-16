@@ -62,6 +62,11 @@ function initGame(opts = {}) {
     rivalBonusName:   opts.rivalBonusName || 'Crowd Favorite',
     rivalName:        opts.testDummy ? 'Test Dummy' : opts.rival ? opts.rival.name : 'Rival Brewery',
     rivalTrait:       opts.rival ? opts.rival.trait || null : null,
+    rule:             node && node.rule ? node.rule : null,
+    goal:             node && node.goal ? node.goal : null,
+    goalStats:        { played: 0, adjuncts: 0 },
+    goalMet:          false,
+    maxTurns:         node && node.rule === 'speed' ? SPEED_TURNS : MAX_TURNS,
     hopBackUsed:      false,
     ePassed:          false,
     nextCardDiscount: 0,
@@ -82,8 +87,9 @@ function initGame(opts = {}) {
     lastPlayedLane:   null,
   };
 
+  if (opts.disaster) initDisasterState();
   if (opts.rival) {
-    addLog(`⚔ ${opts.rival.name} (${opts.rival.style})${opts.rival.traitName ? ` — ${opts.rival.traitName}: ${opts.rival.traitDesc}` : ''}`, 'enemy');
+    addLog(`⚔ ${opts.rival.name} (${opts.rival.style})${opts.rival.traitName ? ` · ${opts.rival.traitName}: ${opts.rival.traitDesc}` : ''}`, 'enemy');
   }
   drawCards(hasRelic('recipebook') ? 6 : 5, state.pDeck, state.pHand);   // Recipe Book: 1 extra opening card
   drawCards(5, state.eDeck, state.eHand);
@@ -112,13 +118,16 @@ const MAX_TURNS = 8;
 // ── Budget ──
 function getBudget(turn, who = 'p') {
   const cap = 5 + (who === 'p' && hasRelic('fermenter') ? 1 : 0);
-  return Math.min(turn, cap);
+  // Speed Brew: a shorter round, but everyone gets +1 budget every turn
+  const speed = typeof ruleOn === 'function' && ruleOn('speed') ? SPEED_BUDGET : 0;
+  return Math.min(turn + speed, cap + speed);
 }
 
 // ── Scoring ──
 function laneScore(lane, who) {
   let score = state.field[lane][who].reduce((s, c) => s + effectivePoints(c, lane, who), 0);
   if (lane === 'hot' && isBurnt(who)) score = Math.floor(score / 2);
+  if (state.disaster) score = Math.floor(score * disasterLaneMult(lane, who));
   return score * laneMultiplier(lane);
 }
 // ── Complete Beer bonus ──
@@ -131,6 +140,8 @@ const BEER_PARTS = ['malt', 'hop', 'yeast'];
 
 function beerStatus(who) {
   const cats    = new Set(LANES.flatMap(l => state.field[l][who].map(c => c.cat)));
+  // Landrace Barley (legendary) counts as an adjunct too
+  if (LANES.some(l => state.field[l][who].some(c => c.id === 'landrace'))) cats.add('adjunct');
   const missing = BEER_PARTS.filter(c => !cats.has(c));
   const complete  = missing.length === 0;
   const specialty = complete && cats.has('adjunct');
@@ -184,7 +195,7 @@ function startRound() {
   state.field           = { hot: { p: [], e: [] }, cold: { p: [], e: [] } };
   state.judging = judgingFor(state.round);
   addLog(`▶ Round ${state.round} begins! Budget: ${state.budget}`);
-  if (state.judging) addLog(`${state.judging.icon} Judging: ${state.judging.name} — ${state.judging.desc}.`, 'sys');
+  if (state.judging) addLog(`${state.judging.icon} Judging: ${state.judging.name} (${state.judging.desc}).`, 'sys');
   if (state.rivalBonus) {
     const fav = createToken('crowd_fav');
     fav.points = state.rivalBonus;
@@ -193,6 +204,8 @@ function startRound() {
     addLog(`${state.rivalBonusName}: rival starts with +${state.rivalBonus}.`, 'enemy');
   }
   if (state.rivalTrait === 'roastmaster') state.eRoastThreshold = 7;
+  applyRuleAtRoundStart();
+  if (state.rule) addLog(`📜 Competition rule: ${COMP_RULES[state.rule].name}. ${COMP_RULES[state.rule].desc}`, 'sys');
   drawCards(hasRelic('grainmill') ? 2 : 1, state.pDeck, state.pHand);
   drawCards(1, state.eDeck, state.eHand);
   planRivalTurn();
@@ -210,14 +223,15 @@ function endRound() {
   state._tallied = false;
   const ps = totalScore('p'), es = totalScore('e');
   state.lastRoundScore = { p: ps, e: es };
+  checkGoalAtRoundEnd(ps, es);
   ['p', 'e'].forEach(w => {
     const b = beerStatus(w);
     if (b.complete) addLog(`🍺 ${w === 'p' ? 'Your' : "Rival's"} ${b.specialty ? 'Specialty' : 'Complete'} Beer: +${b.bonus}`, w === 'p' ? 'player' : 'enemy');
   });
-  addLog(`■ Round ${state.round}${state.judging ? ` (${state.judging.name})` : ''} ends — You: ${ps}  Rival: ${es}`);
+  addLog(`■ Round ${state.round}${state.judging ? ` (${state.judging.name})` : ''} ends. You: ${ps}, Rival: ${es}`);
   if (ps > es)      { state.roundWins.push('player'); addLog(`★ You win round ${state.round}!`, 'player'); }
   else if (es > ps) { state.roundWins.push('enemy');  addLog(`✗ Rival wins round ${state.round}.`, 'enemy'); }
-  else              { state.roundWins.push('draw');   addLog('— Draw!'); }
+  else              { state.roundWins.push('draw');   addLog('Draw!'); }
 
   // Victory Malt / Award Entry — remember them if you won this round with them on your board
   if (ps > es) {
@@ -241,7 +255,8 @@ function endRound() {
   if (pw >= 2 || ew >= 2 || state.round >= state.maxRounds) {
     state.phase = 'end';
     // Map battles report back to the map; practice games show the overlay
-    if (state.currentNode && pw > ew)      onBattleWin(state.currentNode);
+    if (state.disaster)                    onDisasterEnd(state.currentNode);
+    else if (state.currentNode && pw > ew) onBattleWin(state.currentNode);
     else if (state.currentNode)            onBattleLoss();
     else                                   showOverlay(pw, ew);
   } else {
@@ -263,8 +278,9 @@ function advanceTurn() {
   state.abilityUsed      = false;
   state.abilityTargeting = false;
   state.firstHopBonusUsed = false;
-  if (state.turn > MAX_TURNS) { endRound(); return; }
-  addLog(`▸ Turn ${state.turn} — Budget: ${state.budget}`);
+  if (state.turn > maxTurns()) { endRound(); return; }
+  if (state.disaster) disasterTurn();
+  addLog(`▸ Turn ${state.turn} · Budget: ${state.budget}`);
 
   drawCards(1, state.pDeck, state.pHand);
   if (!state.ePassed) drawCards(state.rivalTrait === 'massprod' && state.turn % 3 === 0 ? 2 : 1, state.eDeck, state.eHand);

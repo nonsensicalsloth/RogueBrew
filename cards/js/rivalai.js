@@ -62,7 +62,7 @@ function evaluatePlay(sim, uid, lane) {
     const i = state.eHand.findIndex(c => c._uid === uid);
     if (i < 0) return null;
     const card = state.eHand[i];
-    const turnsLeft = MAX_TURNS - state.turn;
+    const turnsLeft = maxTurns() - state.turn;
     const acidBefore = acidFutureDamage('p', turnsLeft);
     const gapBefore  = scoreGap();
     const ownBefore  = totalScore('e');
@@ -86,17 +86,17 @@ function planSmart(budget) {
   for (let step = 0; step < 8; step++) {
     let best = null;
     for (const c of sim.eHand) {
-      if ((c.cat === 'token' && c.points < 0) || c.cost > remaining) continue;   // helpful tokens are worth playing
+      if ((c.cat === 'token' && c.points < 0) || rivalCost(c) > remaining) continue;   // helpful tokens are worth playing
       for (const lane of lanesFor(c)) {
         const r = evaluatePlay(sim, c._uid, lane);
-        if (r && (!best || r.value > best.value || (r.value === best.value && c.cost < best.card.cost))) {
+        if (r && (!best || r.value > best.value || (r.value === best.value && rivalCost(c) < rivalCost(best.card)))) {
           best = { ...r, card: c, lane };
         }
       }
     }
     if (!best || best.value <= 0) break;
     plan.push(planEntry(best.card, best.lane, best.gain));
-    remaining -= best.card.cost;
+    remaining -= rivalCost(best.card);
     sim = best.sim;
   }
   return plan;
@@ -109,18 +109,18 @@ function planSimple(budget) {
   let remaining = budget;
   while (remaining > 0) {
     const pick = hand
-      .filter(c => c.cost <= remaining && c.points >= 0 && !RIVAL_ATTACKS.has(c.id) && !rivalWouldOverload(c))
+      .filter(c => rivalCost(c) <= remaining && c.points >= 0 && !RIVAL_ATTACKS.has(c.id) && !rivalWouldOverload(c))
       .sort((a, b) => b.points - a.points)[0];
     if (!pick) break;
     hand.splice(hand.indexOf(pick), 1);
-    remaining -= pick.cost;
+    remaining -= rivalCost(pick);
     plan.push(planEntry(pick, rivalLaneFor(pick), pick.points));
   }
   return plan;
 }
 
 function planEntry(c, lane, gain) {
-  return { uid: c._uid, id: c.id, name: c.name, cat: c.cat, cost: c.cost, lane, gain: Math.round(gain), attack: RIVAL_ATTACKS.has(c.id) };
+  return { uid: c._uid, id: c.id, name: c.name, cat: c.cat, cost: rivalCost(c), lane, gain: Math.round(gain), attack: RIVAL_ATTACKS.has(c.id) };
 }
 
 // Called at the start of each of your turns
@@ -146,9 +146,9 @@ function rivalPlanStep(ctx) {
       : state.eHand.findIndex(c => c.id === step.id);
     if (i < 0) continue;
     const c = state.eHand[i];
-    if (c.cost > ctx.remaining) continue;
+    if (rivalCost(c) > ctx.remaining) continue;
     state.eHand.splice(i, 1);
-    ctx.remaining -= c.cost;
+    ctx.remaining -= rivalCost(c);
     enemyPlayCard(c, step.lane);
     ctx.played++;
     return true;
@@ -187,7 +187,7 @@ const INTENT_ICONS = { malt: '🌾', hop: '🌿', yeast: '🧫', adjunct: '✦',
 function rivalIntentHtml() {
   const plan = state.rivalPlan;
   if (!plan) return '';
-  if (!plan.length) return `<span class="intent-label">RIVAL NEXT:</span> <span class="intent-quiet">nothing — holding back</span>`;
+  if (!plan.length) return `<span class="intent-label">RIVAL NEXT:</span> <span class="intent-quiet">nothing, holding back</span>`;
   const total   = plan.reduce((s, p) => s + Math.max(0, p.gain), 0);
   const attacks = plan.filter(p => p.attack);
   const icons   = plan.filter(p => !p.attack).map(p =>

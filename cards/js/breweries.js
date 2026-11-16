@@ -156,7 +156,7 @@ function useAbility() {
       const drawn = state.pHand.length > before ? state.pHand[state.pHand.length - 1] : null;
       if (drawn && drawn.cat === 'hop') {
         drawn._scoutKey = abilityKey();
-        addLog(`Hop Scout: drew ${drawn.name} — it costs 1 less this turn!`, 'player');
+        addLog(`Hop Scout: drew ${drawn.name}, it costs 1 less this turn!`, 'player');
       } else if (drawn) {
         addLog(`Hop Scout: drew ${drawn.name}.`, 'player');
       }

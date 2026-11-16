@@ -89,8 +89,8 @@ function runSummaryHtml(won, reason, newBreweries) {
     ${newBreweries.length ? newBreweries.map(nb => `<div class="sum-unlock">🎉 NEW BREWERY UNLOCKED: ${nb.icon} ${nb.name}</div>`).join('') : ''}
     ${reason ? `<div class="sum-reason">${reason}</div>` : ''}
     <div class="sum-grid">
-      ${stat('Brewery', b ? `${b.icon} ${b.name}` : '—')}
-      ${stat('Deck', s.deckName || '—')}
+      ${stat('Brewery', b ? `${b.icon} ${b.name}` : '-')}
+      ${stat('Deck', s.deckName || '-')}
       ${stat('Reached', won ? 'Champion!' : `Act ${mapState.act + 1}`)}
       ${stat('Rooms visited', mapState.nodeCount || 0)}
       ${stat('Battles won', s.battlesWon)}

@@ -835,3 +835,26 @@ body::after {
 .lane.lane-dimmed { opacity: 0.45; transition: opacity .2s; }
 .hand-col.hand-picking { outline: 2px solid var(--gold); outline-offset: 4px; box-shadow: 0 0 18px rgba(255,215,0,0.25); }
 .hand-col.hand-picking #hand-lbl { color: var(--gold); animation: mustPlayPulse 1s ease-in-out infinite; }
+
+/* ══════════════ BREW DAY DISASTER (js/disaster.js) ══════════════ */
+.disaster-panel { border: 2px solid #ff7043; background: rgba(255,112,67,0.08); padding: 6px 8px; display: flex; flex-direction: column; gap: 4px; }
+.disaster-head { font-size: 8px; color: #ff7043; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.disaster-tiers { font-size: 7px; color: var(--dim); }
+.disaster-tiers .tier-hit { color: var(--gold); }
+.disaster-tiers .tier-now { margin-left: 6px; color: var(--gold); }
+.disaster-row { font-size: 7px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; line-height: 1.5; }
+.disaster-row b { color: #ff7043; }
+.disaster-active b { color: var(--red); }
+.btn.btn-fix { font-size: 6px; padding: 4px 6px; border-color: #ff7043; color: #ff7043; }
+.btn.btn-fix[disabled] { opacity: 0.35; cursor: not-allowed; }
+.disaster-result { font-size: 8px; line-height: 1.8; text-align: center; }
+.disaster-result-tier { font-size: 14px; margin-bottom: 6px; }
+.disaster-result-tier.tier-0 { color: var(--red); }
+.disaster-result-tier.tier-1 { color: #cd7f32; }
+.disaster-result-tier.tier-2 { color: #c0c0c0; }
+.disaster-result-tier.tier-3 { color: var(--gold); }
+
+/* Blind Tasting */
+.field-card.field-card-hidden { background: repeating-linear-gradient(45deg, #1a1a2e, #1a1a2e 4px, #22223a 4px, #22223a 8px); color: var(--dim); }
+
+.reward-goal { font-size: 8px; color: var(--gold); margin-top: 6px; }

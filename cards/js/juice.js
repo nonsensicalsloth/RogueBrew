@@ -217,9 +217,9 @@ function juiceMoments() {
 
   if (now.phase === 'play' && was.phase !== 'play') {
     const j = state.judging;
-    juiceBanner(`ROUND ${state.round}${j ? `<small>${j.icon} ${j.name.toUpperCase()} — ${j.desc}</small>` : ''}`, 'gold', 1500);
+    juiceBanner(`ROUND ${state.round}${j ? `<small>${j.icon} ${j.name.toUpperCase()}: ${j.desc}</small>` : ''}`, 'gold', 1500);
   }
-  if (now.phase === 'play' && now.myTurn && now.turn === MAX_TURNS && (was.turn !== now.turn || !was.myTurn)) {
+  if (now.phase === 'play' && now.myTurn && now.turn === maxTurns() && (was.turn !== now.turn || !was.myTurn)) {
     juiceBanner('⏳ LAST TURN!', 'orange', 1200);
   }
   if (now.burntP && !was.burntP) {
@@ -242,7 +242,7 @@ function juiceMoments() {
   if (now.beerE > was.beerE && was.beerE === 0 && now.phase === 'play' && was.phase === 'play') {
     juiceBanner(`Rival brewed a complete beer +${now.beerE}`, 'enemy', 1200);
   }
-  if (now.lead !== was.lead && now.phase === 'play' && now.lead !== 0) {
+  if (now.lead !== was.lead && now.phase === 'play' && now.lead !== 0 && !rivalHidden()) {
     const box = document.getElementById(now.lead > 0 ? 'score-player' : 'score-enemy');
     if (box) { box.classList.remove('lead-pop'); void box.offsetWidth; box.classList.add('lead-pop'); }
   }
@@ -276,16 +276,21 @@ function showRoundTally(done) {
   const row = (label, p, e, note) => ({ label, p, e, note });
   const rows = [
     row(`🔥 Hot side${j && j.lane === 'hot' ? ' ×2' : ''}`, laneScore('hot', 'p'), laneScore('hot', 'e'),
-        isBurnt('p') || isBurnt('e') ? `${isBurnt('p') ? 'you' : 'rival'} burnt — ½` : ''),
+        isBurnt('p') || isBurnt('e') ? `${isBurnt('p') ? 'you' : 'rival'} burnt, ½` : ''),
     row(`❄ Cold side${j && j.lane === 'cold' ? ' ×2' : ''}`, laneScore('cold', 'p'), laneScore('cold', 'e'), ''),
     row('🍺 Beer bonus', beerStatus('p').bonus, beerStatus('e').bonus, ''),
   ];
   const ps = totalScore('p'), es = totalScore('e');
-  const result = ps > es ? 'win' : es > ps ? 'lose' : 'draw';
-  const stamp  = result === 'win' ? '★ YOU WIN THE ROUND!' : result === 'lose' ? '✗ RIVAL WINS THE ROUND' : '— DRAW —';
+  let result = ps > es ? 'win' : es > ps ? 'lose' : 'draw';
+  let stamp  = result === 'win' ? '★ YOU WIN THE ROUND!' : result === 'lose' ? '✗ RIVAL WINS THE ROUND' : 'DRAW';
+  if (state.disaster) {
+    const tier = disasterTier(ps);
+    result = tier ? 'win' : 'lose';
+    stamp  = tier ? `${TIER_NAMES[tier]} TIER!` : 'TARGET MISSED';
+  }
 
   box.innerHTML = `
-    <div class="tally-title">ROUND ${state.round} — THE JUDGES TASTE</div>
+    <div class="tally-title">ROUND ${state.round}: THE JUDGES TASTE</div>
     ${j ? `<div class="tally-cat">${j.icon} ${j.name.toUpperCase()}</div>` : ''}
     <div class="tally-grid">
       <div class="tally-head"></div><div class="tally-head you">YOU</div><div class="tally-head rival">${(state.rivalName || 'RIVAL').toUpperCase()}</div>

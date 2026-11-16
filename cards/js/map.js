@@ -14,7 +14,7 @@ const MAP_EXTRA_FORK = 0.6;    // chance a node gets an extra diagonal fork
 // Weighted odds for floors that aren't fixed (see assignNodeTypes for the rules)
 const NODE_WEIGHTS = {
   battle: 40, event: 14, draft: 10, festival: 9, rest: 8, shop: 10,
-  barrel: 3, collab: 3, lab: 3, taproom: 3, contract: 3,
+  barrel: 3, collab: 3, lab: 3, taproom: 3, contract: 3, disaster: 5,
 };
 // These shouldn't follow themselves on a path
 const NO_REPEAT = ['rest', 'shop', 'festival'];
@@ -32,12 +32,13 @@ const NODE_ICONS = {
   lab:      '🔬',
   taproom:  '🍺',
   contract: '📜',
+  disaster: '🔧',
 };
 
 const NODE_NAMES = {
   battle:'Rival Brewery', draft:'Draft', shop:'Shop', event:'Event', rest:'Rest Stop', boss:'Act Boss',
   festival:'Beer Festival (elite)', barrel:'Barrel Room', collab:'Collab Brew', lab:'Quality Lab',
-  taproom:'Taproom Night', contract:'Supplier Contract',
+  taproom:'Taproom Night', contract:'Supplier Contract', disaster:'Brew Day Disaster',
 };
 
 const NODE_COLORS = {
@@ -53,6 +54,7 @@ const NODE_COLORS = {
   lab:      '#4fc3f7',
   taproom:  '#d4af37',
   contract: '#95a5a6',
+  disaster: '#ff7043',
 };
 
 // ── Run state additions ──
@@ -133,7 +135,7 @@ function generateAct(act) {
 
   mapState.nodes.push(actNodes);
   assignNodeTypes(act, actNodes);
-  actNodes.flat().forEach(n => { n.rival = assignRival(n); n.rivalSize = rivalSizeFor(n); });
+  actNodes.flat().forEach(n => { n.rival = assignRival(n); n.rivalSize = rivalSizeFor(n); n.rule = assignRule(n); n.goal = assignGoal(n); });
 }
 
 function parentsOf(node) {
@@ -155,7 +157,7 @@ function assignNodeTypes(act, actNodes) {
       if (f === MAP_FLOORS - 1) { node.type = 'rest';   continue; }
       const banned = new Set();
       if (f < 3) { banned.add('festival'); banned.add('rest'); }
-      if (f < 2) banned.add('shop');
+      if (f < 2) { banned.add('shop'); banned.add('disaster'); }
       if (f === MAP_FLOORS - 2) banned.add('rest');            // a rest row is coming
       const parents = parentsOf(node);
       parents.forEach(p => { if (NO_REPEAT.includes(p.type)) banned.add(p.type); });
@@ -245,7 +247,7 @@ function renderMap() {
   document.getElementById('map-gold').textContent      = `💰 ${mapState.gold}`;
   const bossNode = actNodes[actNodes.length - 1][0];
   const boss     = bossNode && getRivalDef(bossNode.rival);
-  document.getElementById('map-act-name').textContent  = ACT_NAMES[act] + (boss ? ` — 💀 ${boss.name}` : '');
+  document.getElementById('map-act-name').textContent  = ACT_NAMES[act] + (boss ? ` · 💀 ${boss.name}` : '');
   document.getElementById('map-deck-count').textContent= `🃏 ${draftState.deck.length} cards`;
   const repEl = document.getElementById('map-rep');
   if (repEl) {
@@ -257,7 +259,7 @@ function renderMap() {
   if (mapState.contract) extras.push(`📜 ${mapState.contract} contract`);
   const extraEl = document.getElementById('map-extras');
   const bDef = BREWERIES.find(b => b.id === runBrewery());
-  const bIcon = bDef ? `<span class="relic-icon" title="${bDef.name} — Passive: ${bDef.passive} | Ability: ${bDef.ability.name}: ${bDef.ability.desc} | Perk: ${bDef.perk}">${bDef.icon}</span>` : '';
+  const bIcon = bDef ? `<span class="relic-icon" title="${bDef.name} | Passive: ${bDef.passive} | Ability: ${bDef.ability.name}: ${bDef.ability.desc} | Perk: ${bDef.perk}">${bDef.icon}</span>` : '';
   if (extraEl) extraEl.innerHTML = bIcon + ' ' + extras.join(' ') + ' ' + relicIconsHtml();
   const noticeEl = document.getElementById('map-notice');
   if (noticeEl) { noticeEl.textContent = mapState.notice || ''; mapState.notice = ''; }
@@ -306,6 +308,7 @@ function renderMap() {
       ${node.type === 'boss'
         ? `<text text-anchor="middle" y="${r + 12}" font-size="7" fill="#e74c3c" font-family="monospace">${(getRivalDef(node.rival) || {}).short || ''}</text>`
         : ''}
+      ${mapNodeBadges(node, r, canClick)}
     </g>`;
   });
 
@@ -323,12 +326,34 @@ function renderMap() {
   if (focus && focus.scrollIntoView) focus.scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
 
+// Little markers for a battle's Competition Rule and Judge's Challenge
+function mapNodeBadges(node, r, canClick) {
+  const marks = [];
+  if (node.rule && COMP_RULES[node.rule]) marks.push({ icon: COMP_RULES[node.rule].icon, label: COMP_RULES[node.rule].short, color: '#81d4fa' });
+  if (node.goal && typeof JUDGE_GOALS !== 'undefined' && JUDGE_GOALS[node.goal]) marks.push({ icon: '🎯', label: 'Challenge', color: '#ffd700' });
+  if (!marks.length) return '';
+  let out = '';
+  marks.forEach((m, i) => {
+    const bx = r - 2 - i * 13, by = -r + 2;
+    out += `<circle cx="${bx}" cy="${by}" r="6.5" fill="#0d0d1a" stroke="${m.color}" stroke-width="1"/>
+      <text x="${bx}" y="${by}" text-anchor="middle" dominant-baseline="central" font-size="7">${m.icon}</text>`;
+  });
+  // Under nodes you can pick next, spell the rule out so you can plan your route
+  if (canClick) {
+    out += `<text text-anchor="middle" y="${r + 11}" font-size="6.5" fill="${marks[0].color}" font-family="monospace">${marks.map(m => m.label).join(' + ')}</text>`;
+  }
+  return out;
+}
+
 function nodeTooltip(node) {
   const base = NODE_NAMES[node.type] || node.type;
+  if (node.type === 'disaster') return `${base}: no rival, but something breaks every turn. Fix things with budget or gold. Score for reward tiers.`;
   const r = node.rival && getRivalDef(node.rival);
   if (!r) return base;
   const trait = r.traitName ? ` | ${r.traitName}: ${r.traitDesc}` : '';
-  return `${base}: ${r.name} (${r.style}, ${node.rivalSize} cards)${trait}`;
+  const rule  = node.rule && COMP_RULES[node.rule] ? ` | RULE: ${COMP_RULES[node.rule].name}. ${COMP_RULES[node.rule].desc}` : '';
+  const goal  = node.goal && JUDGE_GOALS[node.goal] ? ` | CHALLENGE: ${JUDGE_GOALS[node.goal].name}. ${JUDGE_GOALS[node.goal].desc}` : '';
+  return `${base}: ${r.name} (${r.style}, ${node.rivalSize} cards)${trait}${rule}${goal}`;
 }
 
 // Horizontal position comes from the node's grid column, with a small fixed
@@ -373,6 +398,7 @@ function handleNode(node) {
     case 'lab':      showLab();        break;
     case 'taproom':  showTaproom();    break;
     case 'contract': showContract();   break;
+    case 'disaster': startDisaster(node); break;
     case 'draft':
       showMapDraft(node);
       break;
@@ -433,7 +459,7 @@ function generateMapOffer(kind = 'normal') {
   // Hop House run perk: one extra option on every card offer
   const size = (contract ? 4 : 3) + (runBrewery() === 'hophouse' ? 1 : 0);
   mapState.contract = null;
-  const pool = CARD_POOL.filter(c =>
+  const pool = CARD_POOL.filter(c => c.rarity !== 'legendary' &&
     copiesInDeck(c.id) < MAX_COPIES && c.cat !== 'token' && (!contract || c.cat === contract));
   const offer = [];
   while (offer.length < size) {
@@ -515,7 +541,7 @@ function showMapShop(node) {
 
 // Shop stock: 3 commons, 2 uncommons, 1 rare (topped up from any rarity if one runs out)
 function generateShopInventory() {
-  const pool = shuffle(CARD_POOL.filter(c => c.cat !== 'token' && copiesInDeck(c.id) < MAX_COPIES));
+  const pool = shuffle(CARD_POOL.filter(c => c.cat !== 'token' && c.rarity !== 'legendary' && copiesInDeck(c.id) < MAX_COPIES));
   // Cards you haven't unlocked yet are favoured, so shops keep offering something new to collect
   const pickN = (r, n) => {
     const ofRarity = pool.filter(c => c.rarity === r);
@@ -682,7 +708,7 @@ function renderShopRemoval() {
   if (shopRemovalUsed) {
     el.innerHTML = `<div style="font-size:7px;color:var(--dim);">🧹 Cellar cleaned out. Come back next shop.</div>`;
   } else if (!canRemoveCard()) {
-    el.innerHTML = `<div style="font-size:7px;color:var(--dim);">🧹 Your deck is at the minimum (${MIN_DECK_SIZE}) — nothing to clean out.</div>`;
+    el.innerHTML = `<div style="font-size:7px;color:var(--dim);">🧹 Your deck is at the minimum (${MIN_DECK_SIZE}), nothing to clean out.</div>`;
   } else if (shopRemoving) {
     el.innerHTML = `<div style="font-size:8px;color:var(--gold);margin-bottom:6px;">Choose a card to remove (💰 ${price})</div>
       <div class="removal-list">${deckPickerHtml('shopRemoveCard')}</div>
@@ -690,7 +716,7 @@ function renderShopRemoval() {
   } else {
     const afford = mapState.gold >= price;
     el.innerHTML = `<button class="btn ${afford ? 'btn-gold' : 'btn-primary'}" ${afford ? '' : 'style="opacity:0.4;cursor:not-allowed;"'}
-      onclick="${afford ? 'shopRemoving=true;renderMapShop();' : 'void(0)'}">🧹 CLEAN OUT THE CELLAR — remove a card (💰 ${price})</button>`;
+      onclick="${afford ? 'shopRemoving=true;renderMapShop();' : 'void(0)'}">🧹 CLEAN OUT THE CELLAR: remove a card (💰 ${price})</button>`;
   }
 }
 
@@ -763,7 +789,7 @@ const MAP_EVENTS = [
     desc: 'A shipment arrives with no label. Could be amazing, could be terrible.',
     options: [
       { label: 'Accept it (add random card)', action: () => {
-        const pool = CARD_POOL.filter(c => copiesInDeck(c.id) < MAX_COPIES);
+        const pool = CARD_POOL.filter(c => c.cat !== 'token' && c.rarity !== 'legendary' && copiesInDeck(c.id) < MAX_COPIES);
         const card = pool[Math.floor(Math.random() * pool.length)];
         if (!card || draftState.deck.length >= MAX_DECK_SIZE) return 'The shipment was empty. Odd.';
         draftState.deck.push({ ...card });
@@ -986,7 +1012,7 @@ function applyBattleWinCards() {
   });
   if (state.awardWon) {
     mapState.gold += AWARD_GOLD;
-    addLog(`🏆 Award Entry: your winning beer takes a medal — +${AWARD_GOLD} gold!`, 'player');
+    addLog(`🏆 Award Entry: your winning beer takes a medal, +${AWARD_GOLD} gold!`, 'player');
   }
 }
 
@@ -997,6 +1023,7 @@ function onBattleWin(node) {
   addLog(`Victory! +${goldReward} gold earned.`, 'player');
 
   applyBattleWinCards();
+  lastGoalMsg = payGoal(node);
   trackBattleWin(node, goldReward);
   if (node.type === 'boss') {
     if (mapState.act < 2) {
@@ -1049,18 +1076,21 @@ function onBattleLoss() {
   saveRun({ screen: 'map' });
   setScreen('battle-lost-screen');
   document.getElementById('lost-detail').textContent =
-    gap > 0 ? `${state.rivalName} beat you ${sc.e} to ${sc.p} (by ${gap}).` : `A tie with ${state.rivalName} — the judges weren't impressed.`;
+    gap > 0 ? `${state.rivalName} beat you ${sc.e} to ${sc.p} (by ${gap}).` : `A tie with ${state.rivalName}, the judges weren't impressed.`;
   document.getElementById('lost-rep').textContent =
     `−${loss} Reputation  ·  ⭐ ${mapState.rep}/${mapState.maxRep} left`;
 }
 
 let rewardOffer = [];
+let lastGoalMsg = '';
 
 function showBattleReward(node, goldReward) {
   setScreen('battle-reward-screen');
   const festival = node.type === 'festival';
   document.getElementById('reward-gold').textContent =
-    festival ? `🎪 Festival winner! +${goldReward} gold — pick a premium card` : `+${goldReward} gold earned!`;
+    festival ? `🎪 Festival winner! +${goldReward} gold, pick a premium card` : `+${goldReward} gold earned!`;
+  if (lastGoalMsg) document.getElementById('reward-gold').innerHTML += `<div class="reward-goal">${lastGoalMsg}</div>`;
+  lastGoalMsg = '';
   rewardOffer = festival ? generateRareOffer() : generateMapOffer();
   document.getElementById('reward-card-offer').innerHTML =
     rewardOffer.map((c, i) => specialCardHtml(c, `pickRewardCard(${i})`)).join('');
@@ -1086,7 +1116,7 @@ function showActTransition(goldReward) {
   const nextBossNode = mapState.nodes[mapState.act + 1] && getBossNode(mapState.act + 1);
   const nextBoss = nextBossNode && getRivalDef(nextBossNode.rival);
   document.getElementById('act-transition-next').textContent =
-    `Next: ${ACT_NAMES[mapState.act + 1]}${nextBoss ? ` — boss: ${nextBoss.name}` : ''}`;
+    `Next: ${ACT_NAMES[mapState.act + 1]}${nextBoss ? ` · Boss: ${nextBoss.name}` : ''}`;
   document.getElementById('act-transition-deck').textContent =
     `Your deck: ${draftState.deck.length} cards`;
   document.getElementById('act-transition-gold').textContent =

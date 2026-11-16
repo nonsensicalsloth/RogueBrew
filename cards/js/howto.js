@@ -156,7 +156,19 @@ const HOWTO_CONTENT = {
     hp(`Each act is a map of <b>${MAP_FLOORS} floors</b> plus the boss. Pick a starting room, then move down one floor at a time along the lines. Gold lines show where you can go next. Plan your route: you can see the whole act.`) +
     `<div class="howto-rooms">` + Object.keys(NODE_NAMES).map(t =>
       `<div class="howto-room"><span style="color:${NODE_COLORS[t]}">${NODE_ICONS[t]}</span><div><b>${NODE_NAMES[t]}</b><br>${HOWTO_ROOM_TEXT[t] || ''}</div></div>`
-    ).join('') + `</div>`,
+    ).join('') + `</div>` +
+    hbox('🔧 Brew Day Disaster',
+      hli([
+        `There's no rival. At the start of each turn, the breakdown shown as <b>NEXT TURN</b> hits your brewhouse.`,
+        `Pay <b>${FIX_BUDGET} budget</b> or <b>${FIX_GOLD} gold</b> to prevent the next breakdown, or to repair a broken boiler or glycol.`,
+        `Score for 🥉 bronze (gold), 🥈 silver (gold and a card) or 🥇 gold (more gold, a premium card and equipment). Miss bronze and you lose ${DISASTER_FAIL_REP} Reputation.`,
+        `Sour cards turn their Acid into Tartness on your own board, since there's no rival to sour.`,
+      ])) +
+    hbox('📜 Competition Rules',
+      hp(`Some battles are held under a special rule, shown as a badge on the map and spelled out under rooms you can pick next. Rules apply to the rival too.`) +
+      hli(Object.values(COMP_RULES).map(r => `${r.icon} <b>${r.name}</b>: ${r.desc}`))) +
+    hbox("🎯 Judge's Challenges",
+      hp(`Some battles carry an optional challenge. You still have to win. In acts 1 and 2 a challenge pays gold. Act 3 challenges are hard, and pay a <b>legendary card</b> that's unlocked in your collection for good.`)),
 
   run: () =>
     hbox(`⭐ Reputation (starts at ${START_REP})`,
@@ -191,6 +203,7 @@ const HOWTO_CONTENT = {
         `<b>Common</b>: the basics. Reliable, and most of what you'll see.`,
         `<b>Uncommon</b>: synergy builders and special ingredients.`,
         `<b>Rare</b>: powerful build-around cards. Beer Festivals are the best place to find them.`,
+        `<b>Legendary</b>: never sold or offered. Win an act 3 Judge's Challenge to earn one.`,
       ])),
 };
 
@@ -207,4 +220,5 @@ const HOWTO_ROOM_TEXT = {
   lab:      'Turn a card into a random card of the same type.',
   taproom:  'Sell beer for gold. Pays more if your deck has a signature flavour.',
   contract: 'Pay now so your next card offer is all one type you choose.',
+  disaster: 'No rival. Something breaks every turn. Fix it with budget or gold, and score for bronze, silver or gold rewards.',
 };

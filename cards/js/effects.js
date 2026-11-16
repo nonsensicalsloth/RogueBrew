@@ -100,7 +100,7 @@ function addRoastToken(who, amount = 1) {
   const whose = who === 'p' ? 'you' : 'rival';
   addLog(`🔥 +${amount} roast (${whose}): ${state[k.t]}/${getRoastThreshold(who)}`, who === 'p' ? 'warn' : 'enemy');
   if (effective >= getRoastThreshold(who)) {
-    addLog(`🔥 BURNT (${whose})! Too much roast — hot side scores half.`, who === 'p' ? 'warn' : 'enemy');
+    addLog(`🔥 BURNT (${whose})! Too much roast, hot side scores half.`, who === 'p' ? 'warn' : 'enemy');
   }
 }
 
@@ -208,7 +208,7 @@ function isMashStuck(who) { return getLaneCards('hot', who).some(c => c.id === '
 function checkStuckMash(who) {
   if (!hasClump(who) || isMashStuck(who)) return;
   getLaneCards('hot', who).push(createToken('stuckmash'));
-  addLog(`🥣 ${who === 'p' ? 'Your' : "Rival's"} sticky grains clumped — Stuck Mash (−8)! Space them out, or add Rice Hulls.`, who === 'p' ? 'warn' : 'enemy');
+  addLog(`🥣 ${who === 'p' ? 'Your' : "Rival's"} sticky grains clumped, Stuck Mash (−8)! Space them out, or add Rice Hulls.`, who === 'p' ? 'warn' : 'enemy');
 }
 
 function removeAllTokens(who, tokenId) {
@@ -267,12 +267,12 @@ const HOP_PRODUCTS = ['cryo','hopoil'];
 function copyLastHopFlavor(card, who) {
   const last = state.lastHop && state.lastHop[who];
   if (!last) {
-    addLog(`${card.name}: no hop played yet this round — no flavor to carry.`, who === 'p' ? 'player' : 'enemy');
+    addLog(`${card.name}: no hop played yet this round, no flavor to carry.`, who === 'p' ? 'player' : 'enemy');
     return;
   }
   card.tags = [...(last.tags || [])];
   card.name = `${card.name.split(' (')[0]} (${last.name})`;
-  addLog(`${card.name}: carries ${last.name}'s flavor — ${card.tags.join(', ')}.`, who === 'p' ? 'player' : 'enemy');
+  addLog(`${card.name}: carries ${last.name}'s flavor, ${card.tags.join(', ')}.`, who === 'p' ? 'player' : 'enemy');
 }
 
 // Remember the last real hop variety each side played.
@@ -293,17 +293,17 @@ function applyDryHopBonus(card, who) {
   switch (card.id) {
     case 'hallblanc':
       card.points += 4;
-      addLog('Hallertau Blanc: dry hopped — +4 pts!', 'player');
+      addLog('Hallertau Blanc: dry hopped, +4 pts!', 'player');
       break;
     case 'talus': {
       const ok = c => c !== card && c.tags && (c.tags.includes('citrus') || c.tags.includes('piney'));
       const n = buffLaneCards('hot', who, 2, ok) + buffLaneCards('cold', who, 2, ok);
-      addLog(`Talus: dry hopped — +2 to ${n} citrus/piney card(s).`, 'player');
+      addLog(`Talus: dry hopped, +2 to ${n} citrus/piney card(s).`, 'player');
       break;
     }
     case 'riwaka':
       card.points += 6;
-      addLog('Riwaka: dry hopped — +6 pts!', 'player');
+      addLog('Riwaka: dry hopped, +6 pts!', 'player');
       break;
   }
 }
@@ -334,7 +334,7 @@ const CARD_TARGETS = {
     pick(t, who) {
       const back = returnToHand(t.c, t.lane, who);
       back._freeKey = `${state.round}:${state.turn}`;          // re-pitch it for free this turn
-      addLog(`Filtration: ${t.c.name} back in hand — free to pitch again this turn.`, who === 'p' ? 'player' : 'enemy');
+      addLog(`Filtration: ${t.c.name} back in hand, free to pitch again this turn.`, who === 'p' ? 'player' : 'enemy');
     },
   },
   recipetweak: {
@@ -367,7 +367,7 @@ const CARD_TARGETS = {
       const lane = state.field[t.lane][who];
       lane.splice(lane.indexOf(t.c), 1);
       src.points += t.c.points * 2;
-      addLog(`Crystal 120: absorbed ${t.c.name} — +${t.c.points * 2} pts (double)!`, who === 'p' ? 'player' : 'enemy');
+      addLog(`Crystal 120: absorbed ${t.c.name}, +${t.c.points * 2} pts (double)!`, who === 'p' ? 'player' : 'enemy');
     },
   },
 };
@@ -443,7 +443,7 @@ function applyCardEffect(card, lane, who) {
       // Opening the brew day with it draws a card (cardsThisTurn counts after effects)
       if (!(state.cardsThisTurn && state.cardsThisTurn[who])) {
         drawFor(who, 1);
-        addLog('Pilsner Malt: first card this turn — drew 1.', who === 'p' ? 'player' : 'enemy');
+        addLog('Pilsner Malt: first card this turn, drew 1.', who === 'p' ? 'player' : 'enemy');
       }
       break;
 
@@ -483,7 +483,7 @@ function applyCardEffect(card, lane, who) {
     case 'fining': {
       removeFirstToken(who);
       const n = buffLaneCards('cold', who, 2, c => c.cat === 'yeast');
-      addLog(`Fining Agent: clearer beer — ${n} yeast(s) +2.`, 'player');
+      addLog(`Fining Agent: clearer beer, ${n} yeast(s) +2.`, 'player');
       break;
     }
 
@@ -516,6 +516,37 @@ function applyCardEffect(card, lane, who) {
     case 'coldcrash':  addLagering(who, COLD_CRASH_LAGER, 'Cold Crash'); break;
 
     case 'acidmalt':   giveAcid(other(who), 2); break;
+
+    // ── Legendaries ──
+    case 'wethop': {
+      const n = buffLaneCards('hot', who, 4, c => c !== card && c.cat === 'hop') + buffLaneCards('cold', who, 4, c => c !== card && c.cat === 'hop');
+      addLog(`Wet Hop Harvest: +4 to ${n} other hop(s).`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+    case 'imperial': {
+      const k = roastKeys(who);
+      state[k.th] = (state[k.th] || 5) + 3;
+      addRoastToken(who, 2);
+      addLog(`Imperial Roast: +2 roast, roast limit now ${state[k.th]}.`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+    case 'coolship': {
+      const left = Math.max(0, maxTurns() - state.turn);
+      if (left) giveAcid(other(who), left);
+      else addLog('Coolship: no turns left for it to work.', 'sys');
+      break;
+    }
+    case 'masterblend': {
+      let best = null, bestLane = null, bestPts = -Infinity;
+      LANES.forEach(l => state.field[l][who].forEach(c => {
+        if (c === card || c.cat === 'token') return;
+        const p = effectivePoints(c, l, who);
+        if (p > bestPts) { best = c; bestLane = l; bestPts = p; }
+      }));
+      if (best && bestPts > 0) { best.points += bestPts; addLog(`Master Blender: ${best.name} doubled (+${bestPts})!`, isPlayer ? 'player' : 'enemy'); }
+      else addLog('Master Blender: nothing worth blending yet.', 'sys');
+      break;
+    }
     case 'kettlesour': giveAcid(other(who), 5); break;
     case 'lacticacid': {
       const a = acidOn(other(who));
@@ -582,7 +613,7 @@ function applyCardEffect(card, lane, who) {
       const darkCrystal = hotCards.filter(isDarkOrCrystal).length;
       if (darkCrystal >= 3) {
         card.points += 8;
-        addLog(`Maris Otter: 3+ crystal/dark malts — +8 pts!`, 'player');
+        addLog(`Maris Otter: 3+ crystal/dark malts, +8 pts!`, 'player');
       }
       break;
     }
@@ -596,7 +627,7 @@ function applyCardEffect(card, lane, who) {
       const hasDarkCrystal = hotCards.some(isDarkOrCrystal);
       if (!hasDarkCrystal) {
         card.points += 10;
-        addLog('Floor Malted Pilsner: no dark/crystal malts — +10 pts!', 'player');
+        addLog('Floor Malted Pilsner: no dark/crystal malts, +10 pts!', 'player');
       }
       break;
     }
@@ -662,7 +693,7 @@ function applyCardEffect(card, lane, who) {
       const darkCount = hotCards.filter(c => c.cat === 'malt' && c.tags && c.tags.includes('roasty')).length;
       if (darkCount >= 2) {
         card.points += 8;
-        addLog('Cherries: 2+ dark malts — +8 pts!', 'player');
+        addLog('Cherries: 2+ dark malts, +8 pts!', 'player');
       }
       break;
     }
@@ -742,7 +773,7 @@ function applyCardEffect(card, lane, who) {
       const opp = who === 'p' ? 'e' : 'p';
       if (totalScore(who) > totalScore(opp)) {
         card.points += 14;
-        addLog(`Quality Control: ${isPlayer ? "you're" : "rival is"} ahead — +14 pts!`, isPlayer ? 'player' : 'enemy');
+        addLog(`Quality Control: ${isPlayer ? "you're" : "rival is"} ahead, +14 pts!`, isPlayer ? 'player' : 'enemy');
       }
       break;
     }
@@ -772,7 +803,7 @@ function applyCardEffect(card, lane, who) {
     }
     case 'coriander': {
       const hasBelgYeast = getLaneCards('cold', who).some(c => c.cat === 'yeast' && c.tags && c.tags.includes('belgian'));
-      if (hasBelgYeast) { card.points += 6; addLog('Coriander: Belgian yeast present — +8 pts!', 'player'); }
+      if (hasBelgYeast) { card.points += 6; addLog('Coriander: Belgian yeast present, +6 pts!', 'player'); }
       break;
     }
     case 'orangepeel': {
@@ -783,7 +814,7 @@ function applyCardEffect(card, lane, who) {
     }
     case 'grainspara': {
       const belgCount = getAllOnField(who).filter(c => c.tags && c.tags.includes('belgian')).length;
-      if (belgCount >= 3) { card.points += 12; addLog('Grains of Paradise: 3+ belgian cards — +12 pts!', 'player'); }
+      if (belgCount >= 3) { card.points += 12; addLog('Grains of Paradise: 3+ belgian cards, +12 pts!', 'player'); }
       break;
     }
     case 'cardamom': {
@@ -801,7 +832,7 @@ function applyCardEffect(card, lane, who) {
       addRoastToken(who, 2);
       if (getRoast(who) >= 3) {
         card.points += 10;
-        addLog('Roasted Barley: 3+ roast — +10 pts!', 'player');
+        addLog('Roasted Barley: 3+ roast, +10 pts!', 'player');
       }
       break;
     }
@@ -833,7 +864,7 @@ function applyCardEffect(card, lane, who) {
 
     case 'midnightw': {
       const n = buffLaneCards('hot', who, 3, c => c !== card && c.tags && c.tags.includes('roasty') && c.cat !== 'token');
-      addLog(`Midnight Wheat: dark color without the roast — +3 to ${n} roasty card(s).`, who === 'p' ? 'player' : 'enemy');
+      addLog(`Midnight Wheat: dark color without the roast, +3 to ${n} roasty card(s).`, who === 'p' ? 'player' : 'enemy');
       break;
     }
 
@@ -850,7 +881,7 @@ function applyCardEffect(card, lane, who) {
     case 'cacaonibs': {
       addRoastToken(who, 1);
       const hasChoc = getLaneCards('hot', who).some(c => c.id === 'choc');
-      if (hasChoc) { card.points *= 2; addLog('Cacao Nibs: Chocolate Malt present — doubled!', 'player'); }
+      if (hasChoc) { card.points *= 2; addLog('Cacao Nibs: Chocolate Malt present, doubled!', 'player'); }
       break;
     }
 
@@ -891,7 +922,7 @@ function applyCardEffect(card, lane, who) {
       if (discardCount > 0) {
         card.points *= (discardCount + 1);
         card._locked = true;
-        addLog(`Melanoidin: ${discardCount} in discard — score x${discardCount+1}! Value locked.`, 'player');
+        addLog(`Melanoidin: ${discardCount} in discard, score x${discardCount+1}! Value locked.`, 'player');
       }
       break;
     }
@@ -923,7 +954,7 @@ function applyCardEffect(card, lane, who) {
       const earned   = card.points - basePts;          // upgrades, aging, act bonus
       card.points    = basePts * rowCount + earned;
       card._noMultiplier = true;
-      addLog(`Biscuit Malt: ${rowCount} cards in hot side row — ${card.points} pts!`, 'player');
+      addLog(`Biscuit Malt: ${rowCount} cards in hot side row, ${card.points} pts!`, 'player');
       break;
     }
 
@@ -958,7 +989,7 @@ function applyCardEffect(card, lane, who) {
       // Double if last card played was a crystal malt
       if (state.lastPlayedCard && state.lastPlayedCard.id && state.lastPlayedCard.id.startsWith('crystal')) {
         card.points *= 2;
-        addLog('Blueberry: played after crystal malt — doubled!', 'player');
+        addLog('Blueberry: played after crystal malt, doubled!', 'player');
       }
       break;
     }
@@ -967,7 +998,7 @@ function applyCardEffect(card, lane, who) {
       const hasCitrusHop = getLaneCards('cold', who).some(c => c.tags && c.tags.includes('citrus'));
       if (hasCitrusHop) {
         card.points += 6;
-        addLog('Blood Orange: citrus hop on cold side — +6 pts!', 'player');
+        addLog('Blood Orange: citrus hop on cold side, +6 pts!', 'player');
       }
       break;
     }
@@ -989,7 +1020,7 @@ function applyCardEffect(card, lane, who) {
       const neutralCount = countTag('neutral', who);
       if (neutralCount >= 3) {
         card.points += 10;
-        addLog('Flaked Corn: 3+ neutral cards — +10 pts!', 'player');
+        addLog('Flaked Corn: 3+ neutral cards, +10 pts!', 'player');
       }
       break;
     }
@@ -1004,7 +1035,7 @@ function applyCardEffect(card, lane, who) {
       const nuancedCount = countTag('nuanced', who);
       if (nuancedCount >= 2) {
         drawFor(who, 1);
-        addLog('Buckwheat: 2+ nuanced cards — drew 1 card!', 'player');
+        addLog('Buckwheat: 2+ nuanced cards, drew 1 card!', 'player');
       }
       break;
     }
@@ -1019,7 +1050,7 @@ function applyCardEffect(card, lane, who) {
       const hasToasty = countOthers('toasty', who, card, 'hot') > 0;
       if (hasSweet && hasToasty) {
         card.points += 8;
-        addLog('Toasted Coconut: sweet + toasty both present — +8 pts!', 'player');
+        addLog('Toasted Coconut: sweet + toasty both present, +8 pts!', 'player');
       }
       break;
     }
@@ -1133,7 +1164,7 @@ function applyCardEffect(card, lane, who) {
       // Show enemy hand in log
       if (isPlayer) {
         const eHandStr = state.eHand.map(c => `${c.name}(${c.points})`).join(', ');
-        addLog(`Tasting Notes: rival's hand — ${eHandStr || 'empty'}`, 'player');
+        addLog(`Tasting Notes: rival's hand: ${eHandStr || 'empty'}`, 'player');
       }
       break;
 
@@ -1199,7 +1230,7 @@ function applyCardEffect(card, lane, who) {
     case 'peatmalt': {
       const opp = isPlayer ? 'e' : 'p';
       addRoastToken(opp, 2);
-      addLog(`Peated Malt: smoke drifts over — ${isPlayer ? 'rival' : 'you'} +2 roast!`, isPlayer ? 'player' : 'warn');
+      addLog(`Peated Malt: smoke drifts over, ${isPlayer ? 'rival' : 'you'} +2 roast!`, isPlayer ? 'player' : 'warn');
       break;
     }
 
@@ -1278,12 +1309,12 @@ function applyCardEffect(card, lane, who) {
     // Noble & European
     case 'saaz': {
       const hasPils = hotCards.some(c => c.id === 'pilsner' || c.id === 'expilsner' || c.id === 'floorpilsner');
-      if (hasPils) { card.points += 8; addLog('Saaz: Pilsner malt on hot side — +8 pts!', 'player'); }
+      if (hasPils) { card.points += 8; addLog('Saaz: Pilsner malt on hot side, +8 pts!', 'player'); }
       break;
     }
 
     case 'hallertau':
-      if (getRoast(who) === 0) { card.points += 6; addLog('Hallertau Mittelfrüh: no roast — +6 pts!', 'player'); }
+      if (getRoast(who) === 0) { card.points += 6; addLog('Hallertau Mittelfrüh: no roast, +6 pts!', 'player'); }
       break;
 
     case 'tettnang': {
@@ -1304,7 +1335,7 @@ function applyCardEffect(card, lane, who) {
     case 'ekg':
       if (hotCards.some(c => c.tags && c.tags.includes('biscuity'))) {
         card.points += 8;
-        addLog('East Kent Goldings: biscuity malt on hot side — +8 pts!', 'player');
+        addLog('East Kent Goldings: biscuity malt on hot side, +8 pts!', 'player');
       }
       break;
 
@@ -1323,7 +1354,7 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'chinook':
-      if (lane === 'hot') { card.points += 4; addLog('Chinook: boil addition — +4 pts!', 'player'); }
+      if (lane === 'hot') { card.points += 4; addLog('Chinook: boil addition, +4 pts!', 'player'); }
       break;
 
     case 'columbus':
@@ -1355,7 +1386,7 @@ function applyCardEffect(card, lane, who) {
       const hasPiney    = others.some(c => c.tags && c.tags.includes('piney'));
       if (hasTropical && hasPiney) {
         card.points += 6;
-        addLog('Idaho 7: tropical + piney on board — +6 pts!', 'player');
+        addLog('Idaho 7: tropical + piney on board, +6 pts!', 'player');
       }
       break;
     }
@@ -1393,7 +1424,7 @@ function applyCardEffect(card, lane, who) {
 
     // Southern Hemisphere
     case 'galaxy':
-      if (countTag('hazy', who) >= 2) { card.points += 8; addLog('Galaxy: 2+ hazy cards — +8 pts!', 'player'); }
+      if (countTag('hazy', who) >= 2) { card.points += 8; addLog('Galaxy: 2+ hazy cards, +8 pts!', 'player'); }
       break;
 
     case 'nelson':
@@ -1528,7 +1559,7 @@ function applyCardEffect(card, lane, who) {
     case 'brett': {
       const sweet = countTag('sweet', who, 'hot');
       card.points += sweet * 3;
-      addLog(`Brettanomyces: ate the residual sugar — +${sweet * 3} pts.`, 'player');
+      addLog(`Brettanomyces: ate the residual sugar, +${sweet * 3} pts.`, 'player');
       break;
     }
 
@@ -1537,7 +1568,7 @@ function applyCardEffect(card, lane, who) {
       const hotHops = getLaneCards('hot', who).filter(c => c.cat === 'hop').length;
       const acid    = Math.max(0, 4 - hotHops);
       if (acid) giveAcid(other(who), acid);
-      else addLog('Lactobacillus: too many hops — no Acid.', 'warn');
+      else addLog('Lactobacillus: too many hops, no Acid.', 'warn');
       break;
     }
 
@@ -1643,7 +1674,7 @@ function addLagering(who, n, source) {
   const before = state.lager[who];
   state.lager[who] = Math.min(LAGER_MAX, before + n);
   if (state.lager[who] > before) {
-    addLog(`🧊 ${source ? source + ': ' : ''}${who === 'p' ? 'Lagering' : 'Rival Lagering'} ${state.lager[who]} — next crisp card +${state.lager[who] * lagerPower(who)}.`, who === 'p' ? 'player' : 'enemy');
+    addLog(`🧊 ${source ? source + ': ' : ''}${who === 'p' ? 'Lagering' : 'Rival Lagering'} ${state.lager[who]}, next crisp card +${state.lager[who] * lagerPower(who)}.`, who === 'p' ? 'player' : 'enemy');
   }
 }
 
@@ -1666,6 +1697,8 @@ function acidOn(who) { return (state.acid && state.acid[who]) || 0; }
 
 function giveAcid(victim, n) {
   if (!n || n <= 0) return;
+  // Brew Day Disaster: no rival to sour, so the acidity protects your own beer instead
+  if (state.disaster && victim === 'e') { addTartness(n); return; }
   state.acid = state.acid || { p: 0, e: 0 };
   state.acid[victim] += n;
   addLog(`🍋 ${victim === 'e' ? 'Rival' : 'You'} +${n} Acid (now ${state.acid[victim]}).`, victim === 'e' ? 'player' : 'enemy');
@@ -1695,22 +1728,22 @@ const isFruit = c => c.cat === 'adjunct' && c.tags && (c.tags.includes('fruity')
 function effectivePoints(c, lane, who) {
   const roast = roastBonus(c, who);
   const m = synergyMultiplier(c, lane, who);
-  if (m === 1) return c.points + roast;
+  if (m === 1) return rulePoints(c, c.points + roast);
   const base = Math.max(0, Math.min(printedPoints(c), c.points));
-  return Math.floor(c.points + base * (m - 1)) + roast;
+  return rulePoints(c, Math.floor(c.points + base * (m - 1)) + roast);
 }
 
 // These just announce the synergy; the math lives in synergyMultiplier
 function applyNuancedSynergy(who) {
   const n = getAllOnField(who).filter(c => c.cat !== 'token' && c.tags && c.tags.includes('nuanced')).length;
   if (n < 2) return;
-  addLog(`Nuanced synergy! ${n} nuanced cards — each scores double its printed points.`, who === 'p' ? 'player' : 'enemy');
+  addLog(`Nuanced synergy! ${n} nuanced cards, each scores double its printed points.`, who === 'p' ? 'player' : 'enemy');
 }
 
 function applyCHopSynergy(lane, who) {
   const n = getLaneCards(lane, who).filter(c => c.tags && c.tags.includes('c-hop')).length;
   if (n < 2) return;
-  addLog(`C-Hop synergy! ${n} c-hops on ${LANE_NAMES[lane]} — each scores +50%.`, who === 'p' ? 'player' : 'enemy');
+  addLog(`C-Hop synergy! ${n} c-hops on ${LANE_NAMES[lane]}, each scores +50%.`, who === 'p' ? 'player' : 'enemy');
 }
 
 // ── Per-turn persistent effects ──
@@ -1720,15 +1753,17 @@ function applyTurnEffects(who) {
   const coldCards = getLaneCards('cold', who);
   const isPlayer  = who === 'p';
   const NO_ACCUMULATION = ['kveik'];
+  // Heirloom Yeast (legendary) feeds every other yeast
+  const heirlooms = coldCards.filter(c => c.id === 'heirloom' && !c._heatKilled).length;
 
   coldCards.forEach(c => {
     if (c.cat !== 'yeast' || NO_ACCUMULATION.includes(c.id)) return;
     if (c._heatKilled) return;                                 // Heat Kill
 
     if (c.id === 'brett') {
-      c.points += 3 + (isPlayer && hasRelic('glycol') && state.turn % 2 === 0 ? 1 : 0);
+      c.points += 3 + heirlooms + (isPlayer && hasRelic('glycol') && state.turn % 2 === 0 ? 1 : 0);
       if (Math.random() < 0.5) {
-        if (isPlayer) addLog('Brettanomyces: +3 pts — and it got loose in the cellar...', 'warn');
+        if (isPlayer) addLog('Brettanomyces: +3 pts, and it got loose in the cellar...', 'warn');
         shuffleIntoRemainingDeck(who, 'contamination');
       } else if (isPlayer) {
         addLog('Brettanomyces: +3 pts (accumulating).', 'player');
@@ -1739,8 +1774,9 @@ function applyTurnEffects(who) {
     // Glycol Chiller: +1 extra on even turns
     const chill = isPlayer ? (hasRelic('glycol') && state.turn % 2 === 0 ? 1 : 0)
                            : (state.rivalTrait === 'patience' ? 2 : 0);
-    c.points += 2 + chill;
-    if (isPlayer) addLog(`${c.name}: +${2 + chill} pts (accumulating).`, 'player');
+    const grow = (c.id === 'heirloom' ? 3 : 2 + heirlooms) + chill;
+    c.points += grow;
+    if (isPlayer) addLog(`${c.name}: +${grow} pts (accumulating).`, 'player');
   });
 }
 
@@ -1754,7 +1790,7 @@ function softenContamination(c, who) {
                   || (who === 'p' && hasRelic('microscope'))
                   || (who === 'p' && activeBrewery() === 'wildcellar');   // Wild Cellar passive
   if (!cleanYeast) return c;
-  addLog('A clean yeast outcompetes the Contamination — softened to −5.', who === 'p' ? 'player' : 'enemy');
+  addLog('A clean yeast outcompetes the Contamination, softened to −5.', who === 'p' ? 'player' : 'enemy');
   return createToken('contam_soft');
 }
 
@@ -1770,13 +1806,13 @@ function playerMustPlayContamination() {
 // The rival auto-plays any Contamination it draws. The player's stays in hand (see battle.js).
 function checkContaminationInHand(who = 'p') {
   if (who === 'p') {
-    if (playerMustPlayContamination()) addLog('⚠ Contamination in your hand — you must pour it onto your cold side!', 'warn');
+    if (playerMustPlayContamination()) addLog('⚠ Contamination in your hand, you must pour it onto your cold side!', 'warn');
     return;
   }
   let idx;
   while ((idx = state.eHand.findIndex(isContamination)) >= 0) {
     const c = softenContamination(state.eHand.splice(idx, 1)[0], 'e');
     state.field.cold.e.push(c);
-    addLog(`⚠ Rival drew Contamination — poured onto its cold side (${c.points} pts).`, 'enemy');
+    addLog(`⚠ Rival drew Contamination, poured onto its cold side (${c.points} pts).`, 'enemy');
   }
 }

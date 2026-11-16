@@ -59,7 +59,7 @@ function showEventCardOffer(prompt, cards, onPick) {
 }
 
 function randomCardsWhere(filter, n) {
-  return shuffle(CARD_POOL.filter(c => filter(c) && copiesInDeck(c.id) < MAX_COPIES)).slice(0, n).map(c => ({ ...c }));
+  return shuffle(CARD_POOL.filter(c => filter(c) && c.rarity !== 'legendary' && copiesInDeck(c.id) < MAX_COPIES)).slice(0, n).map(c => ({ ...c }));
 }
 
 // ── Picker callbacks ──
@@ -174,8 +174,8 @@ const EXTRA_EVENTS = [
     ],
   },
   {
-    title: '💦 Wrong Tri-Clamp',
-    desc: 'Someone pops the tri-clamp off the wrong valve — on a full fermenter. There is beer everywhere.',
+    title: 'Wrong Tri-Clamp',
+    desc: 'Someone undoes the wrong tri-clamp and a valve fell off a full fermenter. There is beer everywhere.',
     options: [
       { label: 'Salvage what you can (lose a random yeast)',
         can: () => canRemoveCard() && draftState.deck.some(c => c.cat === 'yeast'),
