@@ -19,9 +19,9 @@ function fieldCardHtml(c, lane, who, idx) {
   const sign = pts >= 0 ? '+' : '';
   const fx   = juiceCardAttrs(c);
   const tags = (c.tags || []);
-  const refs = cardRefTags(c);
+  const refs = cardRefs(c);
   return `<div class="field-card ${who}${pts < 0 ? ' field-card-neg' : ''}${target ? ' field-card-target' : ''}${fx.cls}"${fx.attrs}
-    data-tags="${tags.join(' ')}" data-refs="${refs.join(' ')}" onmouseenter="tagHoverRefs(this.dataset.refs)" onmouseleave="tagHover(null)"
+    data-lane="${lane}" data-idx="${idx}" data-refs="${refs.join(' ')}" onmouseenter="tagHoverRefs(this.dataset.refs, this)" onmouseleave="tagHover(null)"
     ${target ? `onclick="event.stopPropagation();${session ? `sessionPick('${lane}', ${idx})` : `pickBoardTarget('${lane}', ${idx})`}"` : ''} title="${c.name}: ${c.points} pts${pts !== c.points ? ` + ${pts - c.points} synergy = ${pts}` : ''}${c.desc ? `\n${c.desc.replace(/"/g, '&quot;')}` : ''}">
     <div class="field-card-art">${cardArtMini(c)}</div>
     <div class="field-card-main">
@@ -34,25 +34,28 @@ function fieldCardHtml(c, lane, who, idx) {
 
 // ── Tag highlighting ──
 // Hover (or select) a card that mentions tags, and your board cards with those tags light up.
-let _hoverRefs = null;
+let _hoverRefs = null, _hoverEl = null;
 function tagHover(handIdx) {
-  _hoverRefs = handIdx === null || !state.pHand[handIdx] ? null : cardRefTags(state.pHand[handIdx]);
+  _hoverRefs = handIdx === null || !state.pHand[handIdx] ? null : cardRefs(state.pHand[handIdx]);
+  _hoverEl = null;
   applyTagHighlight();
 }
-function tagHoverRefs(refStr) {
+function tagHoverRefs(refStr, el) {
   _hoverRefs = refStr ? refStr.split(' ') : [];
+  _hoverEl = el || null;
   applyTagHighlight();
 }
 function applyTagHighlight() {
   const sel = typeof selectedCard !== 'undefined' && selectedCard !== null && state.pHand ? state.pHand[selectedCard] : null;
-  const refs = _hoverRefs !== null ? _hoverRefs : sel ? cardRefTags(sel) : [];
+  const refs = _hoverRefs !== null ? _hoverRefs : sel ? cardRefs(sel) : [];
   const on = refs.length > 0;
+  const tagRefs = refs.filter(r => r.startsWith('tag:')).map(r => r.slice(4).split('@')[0]);
   document.querySelectorAll('.field-card.p').forEach(el => {
-    const tags = (el.dataset.tags || '').split(' ');
-    const hit = on && tags.some(t => refs.includes(t));
-    el.classList.toggle('tag-match', hit);
-    el.classList.toggle('tag-dim', on && !hit);
-    el.querySelectorAll('.ftag').forEach(s => s.classList.toggle('tag-hit', on && refs.includes(s.dataset.tag)));
+    const c = state.field[el.dataset.lane] && state.field[el.dataset.lane].p[+el.dataset.idx];
+    const hit = on && c && el !== _hoverEl && refs.some(r => refMatches(r, c, el.dataset.lane));
+    el.classList.toggle('tag-match', !!hit);
+    el.classList.toggle('tag-dim', on && !hit && el !== _hoverEl);
+    el.querySelectorAll('.ftag').forEach(s => s.classList.toggle('tag-hit', !!hit && tagRefs.includes(s.dataset.tag)));
   });
 }
 

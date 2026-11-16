@@ -42,6 +42,49 @@ function cardRefTags(c) {
   return [...allTags()].filter(t => tagRegex(t).test(text) && (tagRegex(t).lastIndex = 0, true));
 }
 
+// Everything a card's text cares about, as tokens like "tag:citrus", "cat:hop@cold" or "base@hot".
+// Categories only count when the text clearly scores them ("every hop", "+2 per hop", "each base malt"),
+// not when it just mentions one ("Counts as two base malts", "Your next hop costs 1 less").
+const REF_GROUPS = { base: 'base', crystal: 'crystal', dark: 'dark', nz: 'nz' };
+function cardRefs(c) {
+  const text = ((c && c.desc) || '');
+  const refs = new Set(cardRefTags(c).map(t => 'tag:' + t));
+  const scope = rest => /hot side/i.test(rest) ? '@hot' : /cold side/i.test(rest) ? '@cold' : '';
+  text.split(/(?<=\.)\s+/).forEach(sentence => {
+    const re = /\b(each|every|all|per)\s+(other\s+)?(?:([a-z][a-z-]*)\s+)?(malts?|hops?|yeasts?|adjuncts?)\b/gi;
+    let m;
+    while ((m = re.exec(sentence))) {
+      const q = (m[3] || '').toLowerCase(), cat = m[4].toLowerCase().replace(/s$/, '');
+      const where = scope(sentence.slice(m.index));
+      if (REF_GROUPS[q]) refs.add(REF_GROUPS[q] + where);
+      else if (!q || q === 'other') refs.add('cat:' + cat + where);
+      // a tag word in front ("noble hop", "Belgian yeast") is already covered by the tag itself
+    }
+    // groups the game tracks, even without each/every: "If 2+ dark malts are on your hot side"
+    const g = /\b(crystal|dark)(?:\s*(?:\/|or)\s*(crystal|dark))?\s+malts?\b/gi;
+    while ((m = g.exec(sentence))) {
+      if (/^(Counts|Copies|Doubles the last)/.test(sentence)) continue;
+      const where = scope(sentence.slice(m.index));
+      [m[1], m[2]].filter(Boolean).forEach(q => refs.add(q.toLowerCase() + where));
+    }
+  });
+  return [...refs];
+}
+
+// Does a card on the board match one of those tokens?
+function refMatches(ref, c, lane) {
+  const [what, where] = ref.split('@');
+  if (where && where !== lane) return false;
+  const [kind, val] = what.includes(':') ? what.split(':') : [what, null];
+  if (kind === 'tag') return !!(c.tags && c.tags.includes(val));
+  if (kind === 'cat') return c.cat === val;
+  if (kind === 'base') return BASE_MALT_IDS.includes(c.id);
+  if (kind === 'crystal') return c.cat === 'malt' && (/^crystal\d/.test(c.id) || ['caramun', 'specialb', 'carapils'].includes(c.id));
+  if (kind === 'dark') return c.cat === 'malt' && !!(c.tags && c.tags.includes('roasty'));
+  if (kind === 'nz') return NZ_HOPS.includes(c.id);
+  return false;
+}
+
 // Card text with tag words colored like their tag
 function richDesc(text) {
   let out = text || '';
