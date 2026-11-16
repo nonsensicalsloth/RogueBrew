@@ -547,7 +547,7 @@ function renderMapDraft() {
     return `<div class="card cat-${c.cat}" onclick="pickMapCard(${i})" style="width:130px;">
       <div class="card-cost-gem">${c.cost}</div>
       <div class="card-pts-gem">${pts}</div>
-      <div class="card-art">${catIcon(c.cat)}</div>
+      ${cardArtHtml(c)}
       ${rarityBar(c)}<div class="card-name-banner">${c.name}</div>
       <div class="card-tags-row">${tagHtml(c.tags)}</div>
       <div class="card-effect-text">${c.desc || ''}</div>
@@ -624,7 +624,7 @@ function renderMapShop() {
       style="width:110px;position:relative;">
       <div class="card-cost-gem">${c.cost}</div>
       <div class="card-pts-gem">${pts}</div>
-      <div class="card-art">${catIcon(c.cat)}</div>
+      ${cardArtHtml(c)}
       ${rarityBar(c)}<div class="card-name-banner">${c.name}</div>
       <div class="card-tags-row">${tagHtml(c.tags)}</div>
       <div class="card-effect-text">${c.desc || ''}</div>

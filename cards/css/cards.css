@@ -224,3 +224,12 @@
 .card-tags-row span, .tag { font-family: var(--read-font) !important; font-size: 13px !important; }
 .card-restrict { font-family: var(--read-font) !important; font-size: 13px !important; }
 .field-card-name { font-family: var(--read-font); font-size: 14px; }
+
+/* Card art: a 16x16 pixel sprite drawn at 3x, over a faint wash of the card's own color */
+.card-art {
+  height: 54px;
+  background: radial-gradient(ellipse 70% 85% at 50% 60%, color-mix(in srgb, var(--art, #888) 34%, transparent), transparent 78%), var(--bg3);
+}
+.card-art .sprite { width: 48px; height: 48px; image-rendering: pixelated; filter: drop-shadow(0 2px 0 rgba(0,0,0,.5)); }
+.card-art .twinkle { animation: artTwinkle 2.4s ease-in-out infinite; }
+@keyframes artTwinkle { 0%, 70%, 100% { opacity: 1; } 80% { opacity: .15; } 90% { opacity: .8; } }

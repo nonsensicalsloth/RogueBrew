@@ -32,7 +32,7 @@ function specialCardHtml(c, onclick) {
   return `<div class="card cat-${c.cat}" onclick="${onclick}" style="width:120px;">
     <div class="card-cost-gem">${c.cost}</div>
     <div class="card-pts-gem">${pts}</div>
-    <div class="card-art">${catIcon(c.cat)}</div>
+    ${cardArtHtml(c)}
     ${rarityBar(c)}<div class="card-name-banner">${c.name}</div>
     <div class="card-tags-row">${tagHtml(c.tags)}</div>
     <div class="card-effect-text">${c.desc || ''}</div>

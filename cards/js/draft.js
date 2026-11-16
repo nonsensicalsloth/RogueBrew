@@ -45,7 +45,7 @@ function cardHtml(c, i, mode, extra='', shownCost=null, preview=null) {
   return `<div class="card cat-${c.cat} ${extra}" onclick="${clickFn}">
     <div class="card-cost-gem${costCls}" ${cost < c.cost ? `title="Normally ${c.cost}"` : ''}>${cost}</div>
     <div class="card-pts-gem${ptsCls}" ${preview ? `title="Printed: ${c.points}"` : ''}>${pts}</div>
-    <div class="card-art">${c.cat === 'token' && c.points >= 0 ? '✨' : catIcon(c.cat)}</div>
+    ${cardArtHtml(c)}
     ${rarityBar(c)}<div class="card-name-banner">${c.name}</div>
     <div class="card-tags-row">${tagHtml(c.tags)}</div>
     <div class="card-effect-text"><span>${c.desc || ''}${nowNote}</span></div>
@@ -335,7 +335,7 @@ function renderBuilderCards() {
       <div class="card-cost-gem">${c.cost}</div>
       <div class="card-pts-gem">${pts}</div>
       ${n > 0 ? `<div class="card-copy-badge">${n}/${MAX_COPIES}</div>` : ''}
-      <div class="card-art">${catIcon(c.cat)}</div>
+      ${cardArtHtml(c)}
       ${rarityBar(c)}<div class="card-name-banner">${c.name}</div>
       <div class="card-tags-row">${tagHtml(c.tags)}</div>
       <div class="card-effect-text">${c.desc || ''}</div>

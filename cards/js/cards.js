@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'screen polish (Nov 16)';
+const CARDS_VERSION = 'card art (Nov 16)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
