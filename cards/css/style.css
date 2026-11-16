@@ -830,3 +830,8 @@ body::after {
 .tally-stamp.stamp-draw { color: var(--dim); }
 .tally-continue { opacity: 0; pointer-events: none; transition: opacity .3s; }
 .tally-continue.shown { opacity: 1; pointer-events: auto; }
+
+/* Grain Out: choosing a card from your hand */
+.lane.lane-dimmed { opacity: 0.45; transition: opacity .2s; }
+.hand-col.hand-picking { outline: 2px solid var(--gold); outline-offset: 4px; box-shadow: 0 0 18px rgba(255,215,0,0.25); }
+.hand-col.hand-picking #hand-lbl { color: var(--gold); animation: mustPlayPulse 1s ease-in-out infinite; }

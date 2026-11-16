@@ -174,12 +174,12 @@ const EXTRA_EVENTS = [
     ],
   },
   {
-    title: '💦 Spilled Fermenter',
-    desc: 'A fermenter tips over. There is beer everywhere.',
+    title: '💦 Wrong Tri-Clamp',
+    desc: 'Someone pops the tri-clamp off the wrong valve — on a full fermenter. There is beer everywhere.',
     options: [
       { label: 'Salvage what you can (lose a random yeast)',
         can: () => canRemoveCard() && draftState.deck.some(c => c.cat === 'yeast'),
-        action: () => { const [c] = draftState.deck.splice(randomDeckIndex(c => c.cat === 'yeast'), 1); return `${c.name} is gone, but the floor is clean.`; } },
+        action: () => { const [c] = draftState.deck.splice(randomDeckIndex(c => c.cat === 'yeast'), 1); return `${c.name} went down the floor drain, but at least the floor is clean.`; } },
       { label: 'Rebrew it (−25 gold)', can: () => mapState.gold >= 25,
         action: () => { mapState.gold -= 25; return 'Same recipe, second try. Nobody will know.'; } },
       { label: 'Mop up and move on (−5 Reputation)', action: () => `Tasters notice the missing beer. ${loseRep(5)}` },

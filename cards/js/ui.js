@@ -39,7 +39,13 @@ ${fieldCardHtml(c, l, 'e')}`).join('')
 
     const playerLane = document.getElementById('plane-' + l).closest('.lane');
     if (playerLane) {
-      if (canTarget) {
+      // While a hand choice is pending, the board steps back and points you to your hand
+      playerLane.classList.toggle('lane-dimmed', !!state.handTargeting);
+      if (state.handTargeting) {
+        playerLane.style.outline = '';
+        playerLane.style.cursor  = '';
+        playerLane.onclick = () => { addLog('Pick the card to discard from your hand, below.', 'warn'); render(); };
+      } else if (canTarget) {
         playerLane.style.outline = '2px solid var(--gold)';
         playerLane.style.cursor  = 'pointer';
         playerLane.onclick = () => playToLane(l);
@@ -274,9 +280,13 @@ function render() {
   }
 
   const discountMsg = (state.nextCardDiscount || 0) > 0 ? ` ★-${state.nextCardDiscount}` : '';
+  const handCol = document.getElementById('hand-lbl').closest('.hand-col');
+  if (handCol) handCol.classList.toggle('hand-picking', !!state.handTargeting && state.phase === 'play');
   document.getElementById('hand-lbl').textContent =
     state.phase === 'mulligan'
       ? `YOUR HAND — SELECT UP TO ${mulliganLimit()} TO SEND BACK`
+      : state.handTargeting && state.phase === 'play'
+        ? '🫳 GRAIN OUT — CLICK A CARD IN YOUR HAND TO DISCARD IT'
       : playerMustPlayContamination() && state.phase === 'play'
         ? '⚠ CONTAMINATION! CLICK IT, THEN YOUR COLD SIDE'
         : `YOUR HAND (${state.pHand.length}) — BUDGET: ${state.budget - state.budgetUsed}/${state.budget}${discountMsg}`;
