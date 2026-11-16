@@ -26,11 +26,13 @@ function fieldCardHtml(c, lane, who, idx) {
     <div class="field-card-art">${cardArtMini(c)}</div>
     <div class="field-card-main">
       <div class="field-card-name">${c.name}</div>
-      ${tags.length ? `<div class="field-card-tags">${tags.map(t => `<span class="ftag tag-${t}" data-tag="${t}">${t}</span>`).join('')}</div>` : ''}
+      ${tags.length ? `<div class="field-card-tags">${tags.map(t => `<span class="ftag tag-${t}" data-tag="${t}" title="${t}">${t}</span>`).join('')}</div>` : ''}
     </div>
     <div class="field-card-pts">${sign}${pts}${mult > 1 ? `<span class="field-card-mult"> ×${mult}</span>` : ''}</div>
   </div>`;
 }
+
+const COMPACT_LANE_AT = 8;   // more cards than this in a lane and it switches to compact cards
 
 // ── Tag highlighting ──
 // Hover (or select) a card that mentions tags, and your board cards with those tags light up.
@@ -76,6 +78,10 @@ ${fieldCardHtml(c, l, 'p', i)}`).join('')
       ? state.field[l].e.map(c => `
 ${fieldCardHtml(c, l, 'e')}`).join('')
       : '<span class="empty-msg">empty</span>';
+
+    // Crowded lanes go compact: tags shrink to colored dots so each card is one line
+    pe.classList.toggle('lane-compact', state.field[l].p.length > COMPACT_LANE_AT);
+    ee.classList.toggle('lane-compact', state.field[l].e.length > COMPACT_LANE_AT);
 
     const playerLane = document.getElementById('plane-' + l).closest('.lane');
     if (playerLane) {
