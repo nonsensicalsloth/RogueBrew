@@ -88,10 +88,22 @@ function initGame(opts = {}) {
   };
 
   if (opts.disaster) initDisasterState();
+  // Taproom: Tap List scores the variety on your board
+  state.taproomActive = !!(node && activeBreweryAt() === 'taproom');
   if (opts.rival) {
     addLog(`⚔ ${opts.rival.name} (${opts.rival.style})${opts.rival.traitName ? ` · ${opts.rival.traitName}: ${opts.rival.traitDesc}` : ''}`, 'enemy');
   }
   drawCards(hasRelic('recipebook') ? 6 : 5, state.pDeck, state.pHand);   // Recipe Book: 1 extra opening card
+  // Pilot System: a random rare to try out, this battle only (it's not added to your deck)
+  if (node && hasRelic('pilotsystem')) {
+    const rares = CARD_POOL.filter(c => c.rarity === 'rare' && c.cat !== 'token');
+    const pick = rares[Math.floor(Math.random() * rares.length)];
+    if (pick) {
+      state.pDeck.push({ ...pick, tags: [...(pick.tags || [])], _pilot: true });
+      state.pDeck = shuffle(state.pDeck);
+      addLog(`⚗️ Pilot System: a test batch of ${pick.name} is shuffled into your deck for this battle.`, 'player');
+    }
+  }
   drawCards(5, state.eDeck, state.eHand);
   render();
 }
@@ -126,7 +138,7 @@ function getBudget(turn, who = 'p') {
 // ── Scoring ──
 function laneScore(lane, who) {
   let score = state.field[lane][who].reduce((s, c) => s + effectivePoints(c, lane, who), 0);
-  if (lane === 'hot' && isBurnt(who)) score = Math.floor(score / 2);
+  if (lane === 'hot' && isBurnt(who)) score = Math.floor(score * (who === 'p' && hasRelic('steamjacket') ? 0.75 : 0.5));
   if (state.disaster) score = Math.floor(score * disasterLaneMult(lane, who));
   return score * laneMultiplier(lane);
 }
@@ -150,7 +162,7 @@ function beerStatus(who) {
 }
 
 function totalScore(who) {
-  return LANES.reduce((s, l) => s + laneScore(l, who), 0) + beerStatus(who).bonus;
+  return LANES.reduce((s, l) => s + laneScore(l, who), 0) + beerStatus(who).bonus + tapListPoints(who);
 }
 
 // ── Logging ──
@@ -191,7 +203,8 @@ function startRound() {
   state.nextHopDiscount   = 0;
   state.pendingHopBuff    = 0;
   state.acid              = { p: 0, e: 0 };
-  state.lager             = { p: 0, e: 0 };
+  state.lager             = { p: hasRelic('britetank') ? BRITE_TANK_LAGER : 0, e: 0 };
+  state.augerUsed         = false;
   state.field           = { hot: { p: [], e: [] }, cold: { p: [], e: [] } };
   state.judging = judgingFor(state.round);
   addLog(`▶ Round ${state.round} begins! Budget: ${state.budget}`);
@@ -278,6 +291,7 @@ function advanceTurn() {
   state.abilityUsed      = false;
   state.abilityTargeting = false;
   state.firstHopBonusUsed = false;
+  state.augerUsed        = false;
   if (state.turn > maxTurns()) { endRound(); return; }
   if (state.disaster) disasterTurn();
   addLog(`▸ Turn ${state.turn} · Budget: ${state.budget}`);

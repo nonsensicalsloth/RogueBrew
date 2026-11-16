@@ -183,7 +183,7 @@ const HOWTO_CONTENT = {
         `Win battles to earn gold and pick a new card.`,
         `Drafts, shops, collabs and events add and change cards.`,
         `Upgrade or remove cards at rest stops and shops. A lean deck draws its best cards more often. You can't go below ${MIN_DECK_SIZE} cards.`,
-        `Beat an act boss to choose a piece of <b>brewing equipment</b>, a permanent bonus for the run.`,
+        `Beat an act boss to choose a piece of <b>brewing equipment</b>, a permanent bonus for the run. Some boss equipment is marked <b>HAS A CATCH</b>: strong, with a downside. A gold-tier Brew Day Disaster also hands out equipment.`,
       ])) +
     hbox('After each run',
       hp(`A summary shows how far you got, your best score, what you unlocked, and your final deck. Wins and bosses beaten count toward <b>unlocking new breweries</b>.`)) +

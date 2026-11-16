@@ -223,7 +223,7 @@ function juiceMoments() {
     juiceBanner('⏳ LAST TURN!', 'orange', 1200);
   }
   if (now.burntP && !was.burntP) {
-    juiceBanner('🔥 BURNT!<small>Your hot side scores half</small>', 'red', 1600);
+    juiceBanner(`🔥 BURNT!<small>Your hot side scores ${hasRelic('steamjacket') ? 'three quarters' : 'half'}</small>`, 'red', 1600);
     juiceShake(laneEl('hot', 'p'));
   }
   if (now.burntE && !was.burntE) {
@@ -231,8 +231,8 @@ function juiceMoments() {
     juiceShake(laneEl('hot', 'e'));
   }
   if (now.stuck && !was.stuck) {
-    juiceBanner('🧱 STUCK MASH! −8', 'red', 1400);
-    juiceShake(laneEl('hot', 'p'));
+    if (hasRelic('decoction')) juiceBanner('🫕 DECOCTION! +8', 'gold', 1400);
+    else { juiceBanner('🧱 STUCK MASH! −8', 'red', 1400); juiceShake(laneEl('hot', 'p')); }
   }
   if (now.beerP > was.beerP && now.phase === 'play' && was.phase === 'play') {
     juiceBanner(was.beerP === 0
@@ -276,10 +276,11 @@ function showRoundTally(done) {
   const row = (label, p, e, note) => ({ label, p, e, note });
   const rows = [
     row(`🔥 Hot side${j && j.lane === 'hot' ? ' ×2' : ''}`, laneScore('hot', 'p'), laneScore('hot', 'e'),
-        isBurnt('p') || isBurnt('e') ? `${isBurnt('p') ? 'you' : 'rival'} burnt, ½` : ''),
+        isBurnt('p') || isBurnt('e') ? `${isBurnt('p') ? 'you' : 'rival'} burnt, ${isBurnt('p') && hasRelic('steamjacket') ? '¾' : '½'}` : ''),
     row(`❄ Cold side${j && j.lane === 'cold' ? ' ×2' : ''}`, laneScore('cold', 'p'), laneScore('cold', 'e'), ''),
     row('🍺 Beer bonus', beerStatus('p').bonus, beerStatus('e').bonus, ''),
   ];
+  if (state.taproomActive) rows.push(row(`🍻 Tap List (${boardTagCount('p')} tags)`, tapListPoints('p'), 0, ''));
   const ps = totalScore('p'), es = totalScore('e');
   let result = ps > es ? 'win' : es > ps ? 'lose' : 'draw';
   let stamp  = result === 'win' ? '★ YOU WIN THE ROUND!' : result === 'lose' ? '✗ RIVAL WINS THE ROUND' : 'DRAW';

@@ -276,6 +276,18 @@ function render() {
     lagerEl.title = `Budget you don't spend becomes Lagering (max ${LAGER_MAX}). The next crisp card you play gets +${lagerPower('p')} per Lagering, then it empties.`;
   }
 
+  // Taproom: Tap List
+  const tapEl = document.getElementById('taplist-pill');
+  if (tapEl) {
+    const on = state.taproomActive && state.phase === 'play';
+    tapEl.style.display = on ? '' : 'none';
+    if (on) {
+      const n = boardTagCount('p'), pts = tapListPoints('p');
+      tapEl.textContent = pts ? `🍻 TAP LIST: ${n} tags, +${pts}` : `🍻 TAP LIST: ${n}/${TAP_LIST_FLOOR + 1} tags`;
+      tapEl.title = `At judging, +${TAP_LIST_POINTS} for every different tag on your board beyond ${TAP_LIST_FLOOR}.`;
+    }
+  }
+
   // Acid: eats a brewery's best lane at the start of each turn, then drops by 1
   const acidEl = document.getElementById('acid-pill');
   if (acidEl) {

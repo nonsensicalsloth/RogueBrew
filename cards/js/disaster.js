@@ -69,7 +69,7 @@ function applyBreakdown(id) {
   } else if (id === 'power') {
     state.budget = Math.max(0, state.budget - 1);
   } else if (id === 'pump') {
-    state.field.hot.p.push(createToken('stuckmash'));
+    state.field.hot.p.push(makeStuckMash('p'));
   } else if (id === 'wildyeast') {
     shuffleIntoRemainingDeck('p', 'contamination');
   } else if (id === 'hose') {
@@ -196,7 +196,7 @@ function onDisasterEnd(node) {
     mapState.gold += gold;
     if (tier >= 3) {
       const owned = mapState.relics || [];
-      const left = RELICS.filter(r => !owned.includes(r.id));
+      const left = RELICS.filter(r => !owned.includes(r.id) && !r.boss);   // boss-only equipment stays with bosses
       if (left.length) {
         relic = left[Math.floor(Math.random() * left.length)];
         mapState.relics = [...owned, relic.id];

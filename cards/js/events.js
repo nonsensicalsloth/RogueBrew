@@ -146,11 +146,17 @@ const EXTRA_EVENTS = [
     ],
   },
   {
-    title: '🏭 Contract Brewing Offer',
+    title: 'Contract Brewing Offer',
     desc: 'A big brewery wants to rent your spare tank time to brew their light lager.',
     options: [
-      { label: 'Take the money (+60 gold, −10 Reputation)', can: () => mapState.rep > 10,
-        action: () => { mapState.gold += 60; return `+60 gold. Some regulars noticed. ${loseRep(10)}`; } },
+      { label: 'Squeeze it in (+60 gold, 1 in 4 chance the batch goes bad)',
+        action: () => {
+          if (Math.random() < 0.25) return `The batch picked up an infection and they refuse to pay. ${loseRep(8)}`;
+          mapState.gold += 60;
+          return 'A clean batch, paid in full. +60 gold.';
+        } },
+      { label: 'Brew it with extra care (+35 gold)',
+        action: () => { mapState.gold += 35; return 'Slow and careful. Nothing goes wrong. +35 gold.'; } },
       { label: 'Politely decline', action: () => 'Your tanks, your beer.' },
     ],
   },

@@ -35,7 +35,7 @@ const BREWERIES = [
   // ── Unlocked by playing ──
   {
     id: 'taproom', name: 'Taproom', icon: '🍻', subtitle: 'Money talks.',
-    passive: 'Adjuncts you play get +2.',
+    passive: 'Tap List: at judging, +3 for every different tag on your board beyond 12. The more chaotic the beer, the better.',
     ability: { name: 'Sell a Pint', cost: 1, desc: `Once per turn: gain 6 gold.` },
     perk:    'More shops on the map, and your first purchase in each shop is half price.',
     unlock:  { text: 'Win a run.', test: p => p.wins >= 1 },
@@ -126,6 +126,20 @@ function abilityStatus() {
 }
 
 const SELL_PINT_GOLD = 6;
+
+// ── Taproom: Tap List ──
+// A taproom does well with variety: at judging, +TAP_LIST_POINTS for every different tag on
+// your board beyond the first TAP_LIST_FLOOR. Focused beers rarely pass the floor; chaotic ones do.
+// (A budget bonus for deck variety was tested first, but chaotic decks run out of cards, not budget.)
+const TAP_LIST_POINTS = 3;
+const TAP_LIST_FLOOR  = 12;
+
+function boardTagCount(who) {
+  return new Set(LANES.flatMap(l => state.field[l][who].filter(c => c.cat !== 'token').flatMap(c => c.tags || []))).size;
+}
+function tapListPoints(who) {
+  return who === 'p' && state.taproomActive ? Math.max(0, boardTagCount(who) - TAP_LIST_FLOOR) * TAP_LIST_POINTS : 0;
+}
 
 function finishAbility(b) {
   state.budgetUsed += b.ability.cost;

@@ -39,6 +39,7 @@ function getEffectiveCost(c) {
   if (c.cat === 'process' && activeBrewery() === 'contract') discount += 1;
   if (c.cat === 'yeast') discount += (state.nextYeastDiscount || 0);
   if (c.cat === 'hop')   discount += (state.nextHopDiscount   || 0);
+  if (c.cat === 'malt' && hasRelic('grainauger') && !state.augerUsed) discount += 1;   // Grain Auger
   return Math.max(0, c.cost + ruleCostMod(c) - discount - scout);
 }
 
@@ -73,6 +74,7 @@ function playToLane(lane) {
   if (state.nextCardDiscount > 0) state.nextCardDiscount = 0;
   if (c.cat === 'yeast') state.nextYeastDiscount = 0;
   if (c.cat === 'hop')   { state.nextHopDiscount = 0; state.nextHopFree = false; state.hopBackUsed = true; }
+  if (c.cat === 'malt')  state.augerUsed = true;
 
   addLog(`You play ${c.name} (+${c.points}) → ${LANE_NAMES[lane]}`, 'player');
   trackGoalPlay(c);
@@ -101,10 +103,6 @@ function resolvePlay(c, lane, who) {
   // Brewery passives (map runs only)
   if (who === 'p' && c.cat !== 'token') {
     const brew = activeBrewery();
-    if (brew === 'taproom' && c.cat === 'adjunct') {
-      c.points += 2;
-      addLog(`Taproom: ${c.name} +2 (adjunct).`, 'player');
-    }
     if (brew === 'hophouse' && c.cat === 'hop' && !state.firstHopBonusUsed) {
       c.points += 2;
       state.firstHopBonusUsed = true;

@@ -858,3 +858,5 @@ body::after {
 .field-card.field-card-hidden { background: repeating-linear-gradient(45deg, #1a1a2e, #1a1a2e 4px, #22223a 4px, #22223a 8px); color: var(--dim); }
 
 .reward-goal { font-size: 8px; color: var(--gold); margin-top: 6px; }
+
+.relic-catch { font-size: 6px; color: var(--red); margin-top: 3px; letter-spacing: 1px; }

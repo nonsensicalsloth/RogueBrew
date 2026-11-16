@@ -426,6 +426,8 @@ function startMapBattle(node) {
   let rivalBonus = 0, rivalBonusName = '';
   if (node.type === 'festival')            { rivalBonus = 10; rivalBonusName = 'Crowd Favorite'; }
   if (rival && rival.trait === 'regulars') { rivalBonus = 15; rivalBonusName = 'The Regulars'; }
+  // Contract Brewing Deal: rivals know you're stretched thin
+  if (hasRelicNow('contractdeal')) { rivalBonus += CONTRACT_RIVAL_BONUS; rivalBonusName = rivalBonusName || 'Contract Rumors'; }
   initGame({ rivalDeck, node, rival, rivalBonus, rivalBonusName });
 }
 
@@ -1024,6 +1026,10 @@ function onBattleWin(node) {
 
   applyBattleWinCards();
   lastGoalMsg = payGoal(node);
+  let equipGold = 0;
+  if (hasRelicNow('canningline'))  equipGold += CANNING_GOLD;
+  if (hasRelicNow('contractdeal')) equipGold += CONTRACT_GOLD;
+  if (equipGold) { mapState.gold += equipGold; lastGoalMsg = `🥫 Equipment pays out: +${equipGold} gold.` + (lastGoalMsg ? `<br>${lastGoalMsg}` : ''); }
   trackBattleWin(node, goldReward);
   if (node.type === 'boss') {
     if (mapState.act < 2) {

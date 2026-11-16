@@ -205,10 +205,19 @@ function hasClump(who) {
 function stickyCount(who) { return getLaneCards('hot', who).filter(isSticky).length; }
 function isMashStuck(who) { return getLaneCards('hot', who).some(c => c.id === 'stuckmash'); }
 
+// A Stuck Mash token. With the Decoction Kettle, yours is worth +8 instead.
+function makeStuckMash(who) {
+  const t = createToken('stuckmash');
+  if (who === 'p' && hasRelic('decoction')) { t.points = 8; t.name = 'Decoction Mash'; t.desc = 'Your Decoction Kettle turned a stuck mash into a rich one.'; }
+  return t;
+}
+
 function checkStuckMash(who) {
   if (!hasClump(who) || isMashStuck(who)) return;
-  getLaneCards('hot', who).push(createToken('stuckmash'));
-  addLog(`🥣 ${who === 'p' ? 'Your' : "Rival's"} sticky grains clumped, Stuck Mash (−8)! Space them out, or add Rice Hulls.`, who === 'p' ? 'warn' : 'enemy');
+  const t = makeStuckMash(who);
+  getLaneCards('hot', who).push(t);
+  if (t.points > 0) addLog(`🫕 Decoction Kettle: your sticky grains clumped into a rich decoction, +${t.points}!`, 'player');
+  else addLog(`🥣 ${who === 'p' ? 'Your' : "Rival's"} sticky grains clumped, Stuck Mash (−8)! Space them out, or add Rice Hulls.`, who === 'p' ? 'warn' : 'enemy');
 }
 
 function removeAllTokens(who, tokenId) {
@@ -1699,6 +1708,8 @@ function acidOn(who) { return (state.acid && state.acid[who]) || 0; }
 
 function giveAcid(victim, n) {
   if (!n || n <= 0) return;
+  // pH Meter: the first Acid you give each round is 2 stronger
+  if (victim === 'e' && hasRelic('phmeter') && state.phMeterRound !== state.round) { n += PH_METER_BONUS; state.phMeterRound = state.round; }
   // Brew Day Disaster: no rival to sour, so the acidity protects your own beer instead
   if (state.disaster && victim === 'e') { addTartness(n); return; }
   state.acid = state.acid || { p: 0, e: 0 };
