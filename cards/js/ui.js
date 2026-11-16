@@ -32,7 +32,44 @@ function fieldCardHtml(c, lane, who, idx) {
   </div>`;
 }
 
-const COMPACT_LANE_AT = 8;   // more cards than this in a lane and it switches to compact cards
+const COMPACT_LANE_AT = 8;
+
+// A lane's cards. On the hot side, sticky grains next to each other clump into one bar:
+// 2 in a row warns you, 3 in a row is a Stuck Mash and the bar carries the penalty.
+function laneCardsHtml(lane, who) {
+  const cards = state.field[lane][who];
+  const html = (c, i) => fieldCardHtml(c, lane, who, i);
+  if (lane !== 'hot' || (who === 'e' && rivalHidden())) return cards.map(html).join('');
+
+  // find runs of 2+ sticky cards in a row
+  const runs = [];
+  for (let i = 0; i < cards.length; ) {
+    if (!isSticky(cards[i])) { i++; continue; }
+    let j = i; while (j < cards.length && isSticky(cards[j])) j++;
+    if (j - i >= 2) runs.push([i, j]);
+    i = j;
+  }
+  // a Stuck Mash token is shown on the clump that caused it, instead of as its own card
+  const tokenIdx = cards.findIndex(c => c.id === 'stuckmash');
+  const stuckRun = tokenIdx >= 0 ? runs.find(([a, b]) => b - a >= CLUMP_SIZE) : null;
+
+  let out = '';
+  for (let i = 0; i < cards.length; ) {
+    if (i === tokenIdx && stuckRun) { i++; continue; }
+    const run = runs.find(([a]) => a === i);
+    if (!run) { out += html(cards[i], i); i++; continue; }
+    const [a, b] = run, n = b - a, stuck = run === stuckRun;
+    const t = stuck ? cards[tokenIdx] : null;
+    const label = stuck
+      ? `<div class="clump-label" title="${t.desc.replace(/"/g, '&quot;')}">${t.points >= 0 ? '🫕' : '🥣'} ${t.name.toUpperCase()} ${t.points >= 0 ? '+' : ''}${t.points}</div>`
+      : `<div class="clump-label" title="One more sticky grain here and the mash sticks (−8)">🥣 STICKY ${n}/${CLUMP_SIZE}</div>`;
+    const span = n >= 4 ? 'grid-column: 1 / -1' : `grid-column: span ${n}`;
+    out += `<div class="clump ${stuck ? (t.points >= 0 ? 'clump-decoction' : 'clump-stuck') : 'clump-warn'}" style="${span}">
+      ${label}<div class="clump-cards">${cards.slice(a, b).map((c, k) => html(c, a + k)).join('')}</div></div>`;
+    i = b;
+  }
+  return out;
+}   // more cards than this in a lane and it switches to compact cards
 
 // ── Tag highlighting ──
 // Hover (or select) a card that mentions tags, and your board cards with those tags light up.
@@ -69,15 +106,21 @@ function renderField() {
     const canTarget = selC && state.playerTurn && state.phase === 'play'
       && (selC.lane === 'both' || selC.lane === l);
 
-    pe.innerHTML = state.field[l].p.length
-      ? state.field[l].p.map((c, i) => `
-${fieldCardHtml(c, l, 'p', i)}`).join('')
-      : '<span class="empty-msg">empty</span>';
+    pe.innerHTML = state.field[l].p.length ? laneCardsHtml(l, 'p') : '<span class="empty-msg">empty</span>';
+    ee.innerHTML = state.field[l].e.length ? laneCardsHtml(l, 'e') : '<span class="empty-msg">empty</span>';
 
-    ee.innerHTML = state.field[l].e.length
-      ? state.field[l].e.map(c => `
-${fieldCardHtml(c, l, 'e')}`).join('')
-      : '<span class="empty-msg">empty</span>';
+    // Burnt: the hot side looks scorched, and its score shows the full total struck through
+    if (l === 'hot') ['p', 'e'].forEach(w => {
+      const laneEl = document.getElementById((w === 'p' ? 'plane-' : 'elane-') + l).closest('.lane');
+      const burnt = isBurnt(w) && !(w === 'e' && rivalHidden());
+      if (laneEl) laneEl.classList.toggle('lane-burnt', burnt);
+      const full = document.getElementById(`hs-${w}-full`);
+      if (full) {
+        const raw = state.field.hot[w].reduce((s, c) => s + effectivePoints(c, 'hot', w), 0) * laneMultiplier('hot');
+        full.textContent = burnt && raw !== laneScore('hot', w) ? String(raw) : '';
+        full.title = burnt ? 'Burnt: your hot side scores half' : '';
+      }
+    });
 
     // Crowded lanes go compact: tags shrink to colored dots so each card is one line
     pe.classList.toggle('lane-compact', state.field[l].p.length > COMPACT_LANE_AT);
@@ -311,8 +354,9 @@ function render() {
         `Each roast token gives every roasty card +${ROAST_POWER}. Reach ${threshold} and the beer is Burnt: hot side scores half.`);
     });
     // Stuck mash: sticky grains in a row at the end of your hot side
-    const run = trailingSticky('p'), stuck = isMashStuck('p');
-    if (run > 0 || stuck) chip('hot-p', stuck ? 'lc-bad lc-pulse' : run >= CLUMP_SIZE - 1 ? 'lc-warn' : 'lc-mash',
+    // Runs of 2+ show on the board as a clump (and so does a Stuck Mash), so the chip only covers a lone sticky grain
+    const run = trailingSticky('p'), stuck = isMashStuck('p') && !hasClump('p');
+    if (run === 1 || stuck) chip('hot-p', stuck ? 'lc-bad lc-pulse' : run >= CLUMP_SIZE - 1 ? 'lc-warn' : 'lc-mash',
       stuck ? '🥣 MASH STUCK −8' : `🥣 sticky ${run}/${CLUMP_SIZE}`,
       `Sticky grains clump: ${CLUMP_SIZE} in a row on your hot side = Stuck Mash (−8). Play something else in between, like a base malt or Rice Hulls.`);
   }
