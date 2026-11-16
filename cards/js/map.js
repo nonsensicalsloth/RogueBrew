@@ -247,12 +247,16 @@ function renderMap() {
   document.getElementById('map-gold').textContent      = `💰 ${mapState.gold}`;
   const bossNode = actNodes[actNodes.length - 1][0];
   const boss     = bossNode && getRivalDef(bossNode.rival);
-  document.getElementById('map-act-name').textContent  = ACT_NAMES[act] + (boss ? ` · 💀 ${boss.name}` : '');
-  document.getElementById('map-deck-count').textContent= `🃏 ${draftState.deck.length} cards`;
+  document.getElementById('map-act-name').textContent  = ACT_NAMES[act].toUpperCase();
+  const subEl = document.getElementById('map-act-sub');
+  if (subEl) subEl.textContent = `Act ${act + 1} of ${ACT_NAMES.length}${boss ? ` · boss: ${boss.name}` : ''}`;
+  document.getElementById('map-deck-count').textContent= `🃏 ${draftState.deck.length}`;
+  document.getElementById('map-deck-count').title = `${draftState.deck.length} cards in your deck`;
   const repEl = document.getElementById('map-rep');
   if (repEl) {
     repEl.textContent = `⭐ ${mapState.rep}/${mapState.maxRep}`;
-    repEl.style.color = mapState.rep <= mapState.maxRep * 0.3 ? 'var(--red)' : 'var(--gold)';
+    repEl.classList.toggle('low', mapState.rep <= mapState.maxRep * 0.3);
+    repEl.title = 'Reputation. Lose a battle and it drops; hit 0 and the run is over.';
   }
   const extras = [];
   if (mapState.barrel && mapState.barrel.length) extras.push(`🛢 ${mapState.barrel.length} aging`);
@@ -260,16 +264,20 @@ function renderMap() {
   const extraEl = document.getElementById('map-extras');
   const bDef = BREWERIES.find(b => b.id === runBrewery());
   const bIcon = bDef ? `<span class="relic-icon" title="${bDef.name} | Passive: ${bDef.passive} | Ability: ${bDef.ability.name}: ${bDef.ability.desc} | Perk: ${bDef.perk}">${bDef.icon}</span>` : '';
-  if (extraEl) extraEl.innerHTML = bIcon + ' ' + bmBadgeHtml() + ' ' + extras.join(' ') + ' ' + relicIconsHtml();
+  if (extraEl) {
+    extraEl.innerHTML = bIcon + ' ' + bmBadgeHtml() + ' ' + extras.join(' ') + ' ' + relicIconsHtml();
+    extraEl.style.display = extraEl.textContent.trim() || extraEl.querySelector('span') ? '' : 'none';
+  }
   const noticeEl = document.getElementById('map-notice');
   if (noticeEl) { noticeEl.textContent = mapState.notice || ''; mapState.notice = ''; }
 
-  const W      = Math.min(Math.max(el.offsetWidth || 0, 320), 640);
+  const W      = Math.min(Math.max((el.clientWidth || 0) - 20, 320), 700);
   const layers = actNodes.length;
-  const layerH = 68;
-  const H      = layers * layerH + 40;
+  const layerH = 72;
+  const H      = layers * layerH + 70;
   const pos    = n => ({ x: nodeX(n, W), y: nodeY(n.layer, H, layers) });
   const choices = new Set(actNodes.flat().filter(canVisit).map(n => n.id));
+  const reach   = reachableFrom(choices);
 
   let svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;">`;
 
@@ -280,33 +288,42 @@ function renderMap() {
     const a = pos(from), b = pos(to);
     const walked = mapState.visited[edge.from] && mapState.visited[edge.to];
     const next   = choices.has(edge.to) && !!mapState.currentNode && mapState.currentNode.id === edge.from;
+    const ahead  = reach.has(edge.from) && reach.has(edge.to);
     const stroke = walked ? '#6c63ff' : next ? '#ffd700' : '#4a4a72';
     svg += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${stroke}"
       stroke-width="${walked || next ? 2.5 : 1.2}" stroke-dasharray="${walked || next ? 'none' : '3,4'}"
-      opacity="${walked || next ? 0.95 : 0.7}"/>`;
+      opacity="${walked || next ? 0.95 : ahead ? 0.7 : 0.22}"/>`;
   });
 
-  // Nodes
+  // Nodes: your path (gold) and your next choices (full color) stand out.
+  // Rooms you can still reach get a faint tint of their type; rooms you can't reach any more go grey.
   actNodes.flat().forEach(node => {
     const { x, y } = pos(node);
     const visited  = isVisited(node);
     const canClick = choices.has(node.id);
     const color    = NODE_COLORS[node.type] || '#555';
     const icon     = NODE_ICONS[node.type]  || '?';
-    const r        = node.type === 'boss' ? 22 : 15;
-    const stroke   = visited ? '#ffd700' : canClick ? color : '#3a3a5e';
-    const opacity  = canClick || visited ? 1 : 0.8;   // the whole act stays readable for route planning
+    const isBoss   = node.type === 'boss';
+    const r        = isBoss ? 26 : 17;
     const isHere   = mapState.currentNode && mapState.currentNode.id === node.id;
+    const state    = visited ? 'path' : canClick ? 'next' : reach.has(node.id) ? 'ahead' : 'gone';
+    const look = {
+      path:  { fill: color + '30', stroke: '#ffd700', sw: 2.5, icon: '#ffd700', op: 1 },
+      next:  { fill: color + '50', stroke: color,     sw: 2.5, icon: color,     op: 1 },
+      ahead: { fill: color + '1c', stroke: color + '70', sw: 1.5, icon: color, op: 0.75 },
+      gone:  { fill: '#1b1b28',    stroke: '#34344a', sw: 1.2, icon: '#777',    op: 0.4 },
+    }[state];
 
-    svg += `<g transform="translate(${x},${y})" opacity="${opacity}" ${isHere || (canClick && !mapState.currentNode) ? 'data-focus="1"' : ''}
+    svg += `<g transform="translate(${x},${y})" class="map-node map-node-${state}" ${isHere || (canClick && !mapState.currentNode) ? 'data-focus="1"' : ''}
       ${canClick ? `onclick="clickMapNode('${node.id}')" style="cursor:pointer"` : ''}>
       <title>${nodeTooltip(node)}</title>
       ${canClick ? `<circle r="${r + 5}" fill="none" stroke="${color}" stroke-width="1.5" class="map-node-pulse"/>` : ''}
-      <circle r="${r}" fill="${visited ? '#1a1a2e' : '#12121f'}" stroke="${stroke}" stroke-width="${visited || canClick ? 2.5 : 1.2}"/>
-      <text text-anchor="middle" dominant-baseline="central" font-size="${node.type === 'boss' ? 14 : 11}"
-        fill="${visited ? '#ffd700' : canClick ? color : '#666'}">${icon}</text>
-      ${node.type === 'boss'
-        ? `<text text-anchor="middle" y="${r + 12}" font-size="7" fill="#e74c3c" font-family="monospace">${(getRivalDef(node.rival) || {}).short || ''}</text>`
+      <g opacity="${look.op}" ${state === 'gone' ? 'class="map-node-grey"' : ''}>
+        <circle r="${r}" fill="${look.fill}" stroke="${look.stroke}" stroke-width="${look.sw}"/>
+        <text text-anchor="middle" dominant-baseline="central" font-size="${isBoss ? 20 : 15}" fill="${look.icon}">${icon}</text>
+      </g>
+      ${isBoss
+        ? `<text text-anchor="middle" y="${r + 14}" font-size="15" fill="#e74c3c" class="map-label">${(getRivalDef(node.rival) || {}).short || ''}</text>`
         : ''}
       ${mapNodeBadges(node, r, canClick)}
     </g>`;
@@ -334,15 +351,25 @@ function mapNodeBadges(node, r, canClick) {
   if (!marks.length) return '';
   let out = '';
   marks.forEach((m, i) => {
-    const bx = r - 2 - i * 13, by = -r + 2;
-    out += `<circle cx="${bx}" cy="${by}" r="6.5" fill="#0d0d1a" stroke="${m.color}" stroke-width="1"/>
-      <text x="${bx}" y="${by}" text-anchor="middle" dominant-baseline="central" font-size="7">${m.icon}</text>`;
+    const bx = r - 1 - i * 15, by = -r + 1;
+    out += `<circle cx="${bx}" cy="${by}" r="7.5" fill="#0d0d1a" stroke="${m.color}" stroke-width="1"/>
+      <text x="${bx}" y="${by}" text-anchor="middle" dominant-baseline="central" font-size="9">${m.icon}</text>`;
   });
   // Under nodes you can pick next, spell the rule out so you can plan your route
   if (canClick) {
-    out += `<text text-anchor="middle" y="${r + 11}" font-size="6.5" fill="${marks[0].color}" font-family="monospace">${marks.map(m => m.label).join(' + ')}</text>`;
+    out += `<text text-anchor="middle" y="${r + 13}" font-size="14" fill="${marks[0].color}" class="map-label">${marks.map(m => m.label).join(' + ')}</text>`;
   }
   return out;
+}
+
+// Every room you could still get to from your next choices (following the paths forward)
+function reachableFrom(startIds) {
+  const seen = new Set(startIds), queue = [...startIds];
+  while (queue.length) {
+    const id = queue.shift();
+    mapState.edges.forEach(e => { if (e.from === id && !seen.has(e.to)) { seen.add(e.to); queue.push(e.to); } });
+  }
+  return seen;
 }
 
 function nodeTooltip(node) {
@@ -369,8 +396,8 @@ function nodeX(node, W) {
 }
 
 function nodeY(layer, H, totalLayers) {
-  const padding = 30;
-  return padding + (layer / (totalLayers - 1)) * (H - padding * 2);
+  const top = 34, bottom = 58;   // extra room at the bottom for the boss's name
+  return top + (layer / (totalLayers - 1)) * (H - top - bottom);
 }
 
 function clickMapNode(nodeId) {
@@ -580,10 +607,11 @@ function getRemovalPrice() {
 }
 
 function renderMapShop() {
-  document.getElementById('shop-gold').textContent = `💰 ${mapState.gold} gold`;
+  document.getElementById('shop-gold').textContent = `💰 ${mapState.gold}`;
+  const dc = document.getElementById('shop-deck-count');
+  if (dc) { dc.textContent = `🃏 ${draftState.deck.length}`; dc.title = `${draftState.deck.length} cards in your deck`; }
   renderShopRemoval();
   const el = document.getElementById('map-shop-items');
-  document.getElementById('shop-gold').textContent = `💰 ${mapState.gold} gold`;
   el.innerHTML = shopInventory.map((c, i) => {
     const canAfford = mapState.gold >= shopPrice(c);
     const full      = draftState.deck.length >= MAX_DECK_SIZE;
@@ -713,17 +741,17 @@ function renderShopRemoval() {
   if (!el) return;
   const price = getRemovalPrice();
   if (shopRemovalUsed) {
-    el.innerHTML = `<div style="font-size:7px;color:var(--dim);">🧹 Cellar cleaned out. Come back next shop.</div>`;
+    el.innerHTML = `<div class="service"><span>🧹 Clean out the cellar</span><span class="service-note">done for this shop</span></div>`;
   } else if (!canRemoveCard()) {
-    el.innerHTML = `<div style="font-size:7px;color:var(--dim);">🧹 Your deck is at the minimum (${MIN_DECK_SIZE}), nothing to clean out.</div>`;
+    el.innerHTML = `<div class="service"><span>🧹 Clean out the cellar: remove a card</span><span class="service-note">deck is at the minimum (${MIN_DECK_SIZE})</span></div>`;
   } else if (shopRemoving) {
-    el.innerHTML = `<div style="font-size:8px;color:var(--gold);margin-bottom:6px;">Choose a card to remove (💰 ${price})</div>
+    el.innerHTML = `<div class="service active"><span>🧹 Choose a card to remove</span><span class="service-price">💰 ${price}</span></div>
       <div class="removal-list">${deckPickerHtml('shopRemoveCard')}</div>
-      <button class="btn btn-primary" style="margin-top:6px;" onclick="shopRemoving=false;renderMapShop();">Cancel</button>`;
+      <div class="scr-foot"><button class="btn btn-primary" onclick="shopRemoving=false;renderMapShop();">Cancel</button></div>`;
   } else {
     const afford = mapState.gold >= price;
-    el.innerHTML = `<button class="btn ${afford ? 'btn-gold' : 'btn-primary'}" ${afford ? '' : 'style="opacity:0.4;cursor:not-allowed;"'}
-      onclick="${afford ? 'shopRemoving=true;renderMapShop();' : 'void(0)'}">🧹 CLEAN OUT THE CELLAR: remove a card (💰 ${price})</button>`;
+    el.innerHTML = `<div class="service ${afford ? 'can' : 'cant'}" onclick="${afford ? 'shopRemoving=true;renderMapShop();' : 'void(0)'}">
+      <span>🧹 Clean out the cellar: remove a card</span><span class="service-price">💰 ${price}</span></div>`;
   }
 }
 
@@ -737,7 +765,7 @@ function shopRemoveCard(idx) {
   shopRemoving    = false;
   renderMapShop();
   const msg = document.getElementById('shop-removal');
-  if (msg && removed) msg.innerHTML = `<div style="font-size:8px;color:var(--green);">🧹 ${removed.name} removed from your deck.</div>`;
+  if (msg && removed) msg.innerHTML = `<div class="service done"><span>🧹 ${removed.name} removed from your deck.</span></div>`;
 }
 
 // ── Event node ──
@@ -867,15 +895,29 @@ function showMapEvent(node) {
   renderMapEvent();
 }
 
+// "🌿 Hop Farm Tour" → icon 🌿, title "Hop Farm Tour" (the icon gets its own spot above the title)
+function splitIcon(title) {
+  const m = title.match(/^(\p{Extended_Pictographic}[\p{Extended_Pictographic}\u200d\ufe0f]*)\s*(.*)$/u);
+  return m ? { icon: m[1], text: m[2] } : { icon: '', text: title };
+}
+// "Accept it (add random card)" → main label + what it does, shown on the right of the button
+function optionLabelHtml(label) {
+  const m = label.match(/^(.*?)\s*\(([^()]*)\)\s*$/);
+  return m && m[1] ? `<span>${m[1]}</span><small>${m[2]}</small>` : `<span>${label}</span>`;
+}
+
 function renderMapEvent() {
-  document.getElementById('event-title').textContent  = currentEvent.title;
+  const t = splitIcon(currentEvent.title);
+  const iconEl = document.getElementById('event-icon');
+  if (iconEl) { iconEl.textContent = t.icon; iconEl.style.display = t.icon ? '' : 'none'; }
+  document.getElementById('event-title').textContent  = t.text;
   document.getElementById('event-desc').textContent   = currentEvent.desc;
   document.getElementById('event-result').textContent = '';
   const el = document.getElementById('event-options');
   // Options you can't take (not enough gold, deck too small) are shown greyed out
   el.innerHTML = eventOptions().map((opt, i) => (!opt.can || opt.can())
-    ? `<button class="btn btn-primary" onclick="chooseEvent(${i})">${opt.label}</button>`
-    : `<button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;">${opt.label}</button>`
+    ? `<button class="btn btn-primary" onclick="chooseEvent(${i})">${optionLabelHtml(opt.label)}</button>`
+    : `<button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;">${optionLabelHtml(opt.label)}</button>`
   ).join('');
 }
 
@@ -1098,9 +1140,13 @@ let lastGoalMsg = '';
 function showBattleReward(node, goldReward) {
   setScreen('battle-reward-screen');
   const festival = node.type === 'festival';
-  document.getElementById('reward-gold').textContent =
-    festival ? `🎪 Festival winner! +${goldReward} gold, pick a premium card` : `+${goldReward} gold earned!`;
-  if (lastGoalMsg) document.getElementById('reward-gold').innerHTML += `<div class="reward-goal">${lastGoalMsg}</div>`;
+  // Gold earned, then any challenge or equipment payouts, each as its own chip
+  const chips = [`<span class="res-chip gold">${festival ? `🎪 Festival winner! +${goldReward} gold` : `💰 +${goldReward} gold`}</span>`];
+  if (lastGoalMsg) lastGoalMsg.split('<br>').forEach(m => {
+    const missed = /missed/i.test(m);
+    chips.push(`<span class="res-chip ${missed ? 'dim' : 'good'} reward-goal">${m}</span>`);
+  });
+  document.getElementById('reward-gold').innerHTML = chips.join('');
   lastGoalMsg = '';
   rewardOffer = festival ? generateRareOffer() : generateMapOffer();
   document.getElementById('reward-card-offer').innerHTML =

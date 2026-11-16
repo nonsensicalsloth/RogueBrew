@@ -95,8 +95,9 @@
 
 <!-- ===== BREWERY SELECT ===== -->
 <div id="brewery-screen" class="screen">
-  <div class="brewery-screen-title">CHOOSE YOUR BREWERY</div>
-  <div class="brewery-screen-sub">Your brewery type shapes your entire run.</div>
+  <div class="scr-head">
+    <div><h1>CHOOSE YOUR BREWERY</h1><div class="scr-sub">Your brewery shapes the whole run: a passive, an ability, and a run perk.</div></div>
+  </div>
   <div id="brewery-choices"></div>
   <div style="margin-top:16px;text-align:center;">
     <button class="btn btn-primary" onclick="showDeckManager()">← BACK</button>
@@ -117,13 +118,13 @@
 
 <!-- ===== MAP SCREEN ===== -->
 <div id="map-screen" class="screen">
-  <div class="map-header">
-    <div class="map-header-title" id="map-act-name">The Mash</div>
-    <div class="map-header-info">
-      <span id="map-gold">💰 100</span>
-      <span id="map-rep">⭐ 100/100</span>
-      <span id="map-deck-count">🃏 15 cards</span>
-      <span id="map-extras"></span>
+  <div class="scr-head">
+    <div><h1 id="map-act-name">The Mash</h1><div class="scr-sub" id="map-act-sub"></div></div>
+    <div class="res-chips">
+      <span class="res-chip gold" id="map-gold">💰 100</span>
+      <span class="res-chip rep" id="map-rep">⭐ 100/100</span>
+      <span class="res-chip" id="map-deck-count">🃏 15</span>
+      <span class="res-chip extras" id="map-extras"></span>
     </div>
   </div>
   <div id="map-notice"></div>
@@ -145,25 +146,31 @@
 
 <!-- ===== MAP SHOP ===== -->
 <div id="map-shop-screen" class="screen">
-  <div style="text-align:center;margin-bottom:12px;">
-    <div class="wortcraft-title" style="font-size:11px;margin-bottom:6px;">🛒 SHOP</div>
-    <div id="shop-gold" style="font-size:9px;color:var(--gold);margin-bottom:4px;">💰 100 gold</div>
-    <div style="font-size:7px;color:var(--dim);">Click a card to buy it</div>
+  <div class="scr-head">
+    <div><h1>🛒 SUPPLY SHOP</h1><div class="scr-sub">Click a card to buy it. New cards unlock for deck building.</div></div>
+    <div class="res-chips"><span class="res-chip gold" id="shop-gold">💰 100</span><span class="res-chip" id="shop-deck-count">🃏 15</span></div>
   </div>
-  <div id="shop-unlock-msg" style="font-size:8px;color:var(--gold);text-align:center;min-height:12px;margin-bottom:6px;"></div>
-  <div id="map-shop-items"></div>
-  <div id="shop-removal" style="text-align:center;margin-top:8px;width:100%;max-width:400px;"></div>
-  <div style="text-align:center;margin-top:16px;">
+  <div class="shelf">
+    <div class="shelf-label">INGREDIENTS</div>
+    <div id="map-shop-items"></div>
+    <div id="shop-unlock-msg" class="shelf-msg"></div>
+    <div class="shelf-label">SERVICES</div>
+    <div id="shop-removal"></div>
+  </div>
+  <div class="scr-foot">
     <button class="btn btn-primary" onclick="leaveShop()">Leave Shop</button>
   </div>
 </div>
 
 <!-- ===== MAP EVENT ===== -->
 <div id="map-event-screen" class="screen">
-  <div class="event-title" id="event-title"></div>
-  <div class="event-desc" id="event-desc"></div>
-  <div class="event-options" id="event-options"></div>
-  <div class="event-result" id="event-result"></div>
+  <div class="event-panel">
+    <div class="event-icon" id="event-icon">❔</div>
+    <div class="event-title" id="event-title"></div>
+    <div class="event-desc" id="event-desc"></div>
+    <div class="event-options" id="event-options"></div>
+    <div class="event-result" id="event-result"></div>
+  </div>
 </div>
 
 <!-- ===== SPECIAL NODES (barrel, collab, lab, taproom, contract) ===== -->
@@ -197,9 +204,9 @@
 
 <!-- ===== BATTLE REWARD ===== -->
 <div id="battle-reward-screen" class="screen">
-  <div class="reward-title">⚔ VICTORY!</div>
-  <div id="reward-gold"></div>
-  <div style="font-size:8px;color:var(--dim);margin-bottom:8px;">Pick a card to add to your deck</div>
+  <div class="victory-banner">VICTORY!</div>
+  <div id="reward-gold" class="res-chips center"></div>
+  <div class="scr-sub center">Pick a card to add to your deck</div>
   <div id="reward-card-offer"></div>
   <div style="text-align:center;margin-top:16px;">
     <button class="btn btn-primary" onclick="skipReward()">Skip card</button>

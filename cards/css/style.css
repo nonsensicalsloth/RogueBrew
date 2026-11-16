@@ -923,3 +923,87 @@ body::after {
 .hand-cards.hand-fanned > .card:hover,
 .hand-cards.hand-fanned > .card.selected-card { z-index: 100 !important; }
 .hand-cards.hand-fanned > .card:not(:last-child):not(:hover):not(.selected-card) .card-pts-gem { visibility: hidden; }
+
+/* ════ Screen polish: one look for every non-battle screen ════
+   Pixel font for titles, buttons and numbers; VT323 (--read-font) for anything you read. */
+
+/* Header strip at the top of a screen */
+.scr-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  width: 100%; max-width: 820px; box-sizing: border-box; margin: 0 auto 8px; padding: 10px 14px;
+  border: 1px solid var(--border); border-left: 3px solid var(--gold);
+  background: linear-gradient(90deg, rgba(255,215,0,.08), transparent 60%), var(--bg2); }
+.scr-head h1 { font-size: 12px; color: var(--gold); font-weight: normal; margin: 0; text-shadow: 0 0 8px rgba(255,215,0,.35); }
+.scr-sub { font-family: var(--read-font); font-size: 18px; color: #9aa3b8; margin-top: 4px; line-height: 1.1; }
+.scr-sub.center { text-align: center; margin: 6px 0 4px; }
+.scr-foot { text-align: center; margin-top: 16px; }
+
+/* Resource chips: gold, reputation, deck size look the same everywhere */
+.res-chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
+.res-chips.center { justify-content: center; }
+.res-chip { font-family: var(--read-font); font-size: 19px; line-height: 1.2; padding: 1px 8px; border: 1px solid var(--border);
+  border-radius: 3px; background: var(--bg3); color: var(--text); white-space: nowrap; cursor: default; }
+.res-chip.gold { color: var(--gold); border-color: rgba(255,215,0,.45); }
+.res-chip.rep  { color: #ffb74d; border-color: rgba(255,183,77,.45); }
+.res-chip.rep.low { color: var(--red); border-color: rgba(255,82,82,.6); }
+.res-chip.good { color: #69f0ae; border-color: rgba(105,240,174,.45); }
+.res-chip.dim  { color: #9aa3b8; }
+.res-chip.extras { font-size: 15px; display: inline-flex; gap: 4px; align-items: center; }
+.res-chip.extras .relic-icon { font-size: 15px; }
+
+/* ── Map ── */
+#map-screen { align-items: stretch; }
+#map-container { width: 100%; max-width: 820px; box-sizing: border-box; margin: 0 auto; border: 1px solid var(--border); border-radius: 3px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(108,99,255,.10), transparent 60%), var(--bg2); padding-bottom: 14px; }
+#map-notice:not(:empty) { font-family: var(--read-font); font-size: 18px; color: var(--gold); text-align: center; margin: 0 auto 8px; }
+.map-legend { font-family: var(--read-font); font-size: 15px !important; gap: 6px 8px !important; padding: 10px 12px 12px !important;
+  border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+.map-legend span { padding: 0 6px; border: 1px solid currentColor; border-radius: 3px; opacity: .85; }
+.map-label { font-family: var(--read-font); }
+.map-node-grey { filter: grayscale(1); }
+
+/* ── Shop ── */
+.shelf { width: 100%; max-width: 820px; box-sizing: border-box; margin: 0 auto; padding: 4px 14px 14px; border: 1px solid var(--border); background: var(--bg2); }
+.shelf-label { font-size: 7px; color: var(--dim); letter-spacing: 2px; padding-top: 10px; }
+#map-shop-items { gap: 22px 12px; padding: 18px 0 6px; }
+.shop-price { font-family: var(--read-font); font-size: 18px; padding: 3px 0 4px; background: rgba(255,215,0,.06); }
+.unlock-badge { font-family: var(--read-font) !important; font-size: 14px !important; letter-spacing: 0 !important; }
+.shelf-msg:not(:empty) { font-family: var(--read-font); font-size: 18px; color: var(--gold); text-align: center; margin-top: 6px; }
+.service { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 10px; padding: 8px 12px;
+  border: 1px dashed var(--border); font-family: var(--read-font); font-size: 18px; color: #9aa3b8; }
+.service.can { border-style: solid; border-color: rgba(255,215,0,.45); color: var(--text); cursor: pointer; }
+.service.can:hover { background: rgba(255,215,0,.08); }
+.service.cant { opacity: .5; cursor: not-allowed; }
+.service.active { border-style: solid; border-color: var(--gold); color: var(--gold); }
+.service.done { border-style: solid; border-color: rgba(105,240,174,.45); color: #69f0ae; }
+.service-price { color: var(--gold); }
+.service-note { color: var(--dim); }
+#shop-removal .removal-list { margin-top: 8px; }
+
+/* ── Events ── */
+#map-event-screen { max-width: 600px; padding-top: 40px; }
+.event-panel { width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-top: 3px solid #b388ff;
+  background: radial-gradient(ellipse at 50% 0%, rgba(179,136,255,.10), transparent 70%), var(--bg2); padding: 22px 26px 18px; }
+.event-icon { font-size: 34px; text-align: center; margin-bottom: 8px; }
+.event-title { font-size: 13px; margin-bottom: 12px; }
+.event-desc { font-family: var(--read-font); font-size: 21px; line-height: 1.25; color: #c5cbe0; margin-bottom: 20px; }
+.event-options .btn { font-family: var(--read-font); font-size: 20px; text-align: left; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.event-options .btn small { font-size: 18px; color: #9aa3b8; text-align: right; }
+.event-options .btn:hover small { color: inherit; }
+.event-result { font-family: var(--read-font); font-size: 19px; line-height: 1.2; }
+
+/* ── Battle reward ── */
+.victory-banner { font-size: 18px; color: var(--gold); text-shadow: 0 0 14px rgba(255,215,0,.5); letter-spacing: 3px; margin: 10px 0 12px; }
+#reward-gold { margin-bottom: 4px; }
+#reward-card-offer { gap: 22px 18px; padding: 18px 0 6px; }
+
+/* ── Brewery select ── */
+#brewery-screen .scr-head { margin-bottom: 14px; }
+.brewery-name { font-size: 9px; }
+.brewery-sub  { font-family: var(--read-font); font-size: 18px; color: #9aa3b8; line-height: 1.1; }
+.brewery-tier { font-family: var(--read-font); font-size: 17px; line-height: 1.1; color: #c5cbe0; margin-top: 10px; }
+.brewery-tier span { font-family: 'Press Start 2P', monospace; font-size: 7px; margin-bottom: 4px; }
+.brewery-card { border-radius: 3px; }
+.brewery-card:not(.locked) { border-top: 3px solid var(--gold); }
+.bm-picker { font-family: var(--read-font); font-size: 17px; }
+.bm-picker .bm-level, .bm-picker .bm-btn { font-family: 'Press Start 2P', monospace; font-size: 8px; }
+.bm-desc { font-size: 16px; }
