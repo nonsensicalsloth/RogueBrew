@@ -15,7 +15,8 @@
   overflow: visible;
 }
 .card:hover:not(.card-disabled) { transform: translateY(-6px) scale(1.04); z-index: 10; }
-.card.card-disabled { opacity: 0.4; cursor: not-allowed; }
+/* Can't afford it: darkened and greyed but still solid, so it fully covers the card beneath it in a crowded hand */
+.card.card-disabled { filter: grayscale(0.7) brightness(0.42); cursor: not-allowed; }
 .card.mulligan-on   { border-color: var(--orange) !important; box-shadow: 0 0 8px var(--orange); }
 .card.selected-card { box-shadow: 0 0 12px var(--gold); border-color: var(--gold) !important; }
 
