@@ -34,7 +34,7 @@ function getEffectiveCost(c) {
   if (c.cat === 'hop' && hasRelic('hopback') && !state.hopBackUsed) return 0;
   // Hop House ability: a scouted hop costs 1 less on the turn it was drawn
   const scout = c._scoutKey && c._scoutKey === abilityKey() ? 1 : 0;
-  let discount = state.nextCardDiscount || 0;
+  let discount = (state.nextCardDiscount || 0) + (state.carryDiscount || 0);
   // Contract Brewer passive: process cards cost 1 less
   if (c.cat === 'process' && activeBrewery() === 'contract') discount += 1;
   if (c.cat === 'yeast') discount += (state.nextYeastDiscount || 0);
@@ -72,6 +72,7 @@ function playToLane(lane) {
 
   // Consume discounts
   if (state.nextCardDiscount > 0) state.nextCardDiscount = 0;
+  if (state.carryDiscount > 0)    state.carryDiscount = 0;
   if (c.cat === 'yeast') state.nextYeastDiscount = 0;
   if (c.cat === 'hop')   { state.nextHopDiscount = 0; state.nextHopFree = false; state.hopBackUsed = true; }
   if (c.cat === 'malt')  state.augerUsed = true;
@@ -148,7 +149,13 @@ function resolvePlay(c, lane, who) {
   }
   // Forced Contamination plays don't count as your "first card" (Pilsner Malt etc.)
   state.cardsThisTurn = state.cardsThisTurn || { p: 0, e: 0 };
-  if (!isContamination(c)) state.cardsThisTurn[who]++;
+  if (!isContamination(c)) {
+    state.cardsThisTurn[who]++;
+    state.cardsThisRound = state.cardsThisRound || { p: 0, e: 0 };
+    state.maltsThisRound = state.maltsThisRound || { p: 0, e: 0 };
+    state.cardsThisRound[who]++;
+    if (c.cat === 'malt') state.maltsThisRound[who]++;
+  }
 
   checkContaminationInHand(who);
 }

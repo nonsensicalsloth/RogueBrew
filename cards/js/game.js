@@ -77,6 +77,9 @@ function initGame(opts = {}) {
     eRoastSafe:       0,
     eRoastThreshold:  5,
     cardsThisTurn:    { p: 0, e: 0 },
+    cardsThisRound:   { p: 0, e: 0 },
+    maltsThisRound:   { p: 0, e: 0 },
+    carryDiscount:    0,
     lastMalt:         {},
     lastHop:          {},
     nextHopFree:      false,
@@ -201,6 +204,9 @@ function startRound() {
   state.eRoastSafe        = 0;
   state.eRoastThreshold   = 5;
   state.cardsThisTurn     = { p: 0, e: 0 };
+  state.cardsThisRound    = { p: 0, e: 0 };
+  state.maltsThisRound    = { p: 0, e: 0 };
+  state.carryDiscount     = 0;
   state.lastMalt          = {};
   state.nextHopFree       = false;
   state.nextYeastDiscount = 0;
@@ -260,7 +266,8 @@ function endRound() {
 
   LANES.forEach(l => {
     // Tokens (Haze, Stuck Mash, Contamination...) leave the game at round end
-    state.pDiscard.push(...state.field[l].p.filter(c => c.cat !== 'token'));
+    // copies made during the battle (Second Runnings) leave with the tokens
+    state.pDiscard.push(...state.field[l].p.filter(c => c.cat !== 'token' && !c._copy));
     state.eDiscard.push(...state.field[l].e.filter(c => c.cat !== 'token'));
     state.field[l].p = [];
     state.field[l].e = [];

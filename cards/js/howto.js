@@ -128,7 +128,7 @@ const HOWTO_CONTENT = {
       hp(`If you end your turn with a ${tag('crisp')} card in hand, the budget you <b>didn't spend</b> becomes <b>Lagering</b> (up to ${LAGER_MAX}). The next ${tag('crisp')} card you play gets <b>+${LAGER_POWER} per Lagering</b>, and that empties it. Cheap lager decks turn their spare budget into one big pour.`)) +
     hbox('🍋 Acidity (sours attack)',
       hp(`Sour cards give the rival <b>Acid</b>. At the start of each turn, Acid eats that many points from the rival's best lane (an <b>Acid Burn</b>), then drops by 1. So 5 Acid eats 5 + 4 + 3 + 2 + 1 = 15 points. Play it early!`) +
-      hli([`<b>Lactic Acid</b> doubles the rival's Acid. Hops hold back <b>Lactobacillus</b>.`,
+      hli([`<b>Lactic Acid</b> gives the rival 3 Acid. Hops hold back <b>Lactobacillus</b>.`,
            `<b>Pediococcus</b> eats a fruit on your board and gets 1.5× its points.`,
            `Rivals can sour you too. CIP Cycle and Fining Agent clean up an Acid Burn, and so does Sanitize if it's on your cold side.`])),
 
@@ -147,7 +147,7 @@ const HOWTO_CONTENT = {
         `Some cards ask you to <b>choose a card on your board</b>. Valid choices glow gold.`,
         `Your brewery <b>ability button</b> sits next to End Turn. You can use it once per turn.`,
         `Rivals can fight back: removing your best card, scorching it with chili, or contaminating you.`,
-        `<b>Your discard pile</b> (the spent grain) holds used process cards and anything you discard. Cards like Grain Out and Trub Dump fill it on purpose; Spent Grain Bread, Solera, Yeast Harvest and Second Runnings cash it in. The DISCRD counter by your deck shows how many cards are in it.`,
+        `<b>Your discard pile</b> (the spent grain) holds used process cards and anything you discard. Cards like Grain Out and Trub Dump fill it on purpose, and Yeast Harvest can pull a yeast back out of it. The DISCRD counter by your deck shows how many cards are in it.`,
       ])) +
     hbox('💀 Boss judgings',
       hp(`Bosses are <b>best of 3 rounds</b>, each judged differently: <b>👃 Aroma</b> (cold side ×2), <b>👅 Flavor</b> (hot side ×2), then <b>🏆 Overall Impression</b>. Cards left in your hand carry into the next round. Each boss also has a signature rule; hover the boss on the map to see it.`)),

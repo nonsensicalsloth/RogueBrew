@@ -392,7 +392,8 @@ function render() {
     }
   }
 
-  const discountMsg = (state.nextCardDiscount || 0) > 0 ? ` ★-${state.nextCardDiscount}` : '';
+  const disc = (state.nextCardDiscount || 0) + (state.carryDiscount || 0);
+  const discountMsg = disc > 0 ? ` ★-${disc}` : '';
   const handCol = document.getElementById('hand-lbl').closest('.hand-col');
   if (handCol) handCol.classList.toggle('hand-picking', !!state.handTargeting && state.phase === 'play');
   document.getElementById('hand-lbl').textContent =

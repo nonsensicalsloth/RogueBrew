@@ -86,7 +86,7 @@ const BATTLE_PICKS = {
   // Take a yeast back from the discard pile (reset to how it is in your deck); free this turn
   yeastharvest(cards, i, who) {
     const pick = cards[i];
-    const pile = discardOf(who);
+    const pile = discardOf(who).includes(pick) ? discardOf(who) : deckOf(who);
     pile.splice(pile.indexOf(pick), 1);
     const fresh = typeof refreshRunCard === 'function' ? refreshRunCard(pick) : { ...(getCardDef(pick.id) || pick) };
     delete fresh._barrelReturn;
@@ -141,34 +141,31 @@ function startTrubDump(src, who) {
 }
 
 function startYeastHarvest(src, who) {
-  const yeasts = discardOf(who).filter(c => c.cat === 'yeast');
-  if (!yeasts.length) { drawFor(who, 1); addLog('Yeast Harvest: no yeast in your discard pile, drew 1 instead.', who === 'p' ? 'player' : 'enemy'); return; }
+  const yeasts = [...discardOf(who), ...deckOf(who)].filter(c => c.cat === 'yeast' && !isContamination(c));
+  if (!yeasts.length) { drawFor(who, 1); addLog('Yeast Harvest: no yeast in your discard pile or deck, drew 1 instead.', who === 'p' ? 'player' : 'enemy'); return; }
   if (who === 'e') {
     const best = yeasts.reduce((bi, c, k) => c.points > yeasts[bi].points ? k : bi, 0);
     BATTLE_PICKS.yeastharvest(yeasts, best, 'e');
     return;
   }
-  openBattlePicker('yeastharvest', 'YEAST HARVEST: CHOOSE A YEAST FROM YOUR DISCARD PILE', yeasts, src);
+  openBattlePicker('yeastharvest', 'YEAST HARVEST: CHOOSE A YEAST FROM YOUR DISCARD PILE OR DECK', yeasts, src);
 }
 
 // ── Second Runnings: replay the most recent malt in your discard pile ──
 
 function secondRunnings(src, who) {
-  const pile = discardOf(who);
-  for (let k = pile.length - 1; k >= 0; k--) {
-    const c = pile[k];
-    if (c.cat !== 'malt') continue;
-    pile.splice(k, 1);
-    const fresh = typeof refreshRunCard === 'function' ? refreshRunCard(c) : { ...(getCardDef(c.id) || c) };
-    delete fresh._barrelReturn;
-    if (c._deckIdx !== undefined) fresh._deckIdx = c._deckIdx;
+  // A fresh copy of the last malt you played this round (it leaves the game at round end, like other copies)
+  const last = state.lastMalt && state.lastMalt[who];
+  if (last) {
+    const fresh = { ...(getCardDef(last.id) || last), tags: [...((getCardDef(last.id) || last).tags || [])] };
+    fresh._copy = true;
     const lane = fresh.lane === 'cold' ? 'cold' : 'hot';
     addLog(`Second Runnings: ${fresh.name} brewed again from the spent grain!`, who === 'p' ? 'player' : 'enemy');
     resolvePlay(fresh, lane, who);
     return;
   }
   src.points += 8;
-  addLog('Second Runnings: no malt to rebrew, +8 pts instead.', who === 'p' ? 'player' : 'enemy');
+  addLog('Second Runnings: no malt played yet this round, +8 pts instead.', who === 'p' ? 'player' : 'enemy');
 }
 
 // ── Picker markup (shown above your hand) ──

@@ -51,9 +51,11 @@ function formulaPreview(c, who = 'p') {
     case 'crystal75':
       return { points: c.points + hotNow * 4, note: `now: ${hotNow} other cards` };
     case 'melanoidin': {
-      const n = (who === 'p' ? state.pDiscard : state.eDiscard).filter(x => x.id === 'melanoidin').length;
-      return { points: c.points * (n + 1), note: `now: ${n} in discard` };
+      const n = maltsThisRound(who);
+      return { points: n >= 2 ? c.points * 2 : c.points, note: n >= 2 ? 'now: doubled' : `now: malt #${n + 1}` };
     }
+    case 'spentbread': case 'solera':
+      return { points: c.points + playedThisRound(who) * 2, note: `now: ${playedThisRound(who)} played` };
   }
   const roasty = roastyLive();
   if (roasty) return roasty;
@@ -138,11 +140,13 @@ function addToHand(who, tokenId) {
   addLog(`${token.name} added to ${who === 'p' ? 'your' : 'rival\'s'} hand.`, who === 'p' ? 'player' : 'enemy');
 }
 
-function shuffleIntoRemainingDeck(who, tokenId) {
+// topN: only shuffle it among the top N cards (so it shows up soon)
+function shuffleIntoRemainingDeck(who, tokenId, topN = null) {
   const token = createToken(tokenId);
   if (!token) return;
   const deck = who === 'p' ? state.pDeck : state.eDeck;
-  const pos = Math.floor(Math.random() * (deck.length + 1));
+  const span = topN ? Math.min(topN, deck.length + 1) : deck.length + 1;
+  const pos = Math.floor(Math.random() * span);
   deck.splice(pos, 0, token);
   addLog(`Contamination shuffled into ${who === 'p' ? 'your' : 'rival\'s'} deck!`, who === 'p' ? 'warn' : 'enemy');
 }
@@ -463,9 +467,9 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case '6row':
-      // Next card costs 1 less this turn
-      state.nextCardDiscount = (state.nextCardDiscount || 0) + 1;
-      addLog('6-Row Malt: next card costs 1 less.', 'player');
+      // Your next card this round costs 1 less (carries over to next turn if unused)
+      if (isPlayer) state.carryDiscount = (state.carryDiscount || 0) + 1;
+      addLog('6-Row Malt: next card costs 1 less.', isPlayer ? 'player' : 'enemy');
       break;
 
     case 'mango':
@@ -483,12 +487,12 @@ function applyCardEffect(card, lane, who) {
 
 
     case 'maltodex':
-      state.nextCardDiscount = (state.nextCardDiscount || 0) + card.cost;
-      addLog('Maltodextrin: next card costs 2 less.', 'player');
+      if (isPlayer) state.carryDiscount = (state.carryDiscount || 0) + 2;
+      addLog('Maltodextrin: next card costs 2 less.', isPlayer ? 'player' : 'enemy');
       break;
 
     case 'lactose':
-      addLog(`Lactose: removed ${removeRoast(who, 2)} roast token(s).`, 'player');
+      addLog('Lactose: roast limit → ' + raiseRoastThreshold(who, 2), isPlayer ? 'player' : 'enemy');
       break;
 
     case 'sip':
@@ -563,12 +567,9 @@ function applyCardEffect(card, lane, who) {
       break;
     }
     case 'kettlesour': giveAcid(other(who), 5); break;
-    case 'lacticacid': {
-      const a = acidOn(other(who));
-      if (a > 0) giveAcid(other(who), a);
-      else addLog('Lactic Acid: no Acid to double yet.', 'sys');
+    case 'lacticacid':
+      giveAcid(other(who), 3);
       break;
-    }
     case 'pedio':
       giveAcid(other(who), 2);
       startCardTargeting('pedio', card, who);
@@ -624,14 +625,7 @@ function applyCardEffect(card, lane, who) {
       break;
     }
 
-    case 'marisotter': {
-      const darkCrystal = hotCards.filter(isDarkOrCrystal).length;
-      if (darkCrystal >= 3) {
-        card.points += 8;
-        addLog(`Maris Otter: 3+ crystal/dark malts, +8 pts!`, 'player');
-      }
-      break;
-    }
+    // Maris Otter: ongoing, see ongoingBonus()
 
     case 'vienna':
       buffLaneCards('hot', who, 2, c => c.cat === 'malt' && c.id !== 'vienna');
@@ -704,18 +698,11 @@ function applyCardEffect(card, lane, who) {
       break;
     }
 
-    case 'cherry': {
-      const darkCount = hotCards.filter(c => c.cat === 'malt' && c.tags && c.tags.includes('roasty')).length;
-      if (darkCount >= 2) {
-        card.points += 8;
-        addLog('Cherries: 2+ dark malts, +8 pts!', 'player');
-      }
-      break;
-    }
+    // Cherries: ongoing, see ongoingBonus()
 
     case 'passionfr': {
-      const n = buffLaneCards('cold', who, 2, c => c.cat === 'hop');
-      addLog(`Passion Fruit: +2 to ${n} hop(s) on cold side.`, 'player');
+      const n = buffLaneCards('cold', who, 3, c => c.cat === 'hop');
+      addLog(`Passion Fruit: +3 to ${n} hop(s) on cold side.`, isPlayer ? 'player' : 'enemy');
       break;
     }
 
@@ -778,9 +765,9 @@ function applyCardEffect(card, lane, who) {
 
     case 'crosscontam': {
       const opp = who === 'p' ? 'e' : 'p';
-      shuffleIntoRemainingDeck(opp, 'contamination');
-      shuffleIntoRemainingDeck(opp, 'contamination');
-      addLog(`Cross Contamination: 2 Contamination cards into ${isPlayer ? "rival's" : "your"} deck!`, isPlayer ? 'player' : 'enemy');
+      shuffleIntoRemainingDeck(opp, 'contamination', 5);
+      shuffleIntoRemainingDeck(opp, 'contamination', 5);
+      addLog(`Cross Contamination: 2 Contamination cards near the top of ${isPlayer ? "rival's" : "your"} deck!`, isPlayer ? 'player' : 'enemy');
       break;
     }
 
@@ -800,8 +787,8 @@ function applyCardEffect(card, lane, who) {
     // ── Belgian adjuncts ──
     case 'candisugarcl': {
       const belgYeasts = getLaneCards('cold', who).filter(c => c.tags && c.tags.includes('belgian')).length;
-      card.points += belgYeasts * 2;
-      addLog(`Clear Candi Sugar: +${belgYeasts * 3} pts (${belgYeasts} belgian yeasts).`, 'player');
+      card.points += belgYeasts * 3;
+      addLog(`Clear Candi Sugar: +${belgYeasts * 3} pts (${belgYeasts} belgian yeasts).`, isPlayer ? 'player' : 'enemy');
       break;
     }
     case 'candisugarab': {
@@ -934,12 +921,12 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'melanoidin': {
-      const discardCount = (who === 'p' ? state.pDiscard : state.eDiscard)
-        .filter(c => c.id === 'melanoidin').length;
-      if (discardCount > 0) {
-        card.points *= (discardCount + 1);
+      // malts played before it this round (it counts itself after its effect)
+      const before = maltsThisRound(who);
+      if (before >= 2) {
+        card.points *= 2;
         card._locked = true;
-        addLog(`Melanoidin: ${discardCount} in discard, score x${discardCount+1}! Value locked.`, 'player');
+        addLog(`Melanoidin: malt #${before + 1} this round, score doubled! Value locked.`, isPlayer ? 'player' : 'enemy');
       }
       break;
     }
@@ -1058,8 +1045,8 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'citrazest':
-      if (isPlayer) state.nextHopFree = true;
-      addLog('Grapefruit Zest: your next hop costs 0.', 'player');
+      if (isPlayer) state.nextHopDiscount = (state.nextHopDiscount || 0) + 1;
+      addLog('Grapefruit Zest: your next hop costs 1 less.', isPlayer ? 'player' : 'enemy');
       break;
 
     case 'toastedcoc': {
@@ -1084,6 +1071,7 @@ function applyCardEffect(card, lane, who) {
       state.field.cold[who] = state.field.cold[who].filter(c => !(c.cat === 'token' && c.points < 0));
       const gone = before - state.field.cold[who].length;
       if (gone) addLog(`Filtration: filtered out ${gone} negative card(s).`, 'player');
+      else { drawFor(who, 1); addLog('Filtration: nothing to filter, drew an extra card.', isPlayer ? 'player' : 'enemy'); }
       startCardTargeting('filtration', card, who);
       break;
     }
@@ -1231,16 +1219,16 @@ function applyCardEffect(card, lane, who) {
     case 'secondrunnings': secondRunnings(card, who);    break;
 
     case 'spentbread': {
-      const n = discardOf(who).filter(c => c.cat !== 'token').length;
+      const n = playedThisRound(who);
       card.points += n * 2;
-      addLog(`Spent Grain Bread: +${n * 2} pts (${n} cards in discard).`, 'player');
+      addLog(`Spent Grain Bread: +${n * 2} pts (${n} cards played this round).`, isPlayer ? 'player' : 'enemy');
       break;
     }
 
     case 'solera': {
-      const n = discardOf(who).filter(c => c.cat !== 'token').length;
+      const n = playedThisRound(who);
       card.points += n * 2;
-      addLog(`Solera: +${n * 2} pts (${n} cards in discard).`, 'player');
+      addLog(`Solera: +${n * 2} pts (${n} cards played this round).`, isPlayer ? 'player' : 'enemy');
       break;
     }
 
@@ -1261,8 +1249,8 @@ function applyCardEffect(card, lane, who) {
 
     case 'honeymalt': {
       const n = countOthers('bitter', who, card);
-      card.points += n * 3;
-      addLog(`Honey Malt: +${n * 3} pts (${n} bitter cards balanced).`, 'player');
+      card.points += n * 4;
+      addLog(`Honey Malt: +${n * 4} pts (${n} bitter cards balanced).`, isPlayer ? 'player' : 'enemy');
       break;
     }
 
@@ -1349,12 +1337,12 @@ function applyCardEffect(card, lane, who) {
       break;
     }
 
-    case 'ekg':
-      if (hotCards.some(c => c.tags && c.tags.includes('biscuity'))) {
-        card.points += 8;
-        addLog('East Kent Goldings: biscuity malt on hot side, +8 pts!', 'player');
-      }
+    case 'ekg': {
+      const n = countOthers('biscuity', who, card);
+      card.points += n * 3;
+      if (n) addLog(`East Kent Goldings: +${n * 3} pts (${n} biscuity card${n > 1 ? 's' : ''}).`, isPlayer ? 'player' : 'enemy');
       break;
+    }
 
     // Bittering
     case 'magnum': {
@@ -1762,8 +1750,21 @@ function carapilsBonus(c, lane, who) {
   return [list[i - 1], list[i + 1]].filter(n => n && n.id === 'carapils').length * CARAPILS_BONUS;
 }
 
+// Cards whose bonus is on while a condition holds (so playing order doesn't matter)
+const ONGOING_BONUS = 8;
+function ongoingBonus(c, lane, who) {
+  if (c._locked) return 0;
+  if (c.id === 'marisotter') return getLaneCards('hot', who).filter(x => x !== c && isDarkOrCrystal(x)).length >= 2 ? ONGOING_BONUS : 0;
+  if (c.id === 'cherry')     return getLaneCards('hot', who).filter(x => x !== c && x.cat === 'malt' && x.tags && x.tags.includes('roasty')).length >= 2 ? ONGOING_BONUS : 0;
+  return 0;
+}
+
+// Cards played this round (Spent Grain Bread, Solera) and malts played this round (Melanoidin)
+function playedThisRound(who) { return (state.cardsThisRound && state.cardsThisRound[who]) || 0; }
+function maltsThisRound(who)  { return (state.maltsThisRound && state.maltsThisRound[who]) || 0; }
+
 function effectivePoints(c, lane, who) {
-  const roast = roastBonus(c, who) + carapilsBonus(c, lane, who) + twoRowBonus(c, lane, who);
+  const roast = roastBonus(c, who) + carapilsBonus(c, lane, who) + twoRowBonus(c, lane, who) + ongoingBonus(c, lane, who);
   const m = synergyMultiplier(c, lane, who);
   if (m === 1) return rulePoints(c, c.points + roast);
   const base = Math.max(0, Math.min(printedPoints(c), c.points));
