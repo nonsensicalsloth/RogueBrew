@@ -68,7 +68,22 @@ function cardRefs(c) {
       [m[1], m[2]].filter(Boolean).forEach(q => refs.add(q.toLowerCase() + where));
     }
   });
+  // Cards named in the text ("Saaz", "Chocolate Malt", "a Pilsner malt"); longest names first so
+  // "Honey Malt" isn't also read as "Honey"
+  let rest = text;
+  if (/\bPilsner malts?\b/i.test(rest)) { refs.add('pils' + (/hot side/i.test(text) ? '@hot' : '')); rest = rest.replace(/\bPilsner malts?\b/gi, ' '); }
+  cardNamesLongestFirst().forEach(([name, id]) => {
+    if (id === c.id) return;
+    const re = new RegExp(`(^|[^A-Za-z])${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z])`);
+    if (re.test(rest)) { refs.add('card:' + id); rest = rest.replace(re, '$1 '); }
+  });
   return [...refs];
+}
+let _cardNames = null;
+function cardNamesLongestFirst() {
+  if (!_cardNames) _cardNames = CARD_POOL.filter(x => x.cat !== 'token' && x.name.length >= 4)
+    .map(x => [x.name, x.id]).sort((a, b) => b[0].length - a[0].length);
+  return _cardNames;
 }
 
 // Does a card on the board match one of those tokens?
@@ -82,6 +97,8 @@ function refMatches(ref, c, lane) {
   if (kind === 'crystal') return c.cat === 'malt' && (/^crystal\d/.test(c.id) || ['caramun', 'specialb', 'carapils'].includes(c.id));
   if (kind === 'dark') return c.cat === 'malt' && !!(c.tags && c.tags.includes('roasty'));
   if (kind === 'nz') return NZ_HOPS.includes(c.id);
+  if (kind === 'card') return c.id === val;
+  if (kind === 'pils') return ['pilsner', 'expilsner', 'floorpilsner'].includes(c.id);
   return false;
 }
 
