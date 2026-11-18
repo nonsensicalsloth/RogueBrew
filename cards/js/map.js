@@ -720,6 +720,8 @@ function showCardHover(idx, ev) {
   if (c._upgraded)   notes.push(`★ Upgraded (+${c._upgradeBonus || REST_UPGRADE})`);
   if (c._barrelAged) notes.push(`🛢 Barrel-aged (+${BARREL_BONUS}, oaky)`);
   if (c._victoryBonus) notes.push(`🏅 Victories (+${c._victoryBonus})`);
+  if (c._propagated)   notes.push(`🧫 Propagated (+${PROP_GROWTH} growth per turn)`);
+  if (c._panelTag)     notes.push(`👃 Sensory Panel (+${c._panelTag} tag)`);
   if (def && c.points !== def.points && !notes.length) notes.push(`Printed: ${def.points} pts`);
   const el = deckPreviewEl();
   el.innerHTML = cardHtml(c, idx, 'view') + (notes.length ? `<div class="deck-preview-notes">${notes.join('<br>')}</div>` : '');

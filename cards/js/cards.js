@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'shorter card text, hazy barbarian (Nov 18)';
+const CARDS_VERSION = 'quality lab services (Nov 18)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:

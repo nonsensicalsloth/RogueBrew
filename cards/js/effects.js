@@ -2016,7 +2016,7 @@ function applyTurnEffects(who) {
     if (c._heatKilled) return;                                 // Heat Kill
 
     if (c.id === 'brett') {
-      c.points += 3 + heirlooms + (isPlayer && hasRelic('glycol') && state.turn % 2 === 0 ? 1 : 0);
+      c.points += 3 + heirlooms + (c._propagated ? PROP_GROWTH : 0) + (isPlayer && hasRelic('glycol') && state.turn % 2 === 0 ? 1 : 0);
       // 50% it gets loose; then 50/50 whether it lands in your cellar or drifts over to the rival's
       if (Math.random() < 0.5) {
         const victim = Math.random() < 0.5 ? who : other(who);
@@ -2036,7 +2036,7 @@ function applyTurnEffects(who) {
     if (c.id === 'roeselare') giveAcid(other(who), ROESELARE_ACID);
     // Augustiner grows +3 instead of +2 while you have Lagering banked
     const base = c.id === 'heirloom' ? 3 : c.id === 'augustiner' && lagering(who) > 0 ? 3 : c.id === 'trappist' ? 3 : 2;
-    const grow = base + (c.id === 'heirloom' ? 0 : heirlooms) + chill;
+    const grow = base + (c.id === 'heirloom' ? 0 : heirlooms) + chill + (c._propagated ? PROP_GROWTH : 0);
     c.points += grow;
     if (isPlayer) addLog(`${c.name}: +${grow} pts (accumulating).`, 'player');
   });

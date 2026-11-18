@@ -78,6 +78,15 @@ function refreshRunCard(c) {
     fresh._victoryBonus = c._victoryBonus;
   }
   if (c._barrelReturn !== undefined) fresh._barrelReturn = c._barrelReturn;
+  // Quality Lab: propagated yeast, Sensory Panel tag
+  if (c._propagated) {
+    fresh._propagated = true;
+    fresh.desc = `${fresh.desc} Propagated: +${typeof PROP_GROWTH !== 'undefined' ? PROP_GROWTH : 1} more per turn.`;
+  }
+  if (c._panelTag) {
+    fresh._panelTag = c._panelTag;
+    if (!fresh.tags.includes(c._panelTag)) fresh.tags.push(c._panelTag);
+  }
   return fresh;
 }
 

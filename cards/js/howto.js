@@ -220,7 +220,7 @@ const HOWTO_ROOM_TEXT = {
   rest:     'Recover Reputation, upgrade a card, or remove one.',
   barrel:   'Age a card for 3 stops. It returns stronger and oaky.',
   collab:   'Trade one of your cards for one from a themed brewery.',
-  lab:      'Turn a card into a random card of the same type.',
+  lab:      'Pick one: propagate a yeast, give a card one of your top tags, or rework a card.',
   taproom:  'Sell beer for gold. Pays more if your deck has a signature flavour.',
   contract: 'Pay now so your next card offer is all one type you choose.',
   disaster: 'No rival. Something breaks every turn. Fix it with budget or gold, and score for bronze, silver or gold rewards.',

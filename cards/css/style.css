@@ -1095,3 +1095,9 @@ body::after {
 .deck-slot.deck-slot-locked-slot { opacity: .55; border-style: dashed; background: var(--bg2); }
 .deck-slot.deck-slot-locked-slot .deck-slot-empty { color: var(--dim); }
 .deck-slot.deck-slot-locked-slot .deck-slot-count { text-align: center; }
+
+/* Quality Lab */
+.lab-services { display:flex; flex-direction:column; gap:10px; max-width:640px; margin:10px auto; }
+.lab-services .service b { color: var(--gold); font-weight: normal; }
+.lab-tag-pick { display:flex; gap:12px; justify-content:center; padding:14px 0; }
+.lab-tag-btn .card-tag { font-size: 14px; }
