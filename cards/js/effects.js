@@ -54,7 +54,9 @@ function formulaPreview(c, who = 'p') {
       const n = maltsThisRound(who);
       return { points: n >= 2 ? c.points * 2 : c.points, note: n >= 2 ? 'now: doubled' : `now: malt #${n + 1}` };
     }
-    case 'spentbread': case 'solera':
+    case 'spentbread':
+      return { points: c.points + playedThisRound(who), note: `now: ${playedThisRound(who)} played` };
+    case 'solera':
       return { points: c.points + playedThisRound(who) * 2, note: `now: ${playedThisRound(who)} played` };
   }
   const roasty = roastyLive();
@@ -476,7 +478,7 @@ function applyCardEffect(card, lane, who) {
     case 'flakedwheat': {
       const side = card.id === 'flakedwheat' ? 'hot' : lane;
       const n = buffLaneCards(side, who, 3, c => c.cat === 'hop');
-      addLog(`${card.name}: +2 to ${n} hop(s) on ${LANE_NAMES[side]}.`, who === 'p' ? 'player' : 'enemy');
+      addLog(`${card.name}: +3 to ${n} hop(s) on ${LANE_NAMES[side]}.`, who === 'p' ? 'player' : 'enemy');
       break;
     }
 
@@ -1220,8 +1222,8 @@ function applyCardEffect(card, lane, who) {
 
     case 'spentbread': {
       const n = playedThisRound(who);
-      card.points += n * 2;
-      addLog(`Spent Grain Bread: +${n * 2} pts (${n} cards played this round).`, isPlayer ? 'player' : 'enemy');
+      card.points += n;
+      addLog(`Spent Grain Bread: +${n} pts (${n} cards played this round).`, isPlayer ? 'player' : 'enemy');
       break;
     }
 
@@ -1573,7 +1575,7 @@ function applyCardEffect(card, lane, who) {
     case 'lacto': {
       // Hops hold Lactobacillus back
       const hotHops = getLaneCards('hot', who).filter(c => c.cat === 'hop').length;
-      const acid    = Math.max(0, 4 - hotHops);
+      const acid    = Math.max(0, 3 - hotHops);
       if (acid) giveAcid(other(who), acid);
       else addLog('Lactobacillus: too many hops, no Acid.', 'warn');
       break;

@@ -105,7 +105,7 @@ const HOWTO_CONTENT = {
     hli([
       `Motueka gets <b>+2 for each other ${tag('citrus')} card</b> on your board.`,
       `Vanilla gives <b>+2 to every other ${tag('sweet')} card</b>.`,
-      `Lactobacillus <b>loses points for each ${tag('bitter')} card</b>, since bacteria hate hops.`,
+      `Lactobacillus <b>gives less Acid for each hop</b> on your hot side, since bacteria hate hops.`,
     ]) +
     hp(`Building around a few tags that feed each other is how big scores happen.`) +
     hbox('Special tags',
@@ -122,7 +122,7 @@ const HOWTO_CONTENT = {
       hp(`${tag('sticky')} grains (oats, wheat, rye, spelt) score a little extra, but they clump. <b>${CLUMP_SIZE} sticky cards in a row</b> on your hot side stick the mash: a <b>−8 Stuck Mash</b> token appears. Play something else in between, like a base malt or <b>Rice Hulls</b>, to keep the grain bed loose. Rice Hulls, CIP Cycle and Fining Agent also clear a Stuck Mash. The MASH meter shows how many sticky grains are in a row right now.`)) +
     hbox('🔥 Roast (push your luck)',
       hp(`Dark malts add <b>roast tokens</b>. Every roast token gives <b>each of your ${tag('roasty')} cards +${ROAST_POWER}</b>, so stouts get stronger as roast builds. But reach your roast limit (normally 5) and your beer is <b>Burnt</b>: your hot side scores half. The sweet spot is one under the limit.`) +
-      hli([`Carafa and Cold Brew raise your limit. De-bittered Black and Lactose remove roast. Midnight Wheat boosts roasty cards without adding roast.`,
+      hli([`Carafa and Cold Brew raise your limit. De-bittered Black removes roast, and Lactose raises your limit. Midnight Wheat boosts roasty cards without adding roast.`,
            `Columbus and Peated Malt give the <b>rival</b> roast. Push a rival over the edge, but careful: roast also powers their roasty cards.`])) +
     hbox('🧊 Lagering (patience pays)',
       hp(`If you end your turn with a ${tag('crisp')} card in hand, the budget you <b>didn't spend</b> becomes <b>Lagering</b> (up to ${LAGER_MAX}). The next ${tag('crisp')} card you play gets <b>+${LAGER_POWER} per Lagering</b>, and that empties it. Cheap lager decks turn their spare budget into one big pour.`)) +
