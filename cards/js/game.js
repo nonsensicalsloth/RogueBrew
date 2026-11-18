@@ -99,8 +99,12 @@ function initGame(opts = {}) {
   drawCards(hasRelic('recipebook') ? 6 : 5, state.pDeck, state.pHand);   // Recipe Book: 1 extra opening card
   // Pilot System: a random rare to try out, this battle only (it's not added to your deck)
   if (node && hasRelic('pilotsystem')) {
+    // A rare that fits: shares at least one tag with your deck (any rare if nothing matches)
+    const deckTags = new Set(state.pDeck.flatMap(c => c.tags || []));
     const rares = CARD_POOL.filter(c => c.rarity === 'rare' && c.cat !== 'token');
-    const pick = rares[Math.floor(Math.random() * rares.length)];
+    const fits  = rares.filter(c => (c.tags || []).some(t => deckTags.has(t)));
+    const pool  = fits.length ? fits : rares;
+    const pick  = pool[Math.floor(Math.random() * pool.length)];
     if (pick) {
       state.pDeck.push({ ...pick, tags: [...(pick.tags || [])], _pilot: true });
       state.pDeck = shuffle(state.pDeck);
@@ -135,11 +139,13 @@ function laneMultiplier(lane) {
 const MAX_TURNS = 8;
 
 // ── Budget ──
+const FERMENTER_TURNS = 3;   // Second Fermenter: +1 budget on each of your first 3 turns
 function getBudget(turn, who = 'p') {
-  const cap = 5 + (who === 'p' && hasRelic('fermenter') ? 1 : 0);
+  const cap = 5;
   // Speed Brew: a shorter round, but everyone gets +1 budget every turn
   const speed = typeof ruleOn === 'function' && ruleOn('speed') ? SPEED_BUDGET : 0;
-  return Math.min(turn + speed, cap + speed);
+  const early = who === 'p' && hasRelic('fermenter') && turn <= FERMENTER_TURNS ? 1 : 0;
+  return Math.min(turn + speed, cap + speed) + early;
 }
 
 // ── Scoring ──

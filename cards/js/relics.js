@@ -22,7 +22,7 @@ const RELICS = [
   { id:'glycol',     name:'Glycol Chiller',    icon:'❄️', desc:'Your yeast gains +1 extra point every other turn.' },
   { id:'hopback',    name:'Hop Back',          icon:'🫖', desc:'Your first hop each round costs 0.' },
   { id:'grainmill',  name:'Grain Mill',        icon:'⚙️', desc:'Draw 1 extra card at the start of each round.' },
-  { id:'fermenter',  name:'Second Fermenter',  icon:'🛢️', desc:'Your max budget is 6 instead of 5.' },
+  { id:'fermenter',  name:'Second Fermenter',  icon:'🛢️', desc:'+1 budget on each of your first 3 turns every round.' },
   { id:'microscope', name:'Lab Microscope',    icon:'🔬', desc:'Contamination that lands on your board is always softened to −5.' },
   { id:'roaster',    name:'Coffee Roaster',    icon:'☕', desc:'Your roast threshold starts 2 higher.' },
   { id:'hopcannon',  name:'Hop Cannon',        icon:'🌿', desc:'Hops you play on your cold side get +2.' },
@@ -33,7 +33,7 @@ const RELICS = [
   { id:'decoction',   name:'Decoction Kettle', icon:'🫕', desc:'A Stuck Mash gives you +8 instead of −8.' },
   { id:'grainauger',  name:'Grain Auger',      icon:'🌾', desc:'The first malt you play each turn costs 1 less.' },
   { id:'canningline', name:'Canning Line',     icon:'🥫', desc:'+15 gold after every battle you win.' },
-  { id:'pilotsystem', name:'Pilot System',     icon:'⚗️', desc:'Each battle, a random rare card is shuffled into your deck. It only lasts that battle.' },
+  { id:'pilotsystem', name:'Pilot System',     icon:'⚗️', desc:'Each battle, a random rare card that shares a tag with your deck is shuffled in. It only lasts that battle.' },
   // Boss rewards only: strong, with a catch
   { id:'contractdeal', name:'Contract Brewing Deal', icon:'🏭', boss: true,
     desc:"You brew another brewery's beer on the side: +25 gold after every battle you win. But every rival starts with +10." },

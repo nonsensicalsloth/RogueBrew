@@ -301,3 +301,11 @@
 .lane-score-full { font-size: 9px; color: #9a6a5a; text-decoration: line-through; text-decoration-thickness: 2px; }
 .lane-score-full:empty { display: none; }
 .lane-cards:has(.clump) > .field-card { align-self: center; }
+
+/* ── Keyword tooltips ── */
+.kw[data-tip], .card-tag[data-tip], .ftag[data-tip] { cursor: help; }
+.kw.kw-term { color: #e8e2c8; text-decoration: underline dotted rgba(232,226,200,.55); text-underline-offset: 2px; font-weight: normal; }
+.card-effect-text .kw.tag-crisp, .card-effect-text .kw[class*="tag-"] { text-decoration: underline dotted currentColor; text-underline-offset: 2px; }
+#kw-tip { position: fixed; z-index: 9999; display: none; max-width: 260px; padding: 6px 9px; pointer-events: none;
+  font-family: var(--read-font); font-size: 17px; line-height: 1.15; color: var(--text);
+  background: #11111c; border: 1px solid var(--gold); border-radius: 3px; box-shadow: 0 4px 14px rgba(0,0,0,.6); }

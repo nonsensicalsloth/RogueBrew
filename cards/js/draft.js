@@ -27,7 +27,7 @@ function catIcon(cat) {
 }
 
 function tagHtml(tags) {
-  return (tags || []).map(t => `<span class="card-tag tag-${t}">${t}</span>`).join('');
+  return (tags || []).map(t => `<span class="card-tag tag-${t}" data-tip="${escAttr(tagTip(t))}">${t}</span>`).join('');
 }
 
 // Every tag used by any card (built once, after the card list loads)
@@ -113,10 +113,29 @@ function refMatches(ref, c, lane) {
 }
 
 // Card text with tag words colored like their tag
+// Card text with tag words colored like their tag, and game terms explained on hover.
+// One pass over the plain text, so a tooltip's own words are never matched again.
+let _richRe = null, _richMap = null;
 function richDesc(text) {
-  let out = text || '';
-  allTags().forEach(t => { out = out.replace(tagRegex(t), (m, pre, word) => `${pre}<span class="kw tag-${t}">${word}</span>`); });
-  return out;
+  if (!_richRe) {
+    _richMap = {};
+    const terms = [];
+    gameKeywords().forEach(([w, tip]) => { _richMap[w.toLowerCase()] = { tip }; terms.push(w); });
+    allTags().forEach(t => { if (!_richMap[t]) { _richMap[t] = { tag: t, tip: tagTip(t) }; terms.push(t); } });
+    terms.sort((a, b) => b.length - a.length);
+    const esc = w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    _richRe = new RegExp(`(^|[^A-Za-z-])(${terms.map(esc).join('|')})(?![A-Za-z])`, 'gi');
+  }
+  return (text || '').replace(_richRe, (m, pre, word, offset, full) => {
+    const k = word.toLowerCase();
+    const hit = _richMap[k];
+    if (!hit) return m;
+    // "dry hop" is a technique, not the dry tag
+    if (k === 'dry' && /^\s+hop/i.test(full.slice(offset + m.length))) return m;
+    return hit.tag
+      ? `${pre}<span class="kw tag-${hit.tag}" data-tip="${escAttr(hit.tip)}">${word}</span>`
+      : `${pre}<span class="kw kw-term" data-tip="${escAttr(hit.tip)}">${word}</span>`;
+  });
 }
 
 // Rarity: a coloured strip under the art, and a label in the footer for uncommon/rare

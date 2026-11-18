@@ -26,7 +26,7 @@ function fieldCardHtml(c, lane, who, idx) {
     <div class="field-card-art">${cardArtMini(c)}</div>
     <div class="field-card-main">
       <div class="field-card-name">${c.name}</div>
-      ${tags.length ? `<div class="field-card-tags">${tags.map(t => `<span class="ftag tag-${t}" data-tag="${t}" title="${t}">${t}</span>`).join('')}</div>` : ''}
+      ${tags.length ? `<div class="field-card-tags">${tags.map(t => `<span class="ftag tag-${t}" data-tag="${t}" data-tip="${escAttr(tagTip(t))}">${t}</span>`).join('')}</div>` : ''}
     </div>
     <div class="field-card-pts">${sign}${pts}${mult > 1 ? `<span class="field-card-mult"> ×${mult}</span>` : ''}</div>
   </div>`;
