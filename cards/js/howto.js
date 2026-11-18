@@ -121,7 +121,7 @@ const HOWTO_CONTENT = {
     hbox('🥣 Stuck Mash (sticky grains clump)',
       hp(`${tag('sticky')} grains (oats, wheat, rye, spelt) score a little extra, but they clump. <b>${CLUMP_SIZE} sticky cards in a row</b> on your hot side stick the mash: a <b>−8 Stuck Mash</b> token appears. Play something else in between, like a base malt or <b>Rice Hulls</b>, to keep the grain bed loose. Rice Hulls, CIP Cycle and Fining Agent also clear a Stuck Mash. The MASH meter shows how many sticky grains are in a row right now.`)) +
     hbox('🔥 Roast (push your luck)',
-      hp(`Dark malts add <b>roast tokens</b>. Every roast token gives <b>each of your ${tag('roasty')} cards +${ROAST_POWER}</b>, so stouts get stronger as roast builds. But reach your roast limit (normally 5) and your beer is <b>Burnt</b>: your hot side scores half. The sweet spot is one under the limit.`) +
+      hp(`Dark malts add <b>roast tokens</b>. Every roast token gives <b>each of your ${tag('roasty')} cards +${ROAST_POWER}</b>, so stouts get stronger as roast builds. Your hot side can hold up to your roast limit (normally 4). Go past it and your beer is <b>Burnt</b>: your hot side scores half. The sweet spot is right at the limit.`) +
       hli([`Carafa and Cold Brew raise your limit. De-bittered Black removes roast, and Lactose raises your limit. Midnight Wheat boosts roasty cards without adding roast.`,
            `Columbus and Peated Malt give the <b>rival</b> roast. Push a rival over the edge, but careful: roast also powers their roasty cards.`])) +
     hbox('🧊 Lagering (patience pays)',

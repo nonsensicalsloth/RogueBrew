@@ -253,10 +253,10 @@ function juiceMeters(roastEl, mashEl) {
   if (roastEl) {
     const roast = state.roastTokens || 0;
     const eff   = roast - (state.roastSafe || 0);
-    const th    = state.roastThreshold || 5;
+    const th    = getRoastThreshold('p');
     const burnt = state.phase === 'play' && isBurnt('p');
-    roastEl.classList.toggle('roast-warm',   !burnt && roast > 0 && eff < th - 1);
-    roastEl.classList.toggle('roast-danger', !burnt && eff >= th - 1 && roast > 0);
+    roastEl.classList.toggle('roast-warm',   !burnt && roast > 0 && eff < th);
+    roastEl.classList.toggle('roast-danger', !burnt && eff >= th && roast > 0);
     roastEl.classList.toggle('roast-burnt',  burnt);
   }
   if (mashEl) {

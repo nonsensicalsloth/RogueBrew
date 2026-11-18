@@ -95,7 +95,9 @@ function roastKeys(who) {
     : { t: 'eRoastTokens', s: 'eRoastSafe', th: 'eRoastThreshold' };
 }
 
-function getRoastThreshold(who) { return state[roastKeys(who).th] || 5; }
+// Your hot side holds up to ROAST_LIMIT roast tokens; go past it and the beer is Burnt
+const ROAST_LIMIT = 4;
+function getRoastThreshold(who) { const v = state[roastKeys(who).th]; return v == null ? ROAST_LIMIT : v; }
 
 function addRoastToken(who, amount = 1) {
   const k = roastKeys(who);
@@ -103,7 +105,7 @@ function addRoastToken(who, amount = 1) {
   const effective = state[k.t] - (state[k.s] || 0);
   const whose = who === 'p' ? 'you' : 'rival';
   addLog(`🔥 +${amount} roast (${whose}): ${state[k.t]}/${getRoastThreshold(who)}`, who === 'p' ? 'warn' : 'enemy');
-  if (effective >= getRoastThreshold(who)) {
+  if (effective > getRoastThreshold(who)) {
     addLog(`🔥 BURNT (${whose})! Too much roast, hot side scores half.`, who === 'p' ? 'warn' : 'enemy');
   }
 }
@@ -1791,7 +1793,7 @@ const NUANCED_MULT = 2;     // two or more nuanced cards on your board
 
 // ── Roast power ──
 // Every roast token you hold (safe roast included) gives each of your roasty cards
-// +ROAST_POWER. Push toward your roast limit for big dark beers, but reach it and
+// +ROAST_POWER. Push up to your roast limit for big dark beers, but go past it and
 // your beer is Burnt: the hot side scores half.
 const ROAST_POWER = 1;
 
@@ -1801,7 +1803,7 @@ function roastBonus(c, who) {
 
 function isBurnt(who) {
   const k = roastKeys(who);
-  return (state[k.t] || 0) - (state[k.s] || 0) >= (state[k.th] || 5);
+  return (state[k.t] || 0) - (state[k.s] || 0) > getRoastThreshold(who);
 }
 
 // A card's "printed" points for this run: card + upgrades + barrel aging (not battle buffs)

@@ -24,7 +24,7 @@ const RELICS = [
   { id:'grainmill',  name:'Grain Mill',        icon:'⚙️', desc:'Draw 1 extra card at the start of each round.' },
   { id:'fermenter',  name:'Second Fermenter',  icon:'🛢️', desc:'+1 budget on each of your first 3 turns every round.' },
   { id:'microscope', name:'Lab Microscope',    icon:'🔬', desc:'Contamination that lands on your board is always softened to −5.' },
-  { id:'roaster',    name:'Coffee Roaster',    icon:'☕', desc:'Your roast threshold starts 2 higher.' },
+  { id:'roaster',    name:'Coffee Roaster',    icon:'☕', desc:'Your roast limit starts 2 higher.' },
   { id:'hopcannon',  name:'Hop Cannon',        icon:'🌿', desc:'Hops you play on your cold side get +2.' },
   { id:'recipebook', name:'Recipe Book',       icon:'📖', desc:'Start each battle with 1 extra card, and mulligan up to 3 instead of 2.' },
   { id:'steamjacket', name:'Steam Jacket',     icon:'♨️', desc:'Going Burnt only takes a quarter off your hot side instead of half.' },

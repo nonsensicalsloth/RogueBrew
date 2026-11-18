@@ -72,10 +72,10 @@ function initGame(opts = {}) {
     nextCardDiscount: 0,
     roastTokens:      0,
     roastSafe:        0,
-    roastThreshold:   5,
+    roastThreshold:   4,
     eRoastTokens:     0,
     eRoastSafe:       0,
-    eRoastThreshold:  5,
+    eRoastThreshold:  4,
     cardsThisTurn:    { p: 0, e: 0 },
     cardsThisRound:   { p: 0, e: 0 },
     maltsThisRound:   { p: 0, e: 0 },
@@ -198,7 +198,7 @@ function startRound() {
   state.lastHop           = {};
   state.roastTokens       = 0;
   state.roastSafe         = 0;
-  state.roastThreshold    = 5 + (hasRelic('roaster') ? 2 : 0) + (activeBreweryAt() === 'stouthouse' ? STOUT_HOUSE_LIMIT : 0);
+  state.roastThreshold    = ROAST_LIMIT + (hasRelic('roaster') ? 2 : 0) + (activeBreweryAt() === 'stouthouse' ? STOUT_HOUSE_LIMIT : 0);
   state.garageUsedRound   = false;
   state.hopBackUsed       = false;
   state.abilityUsed       = false;
@@ -208,7 +208,7 @@ function startRound() {
   state.cardTargeting     = null;
   state.eRoastTokens      = 0;
   state.eRoastSafe        = 0;
-  state.eRoastThreshold   = 5;
+  state.eRoastThreshold   = ROAST_LIMIT;
   state.cardsThisTurn     = { p: 0, e: 0 };
   state.cardsThisRound    = { p: 0, e: 0 };
   state.maltsThisRound    = { p: 0, e: 0 };
@@ -232,7 +232,7 @@ function startRound() {
     state.field.hot.e.push(fav);
     addLog(`${state.rivalBonusName}: rival starts with +${state.rivalBonus}.`, 'enemy');
   }
-  if (state.rivalTrait === 'roastmaster') state.eRoastThreshold = 7;
+  if (state.rivalTrait === 'roastmaster') state.eRoastThreshold = ROAST_LIMIT + 2;
   applyRuleAtRoundStart();
   if (state.rule) addLog(`📜 Competition rule: ${COMP_RULES[state.rule].name}. ${COMP_RULES[state.rule].desc}`, 'sys');
   drawCards(hasRelic('grainmill') ? 2 : 1, state.pDeck, state.pHand);

@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'gueuze blend (Nov 17)';
+const CARDS_VERSION = 'roast limit 4, burnt past it (Nov 18)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:

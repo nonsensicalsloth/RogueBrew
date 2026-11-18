@@ -49,8 +49,8 @@ function rulePoints(c, pts) {
 
 function applyRuleAtRoundStart() {
   if (ruleOn('darknight')) {
-    state.roastThreshold  = Math.max(1, state.roastThreshold - DARK_NIGHT_ROAST);
-    state.eRoastThreshold = Math.max(1, state.eRoastThreshold - DARK_NIGHT_ROAST);
+    state.roastThreshold  = Math.max(0, state.roastThreshold - DARK_NIGHT_ROAST);
+    state.eRoastThreshold = Math.max(0, state.eRoastThreshold - DARK_NIGHT_ROAST);
   }
 }
 

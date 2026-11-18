@@ -345,13 +345,13 @@ function render() {
   const chip = (where, cls, text, title) => chipsFor[where].push(`<span class="lchip ${cls}" title="${title}">${text}</span>`);
   if (inPlay) {
     // Roast: on the hot side, where roasty malts live
-    [['p', state.roastTokens || 0, state.roastThreshold || 5], ['e', state.eRoastTokens || 0, state.eRoastThreshold || 5]].forEach(([w, roast, threshold]) => {
+    [['p', state.roastTokens || 0, getRoastThreshold('p')], ['e', state.eRoastTokens || 0, getRoastThreshold('e')]].forEach(([w, roast, threshold]) => {
       if (!roast) return;
       const burnt = isBurnt(w);
-      const near = w === 'p' && roast - (state.roastSafe || 0) >= threshold - 1;
+      const near = w === 'p' && roast - (state.roastSafe || 0) >= threshold;
       chip(`hot-${w}`, burnt ? 'lc-bad lc-pulse' : near ? 'lc-warn' : 'lc-roast',
         burnt ? `🔥 BURNT ${roast}/${threshold}: half points` : `🔥 roast ${roast}/${threshold} · roasty +${ROAST_POWER * roast}`,
-        `Each roast token gives every roasty card +${ROAST_POWER}. Reach ${threshold} and the beer is Burnt: hot side scores half.`);
+        `Each roast token gives every roasty card +${ROAST_POWER}. Your hot side can hold ${threshold}. Go past that and the beer is Burnt: hot side scores half.`);
     });
     // Stuck mash: sticky grains in a row at the end of your hot side
     // Runs of 2+ show on the board as a clump (and so does a Stuck Mash), so the chip only covers a lone sticky grain

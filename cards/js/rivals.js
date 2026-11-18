@@ -73,7 +73,7 @@ const BOSSES = [
   ],
   [ // Act 3
     { id:'syndicate', name:'Imperial Stout Syndicate', short:'Syndicate', style:'imperial stout', trait:'roastmaster',
-      traitName:'Roast Masters', traitDesc:'Its roast limit is 7 instead of 5.',
+      traitName:'Roast Masters', traitDesc:'Its roast limit is 6 instead of 4.',
       cards: null, base:'blackkettle', extra:['patent','patent','blackmalt','roastedbar','cacaonibs','choc'] },
     { id:'collective', name:'The Sour Collective', short:'Sour Collective', style:'wild ale', trait:'spontaneous',
       traitName:'Spontaneous Fermentation', traitDesc:'Every 3rd turn, shuffles a Contamination into YOUR deck.',
@@ -134,8 +134,8 @@ function rivalWouldOverload(c) {
   const add = ROAST_ADDS[c.id] || 0;
   if (!add) return false;
   const effective = (state.eRoastTokens || 0) - (state.eRoastSafe || 0) + add;
-  const threshold = (state.eRoastThreshold || 5) + (ROAST_RAISES[c.id] || 0);
-  return effective >= threshold;
+  const threshold = getRoastThreshold('e') + (ROAST_RAISES[c.id] || 0);
+  return effective > threshold;
 }
 
 // Where the rival puts a card that can go on either side
