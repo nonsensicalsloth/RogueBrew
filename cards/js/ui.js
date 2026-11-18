@@ -228,8 +228,10 @@ function renderActions() {
   if (state.phase === 'mulligan') {
     el.innerHTML = `<button class="btn btn-primary" onclick="confirmMulligan()">CONFIRM MULLIGAN (${state.mulSel.length})</button>`;
   } else if (state.phase === 'play' && state.playerTurn && pendingChoiceActive()) {
-    el.innerHTML = `<button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;">END TURN</button>
-      <span style="font-size:7px;color:var(--gold);margin-left:8px">▲ ${pendingChoicePrompt()}</span>`;
+    const opt = state.cardTargeting && CARD_TARGETS[state.cardTargeting.kind].optional;
+    el.innerHTML = (opt ? `<button class="btn btn-primary" onclick="skipCardTarget()">${opt}</button>`
+                        : `<button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;">END TURN</button>`) +
+      `<span style="font-size:7px;color:var(--gold);margin-left:8px">▲ ${pendingChoicePrompt()}</span>`;
   } else if (state.phase === 'play' && state.playerTurn && playerMustPlayContamination()) {
     el.innerHTML = `<button class="btn btn-primary" style="opacity:0.4;cursor:not-allowed;">END TURN</button>
       <span style="font-size:7px;color:var(--red);margin-left:8px">⚠ POUR THE CONTAMINATION ONTO YOUR COLD SIDE FIRST</span>`;

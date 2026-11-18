@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'taproom discounts + garage scrounger (Nov 18)';
+const CARDS_VERSION = 'filtration re-pitch (Nov 18)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -116,7 +116,7 @@ const CARD_POOL = [
   { id:'cip',          name:'CIP Cycle',        cat:'process', lane:'both', points:0,  cost:2, tags:[],           desc:'Remove every negative token from your board. Draw 1.' },
   { id:'sip',          name:'Sanitize',         cat:'process', lane:'cold',  points:0,  cost:1, tags:[],           desc:'Remove one negative token from your cold side. Draw 1.' },
   { id:'heatkill',     name:'Heat Kill',         cat:'process', lane:'cold', points:0,  cost:2, tags:[],           desc:'Remove all Contamination from your cold side. Each yeast there gets +5 but never grows again. Draw 1.' },
-  { id:'filtration',   name:'Filtration',        cat:'process', lane:'cold', points:0,  cost:2, tags:[],           desc:'Destroy every negative card on your cold side, then choose a yeast there to return to your hand. It costs 0 this turn. Draw 1 (draw 2 if there was nothing to destroy).' },
+  { id:'filtration',   name:'Filtration',        cat:'process', lane:'cold', points:0,  cost:2, tags:[],           desc:'Destroy every negative card on your cold side. Draw 1 (draw 2 if there was nothing to destroy). Then you may return a yeast there to your hand: it keeps its points, costs 0 this turn, and its on-play effect happens again.' },
   { id:'fining',       name:'Fining Agent',      cat:'process', lane:'both',  points:0,  cost:1, tags:[],  desc:'Remove one negative token from your board. Every yeast on your cold side gets +2. Draw 1.' },
   { id:'coldcrash',    name:'Cold Crash',        cat:'process', lane:'cold', points:3,  cost:1, tags:[],   desc:'Add 3 Lagering.' },
   { id:'kettlesour',   name:'Kettle Sour',       cat:'process', lane:'hot', points:4,  cost:2, tags:[],   desc:'Give the rival 5 Acid.' },

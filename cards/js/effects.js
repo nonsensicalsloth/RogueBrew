@@ -355,13 +355,16 @@ const CARD_TARGETS = {
     },
   },
   filtration: {
-    prompt: 'FILTRATION: CHOOSE A YEAST TO RETURN TO YOUR HAND',
+    prompt: 'FILTRATION: YOU MAY PICK A YEAST TO RE-PITCH (IT KEEPS ITS POINTS)',
+    optional: 'KEEP YEAST',
     ok:     (c, lane) => lane === 'cold' && c.cat === 'yeast',
-    aiPick: list => list.reduce((a, b) => b.c.points < a.c.points ? b : a),   // replay its cheapest yeast
+    aiPick: list => list.reduce((a, b) => b.c.points > a.c.points ? b : a),   // re-pitch its best yeast
     pick(t, who) {
+      const built = t.c.points;
       const back = returnToHand(t.c, t.lane, who);
+      back.points = built;                                      // keeps what it has grown so far
       back._freeKey = `${state.round}:${state.turn}`;          // re-pitch it for free this turn
-      addLog(`Filtration: ${t.c.name} back in hand, free to pitch again this turn.`, who === 'p' ? 'player' : 'enemy');
+      addLog(`Filtration: ${t.c.name} back in hand with its ${built} pts. Pitch it again for free to trigger it again.`, who === 'p' ? 'player' : 'enemy');
     },
   },
   recipetweak: {
@@ -428,6 +431,14 @@ function startCardTargeting(kind, src, who) {
 }
 
 function cardTargetingActive() { return !!(state && state.cardTargeting); }
+
+// Some picks are optional (Filtration's re-pitch): skip without choosing
+function skipCardTarget() {
+  if (!cardTargetingActive() || !CARD_TARGETS[state.cardTargeting.kind].optional) return;
+  addLog(`${state.cardTargeting.src.name}: skipped.`, 'sys');
+  state.cardTargeting = null;
+  render();
+}
 
 function isCardTarget(c, lane) {
   if (!cardTargetingActive()) return false;
