@@ -155,6 +155,7 @@ function resolvePlay(c, lane, who) {
     state.maltsThisRound = state.maltsThisRound || { p: 0, e: 0 };
     state.cardsThisRound[who]++;
     if (c.cat === 'malt') state.maltsThisRound[who]++;
+    phillyFollowUp(c, who);
   }
 
   checkContaminationInHand(who);

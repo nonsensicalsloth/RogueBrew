@@ -43,7 +43,7 @@ function laneCardsHtml(lane, who) {
 
   // find runs of 2+ sticky cards in a row
   const runs = [];
-  for (let i = 0; i < cards.length; ) {
+  for (let i = 0; i < cards.length && !hullsOn(who); ) {
     if (!isSticky(cards[i])) { i++; continue; }
     let j = i; while (j < cards.length && isSticky(cards[j])) j++;
     if (j - i >= 2) runs.push([i, j]);

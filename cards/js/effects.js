@@ -193,16 +193,20 @@ function removeFirstToken(who, tokenId = null, lane = null) {
 const CLUMP_SIZE = 3;
 
 function isSticky(c) { return !!(c && c.tags && c.tags.includes('sticky')); }
+// Rice Hulls on your hot side keep the grain bed loose: no clumping at all
+function hullsOn(who) { return getLaneCards('hot', who).some(c => c.id === 'ricehulls' && !c._locked); }
 
 // Length of the sticky run at the end of your hot side (what your next play extends)
 function trailingSticky(who) {
   const lane = getLaneCards('hot', who);
+  if (hullsOn(who)) return 0;
   let n = 0;
   for (let i = lane.length - 1; i >= 0 && isSticky(lane[i]); i--) n++;
   return n;
 }
 
 function hasClump(who) {
+  if (hullsOn(who)) return false;
   let run = 0;
   for (const c of getLaneCards('hot', who)) { run = isSticky(c) ? run + 1 : 0; if (run >= CLUMP_SIZE) return true; }
   return false;
@@ -828,7 +832,7 @@ function applyCardEffect(card, lane, who) {
       const sweetCount  = countOthers('sweet', who, card);
       const spicyCount  = countOthers('spicy', who, card);
       card.points += (sweetCount + spicyCount) * 2;
-      addLog(`Cardamom: +${sweetCount} sweet, +${spicyCount} spicy cards × 3 = +${(sweetCount + spicyCount) * 3} pts.`, 'player');
+      addLog(`Cardamom: +${sweetCount} sweet, +${spicyCount} spicy cards × 2 = +${(sweetCount + spicyCount) * 2} pts.`, 'player');
       break;
     }
     case 'choc':      addRoastToken(who, 1); break;
@@ -1035,10 +1039,58 @@ function applyCardEffect(card, lane, who) {
     }
 
     case 'ricehulls':
-      if (isPlayer) state.nextCardDiscount = (state.nextCardDiscount || 0) + 1;
       if (isMashStuck(who)) { removeAllTokens(who, 'stuckmash'); addLog('Rice Hulls: stuck mash freed!', 'player'); }
-      addLog('Rice Hulls: next card costs 1 less.', 'player');
+      drawFor(who, 1);
+      addLog('Rice Hulls: drew 1 card. Sticky grains on your hot side won\'t clump.', isPlayer ? 'player' : 'enemy');
       break;
+
+    // Pastry and witbier support
+    case 'hazelnut': {
+      const r = countOthers('roasty', who, card, 'hot'), sw = countOthers('sweet', who, card, 'hot');
+      card.points += (r + sw) * 2;
+      addLog(`Hazelnut: +${(r + sw) * 2} (${r} roasty, ${sw} sweet on hot side).`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+    case 'bourbonbarrel':
+      // ongoing: see barrelBonus()
+      addLog(`Bourbon Barrel: sweet cards on your hot side get +2 per roast token (${getRoast(who)} now).`, isPlayer ? 'player' : 'enemy');
+      break;
+    case 'fruitpuree': {
+      const n = allMine.filter(c => c !== card && c.tags && (c.tags.includes('sweet') || c.tags.includes('sour'))).length;
+      card.points += n * 2;
+      addLog(`Fruit Purée: +${n * 2} (${n} sweet or sour cards).`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+    case 'graham': {
+      const n = countOthers('sweet', who, card);
+      card.points += n * 2;
+      addLog(`Graham Cracker: +${n * 2} (${n} sweet cards).`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+    case 'phillysour': {
+      const n = Math.min(PHILLY_MAX, allMine.filter(c => c !== card && c.tags && (c.tags.includes('sweet') || c.tags.includes('fruity'))).length);
+      giveAcid(other(who), n);
+      addLog(`Philly Sour: ${n} sweet or fruity cards sour the rival.`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+    case 'rawwheat': {
+      const n = allMine.filter(c => c !== card && c.cat === 'adjunct' && c.tags && (c.tags.includes('spicy') || c.tags.includes('citrus'))).length;
+      card.points += n * 2;
+      addLog(`Raw Wheat: +${n * 2} (${n} spicy or citrus adjuncts).`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+    case 'chamomile': {
+      const n = countOthers('bready', who, card, 'hot');
+      card.points += n * 3;
+      addLog(`Chamomile: +${n * 3} (${n} bready cards on hot side).`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+    case 'sweetorange': {
+      const sp = countOthers('spicy', who, card), sw = countOthers('sweet', who, card);
+      card.points += (sp + sw) * 2;
+      addLog(`Sweet Orange Peel: +${(sp + sw) * 2} (${sp} spicy, ${sw} sweet).`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
 
     case 'buckwheat': {
       const nuancedCount = countTag('nuanced', who);
@@ -1852,8 +1904,23 @@ function vermontBonus(c, lane, who) {
   return getLaneCards('cold', who).filter(x => x.id === 'vermont' && !x._heatKilled).length * VERMONT_BONUS;
 }
 
+// Bourbon Barrel: every other sweet card on your hot side gets +1 per roast token, per barrel
+const PHILLY_MAX = 5;
+const BARREL_PER_ROAST = 2;
+// Philly Sour keeps souring: each sweet or fruity card played after it gives the rival 1 Acid per Philly Sour
+function phillyFollowUp(c, who) {
+  if (c.id === 'phillysour' || !(c.tags && (c.tags.includes('sweet') || c.tags.includes('fruity')))) return;
+  const n = getLaneCards('cold', who).filter(x => x.id === 'phillysour' && x !== c && !x._heatKilled && !x._locked).length;
+  if (n) giveAcid(other(who), n);
+}
+function barrelBonus(c, lane, who) {
+  if (lane !== 'hot' || c._locked || c.cat === 'token' || !(c.tags && c.tags.includes('sweet'))) return 0;
+  const barrels = getLaneCards('hot', who).filter(x => x !== c && x.id === 'bourbonbarrel' && !x._locked).length;
+  return barrels ? barrels * BARREL_PER_ROAST * getRoast(who) : 0;
+}
+
 function effectivePoints(c, lane, who) {
-  const roast = roastBonus(c, who) + carapilsBonus(c, lane, who) + twoRowBonus(c, lane, who) + ongoingBonus(c, lane, who) + vermontBonus(c, lane, who);
+  const roast = roastBonus(c, who) + carapilsBonus(c, lane, who) + twoRowBonus(c, lane, who) + ongoingBonus(c, lane, who) + vermontBonus(c, lane, who) + barrelBonus(c, lane, who);
   const m = synergyMultiplier(c, lane, who);
   if (m === 1) return rulePoints(c, c.points + roast);
   const base = Math.max(0, Math.min(printedPoints(c), c.points));
