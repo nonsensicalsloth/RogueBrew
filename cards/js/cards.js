@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'filtration re-pitch (Nov 18)';
+const CARDS_VERSION = 'shorter card text, hazy barbarian (Nov 18)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -116,7 +116,7 @@ const CARD_POOL = [
   { id:'cip',          name:'CIP Cycle',        cat:'process', lane:'both', points:0,  cost:2, tags:[],           desc:'Remove every negative token from your board. Draw 1.' },
   { id:'sip',          name:'Sanitize',         cat:'process', lane:'cold',  points:0,  cost:1, tags:[],           desc:'Remove one negative token from your cold side. Draw 1.' },
   { id:'heatkill',     name:'Heat Kill',         cat:'process', lane:'cold', points:0,  cost:2, tags:[],           desc:'Remove all Contamination from your cold side. Each yeast there gets +5 but never grows again. Draw 1.' },
-  { id:'filtration',   name:'Filtration',        cat:'process', lane:'cold', points:0,  cost:2, tags:[],           desc:'Destroy every negative card on your cold side. Draw 1 (draw 2 if there was nothing to destroy). Then you may return a yeast there to your hand: it keeps its points, costs 0 this turn, and its on-play effect happens again.' },
+  { id:'filtration',   name:'Filtration',        cat:'process', lane:'cold', points:0,  cost:2, tags:[],           desc:'Destroy negative cards on your cold side. Draw 1, or 2 if there were none. You may re-pitch a yeast there.' },
   { id:'fining',       name:'Fining Agent',      cat:'process', lane:'both',  points:0,  cost:1, tags:[],  desc:'Remove one negative token from your board. Every yeast on your cold side gets +2. Draw 1.' },
   { id:'coldcrash',    name:'Cold Crash',        cat:'process', lane:'cold', points:3,  cost:1, tags:[],   desc:'Add 3 Lagering.' },
   { id:'kettlesour',   name:'Kettle Sour',       cat:'process', lane:'hot', points:4,  cost:2, tags:[],   desc:'Give the rival 5 Acid.' },
@@ -135,7 +135,7 @@ const CARD_POOL = [
   { id:'kettletrans',  name:'Whirlpool',   cat:'process', lane:'hot',  points:0,  cost:1, tags:[],           desc:'Every hop on your hot side gets +2. Draw 1.' },
   { id:'doublebatch',  name:'Double Batch',      cat:'process', lane:'both', points:0,  cost:2, tags:[],           desc:'Copy the last card you played and add a second instance to the same lane. Draw 1.' },
   { id:'barreltrans',  name:'Barrel Transfer',   cat:'process', lane:'cold', points:12, cost:3, tags:[],  desc:'The highest scoring card on your cold side gets +50% pts (+100% if it is oaky).' },
-  { id:'recipetweak',  name:'Recipe Tweak',      cat:'process', lane:'both', points:0,  cost:0, tags:[],         desc:'Choose any card on your board and return it to your hand. It loses bonuses gained this battle, but keeps upgrades and aging. Your next card costs 1 less. Draw 1.' },
+  { id:'recipetweak',  name:'Recipe Tweak',      cat:'process', lane:'both', points:0,  cost:0, tags:[],         desc:'Return a card on your board to your hand. It loses this battle\'s bonuses. Your next card costs 1 less. Draw 1.' },
 
   // Scoring/multiplier process cards
   { id:'qc',           name:'Quality Control',   cat:'process', lane:'both', points:0,  cost:1, tags:[],   desc:'If your total score is higher than the rival\'s, +14 pts. Otherwise, draw 1.' },
@@ -198,7 +198,7 @@ const CARD_POOL = [
 
   // Clean ale
   { id:'chico',      name:'Cal Ale',            cat:'yeast', lane:'cold', points:6,  cost:2, tags:['crisp','clean'],              desc:'+2 per turn. On play: +2 per citrus, piney or dank card on your board.' },
-  { id:'barbarian',  name:'Barbarian',          cat:'yeast', lane:'cold', points:6,  cost:2, tags:['fruity','clean'],             desc:'+2 per turn. On play: +2 per hop on your board.' },
+  { id:'barbarian',  name:'Barbarian',          cat:'yeast', lane:'cold', points:6,  cost:2, tags:['fruity','clean','hazy'],     desc:'+2 per turn. On play: +2 per hop on your board.' },
   { id:'london3',    name:'London Ale III',     cat:'yeast', lane:'cold', points:6,  cost:2, tags:['hazy','smooth','fruity'],     desc:'+2 per turn. On play: biotransformation, every hop on your cold side gets +4. +2 per hazy card.' },
   { id:'englishale', name:'English Ale',        cat:'yeast', lane:'cold', points:6,  cost:2, tags:['fruity','malty'],          desc:'+2 per turn. On play: +3 per biscuity, malty, or earthy card on your board.' },
   { id:'kveik',      name:'Voss Kveik',         cat:'yeast', lane:'cold', points:17, cost:3, tags:['fruity','dry'],               desc:'Doesn\'t grow. On play: +2 per hop on your board.' },
@@ -214,13 +214,13 @@ const CARD_POOL = [
   { id:'hefeweizen', name:'Hefeweizen',         cat:'yeast', lane:'cold', points:6,  cost:2, tags:['fruity','spicy','hazy'],    desc:'+2 per turn. On play: +3 per bready, fruity, or spicy card on your board.' },
 
   // Wild & sour
-  { id:'brett',      name:'Brettanomyces',      cat:'yeast', lane:'cold', points:6,  cost:2, tags:['funky','dry'],                desc:'+3 per turn. On play: +3 per sweet card on your hot side. Each turn, 50% chance it gets loose and shuffles a Contamination into your deck or the rival\'s (50/50).' },
+  { id:'brett',      name:'Brettanomyces',      cat:'yeast', lane:'cold', points:6,  cost:2, tags:['funky','dry'],                desc:'+3 per turn. On play: +3 per sweet card on your hot side. Each turn, 50% chance it spreads Contamination to you or the rival.' },
   { id:'lacto',      name:'Lactobacillus',      cat:'yeast', lane:'cold', points:6,  cost:1, tags:['sour','crisp'],               desc:'+2 per turn. On play: give the rival 4 Acid, minus 1 for each hop on your hot side.' },
   { id:'pedio',      name:'Pediococcus',        cat:'yeast', lane:'cold', points:4,  cost:2, tags:['sour','funky'],               desc:'+2 per turn. On play: eat a fruit on your board. This gets 1.5× its points. Give the rival 2 Acid.' },
 
   // Engineered strains
   { id:'sourvisiae', name:'Sourvisiae',         cat:'yeast', lane:'cold', points:6,  cost:2, tags:['sour','crisp','clean'],       desc:'+2 per turn. On play: give the rival 2 Acid. +2 per fruity or tropical card on your board.' },
-  { id:'cosmicpunch',name:'Cosmic Punch',       cat:'yeast', lane:'cold', points:6,  cost:2, tags:['fruity','hazy','thiol'],      desc:'+2 per turn. On play: +2 per hop on your cold side. Thiol release: every thiol card on your board gets +6 (Phantasm +8), including ones played later.' },
+  { id:'cosmicpunch',name:'Cosmic Punch',       cat:'yeast', lane:'cold', points:6,  cost:2, tags:['fruity','hazy','thiol'],      desc:'+2 per turn. On play: +2 per hop on your cold side. Thiol release: thiol cards get +6 (Phantasm +8), even ones played later.' },
   // Real strains that fill gaps: stout, sweet/dessert, hazy tropical, adjunct lager, Lagering
   { id:'irishale',   name:'Irish Ale',          cat:'yeast', lane:'cold', points:6,  cost:2, tags:['smooth','clean'],             desc:'+2 per turn. On play: +1 per roasty card on your board. Raises your roast limit by 1.' },
   { id:'londonesb',  name:'London ESB',         cat:'yeast', lane:'cold', points:6,  cost:2, tags:['malty','fruity'],             desc:'+2 per turn. On play: +2 per sweet card on your board.' },
@@ -257,7 +257,7 @@ const CARD_POOL = [
   { id:'bourbonbarrel',name:'Bourbon Barrel',    cat:'adjunct', lane:'hot',  points:16, cost:3, tags:['oaky','sweet'],            desc:'Every other sweet card on your hot side gets +2 per roast token, including ones played later.' },
   { id:'fruitpuree',   name:'Fruit Purée',       cat:'adjunct', lane:'hot',  points:12, cost:2, tags:['sweet','fruity'],          desc:'+2 pts for each other sweet or sour card on your board.' },
   { id:'graham',       name:'Graham Cracker',    cat:'adjunct', lane:'hot',  points:8,  cost:1, tags:['sweet','biscuity','toasty'], desc:'+2 pts for each other sweet card on your board.' },
-  { id:'phillysour',   name:'Philly Sour',       cat:'yeast',   lane:'cold', points:6,  cost:2, tags:['sour','fruity','crisp'],   desc:'+2 per turn. On play: give the rival 1 Acid for each other sweet or fruity card on your board (up to 5). Each sweet or fruity card you play after it gives 1 more.' },
+  { id:'phillysour',   name:'Philly Sour',       cat:'yeast',   lane:'cold', points:6,  cost:2, tags:['sour','fruity','crisp'],   desc:'+2 per turn. On play: the rival gets 1 Acid per other sweet or fruity card (max 5). Later sweet or fruity plays add 1 more.' },
   { id:'rawwheat',     name:'Raw Wheat',         cat:'malt',    lane:'hot',  points:14, cost:2, tags:['bready','hazy'],           desc:'Unmalted, so not sticky. +2 pts for each spicy or citrus adjunct on your board.' },
   { id:'chamomile',    name:'Chamomile',         cat:'adjunct', lane:'hot',  points:7,  cost:1, tags:['floral','spicy','belgian'], desc:'+3 pts for each bready card on your hot side.' },
   { id:'sweetorange',  name:'Sweet Orange Peel', cat:'adjunct', lane:'hot',  points:8,  cost:1, tags:['citrus','sweet','belgian'], desc:'+2 pts for each other spicy card and each other sweet card on your board.' },

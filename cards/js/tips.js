@@ -22,6 +22,7 @@ function gameKeywords() {
     ['Stuck Mash',         `Stuck Mash: ${clump} sticky grains in a row on your hot side clump together for −8.`],
     ['Contamination',      'Contamination: a −10 card that plays itself to your cold side when drawn. CIP Cycle, Fining Agent and Sanitize clean it up.'],
     ['Dry hop',            'Dry hop: this bonus only happens when the hop goes on your cold side.'],
+    ['re-pitch',           'Re-pitch: the yeast goes back to your hand with all the points it has built up. It costs 0 this turn, and playing it again triggers its on-play effect again.'],
     ['Boil',               'Boil: this bonus only happens when the hop goes on your hot side.'],
     ['biotransformation',  'Biotransformation: the yeast reacts with the hops on your cold side and boosts them.'],
     ['Thiol release',      'Thiol release: thiol cards get a big boost once a thiol yeast like Cosmic Punch is on your board.'],
