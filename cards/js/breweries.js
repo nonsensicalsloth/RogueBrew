@@ -37,7 +37,7 @@ const BREWERIES = [
     id: 'taproom', name: 'Taproom', icon: '🍻', subtitle: 'Money talks.',
     passive: 'Tap List: at judging, +3 for every different tag on your board beyond 12. The more chaotic the beer, the better.',
     ability: { name: 'Sell a Pint', cost: 1, desc: `Once per turn: gain 6 gold.` },
-    perk:    'More shops on the map, and your first purchase in each shop is half price.',
+    perk:    'More shops on the map. Your first purchase in each shop (a card or a removal) is half price, and so is the first malt in a bulk deal.',
     unlock:  { text: 'Win a run.', test: p => p.wins >= 1 },
   },
   {
@@ -56,7 +56,7 @@ const BREWERIES = [
   },
   {
     id: 'garage', name: 'Garage Brewer', icon: '🏚', subtitle: 'Hard mode. Make it work.',
-    passive: 'None. You make do.',
+    passive: 'Scrounger: at least half of every shop and card offer shares one of your 3 most common tags.',
     ability: { name: 'Improvise', cost: 0, desc: 'Once per round: discard your hand and draw that many new cards.' },
     perk:    'Your deck is 15 random commons, you start with 2 random pieces of equipment, and 70 max Reputation.',
     unlock:  { text: 'Win 3 runs.', test: p => p.wins >= 3 },

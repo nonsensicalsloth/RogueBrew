@@ -501,12 +501,37 @@ function generateMapOffer(kind = 'normal') {
     const options = left.filter(c => c.rarity === rarity);
     offer.push({ ...options[Math.floor(Math.random() * options.length)] });
   }
+  offer.splice(0, offer.length, ...scroungeLean(offer, pool));
   // Stout House run perk: always at least one roasty card on offer
   if (runBrewery() === 'stouthouse' && offer.length && !offer.some(c => c.tags && c.tags.includes('roasty'))) {
     const roasty = pool.filter(c => c.tags && c.tags.includes('roasty') && !offer.some(o => o.id === c.id));
     if (roasty.length) offer[offer.length - 1] = { ...roasty[Math.floor(Math.random() * roasty.length)] };
   }
   return offer;
+}
+
+// Garage Brewer passive (Scrounger): at least half of every shop and card offer shares
+// one of your deck's 3 most common tags, so a pile of random commons can grow into a style
+const SCROUNGE_TAGS = 3;
+function deckTopTags(n = SCROUNGE_TAGS) {
+  const cnt = {};
+  (draftState.deck || []).forEach(c => (c.tags || []).forEach(t => cnt[t] = (cnt[t] || 0) + 1));
+  return Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, n).map(x => x[0]);
+}
+function scroungeLean(list, pool) {
+  if (runBrewery() !== 'garage' || !list.length) return list;
+  const top = deckTopTags();
+  const fits = c => (c.tags || []).some(t => top.includes(t));
+  const out = [...list];
+  const need = Math.ceil(out.length / 2);
+  for (let i = out.length - 1; i >= 0 && out.filter(fits).length < need; i--) {
+    if (fits(out[i])) continue;
+    // Swap in a fitting card of the same rarity if there is one, else any fitting card
+    const spare = pool.filter(c => fits(c) && !out.some(o => o.id === c.id));
+    const pick = spare.find(c => c.rarity === out[i].rarity) || spare[0];
+    if (pick) out[i] = { ...pick };
+  }
+  return out;
 }
 
 // Picks a rarity by weight, skipping rarities with no cards left
@@ -588,6 +613,7 @@ function generateShopInventory() {
   };
   let stock = [...pickN('common', 3), ...pickN('uncommon', 2), ...pickN('rare', 1)];
   for (const c of pool) { if (stock.length >= 6) break; if (!stock.includes(c)) stock.push(c); }
+  stock = scroungeLean(stock, pool);
   return stock.map(c => ({ ...c, price: getCardPrice(c) }));
 }
 
@@ -603,8 +629,11 @@ let shopRemoving    = false;   // is the removal picker open?
 
 function getRemovalPrice() {
   const p = 50 + 25 * (mapState.removals || 0);
-  return bm(2) ? Math.ceil(p * BM_SHOP_MULT) : p;   // Brewmaster 2
+  const base = bm(2) ? Math.ceil(p * BM_SHOP_MULT) : p;   // Brewmaster 2
+  return taproomHalf(base);
 }
+// Taproom run perk: the first purchase in each shop (a card or a removal) is half price
+function taproomHalf(price) { return runBrewery() === 'taproom' && !shopHalfUsed ? Math.ceil(price / 2) : price; }
 
 function renderMapShop() {
   document.getElementById('shop-gold').textContent = `💰 ${mapState.gold}`;
@@ -639,7 +668,7 @@ function renderMapShop() {
 let shopHalfUsed = false;
 function shopPrice(c) {
   const base = bm(2) ? Math.ceil(c.price * BM_SHOP_MULT) : c.price;   // Brewmaster 2
-  return runBrewery() === 'taproom' && !shopHalfUsed ? Math.ceil(base / 2) : base;
+  return taproomHalf(base);
 }
 
 function buyCard(idx) {
@@ -762,6 +791,7 @@ function shopRemoveCard(idx) {
   mapState.gold -= price;
   mapState.removals = (mapState.removals || 0) + 1;
   shopRemovalUsed = true;
+  if (runBrewery() === 'taproom') shopHalfUsed = true;
   shopRemoving    = false;
   renderMapShop();
   const msg = document.getElementById('shop-removal');
@@ -775,15 +805,17 @@ const BULK_MALT_PRICE = 10;
 const BULK_MALT_MAX   = 3;
 let bulkBought = [];
 
+// Taproom: the first malt in a bulk deal is half price too
+function bulkMaltPrice() { return runBrewery() === 'taproom' && !bulkBought.length ? Math.ceil(BULK_MALT_PRICE / 2) : BULK_MALT_PRICE; }
 function bulkMaltChoices() {
   return BASE_MALT_IDS.map(getCardDef).filter(c => c && copiesInDeck(c.id) < MAX_COPIES);
 }
 
 function showBulkMaltPicker() {
   const left   = BULK_MALT_MAX - bulkBought.length;
-  const canBuy = left > 0 && mapState.gold >= BULK_MALT_PRICE && draftState.deck.length < MAX_DECK_SIZE;
+  const canBuy = left > 0 && mapState.gold >= bulkMaltPrice() && draftState.deck.length < MAX_DECK_SIZE;
   document.getElementById('event-result').textContent =
-    `Picked ${bulkBought.length}/${BULK_MALT_MAX} · 💰 ${mapState.gold} gold` +
+    `Picked ${bulkBought.length}/${BULK_MALT_MAX} · 💰 ${mapState.gold} gold · next malt ${bulkMaltPrice()} gold` +
     (bulkBought.length ? ` · ${bulkBought.join(', ')}` : '');
   document.getElementById('event-options').innerHTML =
     (canBuy ? `<div class="special-cards">${bulkMaltChoices().map(c =>
@@ -793,9 +825,9 @@ function showBulkMaltPicker() {
 
 function buyBulkMalt(id) {
   const c = getCardDef(id);
-  if (!c || bulkBought.length >= BULK_MALT_MAX || mapState.gold < BULK_MALT_PRICE) return;
+  if (!c || bulkBought.length >= BULK_MALT_MAX || mapState.gold < bulkMaltPrice()) return;
   if (copiesInDeck(id) >= MAX_COPIES || draftState.deck.length >= MAX_DECK_SIZE) return;
-  mapState.gold -= BULK_MALT_PRICE;
+  mapState.gold -= bulkMaltPrice();
   draftState.deck.push({ ...c });
   bulkBought.push(c.name);
   showBulkMaltPicker();
@@ -880,7 +912,7 @@ const MAP_EVENTS = [
     desc: 'A supplier offers you a deal on base malts.',
     options: [
       { label: `Choose up to ${BULK_MALT_MAX} base malts (${BULK_MALT_PRICE} gold each)`,
-        can: () => mapState.gold >= BULK_MALT_PRICE && bulkMaltChoices().length > 0 && draftState.deck.length < MAX_DECK_SIZE,
+        can: () => mapState.gold >= bulkMaltPrice() && bulkMaltChoices().length > 0 && draftState.deck.length < MAX_DECK_SIZE,
         picker: () => { bulkBought = []; showBulkMaltPicker(); } },
       { label: 'Pass', action: () => 'You passed on the deal.' },
     ]
