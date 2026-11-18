@@ -683,16 +683,17 @@ function applyCardEffect(card, lane, who) {
 
 
     case 'vanilla':
-      buffLaneCards('hot', who, 2, c => c !== card && c.tags && c.tags.includes('sweet'));
-      buffLaneCards('cold', who, 2, c => c !== card && c.tags && c.tags.includes('sweet'));
-      addLog('Vanilla: +2 to all sweet cards on board.', 'player');
+    case 'vanillabn':
+      // ongoing: see auraBonus()
+      addLog(`${card.name}: every other sweet card on your board gets +${AURAS[card.id].n}, including ones played later.`, isPlayer ? 'player' : 'enemy');
       break;
 
-    case 'vanillabn':
-      buffLaneCards('hot', who, 3, c => c !== card && c.tags && c.tags.includes('sweet'));
-      buffLaneCards('cold', who, 3, c => c !== card && c.tags && c.tags.includes('sweet'));
-      addLog('Vanilla Bean: +3 to all sweet cards on board.', 'player');
+    case 'coconut': {
+      const n = allMine.filter(c => c !== card && c.tags && (c.tags.includes('smooth') || c.tags.includes('tropical'))).length;
+      card.points += n * 2;
+      addLog(`Coconut: +${n * 2} (${n} smooth or tropical cards).`, isPlayer ? 'player' : 'enemy');
       break;
+    }
 
     case 'marshm':
       buffLaneCards('hot', who, 2, c => c !== card && c.tags && c.tags.includes('smooth'));
@@ -817,12 +818,10 @@ function applyCardEffect(card, lane, who) {
       if (hasBelgYeast) { card.points += 6; addLog('Coriander: Belgian yeast present, +6 pts!', 'player'); }
       break;
     }
-    case 'orangepeel': {
-      const isCB = c => c !== card && c.tags && (c.tags.includes('citrus') || c.tags.includes('belgian'));
-      const n = buffLaneCards('hot', who, 2, isCB) + buffLaneCards('cold', who, 2, isCB);
-      addLog(`Orange Peel: +2 to ${n} citrus/belgian card(s).`, 'player');
+    case 'orangepeel':
+      // ongoing: see auraBonus()
+      addLog('Orange Peel: every other citrus and belgian card on your board gets +2, including ones played later.', isPlayer ? 'player' : 'enemy');
       break;
-    }
     case 'grainspara': {
       const belgCount = getAllOnField(who).filter(c => c.tags && c.tags.includes('belgian')).length;
       if (belgCount >= 3) { card.points += 12; addLog('Grains of Paradise: 3+ belgian cards, +12 pts!', 'player'); }
@@ -1906,6 +1905,21 @@ function vermontBonus(c, lane, who) {
 
 // Bourbon Barrel: every other sweet card on your hot side gets +1 per roast token, per barrel
 const PHILLY_MAX = 5;
+// Ongoing buffs from cards on your board: each one boosts every other matching card, including ones played later
+const AURAS = {
+  vanilla:    { n: 2, tags: ['sweet'] },
+  vanillabn:  { n: 3, tags: ['sweet'] },
+  orangepeel: { n: 2, tags: ['citrus', 'belgian'] },
+};
+function auraBonus(c, lane, who) {
+  if (c._locked || c.cat === 'token' || !c.tags) return 0;
+  let b = 0;
+  getAllOnField(who).forEach(x => {
+    const a = AURAS[x.id];
+    if (a && x !== c && !x._locked && a.tags.some(t => c.tags.includes(t))) b += a.n;
+  });
+  return b;
+}
 const BARREL_PER_ROAST = 2;
 // Philly Sour keeps souring: each sweet or fruity card played after it gives the rival 1 Acid per Philly Sour
 function phillyFollowUp(c, who) {
@@ -1920,7 +1934,7 @@ function barrelBonus(c, lane, who) {
 }
 
 function effectivePoints(c, lane, who) {
-  const roast = roastBonus(c, who) + carapilsBonus(c, lane, who) + twoRowBonus(c, lane, who) + ongoingBonus(c, lane, who) + vermontBonus(c, lane, who) + barrelBonus(c, lane, who);
+  const roast = roastBonus(c, who) + carapilsBonus(c, lane, who) + twoRowBonus(c, lane, who) + ongoingBonus(c, lane, who) + vermontBonus(c, lane, who) + barrelBonus(c, lane, who) + auraBonus(c, lane, who);
   const m = synergyMultiplier(c, lane, who);
   if (m === 1) return rulePoints(c, c.points + roast);
   const base = Math.max(0, Math.min(printedPoints(c), c.points));
