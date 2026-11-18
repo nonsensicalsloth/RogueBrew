@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'belgian: styrian, golden, trappist (Nov 17)';
+const CARDS_VERSION = 'gueuze blend (Nov 17)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -265,6 +265,7 @@ const CARD_POOL = [
   { id:'styrian',      name:'Styrian Goldings',  cat:'hop',     lane:'both', points:8,  cost:1, tags:['spicy','earthy','belgian'], desc:'+4 while a Belgian yeast is on your cold side.' },
   { id:'belgiangolden',name:'Belgian Golden Ale',cat:'yeast',   lane:'cold', points:6,  cost:2, tags:['fruity','dry','belgian'],   desc:'+2 per turn. On play: +4 per Clear Candi Sugar and +2 per crisp or dry card on your board.' },
   { id:'trappist',     name:'Trappist High Gravity', cat:'yeast', lane:'cold', points:10, cost:3, tags:['fruity','spicy','belgian'], desc:'+3 per turn. On play: +5 per candi sugar and +2 per toasty or roasty malt on your board.' },
+  { id:'gueuze',       name:'Gueuze Blend',      cat:'process', lane:'cold', points:8,  cost:2, tags:['sour','funky','belgian'], desc:'Give the rival 1 Acid per other funky or sour card on your board. Oaky cards on your board get +2, including ones played later.' },
 ];
 
 // ── Default deck composition (30 cards) ──
@@ -276,6 +277,7 @@ const CARD_POOL = [
 //   Rare     ~15%  build-arounds and standouts
 // ══════════════════════════════════════════════════════════════
 const RARE_CARDS = [
+  'gueuze',
   'trappist',
   'bourbonbarrel','phillysour',
   'nelson','riwaka','cosmicpunch','kveik','phantasm',

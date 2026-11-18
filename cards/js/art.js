@@ -717,7 +717,7 @@ const CARD_ART = {
   flakedrice:['flakes', '#f4f1e6'], ricehulls:['flakes', '#d8c088'], spelt:['flakes', '#d8b878'], buckwheat:['seeds', '#9a7a5a'],
   hazelnut:['bean', '#a0682e'], bourbonbarrel:['barrel', '#6a3a1a'], fruitpuree:['jar', '#d6336c', '#d9d9d9'], graham:['bread', '#c98a4a', '#8a5a2a'],
   phillysour:['rods', '#f0a0b0', '#8a3a5a'], rawwheat:['stalk', null, '#b09060'], chamomile:['flower', '#fffbe8', '#ffc107'], sweetorange:['citrus', '#ffa040'],
-  styrian:['cone', '#6a9a3a', '#b8d080'], belgiangolden:['flask', '#f0c840', '#fff6dc'], trappist:['flask', '#6a3a1e', '#e8c890'],
+  gueuze:['barrel', '#c9a040'], styrian:['cone', '#6a9a3a', '#b8d080'], belgiangolden:['flask', '#f0c840', '#fff6dc'], trappist:['flask', '#6a3a1e', '#e8c890'],
   coffee:['bean', '#6b3e26'], coldbrewcof:['bean', '#4a2a1a'], cacaonibs:['bean', '#5a3424'],
   maltodex:['sugar', '#f4f1e6'], lactose:['sugar', '#fbf7ee'], marshm:['sugar', '#fde8f0'],
   candisugarcl:['sugar', '#f3e6c4'], candisugarab:['sugar', '#d99a4e'], candisugardk:['sugar', '#6e3a1e'],

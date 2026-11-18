@@ -702,6 +702,12 @@ function applyCardEffect(card, lane, who) {
       addLog(`Trappist High Gravity: +${sugar * 5 + dark * 2} (${sugar} candi sugar, ${dark} toasty or roasty malts).`, isPlayer ? 'player' : 'enemy');
       break;
     }
+    case 'gueuze': {
+      const n = allMine.filter(c => c !== card && c.tags && (c.tags.includes('funky') || c.tags.includes('sour'))).length;
+      giveAcid(other(who), n);
+      addLog(`Gueuze Blend: ${n} funky or sour cards sour the rival. Oaky cards get +2.`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
     case 'styrian':
       // ongoing: see ongoingBonus()
       break;
@@ -1901,12 +1907,19 @@ function carapilsBonus(c, lane, who) {
 // Cards whose bonus is on while a condition holds (so playing order doesn't matter)
 const ONGOING_BONUS = 8;
 const STYRIAN_BONUS = 4;
+const GUEUZE_OAK = 2;
 function ongoingBonus(c, lane, who) {
   if (c._locked) return 0;
   if (c.id === 'styrian')    return getLaneCards('cold', who).some(x => x.cat === 'yeast' && x.tags && x.tags.includes('belgian') && !x._heatKilled) ? STYRIAN_BONUS : 0;
   if (c.id === 'marisotter') return getLaneCards('hot', who).filter(x => x !== c && isDarkOrCrystal(x)).length >= 2 ? ONGOING_BONUS : 0;
   if (c.id === 'cherry')     return getLaneCards('hot', who).filter(x => x !== c && x.cat === 'malt' && x.tags && x.tags.includes('roasty')).length >= 2 ? ONGOING_BONUS : 0;
-  if (c.tags && c.tags.includes('oaky')) { const r = getAllOnField(who).filter(x => x.id === 'roeselare' && !x._heatKilled).length; if (r) return r * 3; }
+  if (c.tags && c.tags.includes('oaky')) {
+    // Roeselare +3 and Gueuze Blend +2 to oaky cards
+    const mine = getAllOnField(who);
+    const r = mine.filter(x => x.id === 'roeselare' && !x._heatKilled).length;
+    const gz = mine.filter(x => x.id === 'gueuze' && x !== c && !x._locked).length;
+    if (r || gz) return r * 3 + gz * GUEUZE_OAK;
+  }
   if (c.id === 'mexlager')   return getAllOnField(who).filter(x => x !== c && (x.id === 'flakedcorn' || x.id === 'flakedrice' || (x.tags && x.tags.includes('neutral')))).length * 3;
   return 0;
 }
