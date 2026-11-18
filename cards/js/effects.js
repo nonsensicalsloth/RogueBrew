@@ -1017,15 +1017,10 @@ function applyCardEffect(card, lane, who) {
       startCardTargeting('crystal120', card, who);
       break;
 
-    case 'oats': {
-      const oatHot = getLaneCards('hot', who);
-      const oatIdx = oatHot.indexOf(card);
-      const darkNeighbors = [oatHot[oatIdx-1], oatHot[oatIdx+1]]
-        .filter(n => n && n.tags && n.tags.includes('roasty') && !n._noMultiplier);
-      darkNeighbors.forEach(n => { n.points *= 2; });
-      if (darkNeighbors.length) addLog(`Flaked Oats: doubled adjacent dark malt!`, 'player');
+    case 'oats':
+      // ongoing: see auraBonus()
+      addLog('Flaked Oats: silky body, every other hazy or roasty card on your board gets +2.', isPlayer ? 'player' : 'enemy');
       break;
-    }
 
     case 'coffee': {
       const darkMalts = getLaneCards('hot', who).filter(c => c.tags && c.tags.includes('roasty') && c.cat === 'malt' && !c._noMultiplier);
@@ -1957,6 +1952,7 @@ const AURAS = {
   vanilla:    { n: 2, tags: ['sweet'] },
   vanillabn:  { n: 3, tags: ['sweet'] },
   orangepeel: { n: 2, tags: ['citrus', 'belgian'] },
+  oats:       { n: 2, tags: ['hazy', 'roasty'] },
 };
 function auraBonus(c, lane, who) {
   if (c._locked || c.cat === 'token' || !c.tags) return 0;

@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'propagated yeast text (Nov 18)';
+const CARDS_VERSION = 'oats: silky body (Nov 18)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -65,7 +65,7 @@ const CARD_POOL = [
   // ── Adjuncts ──
 
   // Carried over
-  { id:'oats',       name:'Flaked Oats',     cat:'adjunct', lane:'hot', points:9,  cost:1, tags:['smooth','hazy','sticky'],               desc:'If played next to a dark malt, double that malt\'s base score.' },
+  { id:'oats',       name:'Flaked Oats',     cat:'adjunct', lane:'hot', points:7,  cost:1, tags:['smooth','hazy','sticky'],               desc:'Silky body: every other hazy or roasty card on your board gets +2, including ones played later.' },
   { id:'coffee',     name:'Coffee Beans',    cat:'adjunct', lane:'both', points:12, cost:4, tags:['toasty','roasty'],       desc:'Doubles every roasty malt on your hot side.' },
   { id:'maltodex',   name:'Maltodextrin',    cat:'adjunct', lane:'hot', points:6,  cost:1, tags:['smooth'],               desc:'Your next card this round costs 2 less.' },
   { id:'lactose',    name:'Lactose',         cat:'adjunct', lane:'hot', points:12,  cost:2, tags:['sweet','smooth'],                desc:'Raises your roast limit by 2.' },
