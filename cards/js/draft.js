@@ -6,7 +6,17 @@ const DECK_SIZE      = 15;   // starting deck you build before a run
 const MAX_DECK_SIZE  = 50;   // safety cap only — dilution is the real limit
 const MIN_DECK_SIZE  = 15;   // removal can't trim below this (a 15-card deck already nearly runs dry in 8 turns)
 const MAX_COPIES = 3;
-const MAX_DECKS  = 3;
+const MAX_DECKS  = 3;                 // slots open from the start
+// Extra deck slots earned by winning runs (lifetime run wins). Playtest mode opens them all.
+const BONUS_DECK_SLOTS = [3, 5];      // the 4th slot at 3 wins, the 5th at 5
+const TOTAL_DECK_SLOTS = MAX_DECKS + BONUS_DECK_SLOTS.length;
+function deckSlotWinsNeeded(i) { return i < MAX_DECKS ? 0 : BONUS_DECK_SLOTS[i - MAX_DECKS]; }
+function deckSlotOpen(i) {
+  if (i < MAX_DECKS) return true;
+  if (typeof loadCollection === 'function' && loadCollection().unlockAll) return true;
+  return loadProfile().wins >= deckSlotWinsNeeded(i);
+}
+function openDeckSlots() { let n = 0; for (let i = 0; i < TOTAL_DECK_SLOTS; i++) if (deckSlotOpen(i)) n++; return n; }
 const SAVE_KEY   = 'wortcraft_decks';
 
 // ── Shared helpers (defined here so draft + ui can both use them) ──
@@ -219,7 +229,7 @@ function showDeckManager(mode) {
   const sub   = document.getElementById('deck-manager-sub');
   if (title) title.textContent = deckManagerMode === 'build' ? 'BUILD YOUR DECKS' : 'CHOOSE A DECK';
   if (sub)   sub.textContent   = deckManagerMode === 'build'
-    ? `Build up to ${MAX_DECKS} decks of ${DECK_SIZE} cards. Test them against the dummy before a run.`
+    ? `Build up to ${openDeckSlots()} decks of ${DECK_SIZE} cards. Test them against the dummy before a run.`
     : `Pick the deck you want to start a run with.`;
   renderDeckManager();
 }
@@ -229,10 +239,20 @@ function renderDeckManager() {
   const el    = document.getElementById('deck-slots');
   el.innerHTML = '';
 
-  for (let i = 0; i < MAX_DECKS; i++) {
+  for (let i = 0; i < TOTAL_DECK_SLOTS; i++) {
     const deck = decks[i];
     const div  = document.createElement('div');
     div.className = 'deck-slot';
+    if (!deckSlotOpen(i)) {
+      // A locked bonus slot: shows how close you are
+      const need = deckSlotWinsNeeded(i), have = Math.min(loadProfile().wins, need);
+      div.classList.add('deck-slot-locked-slot');
+      div.innerHTML = `
+        <div class="deck-slot-empty">🔒 Deck slot ${i + 1}</div>
+        <div class="deck-slot-count">Win ${need} runs to unlock (${have}/${need})</div>`;
+      el.appendChild(div);
+      continue;
+    }
     if (deck) {
       div.innerHTML = `
         <div class="deck-slot-name">${deck.name}</div>
@@ -288,6 +308,7 @@ function deleteDeck(i) {
 // ── Deck Builder ──
 
 function openBuilder(slotIndex) {
+  if (!deckSlotOpen(slotIndex)) return;
   const decks = loadSavedDecks();
   const existing = decks[slotIndex];
   builderState.slotIndex = slotIndex;

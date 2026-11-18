@@ -66,7 +66,7 @@ const HOWTO_CONTENT = {
     hp(`Before a run, build a deck in <b>Build Deck</b>. Hit <b>🎯 Test Brew</b> to try it for one round against a dummy that never plays.`) +
     hli([
       `A starting deck is exactly <b>${DECK_SIZE} cards</b>, with up to <b>${MAX_COPIES} copies</b> of any card.`,
-      `You can save <b>${MAX_DECKS} decks</b> and give each a name, like "Hazy IPA" or "Imperial Stout".`,
+      `You can save <b>${MAX_DECKS} decks</b> and give each a name, like "Hazy IPA" or "Imperial Stout". Win ${BONUS_DECK_SLOTS[0]} runs to open a 4th slot, and ${BONUS_DECK_SLOTS[1]} for a 5th.`,
       `Cards are grouped by ingredient: Malt, Adjunct, Hop, Yeast and Process. Use the cost and rarity filters to find what you need.`,
       `Greyed-out cards with a 🔒 aren't in your collection yet (see <b>Collecting Cards</b>).`,
     ]) +

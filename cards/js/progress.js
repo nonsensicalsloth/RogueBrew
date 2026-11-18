@@ -61,6 +61,7 @@ function trackUnlock(name) {
 
 // Records the run in your profile and returns any breweries it unlocked
 let lastLevelUnlocked = null;
+let lastSlotUnlocked  = null;   // deck slot number opened by this win, if any
 
 function recordRun(won) {
   const before = BREWERIES.filter(b => isBreweryUnlocked(b)).map(b => b.id);
@@ -69,6 +70,8 @@ function recordRun(won) {
   const brew = runBrewery() || 'none';
   p.runs++;
   if (won) { p.wins++; p.winsBy[brew] = (p.winsBy[brew] || 0) + 1; }
+  // a bonus deck slot opens exactly at these win counts
+  lastSlotUnlocked = won && BONUS_DECK_SLOTS.includes(p.wins) ? MAX_DECKS + BONUS_DECK_SLOTS.indexOf(p.wins) + 1 : null;
   lastLevelUnlocked = won ? bmRecordWin(p, brew, bmLevel()) : null;
   p.bossesBeaten += s.bossesBeaten;
   p.history.unshift({ won, brewery: brew, level: bmLevel(), act: mapState.act + 1, deck: draftState.deck.length, best: s.bestScore, at: Date.now() });
@@ -91,6 +94,7 @@ function runSummaryHtml(won, reason, newBreweries) {
   return `
     ${newBreweries.length ? newBreweries.map(nb => `<div class="sum-unlock">🎉 NEW BREWERY UNLOCKED: ${nb.icon} ${nb.name}</div>`).join('') : ''}
     ${lastLevelUnlocked && b ? `<div class="sum-unlock">🎖 BREWMASTER ${lastLevelUnlocked} UNLOCKED for ${b.icon} ${b.name}: ${BREWMASTER_LEVELS[lastLevelUnlocked].name}</div>` : ''}
+    ${lastSlotUnlocked ? `<div class="sum-unlock">🗂 NEW DECK SLOT UNLOCKED: slot ${lastSlotUnlocked} is open in Build Deck</div>` : ''}
     ${reason ? `<div class="sum-reason">${reason}</div>` : ''}
     <div class="sum-grid">
       ${stat('Brewery', b ? `${b.icon} ${b.name}` : '-')}
