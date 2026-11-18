@@ -59,7 +59,7 @@ const HOWTO_CONTENT = {
     hli([
       `Win the third act's boss and you're the champion.`,
       `Lose too many judgings and your <b>Reputation</b> runs out, ending the run.`,
-      `Along the way you grow your deck, collect equipment (relics), and unlock new cards forever.`,
+      `Along the way you grow your deck, collect brewing equipment, and unlock new cards forever.`,
     ]),
 
   deck: () =>
