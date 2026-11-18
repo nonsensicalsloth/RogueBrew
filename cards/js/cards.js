@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'ongoing vanilla + orange, coconut (Nov 17)';
+const CARDS_VERSION = 'belgian: styrian, golden, trappist (Nov 17)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -261,6 +261,10 @@ const CARD_POOL = [
   { id:'rawwheat',     name:'Raw Wheat',         cat:'malt',    lane:'hot',  points:14, cost:2, tags:['bready','hazy'],           desc:'Unmalted, so not sticky. +2 pts for each spicy or citrus adjunct on your board.' },
   { id:'chamomile',    name:'Chamomile',         cat:'adjunct', lane:'hot',  points:7,  cost:1, tags:['floral','spicy','belgian'], desc:'+3 pts for each bready card on your hot side.' },
   { id:'sweetorange',  name:'Sweet Orange Peel', cat:'adjunct', lane:'hot',  points:8,  cost:1, tags:['citrus','sweet','belgian'], desc:'+2 pts for each other spicy card and each other sweet card on your board.' },
+  // Belgian: hop, tripel/golden strong yeast, dubbel/quad yeast
+  { id:'styrian',      name:'Styrian Goldings',  cat:'hop',     lane:'both', points:8,  cost:1, tags:['spicy','earthy','belgian'], desc:'+4 while a Belgian yeast is on your cold side.' },
+  { id:'belgiangolden',name:'Belgian Golden Ale',cat:'yeast',   lane:'cold', points:6,  cost:2, tags:['fruity','dry','belgian'],   desc:'+2 per turn. On play: +4 per Clear Candi Sugar and +2 per crisp or dry card on your board.' },
+  { id:'trappist',     name:'Trappist High Gravity', cat:'yeast', lane:'cold', points:10, cost:3, tags:['fruity','spicy','belgian'], desc:'+3 per turn. On play: +5 per candi sugar and +2 per toasty or roasty malt on your board.' },
 ];
 
 // ── Default deck composition (30 cards) ──
@@ -272,6 +276,7 @@ const CARD_POOL = [
 //   Rare     ~15%  build-arounds and standouts
 // ══════════════════════════════════════════════════════════════
 const RARE_CARDS = [
+  'trappist',
   'bourbonbarrel','phillysour',
   'nelson','riwaka','cosmicpunch','kveik','phantasm',
   'crystal75','crystal80','crystal120','coffee','aromatic','melanoidin','biscuit','victory','blackmalt',
@@ -280,6 +285,7 @@ const RARE_CARDS = [
   'oakfoeder','solera','lacticacid','roeselare',
 ];
 const UNCOMMON_CARDS = [
+  'belgiangolden',
   'rawwheat','sweetorange',
   'floorpilsner','darkmunich','expwheat','expilsner','crystal50','crystal60','specialb','carafaIII',
   'roastedbar','midnightw','smokedmalt','patent',

@@ -688,6 +688,23 @@ function applyCardEffect(card, lane, who) {
       addLog(`${card.name}: every other sweet card on your board gets +${AURAS[card.id].n}, including ones played later.`, isPlayer ? 'player' : 'enemy');
       break;
 
+    case 'belgiangolden': {
+      const sugar = allMine.filter(c => c.id === 'candisugarcl').length;
+      const cd = allMine.filter(c => c !== card && c.tags && (c.tags.includes('crisp') || c.tags.includes('dry'))).length;
+      card.points += sugar * 4 + cd * 2;
+      addLog(`Belgian Golden Ale: +${sugar * 4 + cd * 2} (${sugar} clear candi, ${cd} crisp or dry).`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+    case 'trappist': {
+      const sugar = allMine.filter(c => /^candisugar/.test(c.id)).length;
+      const dark = allMine.filter(c => c.cat === 'malt' && c.tags && (c.tags.includes('toasty') || c.tags.includes('roasty'))).length;
+      card.points += sugar * 5 + dark * 2;
+      addLog(`Trappist High Gravity: +${sugar * 5 + dark * 2} (${sugar} candi sugar, ${dark} toasty or roasty malts).`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+    case 'styrian':
+      // ongoing: see ongoingBonus()
+      break;
     case 'coconut': {
       const n = allMine.filter(c => c !== card && c.tags && (c.tags.includes('smooth') || c.tags.includes('tropical'))).length;
       card.points += n * 2;
@@ -1883,8 +1900,10 @@ function carapilsBonus(c, lane, who) {
 
 // Cards whose bonus is on while a condition holds (so playing order doesn't matter)
 const ONGOING_BONUS = 8;
+const STYRIAN_BONUS = 4;
 function ongoingBonus(c, lane, who) {
   if (c._locked) return 0;
+  if (c.id === 'styrian')    return getLaneCards('cold', who).some(x => x.cat === 'yeast' && x.tags && x.tags.includes('belgian') && !x._heatKilled) ? STYRIAN_BONUS : 0;
   if (c.id === 'marisotter') return getLaneCards('hot', who).filter(x => x !== c && isDarkOrCrystal(x)).length >= 2 ? ONGOING_BONUS : 0;
   if (c.id === 'cherry')     return getLaneCards('hot', who).filter(x => x !== c && x.cat === 'malt' && x.tags && x.tags.includes('roasty')).length >= 2 ? ONGOING_BONUS : 0;
   if (c.tags && c.tags.includes('oaky')) { const r = getAllOnField(who).filter(x => x.id === 'roeselare' && !x._heatKilled).length; if (r) return r * 3; }
@@ -1985,7 +2004,7 @@ function applyTurnEffects(who) {
     // Roeselare Blend: a slow sour, 1 Acid to the rival each turn
     if (c.id === 'roeselare') giveAcid(other(who), 1);
     // Augustiner grows +3 instead of +2 while you have Lagering banked
-    const base = c.id === 'heirloom' ? 3 : c.id === 'augustiner' && lagering(who) > 0 ? 3 : 2;
+    const base = c.id === 'heirloom' ? 3 : c.id === 'augustiner' && lagering(who) > 0 ? 3 : c.id === 'trappist' ? 3 : 2;
     const grow = base + (c.id === 'heirloom' ? 0 : heirlooms) + chill;
     c.points += grow;
     if (isPlayer) addLog(`${c.name}: +${grow} pts (accumulating).`, 'player');
