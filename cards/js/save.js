@@ -58,6 +58,16 @@ function savedRunSummary() {
 // A saved run stores full card copies, so a card that was rebalanced since the
 // run started would keep its old cost and points. Rebuild each card from the
 // current definition, then re-apply what the run did to it (upgrades, aging).
+// Quality Lab: show a propagated yeast's real growth on the card ("+2 per turn" becomes "+3 per turn")
+function propagatedDesc(desc) {
+  const n = typeof PROP_GROWTH !== 'undefined' ? PROP_GROWTH : 1;
+  const bump = (m, a) => `+${Number(a) + n}`;
+  if (/\+\d+ per turn instead of \+\d+/.test(desc))
+    return desc.replace(/\+(\d+)( per turn instead of )\+(\d+)/, (m, a, mid, b) => `+${Number(a) + n}${mid}+${Number(b) + n}`) + ' (propagated)';
+  if (/\+\d+ per turn/.test(desc)) return desc.replace(/\+(\d+)(?= per turn)/, bump) + ' (propagated)';
+  return `${desc} Propagated: +${n} more per turn.`;
+}
+
 function refreshRunCard(c) {
   const def = getCardDef(c.id);
   if (!def) return c;                     // retired card: leave as-is
@@ -81,7 +91,7 @@ function refreshRunCard(c) {
   // Quality Lab: propagated yeast, Sensory Panel tag
   if (c._propagated) {
     fresh._propagated = true;
-    fresh.desc = `${fresh.desc} Propagated: +${typeof PROP_GROWTH !== 'undefined' ? PROP_GROWTH : 1} more per turn.`;
+    fresh.desc = propagatedDesc(fresh.desc);
   }
   if (c._panelTag) {
     fresh._panelTag = c._panelTag;
