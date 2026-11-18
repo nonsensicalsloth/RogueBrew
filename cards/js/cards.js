@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'roast limit 4, burnt past it (Nov 18)';
+const CARDS_VERSION = 'wit draw + wild buffs (Nov 18)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -98,7 +98,7 @@ const CARD_POOL = [
   { id:'candisugarcl', name:'Clear Candi Sugar',  cat:'adjunct', lane:'hot', points:6,  cost:1, tags:['sweet','belgian'],            desc:'+3 pts for each Belgian yeast on cold side.' },
   { id:'candisugarab', name:'Amber Candi Sugar',  cat:'adjunct', lane:'hot', points:12,  cost:2, tags:['sweet','belgian','toasty'],   desc:'+3 pts for each Belgian yeast on your cold side.' },
   { id:'candisugardk', name:'Dark Candi Sugar',   cat:'adjunct', lane:'hot', points:12, cost:2, tags:['sweet','belgian','roasty'],   desc:'+4 pts for each Belgian yeast on your cold side.' },
-  { id:'coriander',   name:'Coriander',           cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['spicy','belgian'],            desc:'If a Belgian yeast is on your cold side, +6 pts.' },
+  { id:'coriander',   name:'Coriander',           cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['spicy','belgian'],            desc:'Draw 1 card. If a Belgian yeast is on your cold side, +6 pts.' },
   { id:'orangepeel',  name:'Orange Peel',         cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['citrus','belgian','fruity'],  desc:'Every other citrus and belgian card on your board gets +2, including ones played later.' },
   { id:'grainspara',  name:'Grains of Paradise',  cat:'adjunct', lane:'hot', points:12, cost:2, tags:['spicy','belgian','dry'],      desc:'If 3+ belgian tagged cards on board, +12 pts.' },
   { id:'cardamom',    name:'Cardamom',             cat:'adjunct', lane:'hot', points:10,  cost:2, tags:['spicy','sweet','belgian'],    desc:'+2 pts for each other sweet card and each other spicy card on your board.' },
@@ -214,7 +214,7 @@ const CARD_POOL = [
   { id:'hefeweizen', name:'Hefeweizen',         cat:'yeast', lane:'cold', points:6,  cost:2, tags:['fruity','spicy','hazy'],    desc:'+2 per turn. On play: +3 per bready, fruity, or spicy card on your board.' },
 
   // Wild & sour
-  { id:'brett',      name:'Brettanomyces',      cat:'yeast', lane:'cold', points:6,  cost:2, tags:['funky','dry'],                desc:'+3 per turn. On play: +3 per sweet card on your hot side. Each turn, 50% chance to shuffle Contamination into your deck.' },
+  { id:'brett',      name:'Brettanomyces',      cat:'yeast', lane:'cold', points:6,  cost:2, tags:['funky','dry'],                desc:'+3 per turn. On play: +3 per sweet card on your hot side. Each turn, 50% chance it gets loose and shuffles a Contamination into your deck or the rival\'s (50/50).' },
   { id:'lacto',      name:'Lactobacillus',      cat:'yeast', lane:'cold', points:6,  cost:1, tags:['sour','crisp'],               desc:'+2 per turn. On play: give the rival 4 Acid, minus 1 for each hop on your hot side.' },
   { id:'pedio',      name:'Pediococcus',        cat:'yeast', lane:'cold', points:4,  cost:2, tags:['sour','funky'],               desc:'+2 per turn. On play: eat a fruit on your board. This gets 1.5× its points. Give the rival 2 Acid.' },
 
@@ -229,7 +229,7 @@ const CARD_POOL = [
   { id:'augustiner', name:'Augustiner Lager',   cat:'yeast', lane:'cold', points:6,  cost:2, tags:['crisp','clean','malty'],      desc:'Grows +3 per turn instead of +2 while you have Lagering banked. On play: +2 per crisp card.' },
   { id:'scottish',   name:'Scottish Ale',       cat:'yeast', lane:'cold', points:6,  cost:2, tags:['malty','smooth'],             desc:'+2 per turn. On play: +3 per toasty card on your hot side.' },
   { id:'belgianwit', name:'Belgian Wit',        cat:'yeast', lane:'cold', points:6,  cost:2, tags:['spicy','hazy','belgian'],     desc:'+2 per turn. On play: +2 per bready, citrus or spicy adjunct on your board.' },
-  { id:'roeselare',  name:'Roeselare Blend',    cat:'yeast', lane:'cold', points:6,  cost:2, tags:['sour','funky'],               desc:'+2 per turn. Each turn, give the rival 1 Acid. Oaky cards on your board get +3.' },
+  { id:'roeselare',  name:'Roeselare Blend',    cat:'yeast', lane:'cold', points:6,  cost:2, tags:['sour','funky'],               desc:'+2 per turn. Each turn, give the rival 2 Acid. Oaky cards on your board get +3.' },
 
   // ══════════════════════════════════════════════════════════════
   // ── FLAVOUR PAYOFFS ── cards that reward the less-used tags
@@ -265,7 +265,7 @@ const CARD_POOL = [
   { id:'styrian',      name:'Styrian Goldings',  cat:'hop',     lane:'both', points:8,  cost:1, tags:['spicy','earthy','belgian'], desc:'+4 while a Belgian yeast is on your cold side.' },
   { id:'belgiangolden',name:'Belgian Golden Ale',cat:'yeast',   lane:'cold', points:6,  cost:2, tags:['fruity','dry','belgian'],   desc:'+2 per turn. On play: +4 per Clear Candi Sugar and +2 per crisp or dry card on your board.' },
   { id:'trappist',     name:'Trappist High Gravity', cat:'yeast', lane:'cold', points:10, cost:3, tags:['fruity','spicy','belgian'], desc:'+3 per turn. On play: +5 per candi sugar and +2 per toasty or roasty malt on your board.' },
-  { id:'gueuze',       name:'Gueuze Blend',      cat:'process', lane:'cold', points:8,  cost:2, tags:['sour','funky','belgian'], desc:'Give the rival 1 Acid per other funky or sour card on your board. Oaky cards on your board get +2, including ones played later.' },
+  { id:'gueuze',       name:'Gueuze Blend',      cat:'process', lane:'cold', points:8,  cost:1, tags:['sour','funky','belgian'], desc:'Give the rival 1 Acid per other funky or sour card on your board. Oaky cards on your board get +2, including ones played later.' },
 ];
 
 // ── Default deck composition (30 cards) ──

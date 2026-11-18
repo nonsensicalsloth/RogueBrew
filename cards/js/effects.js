@@ -841,6 +841,7 @@ function applyCardEffect(card, lane, who) {
     case 'coriander': {
       const hasBelgYeast = getLaneCards('cold', who).some(c => c.cat === 'yeast' && c.tags && c.tags.includes('belgian'));
       if (hasBelgYeast) { card.points += 6; addLog('Coriander: Belgian yeast present, +6 pts!', 'player'); }
+      drawFor(who, 1);
       break;
     }
     case 'orangepeel':
@@ -1910,6 +1911,7 @@ function carapilsBonus(c, lane, who) {
 const ONGOING_BONUS = 8;
 const STYRIAN_BONUS = 4;
 const GUEUZE_OAK = 2;
+const ROESELARE_ACID = 2;
 function ongoingBonus(c, lane, who) {
   if (c._locked) return 0;
   if (c.id === 'styrian')    return getLaneCards('cold', who).some(x => x.cat === 'yeast' && x.tags && x.tags.includes('belgian') && !x._heatKilled) ? STYRIAN_BONUS : 0;
@@ -2004,9 +2006,12 @@ function applyTurnEffects(who) {
 
     if (c.id === 'brett') {
       c.points += 3 + heirlooms + (isPlayer && hasRelic('glycol') && state.turn % 2 === 0 ? 1 : 0);
+      // 50% it gets loose; then 50/50 whether it lands in your cellar or drifts over to the rival's
       if (Math.random() < 0.5) {
-        if (isPlayer) addLog('Brettanomyces: +3 pts, and it got loose in the cellar...', 'warn');
-        shuffleIntoRemainingDeck(who, 'contamination');
+        const victim = Math.random() < 0.5 ? who : other(who);
+        shuffleIntoRemainingDeck(victim, 'contamination');
+        if (victim === 'p') addLog('Brettanomyces: +3 pts, and it got loose in your cellar...', 'warn');
+        else if (isPlayer) addLog("Brettanomyces: +3 pts, and it drifted into the rival's cellar!", 'player');
       } else if (isPlayer) {
         addLog('Brettanomyces: +3 pts (accumulating).', 'player');
       }
@@ -2017,7 +2022,7 @@ function applyTurnEffects(who) {
     const chill = isPlayer ? (hasRelic('glycol') && state.turn % 2 === 0 ? 1 : 0)
                            : (state.rivalTrait === 'patience' ? 2 : 0);
     // Roeselare Blend: a slow sour, 1 Acid to the rival each turn
-    if (c.id === 'roeselare') giveAcid(other(who), 1);
+    if (c.id === 'roeselare') giveAcid(other(who), ROESELARE_ACID);
     // Augustiner grows +3 instead of +2 while you have Lagering banked
     const base = c.id === 'heirloom' ? 3 : c.id === 'augustiner' && lagering(who) > 0 ? 3 : c.id === 'trappist' ? 3 : 2;
     const grow = base + (c.id === 'heirloom' ? 0 : heirlooms) + chill;
