@@ -709,6 +709,7 @@ const CARD_ART = {
   // hops that aren't whole cones
   cryo:['pellets', '#6fae3a'], hopoil:['drop', '#c9d94a'], hopthief:['cone', '#8a8a8a', '#5a5a5a'],
   // yeast and bugs
+  irishale:['flask', '#3a2418', '#d9b98a'], scottish:['flask', '#a0522d', '#f0d0a0'], roeselare:['petri', '#a8402a', '#c9e04a'], londonesb:['flask', '#c98a3a', '#fff0d0'],
   brett:['petri', '#c9b458', '#7a5c2e'], pedio:['petri', '#c9e04a', '#6a8f1e'],
   lacto:['rods', '#d8e86a', '#6a8f1e'], sourvisiae:['rods', '#e8e070', '#8a8f1e'], kveik:['flask', '#f08a3c', '#fff6dc'],
   // adjuncts

@@ -1327,6 +1327,35 @@ function applyCardEffect(card, lane, who) {
       if (getRoast(who) === 0) { card.points += 6; addLog('Hallertau Mittelfrüh: no roast, +6 pts!', 'player'); }
       break;
 
+    case 'spalt': {
+      const n = allMine.filter(c => c !== card && c.cat === 'hop' && c.tags && c.tags.includes('noble')).length;
+      card.points += n * 2;
+      addLog(`Spalt: +${n * 2} (${n} other noble hop(s)).`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+
+    case 'hersbrucker': {
+      const n = allMine.filter(c => c !== card && c.tags && c.tags.includes('malty')).length;
+      card.points += n * 2;
+      addLog(`Hersbrucker: +${n * 2} (${n} malty card(s)).`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+
+    case 'perle':
+      if (lane === 'hot') {
+        const n = buffLaneCards('hot', who, 2, c => c !== card && c.cat === 'hop' && c.tags && c.tags.includes('noble'))
+                + buffLaneCards('cold', who, 2, c => c.cat === 'hop' && c.tags && c.tags.includes('noble'));
+        addLog(`Perle: boil addition, +2 to ${n} other noble hop(s).`, isPlayer ? 'player' : 'enemy');
+      }
+      break;
+
+    case 'saphir': {
+      const n = lagering(who);
+      card.points += n * 2;
+      addLog(`Saphir: +${n * 2} (${n} Lagering banked).`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+
     case 'tettnang': {
       const crisp = countTag('crisp', who);
       card.points += crisp * 2;
@@ -1497,7 +1526,53 @@ function applyCardEffect(card, lane, who) {
       const n = buffLaneCards('cold', who, 4, c => c.cat === 'hop');
       const hazy = countTag('hazy', who) - 1; // don't count itself
       card.points += hazy * 2;
-      addLog(`London Ale III: biotransformed ${n} cold side hop(s) +3, +${hazy * 2} from hazy cards.`, 'player');
+      addLog(`London Ale III: biotransformed ${n} cold side hop(s) +4, +${hazy * 2} from hazy cards.`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+
+    case 'irishale': {
+      const n = allMine.filter(c => c !== card && c.tags && c.tags.includes('roasty')).length;
+      card.points += n;
+      const lim = raiseRoastThreshold(who, 1);
+      addLog(`Irish Ale: +${n} (${n} roasty card(s)), roast limit → ${lim}.`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+
+    case 'londonesb': {
+      const n = allMine.filter(c => c !== card && c.tags && c.tags.includes('sweet')).length;
+      card.points += n * 2;
+      addLog(`London ESB: +${n * 2} (${n} sweet card(s)).`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+
+    case 'vermont': {
+      // the +2 to tropical hops on the cold side is ongoing: see vermontBonus()
+      const n = allMine.filter(c => c !== card && c.tags && c.tags.includes('tropical')).length;
+      card.points += n * 2;
+      addLog(`Vermont Ale: +${n * 2} (${n} tropical card(s)); tropical hops on your cold side get +2.`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+
+    // Mexican Lager: ongoing, see ongoingBonus()
+
+    case 'scottish': {
+      const n = getLaneCards('hot', who).filter(c => c.tags && c.tags.includes('toasty')).length;
+      card.points += n * 3;
+      addLog(`Scottish Ale: +${n * 3} (${n} toasty card(s) on your hot side).`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+
+    case 'belgianwit': {
+      const n = allMine.filter(c => c !== card && c.cat === 'adjunct' && c.tags && ['bready', 'citrus', 'spicy'].some(t => c.tags.includes(t))).length;
+      card.points += n * 2;
+      addLog(`Belgian Wit: +${n * 2} (${n} bready, citrus or spicy adjunct(s)).`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+
+    case 'augustiner': {
+      const n = allMine.filter(c => c !== card && isCrisp(c)).length;
+      card.points += n * 2;
+      addLog(`Augustiner Lager: +${n * 2} (${n} crisp card(s)). Grows faster while you have Lagering.`, isPlayer ? 'player' : 'enemy');
       break;
     }
 
@@ -1761,6 +1836,8 @@ function ongoingBonus(c, lane, who) {
   if (c._locked) return 0;
   if (c.id === 'marisotter') return getLaneCards('hot', who).filter(x => x !== c && isDarkOrCrystal(x)).length >= 2 ? ONGOING_BONUS : 0;
   if (c.id === 'cherry')     return getLaneCards('hot', who).filter(x => x !== c && x.cat === 'malt' && x.tags && x.tags.includes('roasty')).length >= 2 ? ONGOING_BONUS : 0;
+  if (c.tags && c.tags.includes('oaky')) { const r = getAllOnField(who).filter(x => x.id === 'roeselare' && !x._heatKilled).length; if (r) return r * 3; }
+  if (c.id === 'mexlager')   return getAllOnField(who).filter(x => x !== c && (x.id === 'flakedcorn' || x.id === 'flakedrice' || (x.tags && x.tags.includes('neutral')))).length * 3;
   return 0;
 }
 
@@ -1768,8 +1845,15 @@ function ongoingBonus(c, lane, who) {
 function playedThisRound(who) { return (state.cardsThisRound && state.cardsThisRound[who]) || 0; }
 function maltsThisRound(who)  { return (state.maltsThisRound && state.maltsThisRound[who]) || 0; }
 
+// Vermont Ale: tropical hops on your cold side get +2 per Vermont there, including ones played later
+const VERMONT_BONUS = 2;
+function vermontBonus(c, lane, who) {
+  if (lane !== 'cold' || c.cat !== 'hop' || c._locked || !(c.tags && c.tags.includes('tropical'))) return 0;
+  return getLaneCards('cold', who).filter(x => x.id === 'vermont' && !x._heatKilled).length * VERMONT_BONUS;
+}
+
 function effectivePoints(c, lane, who) {
-  const roast = roastBonus(c, who) + carapilsBonus(c, lane, who) + twoRowBonus(c, lane, who) + ongoingBonus(c, lane, who);
+  const roast = roastBonus(c, who) + carapilsBonus(c, lane, who) + twoRowBonus(c, lane, who) + ongoingBonus(c, lane, who) + vermontBonus(c, lane, who);
   const m = synergyMultiplier(c, lane, who);
   if (m === 1) return rulePoints(c, c.points + roast);
   const base = Math.max(0, Math.min(printedPoints(c), c.points));
@@ -1817,7 +1901,11 @@ function applyTurnEffects(who) {
     // Glycol Chiller: +1 extra on even turns
     const chill = isPlayer ? (hasRelic('glycol') && state.turn % 2 === 0 ? 1 : 0)
                            : (state.rivalTrait === 'patience' ? 2 : 0);
-    const grow = (c.id === 'heirloom' ? 3 : 2 + heirlooms) + chill;
+    // Roeselare Blend: a slow sour, 1 Acid to the rival each turn
+    if (c.id === 'roeselare') giveAcid(other(who), 1);
+    // Augustiner grows +3 instead of +2 while you have Lagering banked
+    const base = c.id === 'heirloom' ? 3 : c.id === 'augustiner' && lagering(who) > 0 ? 3 : 2;
+    const grow = base + (c.id === 'heirloom' ? 0 : heirlooms) + chill;
     c.points += grow;
     if (isPlayer) addLog(`${c.name}: +${grow} pts (accumulating).`, 'player');
   });

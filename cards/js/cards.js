@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'sour restored (Nov 17)';
+const CARDS_VERSION = 'noble hops + yeasts (Nov 17)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -154,6 +154,10 @@ const CARD_POOL = [
   { id:'saaz',       name:'Saaz',               cat:'hop', lane:'both', points:8,  cost:1, tags:['spicy','earthy','noble'],        desc:'+8 if a Pilsner malt is on your hot side.' },
   { id:'hallertau',  name:'Hallertau Mittelfrüh',cat:'hop', lane:'both', points:8, cost:1, tags:['floral','spicy','noble'],        desc:'+6 if you have no roast tokens.' },
   { id:'tettnang',   name:'Tettnang',           cat:'hop', lane:'both', points:8,  cost:1, tags:['floral','earthy','noble'],        desc:'+2 for each crisp card on your board.' },
+  { id:'spalt',      name:'Spalt',              cat:'hop', lane:'both', points:8,  cost:1, tags:['spicy','floral','noble'],        desc:'+2 for each other noble hop on your board.' },
+  { id:'hersbrucker',name:'Hersbrucker',        cat:'hop', lane:'both', points:8,  cost:1, tags:['floral','spicy','noble'],        desc:'+2 for each malty card on your board.' },
+  { id:'perle',      name:'Perle',              cat:'hop', lane:'both', points:14, cost:2, tags:['bitter','spicy','noble'],        desc:'Boil (hot side): every other noble hop on your board gets +2.' },
+  { id:'saphir',     name:'Saphir',             cat:'hop', lane:'both', points:8,  cost:1, tags:['floral','citrus','noble'],       desc:'+2 for each Lagering you have banked (it stays banked).' },
   { id:'hallblanc',  name:'Hallertau Blanc',    cat:'hop', lane:'both', points:14, cost:2, tags:['fruity','tropical','citrus'],       desc:'+3 for each noble hop on your board. Dry hop (cold side): +4.' },
   { id:'ekg',        name:'East Kent Goldings', cat:'hop', lane:'both', points:14, cost:2, tags:['earthy','floral','spicy'],             desc:'+3 for each biscuity card on your board.' },
 
@@ -217,6 +221,15 @@ const CARD_POOL = [
   // Engineered strains
   { id:'sourvisiae', name:'Sourvisiae',         cat:'yeast', lane:'cold', points:6,  cost:2, tags:['sour','crisp','clean'],       desc:'+2 per turn. On play: give the rival 2 Acid. +2 per fruity or tropical card on your board.' },
   { id:'cosmicpunch',name:'Cosmic Punch',       cat:'yeast', lane:'cold', points:6,  cost:2, tags:['fruity','hazy','thiol'],      desc:'+2 per turn. On play: +2 per hop on your cold side. Thiol release: every thiol card on your board gets +6 (Phantasm +8), including ones played later.' },
+  // Real strains that fill gaps: stout, sweet/dessert, hazy tropical, adjunct lager, Lagering
+  { id:'irishale',   name:'Irish Ale',          cat:'yeast', lane:'cold', points:6,  cost:2, tags:['smooth','clean'],             desc:'+2 per turn. On play: +1 per roasty card on your board. Raises your roast limit by 1.' },
+  { id:'londonesb',  name:'London ESB',         cat:'yeast', lane:'cold', points:6,  cost:2, tags:['malty','fruity'],             desc:'+2 per turn. On play: +2 per sweet card on your board.' },
+  { id:'vermont',    name:'Vermont Ale',        cat:'yeast', lane:'cold', points:6,  cost:2, tags:['hazy','fruity'],              desc:'+2 per turn. On play: +2 per tropical card. Tropical hops on your cold side get +2, including ones played later.' },
+  { id:'mexlager',   name:'Mexican Lager',      cat:'yeast', lane:'cold', points:6,  cost:2, tags:['crisp','clean'],              desc:'+2 per turn. +3 for each Flaked Corn, Flaked Rice or neutral card on your board, including ones played later.' },
+  { id:'augustiner', name:'Augustiner Lager',   cat:'yeast', lane:'cold', points:6,  cost:2, tags:['crisp','clean','malty'],      desc:'Grows +3 per turn instead of +2 while you have Lagering banked. On play: +2 per crisp card.' },
+  { id:'scottish',   name:'Scottish Ale',       cat:'yeast', lane:'cold', points:6,  cost:2, tags:['malty','smooth'],             desc:'+2 per turn. On play: +3 per toasty card on your hot side.' },
+  { id:'belgianwit', name:'Belgian Wit',        cat:'yeast', lane:'cold', points:6,  cost:2, tags:['spicy','hazy','belgian'],     desc:'+2 per turn. On play: +2 per bready, citrus or spicy adjunct on your board.' },
+  { id:'roeselare',  name:'Roeselare Blend',    cat:'yeast', lane:'cold', points:6,  cost:2, tags:['sour','funky'],               desc:'+2 per turn. Each turn, give the rival 1 Acid. Oaky cards on your board get +3.' },
 
   // ══════════════════════════════════════════════════════════════
   // ── FLAVOUR PAYOFFS ── cards that reward the less-used tags
@@ -254,7 +267,7 @@ const RARE_CARDS = [
   'crystal75','crystal80','crystal120','coffee','aromatic','melanoidin','biscuit','victory','blackmalt',
   'heritage','spelt','buckwheat',
   'award','doublebatch','inspector','barreltrans',
-  'oakfoeder','solera','lacticacid',
+  'oakfoeder','solera','lacticacid','roeselare',
 ];
 const UNCOMMON_CARDS = [
   'floorpilsner','darkmunich','expwheat','expilsner','crystal50','crystal60','specialb','carafaIII',
@@ -263,6 +276,7 @@ const UNCOMMON_CARDS = [
   'filtration','heatkill','recipetweak','hopthief','crosscontam','badbatch','dryhop','kettletrans','fermlog',
   'hallblanc','strata','talus','nectaron','cryo','hopoil',
   'london3','barbarian','abbey','brett','sourvisiae','pedio','kettlesour',
+  'irishale','vermont','augustiner','perle','saphir','belgianwit',
   'summit','brutenzyme','yeastnutrient','peatmalt','yeastharvest','secondrunnings',
 ];
 const RARITY_NAMES = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', legendary: 'Legendary' };
