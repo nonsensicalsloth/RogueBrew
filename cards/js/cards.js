@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'sour + tweak pass (Nov 17)';
+const CARDS_VERSION = 'sour restored (Nov 17)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -120,7 +120,7 @@ const CARD_POOL = [
   { id:'fining',       name:'Fining Agent',      cat:'process', lane:'both',  points:0,  cost:1, tags:[],  desc:'Remove one negative token from your board. Every yeast on your cold side gets +2. Draw 1.' },
   { id:'coldcrash',    name:'Cold Crash',        cat:'process', lane:'cold', points:3,  cost:1, tags:[],   desc:'Add 3 Lagering.' },
   { id:'kettlesour',   name:'Kettle Sour',       cat:'process', lane:'hot', points:4,  cost:2, tags:[],   desc:'Give the rival 5 Acid.' },
-  { id:'lacticacid',   name:'Lactic Acid',       cat:'process', lane:'both', points:0,  cost:1, tags:[],   desc:"Give the rival 3 Acid." },
+  { id:'lacticacid',   name:'Lactic Acid',       cat:'process', lane:'both', points:0,  cost:1, tags:[],   desc:"Double the rival's Acid." },
 
   // Disruption (enemy side)
   { id:'drunkcellar',  name:'Drunk Cellarman',   cat:'process', lane:'cold', points:0,  cost:1, tags:[],           desc:'Gives the rival +8 on their cold side, but you draw 3 cards.' },
@@ -211,7 +211,7 @@ const CARD_POOL = [
 
   // Wild & sour
   { id:'brett',      name:'Brettanomyces',      cat:'yeast', lane:'cold', points:6,  cost:2, tags:['funky','dry'],                desc:'+3 per turn. On play: +3 per sweet card on your hot side. Each turn, 50% chance to shuffle Contamination into your deck.' },
-  { id:'lacto',      name:'Lactobacillus',      cat:'yeast', lane:'cold', points:6,  cost:1, tags:['sour','crisp'],               desc:'+2 per turn. On play: give the rival 3 Acid, minus 1 for each hop on your hot side.' },
+  { id:'lacto',      name:'Lactobacillus',      cat:'yeast', lane:'cold', points:6,  cost:1, tags:['sour','crisp'],               desc:'+2 per turn. On play: give the rival 4 Acid, minus 1 for each hop on your hot side.' },
   { id:'pedio',      name:'Pediococcus',        cat:'yeast', lane:'cold', points:4,  cost:2, tags:['sour','funky'],               desc:'+2 per turn. On play: eat a fruit on your board. This gets 1.5× its points. Give the rival 2 Acid.' },
 
   // Engineered strains

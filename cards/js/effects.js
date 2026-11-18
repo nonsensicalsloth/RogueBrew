@@ -569,9 +569,12 @@ function applyCardEffect(card, lane, who) {
       break;
     }
     case 'kettlesour': giveAcid(other(who), 5); break;
-    case 'lacticacid':
-      giveAcid(other(who), 3);
+    case 'lacticacid': {
+      const a = acidOn(other(who));
+      if (a > 0) giveAcid(other(who), a);
+      else addLog('Lactic Acid: no Acid to double yet.', 'sys');
       break;
+    }
     case 'pedio':
       giveAcid(other(who), 2);
       startCardTargeting('pedio', card, who);
@@ -1575,7 +1578,7 @@ function applyCardEffect(card, lane, who) {
     case 'lacto': {
       // Hops hold Lactobacillus back
       const hotHops = getLaneCards('hot', who).filter(c => c.cat === 'hop').length;
-      const acid    = Math.max(0, 3 - hotHops);
+      const acid    = Math.max(0, 4 - hotHops);
       if (acid) giveAcid(other(who), acid);
       else addLog('Lactobacillus: too many hops, no Acid.', 'warn');
       break;
