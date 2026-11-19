@@ -1918,10 +1918,12 @@ function carapilsBonus(c, lane, who) {
 // Cards whose bonus is on while a condition holds (so playing order doesn't matter)
 const ONGOING_BONUS = 8;
 const STYRIAN_BONUS = 4;
+const BRETT_FUNK = 2;   // Brettanomyces: +2 per other funky card on your board, always
 const GUEUZE_OAK = 2;
 const ROESELARE_ACID = 2;
 function ongoingBonus(c, lane, who) {
   if (c._locked) return 0;
+  if (c.id === 'brett' && !c._heatKilled) return getAllOnField(who).filter(x => x !== c && x.cat !== 'token' && x.tags && x.tags.includes('funky')).length * BRETT_FUNK;
   if (c.id === 'styrian')    return getLaneCards('cold', who).some(x => x.cat === 'yeast' && x.tags && x.tags.includes('belgian') && !x._heatKilled) ? STYRIAN_BONUS : 0;
   if (c.id === 'marisotter') return getLaneCards('hot', who).filter(x => x !== c && isDarkOrCrystal(x)).length >= 2 ? ONGOING_BONUS : 0;
   if (c.id === 'cherry')     return getLaneCards('hot', who).filter(x => x !== c && x.cat === 'malt' && x.tags && x.tags.includes('roasty')).length >= 2 ? ONGOING_BONUS : 0;
