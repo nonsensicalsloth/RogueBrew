@@ -29,7 +29,16 @@
     <button class="btn btn-gold"    onclick="showDeckManager('play')">▶ START GAME</button>
     <button class="btn btn-primary" onclick="showDeckManager('build')">🃏 BUILD DECK</button>
     <button class="btn btn-primary" onclick="showHowTo(0)">📖 HOW TO PLAY</button>
+    <button class="btn btn-primary" onclick="showAchievements()">🏆 ACHIEVEMENTS</button>
   </div>
+</div>
+
+<!-- ===== ACHIEVEMENTS ===== -->
+<div id="achievements-screen" class="screen">
+  <div class="scr-head ach-head"><div><h1>🏆 ACHIEVEMENTS</h1><div class="scr-sub" id="ach-count"></div></div></div>
+  <div id="ach-playtest" class="ach-playtest">Playtest mode is on, so no new achievements can be earned until you turn it off in Build Deck.</div>
+  <div id="ach-shelf" class="ach-shelf"></div>
+  <div class="scr-foot"><button class="btn btn-primary" onclick="showTitleScreen()">← MAIN MENU</button></div>
 </div>
 
 <!-- ===== HOW TO PLAY ===== -->
@@ -360,6 +369,7 @@
 <!-- Scripts — order matters -->
 <script src="js/art.js"></script>
 <script src="js/tips.js"></script>
+<script src="js/achievements.js"></script>
 <script src="js/cards.js"></script>
 <script src="js/map.js"></script>
 <script src="js/events.js"></script>

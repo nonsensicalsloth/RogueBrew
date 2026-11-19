@@ -77,6 +77,7 @@ function recordRun(won) {
   p.history.unshift({ won, brewery: brew, level: bmLevel(), act: mapState.act + 1, deck: draftState.deck.length, best: s.bestScore, at: Date.now() });
   p.history = p.history.slice(0, 10);
   saveProfile(p);
+  if (typeof achRunEnd === 'function') achRunEnd(won, p, bmLevel());
   return BREWERIES.filter(b => isBreweryUnlocked(b) && !before.includes(b.id));
 }
 

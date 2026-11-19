@@ -364,6 +364,7 @@ const CARD_TARGETS = {
       const back = returnToHand(t.c, t.lane, who);
       back.points = built;                                      // keeps what it has grown so far
       back._freeKey = `${state.round}:${state.turn}`;          // re-pitch it for free this turn
+      if (who === 'p' && built >= 25 && typeof unlockAch === 'function') unlockAch('repitch');
       addLog(`Filtration: ${t.c.name} back in hand with its ${built} pts. Pitch it again for free to trigger it again.`, who === 'p' ? 'player' : 'enemy');
     },
   },
@@ -1880,6 +1881,7 @@ function giveAcid(victim, n) {
   if (state.disaster && victim === 'e') { addTartness(n); return; }
   state.acid = state.acid || { p: 0, e: 0 };
   state.acid[victim] += n;
+  if (victim === 'e' && typeof achAcidGiven === 'function') achAcidGiven(n);
   addLog(`🍋 ${victim === 'e' ? 'Rival' : 'You'} +${n} Acid (now ${state.acid[victim]}).`, victim === 'e' ? 'player' : 'enemy');
 }
 
@@ -2018,7 +2020,7 @@ function applyTurnEffects(who) {
         const victim = Math.random() < 0.5 ? who : other(who);
         shuffleIntoRemainingDeck(victim, 'contamination');
         if (victim === 'p') addLog('Brettanomyces: +3 pts, and it got loose in your cellar...', 'warn');
-        else if (isPlayer) addLog("Brettanomyces: +3 pts, and it drifted into the rival's cellar!", 'player');
+        else if (isPlayer) { state._brettSpread = true; addLog("Brettanomyces: +3 pts, and it drifted into the rival's cellar!", 'player'); }
       } else if (isPlayer) {
         addLog('Brettanomyces: +3 pts (accumulating).', 'player');
       }

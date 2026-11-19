@@ -183,6 +183,7 @@ function labPropagate(idx) {
   const c = draftState.deck[idx];
   if (!c || c.cat !== 'yeast' || c._propagated || NO_PROPAGATE.includes(c.id)) return;
   draftState.deck[idx] = refreshRunCard({ ...c, _propagated: true });
+  achLabUsed('prop');
   finishSpecial(`🧫 ${c.name} is propagated: it grows +${PROP_GROWTH} more per turn for the rest of the run.`);
 }
 
@@ -212,6 +213,7 @@ function labPanelTag(idx, tag) {
   const c = draftState.deck[idx];
   if (!c || c._panelTag || c.tags.includes(tag)) return;
   draftState.deck[idx] = refreshRunCard({ ...c, _panelTag: tag });
+  achLabUsed('panel');
   finishSpecial(`👃 The panel picks up ${tag} notes in ${c.name}. It now counts as ${tag} for the rest of the run.`);
 }
 
@@ -241,6 +243,7 @@ function labRework(i) {
   const old = draftState.deck[labState.idx], neu = labState.options[i];
   if (!old || !neu) return;
   draftState.deck.splice(labState.idx, 1, neu);
+  achLabUsed('rework');
   labState = { idx: null, options: [] };
   finishSpecial(`🔁 ${old.name} was reworked into ${neu.name}.`);
 }

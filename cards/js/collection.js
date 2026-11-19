@@ -35,6 +35,7 @@ function unlockCard(id) {
   const col = loadCollection();
   col.unlocked.push(id);
   saveCollection(col);
+  if (typeof achCollectionCheck === 'function') achCollectionCheck();
   return true;
 }
 

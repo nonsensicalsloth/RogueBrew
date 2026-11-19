@@ -1103,6 +1103,7 @@ function applyBattleWinCards() {
 }
 
 function onBattleWin(node) {
+  if (typeof achBattleWon === 'function') achBattleWon();
   // Gold reward scaled to rival size
   const goldReward = Math.floor(node.rivalSize * 2 + Math.random() * 20);
   mapState.gold += goldReward;

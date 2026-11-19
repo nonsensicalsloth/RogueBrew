@@ -121,6 +121,7 @@ function resolvePlay(c, lane, who) {
   if (who === 'e' && c.cat === 'hop' && state.rivalTrait === 'juicebomb') c.points += 3;
 
 
+  const achB = who === 'p' && typeof achBeforePlay === 'function' ? achBeforePlay() : null;
   consumeLagering(c, who);
   applyCardEffect(c, lane, who);
   if (c.tags && c.tags.includes('sticky') && lane === 'hot') checkStuckMash(who);
@@ -157,6 +158,7 @@ function resolvePlay(c, lane, who) {
     if (c.cat === 'malt') state.maltsThisRound[who]++;
     phillyFollowUp(c, who);
   }
+  if (achB) achAfterPlay(c, lane, achB);
 
   checkContaminationInHand(who);
 }
