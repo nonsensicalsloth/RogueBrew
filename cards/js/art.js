@@ -739,7 +739,7 @@ const CARD_ART = {
   grainreview:['clipboard', '#c8a165'], fermlog:['clipboard', '#90a4ae'], grainout:['shovel', '#b0bec5'], trubdump:['valve', '#b0bec5', '#8a6a3c'],
   yeastharvest:['flask', '#e9d29a', '#fff6dc'], secondrunnings:['kettle', '#c98a3a'], coolship:['kettle', '#c87533'], masterblend:['glass', '#c0392b'],
   // tokens
-  contamination:['bug', '#7cb342', '#33691e'], contam_soft:['bug', '#a5c88a', '#5a7a3a'], crowd_fav:['mug'],
+  contamination:['bug', '#7cb342', '#33691e'], contam_soft:['bug', '#a5c88a', '#5a7a3a'], contam_tamed:['bug', '#d8e8c8', '#8a9a7a'], crowd_fav:['mug'],
   tartness:['drop', '#e8e04a'], acidburn:['drop', '#c6ff00'], mishap:['valve', '#b0bec5', '#e53935'], stuckmash:['flakes', '#8a6a3c'],
 };
 const CAT_ART = { malt:'kernel', hop:'cone', yeast:'flask', adjunct:'sugar', process:'clipboard', token:'bug' };

@@ -45,7 +45,11 @@ const BRITE_TANK_LAGER = 2;
 const PH_METER_BONUS   = 2;
 
 function getRelic(id) {
-  return RELICS.find(r => r.id === id);
+  const r = RELICS.find(r => r.id === id);
+  // The microscope does more for the Wild Cellar, which already softens Contamination on its own
+  if (r && id === 'microscope' && typeof runBrewery === 'function' && runBrewery() === 'wildcellar')
+    return { ...r, desc: 'Wild Cellar bonus: Contamination that lands on your board is tamed to 0 and fizzles out.' };
+  return r;
 }
 
 // Relics only apply during map runs (not practice games)
@@ -76,7 +80,7 @@ let relicOffer = [];
 function showRelicChoice(goldReward) {
   pendingRelicGold = goldReward;
   const owned = mapState.relics || [];
-  relicOffer = shuffle(RELICS.filter(r => !owned.includes(r.id))).slice(0, 3);   // bosses can offer boss-only equipment
+  relicOffer = shuffle(RELICS.filter(r => !owned.includes(r.id))).slice(0, 3).map(r => getRelic(r.id));   // bosses can offer boss-only equipment
   if (relicOffer.length === 0) { showActTransition(goldReward); return; }
 
   setScreen('relic-screen');

@@ -160,6 +160,8 @@ function resolvePlay(c, lane, who) {
   }
   if (achB) achAfterPlay(c, lane, achB);
 
+  // Tamed Contamination fizzles out instead of taking up space
+  if (c.id === 'contam_tamed') LANES.forEach(l => { state.field[l][who] = state.field[l][who].filter(x => x !== c); });
   checkContaminationInHand(who);
 }
 

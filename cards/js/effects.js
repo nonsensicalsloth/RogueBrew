@@ -2052,12 +2052,17 @@ function softenContamination(c, who) {
   const tool = who === 'p' && hasRelic('microscope') ? 'Lab Microscope'
              : who === 'p' && activeBrewery() === 'wildcellar' ? 'Wild Cellar' : null;
   if (!tool) return c;
+  // Both together: the Wild Cellar's house culture plus the microscope tame it completely
+  if (who === 'p' && hasRelic('microscope') && activeBrewery() === 'wildcellar') {
+    addLog('Wild Cellar + Lab Microscope: the Contamination is tamed and fizzles out.', 'player');
+    return createToken('contam_tamed');
+  }
   addLog(`${tool}: the Contamination is caught early, softened to −5.`, 'player');
   return createToken('contam_soft');
 }
 
 function isContamination(c) {
-  return c && (c.id === 'contamination' || c.id === 'contam_soft');
+  return c && (c.id === 'contamination' || c.id === 'contam_soft' || c.id === 'contam_tamed');
 }
 
 // The player must pour Contamination from their hand before doing anything else
