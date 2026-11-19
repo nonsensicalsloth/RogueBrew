@@ -269,3 +269,150 @@ function pickMapEvent() {
   mapState.seenEvents.push(ev.title);
   return ev;
 }
+
+// ═════════════ Wild Cellar: a wild option for every event ═════════════
+// Each event gets its own on-theme gamble or trade. Keyed by the event title without its icon.
+
+const WILD_CARDS      = ['brett', 'pedio', 'lacto', 'sourvisiae', 'roeselare', 'gueuze'];
+const WILD_RARE_CARDS = ['brett', 'roeselare', 'gueuze'];
+const coin = (p = 0.5) => Math.random() < p;
+
+// Wild touches stick to the card for the run (saved via refreshRunCard)
+function wildTouch(c, tags, pts) {
+  c._wildTags = c._wildTags || [];
+  (tags || []).forEach(t => { if (!c.tags.includes(t)) { c.tags = [...c.tags, t]; c._wildTags.push(t); } });
+  if (pts) { c.points += pts; c._wildBonus = (c._wildBonus || 0) + pts; }
+  return c;
+}
+// Contamination from a wild option is shuffled into your NEXT battle only
+function wildContaminate(n = 1) {
+  mapState.pendingContam = (mapState.pendingContam || 0) + n;
+  return `A Contamination will creep into your next battle.`;
+}
+function addWildCard(ids) {
+  const pick = shuffle(ids.filter(id => getCardDef(id) && copiesInDeck(id) < MAX_COPIES));
+  for (const id of pick) { const n = addCardToDeck(id); if (n) return n; }
+  return null;
+}
+const deckHas = f => draftState.deck.some(f);
+const pickDeck = f => { const i = randomDeckIndex(f); return i >= 0 ? draftState.deck[i] : null; };
+
+const WILD_EVENT_OPTIONS = {
+  'Mystery Grain Delivery': {
+    label: '🦠 Spontaneously ferment it (50%: a random wild card · 50%: Contamination in your next battle)',
+    action: () => { if (coin()) { const n = addWildCard(WILD_RARE_CARDS); if (n) return `Something wonderful moved in. ${n} added to your deck!`; }
+      return `It smells... off. ${wildContaminate()}`; } },
+  'Hop Shortage': {
+    label: '🦠 Use the aged hops in the attic (a hop of your choice gains funky and +6)',
+    can: () => deckHas(c => c.cat === 'hop'),
+    picker: () => showEventDeckPicker('Which hop gets the aged-hop treatment?', c => c.cat === 'hop', 'wildAgedHop', 'funky +6') },
+  'Brewery Inspection': {
+    label: '🦠 Show them the coolship (50%: +10 Reputation, +20 gold · 50%: lose a random card, −5 Reputation)',
+    action: () => { if (coin()) { mapState.gold += 20; return `The inspector is fascinated and asks for a tour. +20 gold. ${gainRep(10)}`; }
+      if (canRemoveCard()) { const [c] = draftState.deck.splice(randomDeckIndex(() => true), 1); return `"Open fermentation? Absolutely not." ${c.name} is confiscated. ${loseRep(5)}`; }
+      return `"Open fermentation? Absolutely not." ${loseRep(5)}`; } },
+  'Fermentation Festival': {
+    label: '🦠 Enter a spontaneous ale (50%: +50 gold and a random wild card · 50%: −8 Reputation)',
+    action: () => { if (coin()) { mapState.gold += 50; const n = addWildCard(WILD_CARDS); return `Best in show! +50 gold${n ? ` and ${n} for your deck` : ''}.`; }
+      return `The judges called it "challenging." ${loseRep(8)}`; } },
+  'Bulk Grain Deal': {
+    label: '🦠 Take the rained-on sacks (2 free base malts with the funky tag · 50%: Contamination in your next battle)',
+    can: () => draftState.deck.length < MAX_DECK_SIZE,
+    action: () => {
+      const got = randomCardsWhere(c => c.cat === 'malt' && c.tags.includes('neutral') || ['2row','pilsner','paleale','marisotter','6row'].includes(c.id), 2)
+        .map(c => { const n = addCardToDeck(c.id); if (n) wildTouch(draftState.deck[draftState.deck.length - 1], ['funky'], 0); return n; }).filter(Boolean);
+      const bad = coin() ? ` ${wildContaminate()}` : '';
+      return `${got.length ? `Free malt: ${got.join(' and ')}, a little funky.` : 'No room for them.'}${bad}`; } },
+  'Glycol Chiller Breakdown': {
+    label: '🦠 Let it free-rise warm (a random yeast becomes Brett or Roeselare · −5 Reputation)',
+    can: () => deckHas(c => c.cat === 'yeast' && !['brett', 'roeselare'].includes(c.id)),
+    action: () => {
+      const i = randomDeckIndex(c => c.cat === 'yeast' && !['brett', 'roeselare'].includes(c.id));
+      const old = draftState.deck[i].name, id = coin() ? 'brett' : 'roeselare';
+      draftState.deck.splice(i, 1, { ...getCardDef(id), tags: [...getCardDef(id).tags] });
+      return `The tanks got warm and wild. ${old} turned into ${getCardDef(id).name}. ${loseRep(5)}`; } },
+  'A Beer Judge Drops By': {
+    label: '🦠 Pour them your sour experiment (50%: upgrade 2 random cards, +5 Reputation · 50%: −10 Reputation)',
+    action: () => { if (coin()) { const ups = [];
+        for (let k = 0; k < 2; k++) { const c = pickDeck(c => !c._upgraded); if (c) { upgradeDeckCard(c); ups.push(c.name); } }
+        return `"Now THIS is interesting." ${ups.length ? `Upgraded ${ups.join(' and ')}. ` : ''}${gainRep(5)}`; }
+      return `They make a face and leave half the glass. ${loseRep(10)}`; } },
+  'Hop Farm Tour': {
+    label: '🦠 Forage the wild hedgerow (choose 1 of 3 hops with funky and +3 · 25%: Contamination in your next battle)',
+    can: () => draftState.deck.length < MAX_DECK_SIZE,
+    picker: () => showEventCardOffer('Pick a wild hop from the hedgerow:', randomCardsWhere(c => c.cat === 'hop', 3), 'wildPickHedgeHop') },
+  'Contract Brewing Offer': {
+    label: '🦠 Sneak your house culture in (50%: +80 gold · 50%: no pay, −10 Reputation)',
+    action: () => coin() ? (mapState.gold += 80, 'They loved the "accident" and paid a bonus. +80 gold!')
+                         : `Their light lager came out sour. No pay. ${loseRep(10)}` },
+  'A Homebrewer Asks for Advice': {
+    label: '🦠 Trade cultures (gain Brett, Pediococcus, Lactobacillus or Sourvisiae; give them a card)',
+    can: () => canRemoveCard(),
+    picker: () => showEventDeckPicker('What do you give them in return?', () => true, 'wildTradeCultures', 'trade') },
+  'Power Outage': {
+    label: '🦠 Open the windows to the night air (50%: a random card gains funky and +5 · 50%: Contamination in your next battle)',
+    action: () => { const c = coin() && pickDeck(c => c.cat !== 'token');
+      if (c) { wildTouch(c, ['funky'], 5); return `Wild microbes drifted in and settled into ${c.name}: funky, +5.`; }
+      return `Something drifted in that you didn't want. ${wildContaminate()}`; } },
+  'Wrong Tri-Clamp': {
+    label: '🦠 Blend the spill into the solera (50%: a random oaky or sour card gets +8 · 50%: lose a random yeast)',
+    action: () => { const c = coin() && pickDeck(c => c.tags.includes('oaky') || c.tags.includes('sour'));
+      if (c) { wildTouch(c, [], 8); return `The blend came out beautiful. ${c.name} gets +8.`; }
+      if (canRemoveCard() && deckHas(c => c.cat === 'yeast')) { const [y] = draftState.deck.splice(randomDeckIndex(c => c.cat === 'yeast'), 1); return `The solera rejected it. ${y.name} is lost.`; }
+      return 'The blend went nowhere, but nothing was lost.'; } },
+  'Release Party': {
+    label: '🦠 Pour the funky stuff (50%: +15 Reputation, +20 gold · 50%: −6 Reputation)',
+    action: () => coin() ? (mapState.gold += 20, `The sour fans showed up in force. +20 gold. ${gainRep(15)}`)
+                         : `Half the crowd wanted a lager. ${loseRep(6)}` },
+  'A Mysterious Yeast Vial': {
+    label: '🦠 Pitch it into a barrel (a random wild yeast, barrel-aged; it sits out 3 stops)',
+    can: () => draftState.deck.length < MAX_DECK_SIZE,
+    action: () => {
+      const id = shuffle(['brett', 'roeselare', 'pedio'])[0];
+      const c = { ...getCardDef(id), tags: [...getCardDef(id).tags] };
+      c._barrelReturn = (mapState.nodeCount || 0) + BARREL_STOPS + 1;
+      mapState.barrel = mapState.barrel || []; mapState.barrel.push(c);
+      return `You pitch the vial into an oak barrel. It turns out to be ${c.name}. Back in ${BARREL_STOPS} stops, barrel-aged.`; } },
+  'Grain Mill Malfunction': {
+    label: '🦠 Turbid mash it, lambic style (50%: 2 random malts gain funky and +4 · 50%: −6 Reputation)',
+    action: () => { if (coin()) { const got = [];
+        for (let k = 0; k < 2; k++) { const c = pickDeck(c => c.cat === 'malt' && !got.includes(c)); if (c) { wildTouch(c, ['funky'], 4); got.push(c); } }
+        return got.length ? `Cloudy, starchy and perfect for a lambic. ${got.map(c => c.name).join(' and ')} gain funky, +4.` : 'No malts to mash.'; }
+      return `It just made a mess. ${loseRep(6)}`; } },
+  'Regional Competition Results': {
+    label: '🦠 Re-enter in the wild category (50%: +20 Reputation, +50 gold · 50%: nothing)',
+    action: () => coin() ? (mapState.gold += 50, `Gold in Wild Ale! +50 gold. ${gainRep(20)}`) : 'No placing this time. At least you tried.' },
+  "A Retired Brewer's Notebook": {
+    label: '🦠 Read the stained pages (a card of your choice gains sour, funky and +6 · 25%: a random card gets it instead)',
+    picker: () => showEventDeckPicker('Which recipe do the stained pages describe?', c => c.cat !== 'token', 'wildNotebook', 'sour funky +6') },
+  'Barrel Broker': {
+    get label() { return `🦠 Fill it with your house culture (−40 gold: barrel a card. Back in ${BARREL_STOPS} stops with +16, oaky and funky · 25%: only +5)`; },
+    can: () => mapState.gold >= 40 && canRemoveCard(),
+    picker: () => { mapState.barrelBroker = true; mapState.barrelCulture = true; showBarrelRoom(); } },
+};
+
+function wildAgedHop(idx) {
+  const c = draftState.deck[idx]; if (!c || c.cat !== 'hop') return;
+  wildTouch(c, ['funky'], 6);
+  finishEvent(`Cheesy, aged and perfect for a lambic. ${c.name} gains funky, +6.`);
+}
+function wildPickHedgeHop(i) {
+  const c = eventOffer[i];
+  const n = c && addCardToDeck(c.id);
+  if (!n) { finishEvent('Your deck has no room for it.'); return; }
+  wildTouch(draftState.deck[draftState.deck.length - 1], ['funky'], 3);
+  finishEvent(`Wild ${n} added, funky, +3.${coin(0.25) ? ' ' + wildContaminate() : ''}`);
+}
+function wildTradeCultures(idx) {
+  const c = draftState.deck[idx]; if (!c || !canRemoveCard()) return;
+  draftState.deck.splice(idx, 1);
+  const n = addWildCard(['brett', 'pedio', 'lacto', 'sourvisiae']);
+  finishEvent(`You hand over ${c.name}${n ? ` and get a jar of ${n} in return` : ', but they had nothing you could take'}.`);
+}
+function wildNotebook(idx) {
+  let c = draftState.deck[idx]; if (!c) return;
+  const smudged = coin(0.25);
+  if (smudged) c = pickDeck(x => x.cat !== 'token') || c;
+  wildTouch(c, ['sour', 'funky'], 6);
+  finishEvent(smudged ? `The page was smudged. It turned out to describe ${c.name}: sour, funky, +6.` : `${c.name} gains sour and funky, +6.`);
+}

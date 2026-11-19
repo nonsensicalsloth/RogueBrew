@@ -28,7 +28,7 @@ const BREWERIES = [
     id: 'wildcellar', name: 'Wild Cellar', icon: '🦠', subtitle: 'Risk for power.',
     passive: 'Contamination on your side is only −5.',
     ability: { name: 'Spontaneous', cost: 0, desc: 'Once per round: pay 5 Reputation to draw 2 cards.' },
-    perk:    'Start with 80 max Reputation. Events offer an extra wild option.',
+    perk:    'Start with 80 max Reputation. Every event has an extra wild option of its own.',
     unlocked: true,
   },
 

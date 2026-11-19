@@ -78,7 +78,8 @@ function refreshRunCard(c) {
     fresh._upgraded = true;
   }
   if (c._barrelAged) {
-    fresh.points += BARREL_BONUS;
+    fresh.points += BARREL_BONUS + (c._barrelExtra || 0);
+    if (c._barrelExtra) fresh._barrelExtra = c._barrelExtra;
     fresh.name = `Barrel-Aged ${def.name}`;
     fresh.tags.push('oaky');
     fresh._barrelAged = true;
@@ -88,6 +89,10 @@ function refreshRunCard(c) {
     fresh._victoryBonus = c._victoryBonus;
   }
   if (c._barrelReturn !== undefined) fresh._barrelReturn = c._barrelReturn;
+  if (c._barrelExtra !== undefined && !c._barrelAged) fresh._barrelExtra = c._barrelExtra;
+  // Wild Cellar event touches: extra tags and points
+  if (c._wildTags && c._wildTags.length) { fresh._wildTags = [...c._wildTags]; c._wildTags.forEach(t => { if (!fresh.tags.includes(t)) fresh.tags.push(t); }); }
+  if (c._wildBonus) { fresh.points += c._wildBonus; fresh._wildBonus = c._wildBonus; }
   // Quality Lab: propagated yeast, Sensory Panel tag
   if (c._propagated) {
     fresh._propagated = true;

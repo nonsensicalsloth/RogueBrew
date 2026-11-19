@@ -74,6 +74,12 @@ function barrelCard(idx) {
   mapState.barrel = mapState.barrel || [];
   mapState.barrel.push(card);
   if (mapState.barrelBroker) { mapState.gold -= 40; mapState.barrelBroker = false; }   // Barrel Broker event
+  if (mapState.barrelCulture) {                                                        // Wild Cellar: house culture
+    mapState.barrelCulture = false;
+    card._barrelExtra = Math.random() < 0.25 ? 5 - BARREL_BONUS : 16 - BARREL_BONUS;
+    card._wildTags = [...(card._wildTags || []), ...(card.tags.includes('funky') ? [] : ['funky'])];
+    if (!card.tags.includes('funky')) card.tags = [...card.tags, 'funky'];
+  }
   finishSpecial(`${card.name} is resting in oak. Back in ${BARREL_STOPS} stops.`);
 }
 
@@ -86,7 +92,7 @@ function checkBarrel() {
   ready.forEach(c => {
     delete c._barrelReturn;
     c._barrelAged = true;
-    c.points += BARREL_BONUS;
+    c.points += BARREL_BONUS + (c._barrelExtra || 0);
     c.name = `Barrel-Aged ${c.name}`;
     c.tags = [...(c.tags || []), 'oaky'];
     draftState.deck.push(c);

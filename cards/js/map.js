@@ -234,6 +234,7 @@ function markVisited(node) {
 function showMapScreen() {
   setScreen('map-screen');
   mapState.barrelBroker = false;
+  mapState.barrelCulture = false;
   saveRun({ screen: 'map' });
   setTimeout(() => renderMap(), 50);
 }
@@ -443,6 +444,14 @@ function handleNode(node) {
 
 // ── Battle node ──
 
+// Contamination owed from Wild Cellar event gambles joins this battle only
+function wildPendingContam() {
+  const n = mapState.pendingContam || 0;
+  for (let k = 0; k < n; k++) shuffleIntoRemainingDeck('p', 'contamination');
+  if (n) addLog(`🦠 ${n} Contamination crept in from your cellar.`, 'warn');
+  mapState.pendingContam = 0;
+}
+
 function startMapBattle(node) {
   // Build rival deck scaled to node.rivalSize
   const rivalDeck = buildRivalDeck(node.rival, node.rivalSize, node.act, node.type === 'boss');
@@ -459,6 +468,7 @@ function startMapBattle(node) {
   if (bm(1)) { rivalBonus += BM_RIVAL_BONUS; rivalBonusName = rivalBonusName || 'Tough Crowd'; }
   if (bm(8) && node.type === 'boss') { rivalBonus += BM_BOSS_BONUS; rivalBonusName = rivalBonusName || 'Headliner'; }
   initGame({ rivalDeck, node, rival, rivalBonus, rivalBonusName });
+  wildPendingContam();
 }
 
 function initGameWithRival(rivalDeck, node) {
@@ -955,19 +965,11 @@ function renderMapEvent() {
   ).join('');
 }
 
-// Wild Cellar run perk: every event gets an extra gamble
-const WILD_EVENT_OPTION = {
-  label: '🦠 Let it ferment wild (50%: +40 gold · 50%: −10 Reputation)',
-  can: () => mapState.rep > 10,
-  action: () => {
-    if (Math.random() < 0.5) { mapState.gold += 40; return 'The wild yeast worked its magic. +40 gold!'; }
-    mapState.rep -= 10;
-    return `It went sideways. −10 Reputation (⭐ ${mapState.rep}).`;
-  },
-};
-
+// Wild Cellar run perk: every event gets its own wild option (events.js, WILD_EVENT_OPTIONS)
 function eventOptions() {
-  return runBrewery() === 'wildcellar' ? [...currentEvent.options, WILD_EVENT_OPTION] : currentEvent.options;
+  if (runBrewery() !== 'wildcellar') return currentEvent.options;
+  const wild = WILD_EVENT_OPTIONS[splitIcon(currentEvent.title).text];
+  return wild ? [...currentEvent.options, wild] : currentEvent.options;
 }
 
 function chooseEvent(idx) {
