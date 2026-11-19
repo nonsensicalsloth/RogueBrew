@@ -192,7 +192,10 @@ function rivalIntentHtml() {
   const attacks = plan.filter(p => p.attack);
   const icons   = plan.filter(p => !p.attack).map(p =>
     `<span class="intent-icon" title="${p.cat} → ${p.lane} side">${INTENT_ICONS[p.cat] || '?'}<small>${p.lane === 'hot' ? 'H' : 'C'}</small></span>`).join('');
+  // Acid bites the rival at the start of the next turn, after it plays (not on the round's last turn)
+  const acid = acidOn('e') && state.turn < maxTurns() ? acidOn('e') : 0;
   return `<span class="intent-label">RIVAL NEXT:</span> ${icons}
     ${total > 0 ? `<span class="intent-gain">≈ +${total}</span>` : ''}
+    ${acid ? `<span class="intent-acid" title="The rival's Acid eats this much at the start of next turn, after it plays">then 🍋 −${acid}</span>` : ''}
     ${attacks.map(a => `<span class="intent-attack" title="The rival will play this against you">⚔️ ${a.name}</span>`).join('')}`;
 }

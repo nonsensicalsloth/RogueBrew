@@ -251,7 +251,7 @@ const EXTRA_EVENTS = [
     title: '🛢️ Barrel Broker',
     desc: 'A broker is offloading freshly emptied bourbon barrels.',
     options: [
-      { label: 'Buy one (−40 gold, age a card in it now)', can: () => mapState.gold >= 40 && canRemoveCard(),
+      { get label() { return `Buy one (−40 gold): barrel a card. It returns in ${BARREL_STOPS} stops with +${BARREL_BONUS} and the oaky tag`; }, can: () => mapState.gold >= 40 && canRemoveCard(),
         picker: () => { mapState.barrelBroker = true; showBarrelRoom(); } },   // charged only if you age a card
       { label: 'Pass', action: () => 'Maybe next time.' },
     ],

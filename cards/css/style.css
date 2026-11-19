@@ -1134,3 +1134,4 @@ body::after {
 .ach-toast-kicker { font-size: 7px; color: var(--gold); }
 #ach-toast b { font-size: 9px; color: var(--text); font-weight: normal; }
 .ach-toast-desc { font-family: var(--read-font); font-size: 16px; color: #9aa3b8; }
+.intent-acid { color: #c8e040; margin-left: 6px; }

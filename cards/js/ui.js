@@ -368,7 +368,9 @@ function render() {
       const a = acidOn(w);
       if (!a) return;
       const lane = laneScore('hot', w) >= laneScore('cold', w) ? 'hot' : 'cold';
-      chip(`${lane}-${w}`, w === 'p' ? 'lc-bad' : 'lc-acid', `🍋 acid ${a} · −${a} next turn`,
+      // On the round's last turn, judging comes before the next Acid bite
+      const last = state.turn >= maxTurns();
+      chip(`${lane}-${w}`, w === 'p' ? 'lc-bad' : 'lc-acid', last ? `🍋 acid ${a} · round ends first` : `🍋 acid ${a} · −${a} next turn`,
         'At the start of each turn, Acid eats that many points from the brewery\'s best lane (an Acid Burn), then drops by 1. The lost points stay gone unless CIP Cycle, Fining Agent or Sanitize (cold side) clears the burn.');
     });
     // Lagering: waits in your hand for the next crisp card
