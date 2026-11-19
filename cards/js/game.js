@@ -19,6 +19,7 @@ function freshCopy(c) {
 //   initGame()                      — practice game (default rival, best of 3)
 //   initGame({ rivalDeck, node })   — map battle (1 round, or best of 3 for bosses)
 function initGame(opts = {}) {
+  if (typeof applyCosmetics === 'function') applyCosmetics();
   document.getElementById('overlay').classList.add('hidden');
   selectedCard = null;
 

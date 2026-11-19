@@ -219,6 +219,7 @@ function setScreen(id) {
 
 function showTitleScreen() {
   setScreen('title-screen');
+  if (typeof applyCosmetics === 'function') applyCosmetics();
   // Shows which card data actually loaded — handy when a file didn't get replaced
   const ver = document.getElementById('version-label');
   if (ver) ver.textContent = typeof CARDS_VERSION !== 'undefined'

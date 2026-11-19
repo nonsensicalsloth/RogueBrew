@@ -64,15 +64,23 @@ function unlockAch(id) {
   got[id] = Date.now();
   try { localStorage.setItem(ACH_KEY, JSON.stringify(got)); } catch (e) {}
   achToast(a);
+  const r = typeof COSMETICS !== 'undefined' && COSMETICS.find(c => c.ach === id);
+  if (r) achToastReward(r);
   return true;
 }
 
 // ── Pop-up when you earn one ──
 let achQueue = [], achShowing = false;
+// The toast for an achievement also names its cosmetic reward
+function achToastReward(r) {
+  const kind = { theme: 'board theme', frame: 'card frame', title: 'title' }[r.kind];
+  const last = achQueue[achQueue.length - 1];
+  if (last) last.reward = `the ${r.name} ${kind}`;
+}
 function achToast(a) {
   if (typeof document === 'undefined') return;
-  achQueue.push(a);
-  if (!achShowing) achNextToast();
+  achQueue.push({ ...a });
+  if (!achShowing) { achShowing = true; setTimeout(achNextToast, 0); }
 }
 function achNextToast() {
   const a = achQueue.shift();
@@ -80,7 +88,7 @@ function achNextToast() {
   achShowing = true;
   let el = document.getElementById('ach-toast');
   if (!el) { el = document.createElement('div'); el.id = 'ach-toast'; document.body.appendChild(el); }
-  el.innerHTML = `<span class="ach-toast-icon">${a.icon}</span><span><span class="ach-toast-kicker">🏆 ACHIEVEMENT</span><br><b>${a.name}</b><br><span class="ach-toast-desc">${a.desc}</span></span>`;
+  el.innerHTML = `<span class="ach-toast-icon">${a.icon}</span><span><span class="ach-toast-kicker">🏆 ACHIEVEMENT</span><br><b>${a.name}</b><br><span class="ach-toast-desc">${a.desc}</span>${a.reward ? `<br><span class="ach-toast-reward">🍾 Unlocked ${a.reward}. Wear it in the Cellar.</span>` : ''}</span>`;
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
   setTimeout(() => { el.classList.remove('show'); setTimeout(achNextToast, 350); }, 3200);
 }
@@ -154,9 +162,9 @@ function achCollectionCheck() {
 }
 
 // ── The shelf ──
-function showAchievements() {
+function showAchievements(tab) {
   setScreen('achievements-screen');
-  renderAchievements();
+  showAchTab(tab || 'trophies');
 }
 function renderAchievements() {
   const got = loadAchievements();

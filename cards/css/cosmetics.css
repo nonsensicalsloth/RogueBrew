@@ -1,0 +1,218 @@
+/* ── Cosmetics: board themes (.theme-*) and card frames (.frame-*) ── */
+
+/* ═══ Board themes v2: bolder edges and empty space, calm behind the cards ═══ */
+/* Applies to your two sides; the pattern fades in toward the empty right end */
+.cos-themed .lane.player-lane { position: relative; isolation: isolate; overflow: hidden; }
+.cos-themed .lane.player-lane > * { position: relative; z-index: 2; }
+.cos-themed .lane.player-lane::before { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent 30%, rgba(0,0,0,.55) 65%, #000);
+          mask-image: linear-gradient(90deg, transparent 30%, rgba(0,0,0,.55) 65%, #000); }
+.cos-themed .lane.player-lane::after { content: ''; position: absolute; left: 0; right: 0; top: 0; z-index: 1; pointer-events: none; }
+@keyframes cos-rise   { from { background-position: 0 0, 0 0; } to { background-position: 0 -128px, 0 -64px; } }
+@keyframes cos-ember  { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes cos-shine  { from { background-position: -200px 0; } to { background-position: 1400px 0; } }
+@media (prefers-reduced-motion: reduce) { .cos-themed .lane.player-lane::before, .cos-themed .lane.player-lane::after { animation: none !important; } }
+
+/* Roastery: coffee beans, glowing ember edge */
+#game-screen.theme-roastery { background: radial-gradient(ellipse at 50% 115%, rgba(160,60,15,.35), transparent 55%), #0c0705; }
+.theme-roastery .lane.player-lane.hot-lane  { background: linear-gradient(90deg, rgba(200,80,20,.26), rgba(90,40,15,.12) 55%, rgba(30,15,8,.5)), #150c07; border-color: #5a3018; }
+.theme-roastery .lane.player-lane.cold-lane { background: linear-gradient(90deg, rgba(120,85,60,.20), rgba(40,28,20,.4)), #110b08; border-color: #3e2c1e; }
+.theme-roastery .lane.player-lane::before { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23c88a50' stroke-width='1.6' opacity='.55'%3E%3Cellipse cx='14' cy='14' rx='7' ry='10' transform='rotate(30 14 14)'/%3E%3Cpath d='M10 6 Q16 14 18 22' /%3E%3Cellipse cx='40' cy='38' rx='7' ry='10' transform='rotate(-25 40 38)'/%3E%3Cpath d='M44 29 Q38 38 37 47'/%3E%3C/g%3E%3C/svg%3E") 0 0/56px 56px; }
+.theme-roastery .lane.player-lane.hot-lane::after { top: auto; bottom: 0; height: 3px; background: linear-gradient(90deg, #ff6a10, #ffb040, #ff4a00, #ffb040, #ff6a10); box-shadow: 0 0 10px 2px rgba(255,100,20,.55); animation: cos-ember 2.6s ease-in-out infinite; }
+.theme-roastery .lane.player-lane.cold-lane::after { height: 2px; background: linear-gradient(90deg, transparent, rgba(200,150,110,.5), transparent); }
+.theme-roastery .lane.player-lane .lane-name { color: #ffa060; }
+
+/* Juice Box: rising bubbles, pulpy orange rim */
+#game-screen.theme-juicebox { background: radial-gradient(ellipse at 15% 0%, rgba(255,170,60,.20), transparent 55%), radial-gradient(ellipse at 90% 100%, rgba(255,110,70,.15), transparent 50%), #130b07; }
+.theme-juicebox .lane.player-lane.hot-lane  { background: linear-gradient(100deg, rgba(255,165,60,.26), rgba(255,200,120,.08) 60%, rgba(255,140,60,.05)), #1b1109; border-color: #8a5420; }
+.theme-juicebox .lane.player-lane.cold-lane { background: linear-gradient(100deg, rgba(255,210,110,.22), rgba(255,160,100,.07)), #191109; border-color: #7a5428; }
+.theme-juicebox .lane.player-lane::before { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23ffe0a0' stroke-width='1.2' opacity='.6'%3E%3Ccircle cx='10' cy='40' r='4'/%3E%3Ccircle cx='30' cy='12' r='2.5'/%3E%3Ccircle cx='44' cy='30' r='5.5'/%3E%3Ccircle cx='22' cy='54' r='2'/%3E%3Ccircle cx='52' cy='56' r='3'/%3E%3C/g%3E%3C/svg%3E") 0 0/64px 64px, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23ffe0a0' stroke-width='1.2' opacity='.6'%3E%3Ccircle cx='10' cy='40' r='4'/%3E%3Ccircle cx='30' cy='12' r='2.5'/%3E%3Ccircle cx='44' cy='30' r='5.5'/%3E%3Ccircle cx='22' cy='54' r='2'/%3E%3Ccircle cx='52' cy='56' r='3'/%3E%3C/g%3E%3C/svg%3E") 32px 20px/48px 48px; animation: cos-rise 9s linear infinite; }
+.theme-juicebox .lane.player-lane::after { height: 3px; background: repeating-linear-gradient(90deg, #ffb040 0 10px, #ff8a30 10px 16px, #ffd070 16px 22px); opacity: .85; }
+.theme-juicebox .lane.player-lane .lane-name { color: #ffc070; }
+
+/* Lagerhaus Frost: snowflakes, icicles, a slow glint */
+#game-screen.theme-frost { background: linear-gradient(180deg, #09101a, #0c1624); }
+.theme-frost .lane.player-lane.hot-lane  { background: linear-gradient(90deg, rgba(240,220,140,.14), rgba(200,220,240,.05)), #0f1824; border-color: #4a6a8a; }
+.theme-frost .lane.player-lane.cold-lane { background: linear-gradient(90deg, rgba(150,210,255,.24), rgba(150,210,255,.06)), #0d1826; border-color: #7ab8e8; box-shadow: inset 0 0 18px rgba(170,220,255,.12); }
+.theme-frost .lane.player-lane::before { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='68' height='68' viewBox='0 0 68 68'%3E%3Cg stroke='%23d8f0ff' stroke-width='1.3' opacity='.6' fill='none'%3E%3Cpath d='M20 6 V34 M8 13 L32 27 M8 27 L32 13'/%3E%3Cpath d='M20 6 l-3 3 M20 6 l3 3 M20 34 l-3 -3 M20 34 l3 -3'/%3E%3Cpath d='M52 40 V60 M43 45 L61 55 M43 55 L61 45'/%3E%3C/g%3E%3C/svg%3E") 0 0/68px 68px; }
+.theme-frost .lane.player-lane.cold-lane::after { height: 14px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='14' viewBox='0 0 40 14'%3E%3Cpath d='M0 0 H40 V3 L36 3 L34 10 L32 3 L22 3 L19 14 L16 3 L8 3 L6 8 L4 3 L0 3 Z' fill='%23d8f0ff' opacity='.75'/%3E%3C/svg%3E") 0 0/40px 14px repeat-x; }
+.theme-frost .lane.player-lane.hot-lane::after { height: 100%; background: linear-gradient(100deg, transparent 0, rgba(255,255,255,.07) 40px, transparent 80px) no-repeat; background-size: 200px 100%; animation: cos-shine 7s linear infinite; }
+.theme-frost .lane.player-lane .lane-name { color: #bfe6ff; }
+
+/* Pucker: cherries and lime slices, candy-striped rim */
+#game-screen.theme-pucker { background: radial-gradient(ellipse at 0% 0%, rgba(220,40,110,.18), transparent 50%), radial-gradient(ellipse at 100% 100%, rgba(170,220,40,.12), transparent 50%), #11090f; }
+.theme-pucker .lane.player-lane.hot-lane  { background: linear-gradient(90deg, rgba(220,50,110,.24), rgba(220,50,110,.05)), #190b13; border-color: #9a2a5e; }
+.theme-pucker .lane.player-lane.cold-lane { background: linear-gradient(90deg, rgba(180,230,60,.18), rgba(180,230,60,.04)), #11130a; border-color: #6e902a; }
+.theme-pucker .lane.player-lane::before { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='66' height='66' viewBox='0 0 66 66'%3E%3Cg opacity='.55'%3E%3Cpath d='M14 8 Q18 18 12 26 M14 8 Q22 14 24 26' stroke='%237ab040' stroke-width='1.4' fill='none'/%3E%3Ccircle cx='12' cy='29' r='5' fill='%23d8325a'/%3E%3Ccircle cx='24' cy='29' r='5' fill='%23d8325a'/%3E%3Ccircle cx='48' cy='48' r='9' fill='none' stroke='%23c8e040' stroke-width='1.6'/%3E%3Cpath d='M48 39 V57 M39 48 H57 M42 42 L54 54 M54 42 L42 54' stroke='%23c8e040' stroke-width='.9'/%3E%3C/g%3E%3C/svg%3E") 0 0/66px 66px; }
+.theme-pucker .lane.player-lane::after { height: 3px; background: repeating-linear-gradient(135deg, #e0386a 0 6px, #f4f0e0 6px 9px, #b8e040 9px 15px, #f4f0e0 15px 18px); opacity: .8; }
+.theme-pucker .lane.player-lane.hot-lane .lane-name { color: #ff7aa8; }
+.theme-pucker .lane.player-lane.cold-lane .lane-name { color: #c8f060; }
+
+/* Abbey Cellar: stained-glass arches in stone, gilded rim */
+#game-screen.theme-abbey { background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 26px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.022) 0 1px, transparent 1px 52px), #0f0f13; }
+.theme-abbey .lane.player-lane.hot-lane, .theme-abbey .lane.player-lane.cold-lane { background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 18px),
+    linear-gradient(90deg, rgba(120,110,100,.16), rgba(60,55,70,.10)), #15141a; border-color: #7a6a3e; }
+.theme-abbey .lane.player-lane::before { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='66' viewBox='0 0 44 66'%3E%3Cg opacity='.6'%3E%3Cpath d='M6 60 V22 Q6 6 20 6 Q34 6 34 22 V60 Z' fill='none' stroke='%23c9a24a' stroke-width='1.6'/%3E%3Cpath d='M8 58 V23 Q8 9 20 9 V58 Z' fill='%237a1e2a' opacity='.55'/%3E%3Cpath d='M20 9 Q32 9 32 23 V58 H20 Z' fill='%231e3a7a' opacity='.55'/%3E%3Cpath d='M8 34 H32' stroke='%23c9a24a' stroke-width='1'/%3E%3Ccircle cx='20' cy='22' r='4' fill='%23c9a24a' opacity='.7'/%3E%3C/g%3E%3C/svg%3E") 0 4px/44px 66px; }
+.theme-abbey .lane.player-lane::after { height: 2px; background: linear-gradient(90deg, #8a6a20, #e8c860, #8a6a20); box-shadow: 0 0 6px rgba(232,200,96,.35); }
+.theme-abbey .lane.player-lane .lane-name { color: #e8c860; }
+
+/* Barnyard: barn planks with nails, hay along the floor */
+#game-screen.theme-barnyard { background: #0d0b07; }
+.theme-barnyard .lane.player-lane.hot-lane  { background: linear-gradient(90deg, rgba(150,95,45,.30), rgba(90,62,32,.20)), #1a130b; border-color: #7a5430; }
+.theme-barnyard .lane.player-lane.cold-lane { background: linear-gradient(90deg, rgba(110,130,60,.24), rgba(70,80,40,.14)), #14140b; border-color: #5e7034; }
+.theme-barnyard .lane.player-lane::before { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='22' viewBox='0 0 80 22'%3E%3Cg%3E%3Crect x='0' y='0' width='80' height='1.6' fill='%23000' opacity='.45'/%3E%3Ccircle cx='6' cy='6' r='1.3' fill='%23bba070' opacity='.6'/%3E%3Ccircle cx='74' cy='6' r='1.3' fill='%23bba070' opacity='.6'/%3E%3Cpath d='M14 14 Q30 12 46 15 T78 13' stroke='%233a2a14' stroke-width='1' fill='none' opacity='.6'/%3E%3C/g%3E%3C/svg%3E") 0 0/80px 22px; -webkit-mask-image: linear-gradient(90deg, rgba(0,0,0,.35), #000 60%); mask-image: linear-gradient(90deg, rgba(0,0,0,.35), #000 60%); }
+.theme-barnyard .lane.player-lane::after { top: auto; bottom: 0; height: 8px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='8' viewBox='0 0 28 8'%3E%3Cg stroke='%23d8b860' stroke-width='1' opacity='.55'%3E%3Cpath d='M0 8 L6 0 M5 8 L10 1 M10 8 L17 0 M16 8 L20 2 M21 8 L27 0'/%3E%3C/g%3E%3C/svg%3E") 0 0/28px 8px repeat-x; }
+.theme-barnyard .lane.player-lane .lane-name { color: #e0b870; }
+
+/* Bakery: sprinkles, a frosting drip along the top */
+#game-screen.theme-bakery { background: radial-gradient(ellipse at 50% 0%, rgba(255,170,200,.12), transparent 60%), #130d11; }
+.theme-bakery .lane.player-lane.hot-lane  { background: linear-gradient(90deg, rgba(255,170,190,.20), rgba(255,220,180,.06)), #1c1218; border-color: #b06a86; }
+.theme-bakery .lane.player-lane.cold-lane { background: linear-gradient(90deg, rgba(255,225,170,.18), rgba(200,160,220,.06)), #1a1418; border-color: #9a7a62; }
+.theme-bakery .lane.player-lane::before { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='56' viewBox='0 0 60 56'%3E%3Cg opacity='.7'%3E%3Crect x='8' y='10' width='8' height='2.4' rx='1.2' fill='%23ff8fb8' transform='rotate(30 12 11)'/%3E%3Crect x='30' y='26' width='8' height='2.4' rx='1.2' fill='%238fd8ff' transform='rotate(-40 34 27)'/%3E%3Crect x='44' y='8' width='8' height='2.4' rx='1.2' fill='%23ffe08f' transform='rotate(70 48 9)'/%3E%3Crect x='16' y='40' width='8' height='2.4' rx='1.2' fill='%23b8ff8f' transform='rotate(-15 20 41)'/%3E%3Crect x='46' y='44' width='8' height='2.4' rx='1.2' fill='%23d8a0ff' transform='rotate(50 50 45)'/%3E%3C/g%3E%3C/svg%3E") 0 0/60px 56px; }
+.theme-bakery .lane.player-lane::after { height: 12px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='20' viewBox='0 0 60 20'%3E%3Cpath d='M0 0 H60 V4 Q55 4 54 10 Q53 16 50 10 Q48 4 40 5 Q34 6 33 14 Q32 20 29 14 Q27 6 18 5 Q10 4 9 9 Q8 13 6 9 Q4 4 0 4 Z' fill='%23ffd8e4' opacity='.85'/%3E%3C/svg%3E") 0 0/60px 20px repeat-x; }
+.theme-bakery .lane.player-lane.cold-lane::after { filter: hue-rotate(160deg) saturate(.6) brightness(1.1); }
+.theme-bakery .lane.player-lane .lane-name { color: #ffb0cc; }
+
+/* ═══ Card frames v2 ═══
+   Board cards: the frame becomes the border itself (a two-tone border-box gradient) plus ornaments.
+   Hand cards: the colored border still shows the card type, so they get the ornaments and glow only. */
+.cos-framed .field-card.p { position: relative; border: 2px solid transparent !important; }
+.cos-framed .field-card.p::before, .cos-framed .cos-hand .card::before,
+.cos-framed .field-card.p::after,  .cos-framed .cos-hand .card::after {
+  content: ''; position: absolute; pointer-events: none; z-index: 3; }
+.cos-framed .field-card.p::before, .cos-framed .cos-hand .card::before { inset: -2px; border-radius: inherit; }
+@keyframes frame-sheen { from { background-position: -160px 0, 0 0; } to { background-position: 260px 0, 0 0; } }
+@keyframes frame-flicker { 0%,100% { opacity: .65; } 45% { opacity: 1; } 70% { opacity: .8; } }
+@media (prefers-reduced-motion: reduce) { .cos-framed .field-card.p::after, .cos-framed .cos-hand .card::after { animation: none !important; } }
+
+/* corner dot helper: four radial dots at the corners */
+/* Copper: hammered copper with rivets */
+.frame-copper .field-card.p { background: linear-gradient(var(--bg3), var(--bg3)) padding-box,
+  linear-gradient(135deg, #ffb27a, #b8622c 30%, #e8945a 50%, #7a3a14 75%, #d88048) border-box; box-shadow: 0 0 6px rgba(220,120,60,.35); }
+.frame-copper .field-card.p::before, .frame-copper .cos-hand .card::before { background:
+  radial-gradient(circle at 5px 5px, #ffd0a0 0 1.6px, #6a3010 2.2px, transparent 2.8px),
+  radial-gradient(circle at calc(100% - 5px) 5px, #ffd0a0 0 1.6px, #6a3010 2.2px, transparent 2.8px),
+  radial-gradient(circle at 5px calc(100% - 5px), #ffd0a0 0 1.6px, #6a3010 2.2px, transparent 2.8px),
+  radial-gradient(circle at calc(100% - 5px) calc(100% - 5px), #ffd0a0 0 1.6px, #6a3010 2.2px, transparent 2.8px); }
+.frame-copper .cos-hand .card { box-shadow: 0 0 0 2px #b8622c, 0 0 10px rgba(220,120,60,.35); }
+
+/* Oak Barrel: oak staves bound by two iron hoops */
+.frame-oak .field-card.p { background: repeating-linear-gradient(90deg, rgba(122,78,38,.12) 0 6px, rgba(0,0,0,.06) 6px 7px) padding-box,
+  linear-gradient(var(--bg3), var(--bg3)) padding-box, linear-gradient(180deg, #a06a38, #6a4220 50%, #a06a38) border-box; }
+.frame-oak .field-card.p::before, .frame-oak .cos-hand .card::before { background:
+  linear-gradient(90deg, transparent 10%, #2c2c30 10% calc(10% + 4px), transparent calc(10% + 4px) calc(90% - 4px), #2c2c30 calc(90% - 4px) 90%, transparent 90%),
+  radial-gradient(circle at calc(10% + 2px) 50%, #8a8a90 0 1.2px, transparent 1.6px),
+  radial-gradient(circle at calc(90% - 2px) 50%, #8a8a90 0 1.2px, transparent 1.6px); opacity: .9; }
+.frame-oak .cos-hand .card { box-shadow: 0 0 0 2px #7a4e26; }
+
+/* Stainless: brushed steel, corner screws, a slow sheen */
+.frame-stainless .field-card.p { background: repeating-linear-gradient(90deg, rgba(220,230,240,.035) 0 1px, transparent 1px 3px) padding-box,
+  linear-gradient(var(--bg3), var(--bg3)) padding-box, linear-gradient(180deg, #eef4f8, #8a96a0 45%, #d8e0e6 55%, #6a7680) border-box; }
+.frame-stainless .field-card.p::before, .frame-stainless .cos-hand .card::before { background:
+  radial-gradient(circle at 5px 5px, #c8d0d8 0 2px, transparent 2.4px), radial-gradient(circle at calc(100% - 5px) 5px, #c8d0d8 0 2px, transparent 2.4px),
+  radial-gradient(circle at 5px calc(100% - 5px), #c8d0d8 0 2px, transparent 2.4px), radial-gradient(circle at calc(100% - 5px) calc(100% - 5px), #c8d0d8 0 2px, transparent 2.4px),
+  linear-gradient(45deg, transparent 0 3.5px, #4a525a 3.5px 4.5px, transparent 4.5px) 3px 3px/4px 4px no-repeat; }
+.frame-stainless .field-card.p::after, .frame-stainless .cos-hand .card::after { inset: 0; border-radius: inherit; overflow: hidden;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.10) 30%, transparent 60%) no-repeat, none; background-size: 120px 100%;
+  animation: frame-sheen 6s ease-in-out infinite; }
+.frame-stainless .cos-hand .card { box-shadow: 0 0 0 2px #a8b4bc; }
+
+/* Gold Leaf: gilded border, ornate corners, a slow shimmer */
+.frame-gold .field-card.p { background: linear-gradient(var(--bg3), var(--bg3)) padding-box,
+  linear-gradient(135deg, #fff2a8, #d4a017 30%, #fff6c0 50%, #9a7010 70%, #f0c840) border-box; box-shadow: 0 0 10px rgba(255,215,0,.40); }
+.frame-gold .field-card.p::before, .frame-gold .cos-hand .card::before { inset: 2px; border-radius: 2px; background:
+  linear-gradient(#ffd700,#ffd700) 0 0/8px 1.5px, linear-gradient(#ffd700,#ffd700) 0 0/1.5px 8px,
+  linear-gradient(#ffd700,#ffd700) 100% 0/8px 1.5px, linear-gradient(#ffd700,#ffd700) 100% 0/1.5px 8px,
+  linear-gradient(#ffd700,#ffd700) 0 100%/8px 1.5px, linear-gradient(#ffd700,#ffd700) 0 100%/1.5px 8px,
+  linear-gradient(#ffd700,#ffd700) 100% 100%/8px 1.5px, linear-gradient(#ffd700,#ffd700) 100% 100%/1.5px 8px; background-repeat: no-repeat; }
+.frame-gold .field-card.p::after, .frame-gold .cos-hand .card::after { inset: 0; border-radius: inherit;
+  background: linear-gradient(100deg, transparent, rgba(255,230,120,.16) 30%, transparent 60%) no-repeat; background-size: 120px 100%; animation: frame-sheen 4.5s ease-in-out infinite; }
+.frame-gold .cos-hand .card { box-shadow: 0 0 0 2px #d4a017, 0 0 14px rgba(255,215,0,.45); }
+
+/* Frosted: icy border, frost creeping in from the corners */
+.frame-frost .field-card.p { background: linear-gradient(var(--bg3), var(--bg3)) padding-box,
+  linear-gradient(160deg, #ffffff, #9ad8ff 40%, #e0f4ff 60%, #6ab0e0) border-box; box-shadow: 0 0 10px rgba(160,220,255,.35); }
+.frame-frost .field-card.p::before, .frame-frost .cos-hand .card::before { background:
+  radial-gradient(circle at 0 0, rgba(220,245,255,.55), transparent 14px), radial-gradient(circle at 100% 0, rgba(220,245,255,.45), transparent 12px),
+  radial-gradient(circle at 0 100%, rgba(220,245,255,.35), transparent 11px), radial-gradient(circle at 100% 100%, rgba(220,245,255,.55), transparent 15px),
+  linear-gradient(180deg, rgba(200,235,255,.10), transparent 40%); }
+.frame-frost .cos-hand .card { box-shadow: 0 0 0 2px #bfe8ff, 0 0 12px rgba(160,220,255,.4); }
+
+/* Charred: scorched black edge with glowing embers along the bottom */
+.frame-charred .field-card.p { background: radial-gradient(ellipse at 50% 120%, rgba(255,90,20,.18), transparent 60%) padding-box,
+  linear-gradient(var(--bg3), var(--bg3)) padding-box, linear-gradient(180deg, #3a2418, #120a06 60%, #ff6a20) border-box; }
+.frame-charred .field-card.p::before, .frame-charred .cos-hand .card::before { background:
+  linear-gradient(transparent calc(100% - 3px), #ff7a2a calc(100% - 3px)) ,
+  radial-gradient(circle at 15% 100%, rgba(255,140,40,.9) 0 1.5px, transparent 2.5px), radial-gradient(circle at 55% 100%, rgba(255,180,60,.9) 0 1.2px, transparent 2.2px),
+  radial-gradient(circle at 85% 100%, rgba(255,120,30,.9) 0 1.6px, transparent 2.6px); filter: drop-shadow(0 0 3px rgba(255,100,20,.8)); }
+.frame-charred .field-card.p::after, .frame-charred .cos-hand .card::after { left: 0; right: 0; bottom: -3px; height: 6px;
+  background: radial-gradient(ellipse at 50% 0, rgba(255,110,30,.6), transparent 70%); animation: frame-flicker 1.8s ease-in-out infinite; }
+.frame-charred .cos-hand .card { box-shadow: 0 0 0 2px #2a1a12, 0 4px 10px rgba(255,90,20,.35); }
+
+/* Burlap: woven sack edge with a stitched seam */
+.frame-burlap .field-card.p { background: linear-gradient(var(--bg3), var(--bg3)) padding-box,
+  repeating-linear-gradient(45deg, #c8a874 0 2px, #8a6a40 2px 4px) border-box; }
+.frame-burlap .field-card.p::before, .frame-burlap .cos-hand .card::before { inset: 2px; border-radius: 2px; border: 1.5px dashed rgba(232,210,160,.65); }
+.frame-burlap .cos-hand .card { box-shadow: 0 0 0 2px #b89a6a; }
+.frame-burlap .cos-hand .card::before { inset: 4px; }
+
+/* Chalkboard: wooden frame round a slate, chalk outline */
+.frame-chalk .field-card.p { background: radial-gradient(ellipse at 30% 30%, rgba(255,255,255,.04), transparent 60%) padding-box,
+  linear-gradient(#1c2c22, #1c2c22) padding-box, linear-gradient(180deg, #a07040, #6a4420) border-box; }
+.frame-chalk .field-card.p::before, .frame-chalk .cos-hand .card::before { inset: 3px; border-radius: 2px; border: 1.5px dashed rgba(240,240,225,.55); }
+.frame-chalk .cos-hand .card { box-shadow: 0 0 0 3px #8a5a30; }
+.frame-chalk .cos-hand .card::before { inset: 5px; }
+
+/* Keep top decorations clear of the side label and score */
+.theme-frost  .lane.player-lane.cold-lane { padding-top: 14px; }
+.theme-bakery .lane.player-lane { padding-top: 13px; }
+.theme-frost  .lane.player-lane .lane-header, .theme-abbey .lane.player-lane .lane-header { text-shadow: 0 1px 3px #000, 0 0 6px #000; }
+/* Barnyard: visible plank seams */
+.theme-barnyard .lane.player-lane.hot-lane, .theme-barnyard .lane.player-lane.cold-lane {
+  background-image: repeating-linear-gradient(0deg, rgba(0,0,0,.38) 0 2px, transparent 2px 24px), var(--barn, none); }
+.theme-barnyard .lane.player-lane.hot-lane  { --barn: linear-gradient(90deg, rgba(150,95,45,.30), rgba(90,62,32,.20)); }
+.theme-barnyard .lane.player-lane.cold-lane { --barn: linear-gradient(90deg, rgba(110,130,60,.24), rgba(70,80,40,.14)); }
+/* Oak Barrel on tall hand cards: hoops run across, near the top and bottom */
+.frame-oak .cos-hand .card::before { background:
+  linear-gradient(180deg, transparent 5px, #2c2c30 5px 9px, transparent 9px calc(100% - 9px), #2c2c30 calc(100% - 9px) calc(100% - 5px), transparent calc(100% - 5px)),
+  radial-gradient(circle at 12px 7px, #8a8a90 0 1.4px, transparent 1.8px), radial-gradient(circle at calc(100% - 12px) 7px, #8a8a90 0 1.4px, transparent 1.8px),
+  radial-gradient(circle at 12px calc(100% - 7px), #8a8a90 0 1.4px, transparent 1.8px), radial-gradient(circle at calc(100% - 12px) calc(100% - 7px), #8a8a90 0 1.4px, transparent 1.8px); }
+/* Oak Barrel on board cards: slim hoops right at the ends, clear of the art and points */
+.frame-oak .field-card.p::before { background:
+  linear-gradient(90deg, transparent 2px, rgba(44,44,48,.9) 2px 4px, transparent 4px calc(100% - 4px), rgba(44,44,48,.9) calc(100% - 4px) calc(100% - 2px), transparent calc(100% - 2px)),
+  radial-gradient(circle at 3px 50%, #9a9aa0 0 1px, transparent 1.4px),
+  radial-gradient(circle at calc(100% - 3px) 50%, #9a9aa0 0 1px, transparent 1.4px); opacity: 1; }
+.frame-oak .field-card.p { background: repeating-linear-gradient(90deg, rgba(122,78,38,.07) 0 6px, rgba(0,0,0,.04) 6px 7px) padding-box,
+  linear-gradient(var(--bg3), var(--bg3)) padding-box, linear-gradient(180deg, #a06a38, #6a4220 50%, #a06a38) border-box; }
+
+/* ═══ The Cellar (cosmetics picker) and title display ═══ */
+.ach-tabs { max-width: 980px; margin: 0 auto 12px; display: flex; gap: 8px; }
+.ach-tab { font-family: 'Press Start 2P', monospace; font-size: 9px; padding: 8px 14px; background: #14142a; color: #9aa3b8; border: 1px solid #2e2e4a; cursor: pointer; }
+.ach-tab.active { color: var(--gold); border-color: var(--gold); box-shadow: 0 0 8px rgba(255,215,0,.2); }
+.cos-row { display: grid; gap: 10px; padding-bottom: 8px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.cos-row-title { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+.cos-tile { border: 1px solid #2e2e4a; background: #12122a; padding: 8px; display: flex; flex-direction: column; gap: 5px; }
+.cos-tile.cos-have { cursor: pointer; }
+.cos-tile.cos-have:hover { border-color: #7b7bff; }
+.cos-tile.cos-on { border-color: var(--gold); box-shadow: 0 0 10px rgba(255,215,0,.25); }
+.cos-tile.cos-locked .cos-prev, .cos-tile.cos-locked .cos-title-prev { filter: grayscale(.85) brightness(.5); }
+.cos-name { font-size: 8px; color: var(--text); }
+.cos-on .cos-name { color: var(--gold); }
+.cos-worn { color: #7fe08a; font-size: 7px; margin-left: 6px; }
+.cos-blurb { font-family: var(--read-font); font-size: 16px; color: #9aa3b8; line-height: 1.05; }
+.cos-locked .cos-blurb { color: #7a7f98; }
+.cos-prev { pointer-events: none; }
+.cos-prev .lane { margin-bottom: 3px; }
+.cos-prev .lane-cards { display: flex; flex-wrap: nowrap; gap: 4px; }
+.cos-prev .field-card { min-width: 110px; }
+.cos-title-prev { border: 2px solid var(--gold); padding: 8px; text-align: center; background: #0e0e1c; }
+.cos-you { display: block; font-size: 8px; color: #9aa3b8; }
+.cos-you-title { display: block; font-family: var(--read-font); font-size: 18px; color: #c9b26a; margin-top: 2px; }
+.score-title { font-family: var(--read-font); font-size: 15px; color: #c9b26a; line-height: 1; margin-top: -2px; }
+.title-brewer { font-size: 8px; color: #ffcf6e; text-align: center; margin: 8px auto 0; padding: 5px 10px; border: 1px solid #8a6a2a; background: rgba(255,200,80,.06); width: fit-content; }
+.ach-toast-reward { font-family: var(--read-font); font-size: 16px; color: #7fe08a; }
+/* Themed backdrop fills the whole screen */
+#game-screen.cos-themed { min-height: 100vh; box-sizing: border-box; }

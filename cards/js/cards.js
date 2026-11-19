@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'achievements (Nov 19)';
+const CARDS_VERSION = 'cosmetics cellar (Nov 19)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
