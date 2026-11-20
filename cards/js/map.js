@@ -172,6 +172,7 @@ function assignNodeTypes(act, actNodes) {
 function nodeWeights() {
   const w = { ...NODE_WEIGHTS };
   if (runBrewery() === 'taproom')  w.shop   = Math.round(w.shop * 1.6);
+  if (bm(7)) w.rest = BM_REST_WEIGHT;                                   // Brewmaster 7: Short Season
   if (runBrewery() === 'contract') w.collab = 8;
   return w;
 }
@@ -466,6 +467,7 @@ function startMapBattle(node) {
   if (hasRelicNow('contractdeal')) { rivalBonus += CONTRACT_RIVAL_BONUS; rivalBonusName = rivalBonusName || 'Contract Rumors'; }
   // Brewmaster 1 (Tough Crowd) and 8 (Headliners)
   if (bm(1)) { rivalBonus += BM_RIVAL_BONUS; rivalBonusName = rivalBonusName || 'Tough Crowd'; }
+  if (bm(4)) { rivalBonus += BM_RIVAL_MORE; rivalBonusName = rivalBonusName || 'Sharp Rivals'; }
   if (bm(8) && node.type === 'boss') { rivalBonus += BM_BOSS_BONUS; rivalBonusName = rivalBonusName || 'Headliner'; }
   initGame({ rivalDeck, node, rival, rivalBonus, rivalBonusName });
   wildPendingContam();
@@ -499,7 +501,7 @@ function generateMapOffer(kind = 'normal') {
   // A supplier contract focuses the next offer on one category, with 4 picks
   const contract = mapState.contract;
   // Hop House run perk: one extra option on every card offer
-  const size = (contract ? 4 : 3) + (runBrewery() === 'hophouse' ? 1 : 0);
+  const size = (contract ? 4 : 3) + (runBrewery() === 'hophouse' ? 1 : 0) - (bm(2) ? BM_OFFER_LESS : 0);   // Brewmaster 2
   mapState.contract = null;
   const pool = CARD_POOL.filter(c => c.rarity !== 'legendary' &&
     copiesInDeck(c.id) < MAX_COPIES && c.cat !== 'token' && (!contract || c.cat === contract));
@@ -639,7 +641,7 @@ let shopRemoving    = false;   // is the removal picker open?
 
 function getRemovalPrice() {
   const p = 50 + 25 * (mapState.removals || 0);
-  const base = bm(2) ? Math.ceil(p * BM_SHOP_MULT) : p;   // Brewmaster 2
+  const base = bm(3) ? Math.ceil(p * BM_SHOP_MULT) : p;   // Brewmaster 3
   return taproomHalf(base);
 }
 // Taproom run perk: the first purchase in each shop (a card or a removal) is half price
@@ -677,7 +679,7 @@ function renderMapShop() {
 // Taproom run perk: the first purchase in each shop is half price
 let shopHalfUsed = false;
 function shopPrice(c) {
-  const base = bm(2) ? Math.ceil(c.price * BM_SHOP_MULT) : c.price;   // Brewmaster 2
+  const base = bm(3) ? Math.ceil(c.price * BM_SHOP_MULT) : c.price;   // Brewmaster 3
   return taproomHalf(base);
 }
 

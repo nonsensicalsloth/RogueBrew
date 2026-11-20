@@ -33,7 +33,7 @@ function disasterTiers() {
   return disasterTiersFor(act);
 }
 function disasterTiersFor(act) {
-  const extra = bm(7) ? BM_DISASTER_PLUS : 0;   // Brewmaster 7
+  const extra = bm(9) ? BM_DISASTER_PLUS : 0;   // Brewmaster 9
   return DISASTER_TIERS[Math.min(2, act)].map(t => t + extra);
 }
 

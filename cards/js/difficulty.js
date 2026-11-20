@@ -4,28 +4,33 @@
 
 const BREWMASTER_MAX = 10;
 
+// Every level should be felt: a mix of number tweaks and twists that change how a run plays.
+// Contamination arrives gently (bosses only at 6) and hits every battle only at 9.
 const BREWMASTER_LEVELS = [
   null,
-  { name: 'Tough Crowd',       desc: 'Every rival starts with +5.' },
-  { name: 'Pricey Suppliers',  desc: 'Shop prices are 20% higher.' },
-  { name: 'Thin Reputation',   desc: 'Start each run with 15 less Reputation.' },
-  { name: 'Sharp Rivals',      desc: 'Rivals plan their turns carefully from act 1 on.' },
-  { name: 'Strict Judges',     desc: 'Losing a battle costs 50% more Reputation.' },
-  { name: 'Busy Circuit',      desc: 'Competition Rules show up twice as often.' },
-  { name: 'Rough Brew Days',   desc: 'Brew Day Disaster targets are 20 higher.' },
-  { name: 'Headliners',        desc: 'Bosses start with +15.' },
-  { name: 'Wild Cellar',       desc: 'A Contamination is shuffled into your deck every battle.' },
-  { name: 'Grand Champion',    desc: 'Bosses start with 2 extra cards in hand.' },
+  { name: 'Tough Crowd',      desc: 'Every rival starts with +5.' },
+  { name: 'Picky Customers',  desc: 'Card offers show one fewer card.' },
+  { name: 'Tight Margins',    desc: 'Shop prices are 20% higher, and you start with 15 less Reputation.' },
+  { name: 'Sharp Rivals',     desc: 'Rivals plan carefully from act 1 on, and start with +5 more.' },
+  { name: 'Strict Circuit',   desc: 'Losses cost 50% more Reputation, and Competition Rules show up twice as often.' },
+  { name: 'Leaky Gaskets',    desc: 'A Contamination is shuffled into your deck in every boss fight.' },
+  { name: 'Short Season',     desc: 'Rest Stops are much rarer mid-act. The one before each boss stays.' },
+  { name: 'Headliners',       desc: 'Bosses start with +15.' },
+  { name: 'Rough Brew Days',  desc: 'Brew Day Disaster targets are 20 higher, and the Leaky Gaskets Contamination hits every battle.' },
+  { name: 'Grand Champion',   desc: 'Bosses start with an extra card in hand.' },
 ];
 
-const BM_RIVAL_BONUS   = 5;
-const BM_SHOP_MULT     = 1.2;
-const BM_REP_LOSS      = 15;
-const BM_LOSS_MULT     = 1.5;
-const BM_RULE_MULT     = 2;
-const BM_DISASTER_PLUS = 20;
-const BM_BOSS_BONUS    = 15;
-const BM_BOSS_CARDS    = 2;
+const BM_RIVAL_BONUS   = 5;     // 1
+const BM_OFFER_LESS    = 1;     // 2
+const BM_SHOP_MULT     = 1.2;   // 3
+const BM_REP_LOSS      = 15;    // 3
+const BM_RIVAL_MORE    = 5;     // 4
+const BM_LOSS_MULT     = 1.5;   // 5
+const BM_RULE_MULT     = 2;     // 5
+const BM_REST_WEIGHT   = 2;     // 7 (normally 8)
+const BM_BOSS_BONUS    = 15;    // 8
+const BM_DISASTER_PLUS = 20;    // 9
+const BM_BOSS_CARDS    = 1;     // 10
 
 // The level of the run in progress (0 = normal)
 function bmLevel() {

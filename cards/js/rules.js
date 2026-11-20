@@ -24,7 +24,7 @@ function currentRule() { return state && state.rule ? COMP_RULES[state.rule] : n
 // Map generation: give some battles a rule
 function assignRule(node) {
   if (node.type !== 'battle' && node.type !== 'festival') return null;
-  const chance = Math.min(0.9, RULE_CHANCE[Math.min(2, node.act || 0)] * (bm(6) ? BM_RULE_MULT : 1));   // Brewmaster 6
+  const chance = Math.min(0.9, RULE_CHANCE[Math.min(2, node.act || 0)] * (bm(5) ? BM_RULE_MULT : 1));   // Brewmaster 5
   return Math.random() < chance
     ? COMP_RULE_IDS[Math.floor(Math.random() * COMP_RULE_IDS.length)] : null;
 }
