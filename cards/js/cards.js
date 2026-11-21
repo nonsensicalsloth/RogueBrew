@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'builder search + style starters (Nov 21)';
+const CARDS_VERSION = 'fruit puree cold, hazelnut both (Nov 21)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -253,9 +253,9 @@ const CARD_POOL = [
   { id:'yeastnutrient', name:'Yeast Nutrient', cat:'adjunct', lane:'cold', points:8, cost:1, tags:[],         desc:'Every yeast on your cold side gets +3.' },
   { id:'oakfoeder',   name:'Oak Foeder',     cat:'adjunct', lane:'cold', points:20, cost:3, tags:['oaky','funky'],    desc:'Every other funky or sour card on your cold side gets +5.' },
   // Pastry stout, pastry sour and witbier support
-  { id:'hazelnut',     name:'Hazelnut',          cat:'adjunct', lane:'hot',  points:10, cost:2, tags:['sweet','toasty','roasty'], desc:'+2 pts for each other roasty card and each other sweet card on your hot side.' },
+  { id:'hazelnut',     name:'Hazelnut',          cat:'adjunct', lane:'both', points:10, cost:2, tags:['sweet','toasty','roasty'], desc:'+2 pts for each other roasty card and each other sweet card on your hot side.' },
   { id:'bourbonbarrel',name:'Bourbon Barrel',    cat:'adjunct', lane:'hot',  points:16, cost:3, tags:['oaky','sweet'],            desc:'Every other sweet card on your hot side gets +2 per roast token, including ones played later.' },
-  { id:'fruitpuree',   name:'Fruit Purée',       cat:'adjunct', lane:'hot',  points:12, cost:2, tags:['sweet','fruity'],          desc:'+2 pts for each other sweet or sour card on your board.' },
+  { id:'fruitpuree',   name:'Fruit Purée',       cat:'adjunct', lane:'cold', points:12, cost:2, tags:['sweet','fruity'],          desc:'+2 pts for each other sweet or sour card on your board.' },
   { id:'graham',       name:'Graham Cracker',    cat:'adjunct', lane:'hot',  points:8,  cost:1, tags:['sweet','biscuity','toasty'], desc:'+2 pts for each other sweet card on your board.' },
   { id:'phillysour',   name:'Philly Sour',       cat:'yeast',   lane:'cold', points:6,  cost:2, tags:['sour','fruity','crisp'],   desc:'+2 per turn. On play: the rival gets 1 Acid per other sweet or fruity card (max 5). Later sweet or fruity plays add 1 more.' },
   { id:'rawwheat',     name:'Raw Wheat',         cat:'malt',    lane:'hot',  points:14, cost:2, tags:['bready','hazy'],           desc:'Unmalted, so not sticky. +2 pts for each spicy or citrus adjunct on your board.' },
