@@ -157,6 +157,12 @@ function renderField() {
 function fitHand(el) {
   const cards = el.children, n = cards.length;
   if (!n) return;
+  // Phones: no fan. Cards sit side by side and the hand scrolls sideways (see css/mobile.css)
+  if (typeof phoneUI === 'function' && phoneUI()) {
+    el.classList.remove('hand-fanned');
+    for (let i = 0; i < n; i++) { cards[i].style.marginLeft = ''; cards[i].style.zIndex = ''; }
+    return;
+  }
   const cw = cards[0].offsetWidth || 90, room = el.clientWidth - 20;
   const gap = n > 1 && room > 0 ? Math.min(14, Math.floor((room - n * cw) / (n - 1))) : 14;
   // Overlapping: each card sits fully on top of the one before it (gems included); hover or select lifts it
@@ -170,6 +176,7 @@ function fitHand(el) {
 function renderHand() {
   const el  = document.getElementById('hand');
   const rem = state.budget - state.budgetUsed;
+  el.classList.toggle('hand-mulligan', state.phase === 'mulligan');   // phones show full card text while choosing
 
   if (state.phase === 'mulligan') {
     el.innerHTML = state.pHand.map((c, i) => {
@@ -222,7 +229,7 @@ function abilityButtonHtml() {
 function renderActions() {
   const el   = document.getElementById('actions');
   const hint = selectedCard !== null
-    ? `<span style="font-size:7px;color:var(--gold);margin-left:8px">▲ CLICK YOUR LANE TO PLAY</span>`
+    ? `<span style="font-size:7px;color:var(--gold);margin-left:8px">▲ ${typeof phoneUI === 'function' && phoneUI() ? 'TAP A SIDE TO PLAY' : 'CLICK YOUR LANE TO PLAY'}</span>`
     : '';
 
   if (state.phase === 'mulligan') {

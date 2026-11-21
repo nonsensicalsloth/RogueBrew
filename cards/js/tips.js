@@ -62,13 +62,25 @@ const escAttr = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').re
     const top  = y - r.height - 14 < 8 ? y + 18 : y - r.height - 14;
     tip.style.left = left + 'px'; tip.style.top = top + 'px';
   };
+  const noHover = () => window.matchMedia && window.matchMedia('(hover: none)').matches;   // touch: taps handle tips
   document.addEventListener('mouseover', e => {
+    if (noHover()) return;
     const el = e.target.closest && e.target.closest('[data-tip]');
     if (el) show(el, e.clientX, e.clientY);
     else if (tip) tip.style.display = 'none';
   });
   document.addEventListener('mouseout', e => {
+    if (noHover()) return;
     if (tip && e.target.closest && e.target.closest('[data-tip]') && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('[data-tip]'))) tip.style.display = 'none';
   });
   document.addEventListener('scroll', () => { if (tip) tip.style.display = 'none'; }, true);
+  // Touch screens have no hover: tap a keyword or tag to read it, it fades after a few seconds
+  let hideT = null;
+  document.addEventListener('click', e => {
+    if (!(window.matchMedia && window.matchMedia('(hover: none)').matches)) return;
+    const el = e.target.closest && e.target.closest('[data-tip]');
+    clearTimeout(hideT);
+    if (el) { show(el, e.clientX, e.clientY); hideT = setTimeout(() => { if (tip) tip.style.display = 'none'; }, 3000); }
+    else if (tip) tip.style.display = 'none';
+  });
 })();

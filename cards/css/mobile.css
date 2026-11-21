@@ -1,0 +1,111 @@
+/* ═══════════ Phones ═══════════
+   Everything here sits inside media queries that only match phone-sized or touch-only screens.
+   Desktop and laptop play never matches them, so the computer version is unchanged.
+   A: portrait phones (and very narrow windows)      (max-width: 700px)
+   B: landscape phones                               (max-height: 500px) and touch
+   Shared rules use both. */
+
+@media (max-width: 700px), (max-height: 500px) and (hover: none) and (pointer: coarse) {
+  /* ── Battle: hand and actions docked to the bottom of the screen ── */
+  #game-screen #app { display: flex; flex-direction: column; padding: 8px 6px 0; }
+  #game-screen .game-header   { order: 1; }
+  #game-screen .scoreboard    { order: 2; }
+  #game-screen .status-line   { order: 3; }
+  #game-screen .judging-line  { order: 4; }
+  #game-screen .log-box       { order: 5; }
+  #game-screen .board         { order: 6; }
+  #game-screen #rival-summary { order: 7; }
+  #game-screen .battle-picker { order: 8; }
+  #game-screen .hand-area     { order: 9; }
+  #game-screen .actions       { order: 10; }
+
+  /* The log becomes a one-line ticker under the status line; tap it to open */
+  #game-screen .log-box { max-height: 26px; overflow: hidden; margin: 4px 0 6px; position: relative; cursor: pointer; display: flex; flex-direction: column-reverse; }
+  #game-screen .log-box::after { content: '▾ LOG'; position: absolute; right: 6px; top: 5px; font-size: 7px; color: var(--dim); background: var(--bg2); padding-left: 6px; }
+  #game-screen .log-box.log-open { max-height: 45vh; overflow-y: auto; display: block; }
+  #game-screen .log-box.log-open::after { content: '▴ CLOSE'; position: sticky; float: right; }
+
+  /* Docked hand: stays on screen while the board scrolls above it */
+  #game-screen .hand-area { position: sticky; bottom: 52px; z-index: 40; margin: 6px -6px 0; padding: 6px 6px 2px;
+    background: linear-gradient(180deg, rgba(10,10,18,.92), #0a0a12 18px); border-top: 1px solid #2e2e4a; box-shadow: 0 -8px 18px rgba(0,0,0,.55); }
+  #game-screen .actions { position: sticky; bottom: 0; z-index: 41; margin: 0 -6px; padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    background: #0a0a12; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  #game-screen .actions .btn { min-height: 40px; }
+  #game-screen .piles { flex-direction: column; gap: 4px; }
+  #game-screen .pile { padding: 3px 4px; min-width: 40px; }
+
+  /* Hand: no fan; cards side by side, swipe sideways */
+  #game-screen .hand-cards { overflow-x: auto; overflow-y: visible; scroll-snap-type: x proximity; scroll-padding-inline: 14px; -webkit-overflow-scrolling: touch;
+    gap: 8px; padding: 14px 14px 6px; scrollbar-width: none; }
+  #game-screen .hand-cards::-webkit-scrollbar { display: none; }
+  #game-screen .hand-cards > .card { scroll-snap-align: start; width: 104px; min-width: 104px; margin-left: 0 !important; }
+  #game-screen .hand-cards > .card .card-desc,
+  #game-screen .hand-cards > .card .card-effect-text,
+  #game-screen .hand-cards > .card .card-restrict { display: none; }   /* full text and sides show in the preview when tapped */
+  #game-screen .hand-cards > .card .card-art { height: 40px; }
+  #game-screen .hand-cards > .card .card-art svg { width: 34px; height: 34px; }
+  #game-screen .hand-cards > .card .card-tags-row { padding: 2px 3px 6px; gap: 2px; justify-content: center; flex-wrap: wrap; }
+  #game-screen .hand-cards > .card .card-tags-row span { font-size: 11px !important; padding: 0 3px; margin: 0; line-height: 1.15; }
+  #game-screen .hand-cards > .card .card-name-banner { min-height: 0; padding: 4px 3px; }
+  #game-screen .hand-cards > .card:hover:not(.card-disabled) { transform: none; }
+  #game-screen .hand-cards > .card.selected-card { transform: translateY(-4px); }
+
+  /* Mulligan: you need the card text to decide, so show it */
+  #game-screen .hand-cards.hand-mulligan > .card { width: 132px; min-width: 132px; }
+  #game-screen .hand-cards.hand-mulligan > .card .card-effect-text { display: flex; }
+
+  /* Selected card, shown large with play buttons */
+  .m-preview { border: 1px solid var(--gold); background: #12122a; padding: 8px 10px; margin: 0 0 6px; box-shadow: 0 0 12px rgba(255,215,0,.18); }
+  .mp-head { display: flex; align-items: center; gap: 8px; }
+  .mp-cost { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #7b7bff; color: #fff; font-size: 9px; display: flex; align-items: center; justify-content: center; }
+  .mp-name { flex: 1; font-size: 9px; color: var(--gold); }
+  .mp-pts  { font-size: 10px; color: var(--gold); }
+  .mp-x { background: none; border: 1px solid #3a3a5a; color: var(--dim); font-size: 12px; width: 30px; height: 30px; cursor: pointer; }
+  .mp-tags { margin: 5px 0 2px; display: flex; gap: 4px; flex-wrap: wrap; }
+  .mp-desc { font-family: var(--read-font); font-size: 18px; line-height: 1.1; color: var(--text); margin: 4px 0 6px; }
+  .mp-play { display: flex; gap: 8px; }
+  .mp-lane { flex: 1; min-height: 44px; font-size: 9px; }
+  .mp-hot  { border-color: #ff8a3a !important; }
+  .mp-cold { border-color: #5ab0ff !important; }
+
+  /* Bigger touch targets everywhere */
+  .btn { min-height: 40px; }
+  .ach-tab { min-height: 38px; }
+
+  /* Score area a little tighter */
+  #game-screen .scoreboard { gap: 6px; }
+  #game-screen .score-box { padding: 6px 4px; }
+}
+
+/* ── A: portrait phones ── */
+@media (max-width: 700px) {
+  #game-screen .game-header { flex-wrap: wrap; gap: 4px; }
+  #game-screen .score-val { font-size: 24px; }
+  #game-screen .lane-cards { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 4px; }
+  #game-screen .field-card { min-width: 0; }
+
+}
+
+/* ── B: landscape phones: board on the left, hand panel on the right ── */
+@media (max-height: 500px) and (hover: none) and (pointer: coarse) {
+  #game-screen #app { display: grid; grid-template-columns: minmax(0, 1fr) 316px; column-gap: 10px; max-width: 100%; padding: 6px 0 0 8px; }
+  #game-screen #app > * { grid-column: 1; }
+  #game-screen .score-box { padding: 3px 6px; }
+  #game-screen .score-val { font-size: 18px; }
+  #game-screen .lane-cards { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 4px; }
+
+  /* Right-hand panel: selected card, hand and the turn buttons, always in view */
+  #game-screen #app > .hand-area { grid-column: 2; grid-row: 1 / span 30; position: sticky; top: 0; bottom: auto; align-self: start;
+    height: calc(100vh - 56px); overflow-y: auto; margin: 0; padding: 6px 8px; box-shadow: none; border-top: 0; border-left: 1px solid #2e2e4a;
+    background: #0a0a12; flex-direction: column; }
+  #game-screen .piles { flex-direction: row; gap: 6px; }
+  #game-screen .hand-cards { flex-wrap: wrap; overflow: visible; gap: 12px 8px; padding: 12px 8px 6px; scroll-snap-type: none; }
+  #game-screen .hand-cards > .card { width: 88px; min-width: 88px; }
+  #game-screen #app > .actions { position: fixed; right: 0; bottom: 0; width: 316px; margin: 0; padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    border-left: 1px solid #2e2e4a; border-top: 1px solid #2e2e4a; z-index: 45; }
+  #game-screen .actions > span { display: none; }   /* the hint doesn't fit; the play buttons say it */
+
+  .m-preview { padding: 6px 8px; }
+  .mp-desc { font-size: 16px; }
+  .mp-lane { min-height: 38px; }
+}
