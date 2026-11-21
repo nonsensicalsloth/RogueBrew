@@ -442,7 +442,8 @@ function builderSearch(q) {
 }
 
 // ── Start from a style: lays down a 10-card base, you pick the last 5 ──
-const STARTER_SIZE = 10;
+const STARTER_SIZE = 10;   // core cards stay the same each press; the filler varies
+const STARTER_CORE = 2;    // the two strongest fits, two copies each
 const STARTER_MIN_OWNED = 3;   // a style needs a few owned cards before it can start a deck
 function styleOwnedCount(s) { return CARD_POOL.filter(c => isOwned(c.id) && c.tags.includes(s.tag)).length; }
 const STYLE_STARTERS = [
@@ -486,8 +487,16 @@ function styleStarterCards(styleId) {
   add(s.hops.map(getCardDef).find(c => c && isOwned(c.id)) || own.filter(c => c.cat === 'hop').sort((a, b) => score(b) - score(a) || a.cost - b.cost)[0]);
   add(own.filter(c => c.cat === 'malt').sort((a, b) => score(b) - score(a) || a.cost - b.cost)[0]);
   // Then the cards that fit the style best: two copies of the strongest fits
-  const fits = own.filter(c => score(c) >= 2).sort((a, b) => score(b) - score(a) || a.cost - b.cost || a.name.localeCompare(b.name));
-  for (const c of fits) { add(c); if (score(c) >= 5) add(c); if (picked.length >= STARTER_SIZE) break; }
+  // The strongest fits (tagged AND rewarded by the style) always come first, two copies each.
+  // The filler is shuffled among cards that fit about equally well, so each press varies a little.
+  const byFit = (a, b) => score(b) - score(a) || a.cost - b.cost || a.name.localeCompare(b.name);
+  const fits = own.filter(c => score(c) >= 2);
+  const core = fits.filter(c => score(c) >= 5).sort(byFit).slice(0, STARTER_CORE);
+  core.forEach(c => { add(c); add(c); });
+  const tier = c => score(c) >= 5 ? 5 : Math.floor(score(c));          // shuffle within each fit level
+  const jitter = new Map(fits.map(c => [c.id, Math.random()]));
+  const filler = fits.filter(c => !core.includes(c)).sort((a, b) => tier(b) - tier(a) || jitter.get(b.id) - jitter.get(a.id));
+  for (const c of filler) { add(c); if (picked.length >= STARTER_SIZE) break; }
   // Short on style cards? Top up with cheap malts so the deck can still brew
   own.filter(c => c.cat === 'malt').sort((a, b) => a.cost - b.cost).forEach(c => add(c));
   return picked.slice(0, STARTER_SIZE);
