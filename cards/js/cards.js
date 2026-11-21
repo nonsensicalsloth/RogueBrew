@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'tag cleanup (Nov 21)';
+const CARDS_VERSION = 'floral, smooth, bitter payoffs (Nov 21)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -266,6 +266,11 @@ const CARD_POOL = [
   { id:'belgiangolden',name:'Belgian Golden Ale',cat:'yeast',   lane:'cold', points:6,  cost:2, tags:['fruity','dry','belgian'],   desc:'+2 per turn. On play: +5 per Clear Candi Sugar and +3 per crisp or dry card on your board.' },
   { id:'trappist',     name:'Trappist High Gravity', cat:'yeast', lane:'cold', points:10, cost:3, tags:['fruity','spicy','belgian'], desc:'+3 per turn. On play: +5 per candi sugar and +2 per toasty or roasty malt on your board.' },
   { id:'gueuze',       name:'Gueuze Blend',      cat:'process', lane:'cold', points:8,  cost:1, tags:['sour','funky','belgian'], desc:'Give the rival 1 Acid per other funky or sour card on your board. Oaky cards on your board get +2, including ones played later.' },
+  // Payoffs for floral, smooth and bitter
+  { id:'hibiscus',     name:'Hibiscus',          cat:'adjunct', lane:'both', points:10, cost:2, tags:['floral','sour','fruity'], desc:'+2 pts for each other floral or sour card on your board.' },
+  { id:'nitro',        name:'Nitro Pour',        cat:'process', lane:'cold', points:6,  cost:2, tags:['smooth'],               desc:'Every other smooth card on your board gets +2, including ones played later.' },
+  { id:'oatmalt',      name:'Oat Malt',          cat:'malt',    lane:'hot',  points:8,  cost:1, tags:['smooth','hazy'],         desc:'+2 pts for each other smooth card on your hot side.' },
+  { id:'warrior',      name:'Warrior',           cat:'hop',     lane:'both', points:7,  cost:1, tags:['bitter'],                desc:'+3 pts for each other bitter card on your board, including ones played later.' },
 ];
 
 // ── Default deck composition (30 cards) ──
@@ -287,6 +292,7 @@ const RARE_CARDS = [
   'oakfoeder','solera','lacticacid','roeselare',
 ];
 const UNCOMMON_CARDS = [
+  'hibiscus','nitro',
   'belgiangolden',
   'rawwheat','sweetorange',
   'floorpilsner','darkmunich','expwheat','expilsner','crystal50','crystal60','specialb','carafaIII',

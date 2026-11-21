@@ -725,6 +725,25 @@ function applyCardEffect(card, lane, who) {
     case 'styrian':
       // ongoing: see ongoingBonus()
       break;
+    case 'hibiscus': {
+      const n = allMine.filter(c => c !== card && c.cat !== 'token' && c.tags && (c.tags.includes('floral') || c.tags.includes('sour'))).length;
+      card.points += n * 2;
+      addLog(`Hibiscus: +${n * 2} (${n} floral or sour cards).`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+    case 'nitro':
+      // ongoing: see auraBonus()
+      addLog('Nitro Pour: every other smooth card on your board gets +2, including ones played later.', isPlayer ? 'player' : 'enemy');
+      break;
+    case 'oatmalt': {
+      const n = countOthers('smooth', who, card, 'hot');
+      card.points += n * 2;
+      addLog(`Oat Malt: +${n * 2} (${n} smooth cards on hot side).`, isPlayer ? 'player' : 'enemy');
+      break;
+    }
+    case 'warrior':
+      // ongoing: see ongoingBonus()
+      break;
     case 'coconut': {
       const n = allMine.filter(c => c !== card && c.tags && (c.tags.includes('smooth') || c.tags.includes('tropical'))).length;
       card.points += n * 2;
@@ -1918,11 +1937,13 @@ function carapilsBonus(c, lane, who) {
 // Cards whose bonus is on while a condition holds (so playing order doesn't matter)
 const ONGOING_BONUS = 8;
 const STYRIAN_BONUS = 4;
-const BRETT_FUNK = 2;   // Brettanomyces: +2 per other funky card on your board, always
+const BRETT_FUNK = 2;
+const WARRIOR_BITTER = 3;   // Warrior: +3 per other bitter card on your board, always   // Brettanomyces: +2 per other funky card on your board, always
 const GUEUZE_OAK = 2;
 const ROESELARE_ACID = 2;
 function ongoingBonus(c, lane, who) {
   if (c._locked) return 0;
+  if (c.id === 'warrior') return getAllOnField(who).filter(x => x !== c && x.cat !== 'token' && x.tags && x.tags.includes('bitter')).length * WARRIOR_BITTER;
   if (c.id === 'brett' && !c._heatKilled) return getAllOnField(who).filter(x => x !== c && x.cat !== 'token' && x.tags && x.tags.includes('funky')).length * BRETT_FUNK;
   if (c.id === 'styrian')    return getLaneCards('cold', who).some(x => x.cat === 'yeast' && x.tags && x.tags.includes('belgian') && !x._heatKilled) ? STYRIAN_BONUS : 0;
   if (c.id === 'marisotter') return getLaneCards('hot', who).filter(x => x !== c && isDarkOrCrystal(x)).length >= 2 ? ONGOING_BONUS : 0;
@@ -1958,6 +1979,7 @@ const AURAS = {
   orangepeel: { n: 2, tags: ['citrus', 'spicy'] },
   oats:       { n: 2, tags: ['hazy', 'roasty'] },
   yeastnutrient: { n: 2, cat: 'yeast', lane: 'cold' },
+  nitro:      { n: 2, tags: ['smooth'] },
 };
 function auraBonus(c, lane, who) {
   if (c._locked || c.cat === 'token' || !c.tags) return 0;
