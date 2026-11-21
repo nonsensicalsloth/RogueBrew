@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'modifiers: big kettle to 8 (Nov 21)';
+const CARDS_VERSION = 'carafa I and II cheaper (Nov 21)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -52,9 +52,9 @@ const CARD_POOL = [
   { id:'choc',        name:'Chocolate Malt',   cat:'malt', lane:'hot', points:21, cost:3, tags:['toasty','roasty'],  desc:'Adds 1 roast token.' },
   { id:'patent',      name:'Black Patent',     cat:'malt', lane:'hot', points:17, cost:3, tags:['roasty'],           desc:'Adds 2 roast tokens.' },
   { id:'roastedbar',  name:'Roasted Barley',   cat:'malt', lane:'hot', points:21, cost:3, tags:['roasty','dry'],     desc:'Adds 2 roast tokens. If 3+ roast tokens total, +10 bonus pts.' },
-  { id:'carafaI',     name:'Carafa I',         cat:'malt', lane:'hot', points:14, cost:2, tags:['roasty','smooth'],  desc:'Adds 1 roast token. Roast penalty threshold increases by 1.' },
-  { id:'carafaII',    name:'Carafa II',        cat:'malt', lane:'hot', points:21, cost:3, tags:['roasty','smooth'],  desc:'Adds 1 roast token. Roast penalty threshold increases by 1.' },
-  { id:'carafaIII',   name:'Carafa III',       cat:'malt', lane:'hot', points:22, cost:3, tags:['roasty','smooth'],  desc:'Adds 2 roast tokens. Roast penalty threshold increases by 1.' },
+  { id:'carafaI',     name:'Carafa I',         cat:'malt', lane:'hot', points:8,  cost:1, tags:['roasty','smooth'],  desc:'Adds 1 roast. Raises your roast limit by 1.' },
+  { id:'carafaII',    name:'Carafa II',        cat:'malt', lane:'hot', points:13, cost:2, tags:['roasty','smooth'],  desc:'Adds 1 roast. Raises your roast limit by 1.' },
+  { id:'carafaIII',   name:'Carafa III',       cat:'malt', lane:'hot', points:22, cost:3, tags:['roasty','smooth'],  desc:'Adds 2 roast. Raises your roast limit by 1.' },
   { id:'blackmalt',   name:'Black Malt',       cat:'malt', lane:'hot', points:18, cost:2, tags:['roasty','toasty'],  desc:'Adds 2 roast tokens. An adjacent crystal malt scores double.' },
   { id:'palechoc',    name:'Pale Chocolate',   cat:'malt', lane:'hot', points:16, cost:2, tags:['toasty','roasty'],  desc:'Adds 1 roast token.' },
   { id:'acidmalt',    name:'Acidulated Malt',       cat:'malt', lane:'hot', points:7,  cost:1, tags:['sour'],            desc:'Give the rival 2 Acid.' },

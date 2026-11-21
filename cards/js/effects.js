@@ -907,17 +907,17 @@ function applyCardEffect(card, lane, who) {
 
     case 'carafaI':
       addRoastToken(who, 1);
-      addLog('Carafa I: roast threshold → ' + raiseRoastThreshold(who), 'player');
+      addLog('Carafa I: roast limit → ' + raiseRoastThreshold(who), 'player');
       break;
 
     case 'carafaII':
       addRoastToken(who, 1);
-      addLog('Carafa II: roast threshold → ' + raiseRoastThreshold(who), 'player');
+      addLog('Carafa II: roast limit → ' + raiseRoastThreshold(who), 'player');
       break;
 
     case 'carafaIII':
       addRoastToken(who, 2);
-      addLog('Carafa III: roast threshold → ' + raiseRoastThreshold(who), 'player');
+      addLog('Carafa III: roast limit → ' + raiseRoastThreshold(who), 'player');
       break;
 
     case 'blackmalt': {
