@@ -1385,11 +1385,10 @@ function applyCardEffect(card, lane, who) {
       break;
     }
 
-    case 'yeastnutrient': {
-      const n = buffLaneCards('cold', who, 3, c => c.cat === 'yeast');
-      addLog(`Yeast Nutrient: +3 to ${n} yeast(s).`, 'player');
+    case 'yeastnutrient':
+      // ongoing: see auraBonus(). Added in the boil, it feeds yeast pitched later too
+      addLog('Yeast Nutrient: every yeast on your cold side gets +2, including ones pitched later.', isPlayer ? 'player' : 'enemy');
       break;
-    }
 
     case 'oakfoeder': {
       const wild = c => c !== card && c.tags && (c.tags.includes('funky') || c.tags.includes('sour'));
@@ -1957,13 +1956,16 @@ const AURAS = {
   vanillabn:  { n: 3, tags: ['sweet'] },
   orangepeel: { n: 2, tags: ['citrus', 'belgian'] },
   oats:       { n: 2, tags: ['hazy', 'roasty'] },
+  yeastnutrient: { n: 2, cat: 'yeast', lane: 'cold' },
 };
 function auraBonus(c, lane, who) {
   if (c._locked || c.cat === 'token' || !c.tags) return 0;
   let b = 0;
   getAllOnField(who).forEach(x => {
     const a = AURAS[x.id];
-    if (a && x !== c && !x._locked && a.tags.some(t => c.tags.includes(t))) b += a.n;
+    if (!a || x === c || x._locked) return;
+    if (a.lane && a.lane !== lane) return;
+    if (a.cat ? c.cat === a.cat : a.tags.some(t => c.tags.includes(t))) b += a.n;
   });
   return b;
 }
@@ -1976,7 +1978,7 @@ function phillyFollowUp(c, who) {
 }
 function barrelBonus(c, lane, who) {
   if (lane !== 'hot' || c._locked || c.cat === 'token' || !(c.tags && c.tags.includes('sweet'))) return 0;
-  const barrels = getLaneCards('hot', who).filter(x => x !== c && x.id === 'bourbonbarrel' && !x._locked).length;
+  const barrels = getAllOnField(who).filter(x => x !== c && x.id === 'bourbonbarrel' && !x._locked).length;   // the barrel sits on your cold side
   return barrels ? barrels * BARREL_PER_ROAST * getRoast(who) : 0;
 }
 

@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'varied style starters (Nov 21)';
+const CARDS_VERSION = 'card sides pass (Nov 21)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -84,7 +84,7 @@ const CARD_POOL = [
   { id:'cacaonibs',  name:'Cacao Nibs',      cat:'adjunct', lane:'both', points:19, cost:3, tags:['roasty','bitter'],       desc:'Adds 1 roast token. If Chocolate Malt on hot side, score double.' },
   { id:'honey',      name:'Honey',           cat:'adjunct', lane:'hot', points:12, cost:2, tags:['sweet','floral'],        desc:'Costs 0 if it is your first adjunct this round. +3 per floral card on your board.' },
   { id:'maple',      name:'Maple Syrup',     cat:'adjunct', lane:'hot', points:12, cost:2, tags:['sweet','malty'],        desc:'+4 pts for each other malty card on your hot side.' },
-  { id:'marshm',     name:'Marshmallow',     cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['sweet','smooth'],       desc:'All other smooth cards on your board get +2 pts.' },
+  { id:'marshm',     name:'Marshmallow',     cat:'adjunct', lane:'both', points:8,  cost:1, tags:['sweet','smooth'],       desc:'All other smooth cards on your board get +2 pts.' },
 
   // Grain/texture adjuncts
   { id:'flakedwheat',name:'Flaked Wheat',    cat:'adjunct', lane:'hot', points:9,  cost:1, tags:['smooth','bready','hazy','sticky'],      desc:'Every hop on your hot side gets +3.' },
@@ -102,13 +102,13 @@ const CARD_POOL = [
   { id:'orangepeel',  name:'Orange Peel',         cat:'adjunct', lane:'hot', points:8,  cost:1, tags:['citrus','belgian','fruity'],  desc:'Every other citrus and belgian card on your board gets +2, including ones played later.' },
   { id:'grainspara',  name:'Grains of Paradise',  cat:'adjunct', lane:'hot', points:12, cost:2, tags:['spicy','belgian','dry'],      desc:'If 3+ belgian tagged cards on board, +12 pts.' },
   { id:'cardamom',    name:'Cardamom',             cat:'adjunct', lane:'hot', points:10,  cost:2, tags:['spicy','sweet','belgian'],    desc:'+2 pts for each other sweet card and each other spicy card on your board.' },
-  { id:'citrazest',  name:'Grapefruit Zest',      cat:'adjunct', lane:'hot', points:8, cost:1, tags:['citrus','bitter'],      desc:'Your next hop costs 1 less.' },
+  { id:'citrazest',  name:'Grapefruit Zest',      cat:'adjunct', lane:'both', points:8, cost:1, tags:['citrus','bitter'],      desc:'Your next hop costs 1 less.' },
   { id:'vanillabn',  name:'Vanilla Bean',    cat:'adjunct', lane:'both', points:17, cost:3, tags:['sweet','smooth'],       desc:'Every other sweet card on your board gets +3, including ones played later.' },
   { id:'toastedcoc', name:'Toasted Coconut', cat:'adjunct', lane:'both', points:12, cost:2, tags:['sweet','toasty'],       desc:'If another sweet card and a toasty card are on your hot side, +8 pts.' },
-  { id:'coldbrewcof',name:'Cold Brew Coffee',cat:'adjunct', lane:'both', points:21, cost:3, tags:['toasty','roasty','smooth'], desc:'Adds 1 roast token. Roast penalty threshold +1.' },
+  { id:'coldbrewcof',name:'Cold Brew Coffee',cat:'adjunct', lane:'cold', points:21, cost:3, tags:['toasty','roasty','smooth'], desc:'Adds 1 roast token. Roast penalty threshold +1.' },
   { id:'chili',      name:'Chili Pepper',    cat:'adjunct', lane:'both', points:8,  cost:2, tags:['spicy'],          desc:'The rival\'s highest-scoring card loses 6 pts.' },
   { id:'cinnamon',   name:'Cinnamon',        cat:'adjunct', lane:'hot', points:10,  cost:2, tags:['spicy','sweet'],        desc:'+3 pts for each other sweet card on your hot side.' },
-  { id:'phantasm',   name:'Phantasm',        cat:'adjunct', lane:'hot', points:6,  cost:1, tags:['fruity','thiol'],       desc:'A thiol yeast gives this +8.' },
+  { id:'phantasm',   name:'Phantasm',        cat:'adjunct', lane:'both', points:6,  cost:1, tags:['fruity','thiol'],       desc:'A thiol yeast gives this +8.' },
 
   // ── Process Cards ──
 
@@ -250,11 +250,11 @@ const CARD_POOL = [
   { id:'elderflower', name:'Elderflower',    cat:'adjunct', lane:'both', points:7,  cost:1, tags:['floral','sweet'],  desc:'+3 pts for each other floral card on your board.' },
   { id:'brutenzyme',  name:'Brut Enzyme',    cat:'adjunct', lane:'both', points:12,  cost:2, tags:['dry'],             desc:'Every other dry card on your board gets +3.' },
   { id:'flakedrice',  name:'Flaked Rice',    cat:'adjunct', lane:'hot',  points:7,  cost:1, tags:['neutral','crisp'], desc:'+2 pts for each other neutral or crisp card on your hot side.' },
-  { id:'yeastnutrient', name:'Yeast Nutrient', cat:'adjunct', lane:'cold', points:8, cost:1, tags:[],         desc:'Every yeast on your cold side gets +3.' },
+  { id:'yeastnutrient', name:'Yeast Nutrient', cat:'adjunct', lane:'hot', points:8, cost:1, tags:[],         desc:'Every yeast on your cold side gets +2, including ones pitched later.' },
   { id:'oakfoeder',   name:'Oak Foeder',     cat:'adjunct', lane:'cold', points:20, cost:3, tags:['oaky','funky'],    desc:'Every other funky or sour card on your cold side gets +5.' },
   // Pastry stout, pastry sour and witbier support
   { id:'hazelnut',     name:'Hazelnut',          cat:'adjunct', lane:'both', points:10, cost:2, tags:['sweet','toasty','roasty'], desc:'+2 pts for each other roasty card and each other sweet card on your hot side.' },
-  { id:'bourbonbarrel',name:'Bourbon Barrel',    cat:'adjunct', lane:'hot',  points:16, cost:3, tags:['oaky','sweet'],            desc:'Every other sweet card on your hot side gets +2 per roast token, including ones played later.' },
+  { id:'bourbonbarrel',name:'Bourbon Barrel',    cat:'adjunct', lane:'cold', points:16, cost:3, tags:['oaky','sweet'],            desc:'Every other sweet card on your hot side gets +2 per roast token, including ones played later.' },
   { id:'fruitpuree',   name:'Fruit Purée',       cat:'adjunct', lane:'cold', points:12, cost:2, tags:['sweet','fruity'],          desc:'+2 pts for each other sweet or sour card on your board.' },
   { id:'graham',       name:'Graham Cracker',    cat:'adjunct', lane:'hot',  points:8,  cost:1, tags:['sweet','biscuity','toasty'], desc:'+2 pts for each other sweet card on your board.' },
   { id:'phillysour',   name:'Philly Sour',       cat:'yeast',   lane:'cold', points:6,  cost:2, tags:['sour','fruity','crisp'],   desc:'+2 per turn. On play: the rival gets 1 Acid per other sweet or fruity card (max 5). Later sweet or fruity plays add 1 more.' },
