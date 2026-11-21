@@ -26,11 +26,12 @@
   #game-screen .log-box.log-open::after { content: '▴ CLOSE'; position: sticky; float: right; }
 
   /* Docked hand: stays on screen while the board scrolls above it */
-  #game-screen .hand-area { position: sticky; bottom: 52px; z-index: 40; margin: 6px -6px 0; padding: 6px 6px 2px;
+  #game-screen .hand-area { position: sticky; bottom: calc(64px + env(safe-area-inset-bottom)); z-index: 40; margin: 6px -6px 0; padding: 6px 6px 2px;
     background: linear-gradient(180deg, rgba(10,10,18,.92), #0a0a12 18px); border-top: 1px solid #2e2e4a; box-shadow: 0 -8px 18px rgba(0,0,0,.55); }
   #game-screen .actions { position: sticky; bottom: 0; z-index: 41; margin: 0 -6px; padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
-    background: #0a0a12; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-  #game-screen .actions .btn { min-height: 40px; }
+    background: #0a0a12; display: flex; gap: 8px; flex-wrap: nowrap; justify-content: center; height: 52px; box-sizing: content-box; }
+  #game-screen .actions .btn { min-height: 40px; height: 40px; padding-top: 0; padding-bottom: 0; white-space: nowrap; font-size: 8px; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; }
+  #game-screen .actions > span { display: none; }   /* the hint wraps on narrow phones; the play buttons say it */
   #game-screen .piles { flex-direction: column; gap: 4px; }
   #game-screen .pile { padding: 3px 4px; min-width: 40px; }
 
@@ -108,4 +109,36 @@
   .m-preview { padding: 6px 8px; }
   .mp-desc { font-size: 16px; }
   .mp-lane { min-height: 38px; }
+}
+
+/* ═══ Deck builder on phones ═══ */
+@media (max-width: 700px), (max-height: 500px) and (hover: none) and (pointer: coarse) {
+  #builder-screen { padding: 8px 8px 0; height: auto; min-height: 100vh; }
+  #builder-screen .builder-header { flex-wrap: wrap; gap: 6px; }
+  #builder-screen .builder-header .btn { min-height: 36px; font-size: 7px; padding: 6px 8px; }
+  #deck-name-input { width: 130px !important; }
+  /* Tabs and filters: single rows you swipe sideways */
+  #builder-screen .builder-tabs, #builder-screen .filter-group { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  #builder-screen .builder-tabs::-webkit-scrollbar, #builder-screen .filter-group::-webkit-scrollbar { display: none; }
+  #builder-screen .builder-tab { flex: 0 0 auto; min-height: 36px; font-size: 7px; padding: 6px 10px; }
+  #builder-screen .builder-filters { flex-direction: column; align-items: stretch; gap: 6px; padding: 4px 0 8px; }
+  #builder-screen .filter-chip { flex: 0 0 auto; min-height: 32px; font-size: 7px; padding: 4px 9px; }
+  /* Cards: two columns across the full width */
+  #builder-screen .builder-body { display: block; }
+  #builder-screen .builder-pool-wrap { overflow: visible; padding: 0 0 70px; }
+  #builder-screen .builder-card-pool { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; padding: 12px 8px; }
+  #builder-screen .builder-card-pool > .card { width: auto; }
+  /* Current deck: a bar pinned to the bottom; tap to open the list */
+  #builder-screen .builder-deck-wrap { position: fixed; left: 0; right: 0; bottom: 0; width: auto; z-index: 50; margin: 0;
+    border-top: 2px solid var(--gold); max-height: 56px; overflow: hidden; transition: max-height .2s; padding-bottom: env(safe-area-inset-bottom); }
+  #builder-screen .builder-deck-wrap.deck-open { max-height: 70vh; overflow-y: auto; }
+  #builder-screen .builder-deck-head { cursor: pointer; padding: 14px 12px; display: flex; justify-content: space-between; position: sticky; top: 0; background: var(--bg2); z-index: 1; }
+  #builder-screen .builder-deck-head::after { content: attr(data-count) '  ▴ SHOW'; color: var(--text); }
+  #builder-screen .builder-deck-wrap.deck-open .builder-deck-head::after { content: attr(data-count) '  ▾ HIDE'; }
+  #builder-screen .deck-list-row { padding: 6px 12px; }
+  #builder-screen .deck-list-remove { min-width: 34px; min-height: 30px; }
+}
+/* Landscape phones: three columns fit */
+@media (max-height: 500px) and (hover: none) and (pointer: coarse) {
+  #builder-screen .builder-card-pool { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }

@@ -477,6 +477,8 @@ function renderBuilderCards() {
 
 function renderBuilderDeck() {
   const el = document.getElementById('builder-deck-list');
+  const head = document.querySelector('.builder-deck-head');
+  if (head) head.dataset.count = `${builderState.cards.length}/${DECK_SIZE}`;   // shown on the phone deck bar
   const counts = {};
   builderState.cards.forEach(id => counts[id] = (counts[id] || 0) + 1);
   const unique = [...new Set(builderState.cards)];

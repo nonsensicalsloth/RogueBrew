@@ -26,7 +26,7 @@ function renderMobilePreview() {
       <button class="mp-x" onclick="selectedCard = null; render();" aria-label="Cancel">✕</button></div>
     <div class="mp-tags">${tagHtml(c.tags)}</div>
     <div class="mp-desc">${richDesc(c.desc) || '<span style="color:var(--dim)">No effect. Just points.</span>'}</div>
-    <div class="mp-play">${lanes.map(l => `<button class="btn btn-primary mp-lane mp-${l}" onclick="playToLane('${l}')">▶ ${l === 'hot' ? 'HOT' : 'COLD'} SIDE</button>`).join('')}</div>`;
+    <div class="mp-play">${lanes.map(l => `<button class="btn btn-primary mp-lane mp-${l}" onclick="playToLane('${l}')">▶ PLAY ON ${l === 'hot' ? 'HOT' : 'COLD'} SIDE</button>`).join('')}</div>`;
 }
 
 if (typeof window !== 'undefined') {
@@ -39,6 +39,9 @@ if (typeof window !== 'undefined') {
     // Tap the battle log to open or close it on phones
     const log = document.getElementById('log');
     if (log) log.addEventListener('click', () => { if (phoneUI()) log.classList.toggle('log-open'); });
+    // Deck builder: tap the CURRENT DECK bar to open or close the list
+    const dh = document.querySelector('.builder-deck-head');
+    if (dh) dh.addEventListener('click', () => { if (phoneUI()) dh.parentElement.classList.toggle('deck-open'); });
     // Re-fit the hand when the phone rotates
     window.addEventListener('resize', () => { const h = document.getElementById('hand'); if (h && typeof fitHand === 'function') fitHand(h); });
   });
