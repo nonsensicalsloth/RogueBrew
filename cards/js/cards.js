@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'card sides pass (Nov 21)';
+const CARDS_VERSION = 'framboise raspberries (Nov 21)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:
@@ -71,7 +71,7 @@ const CARD_POOL = [
   { id:'lactose',    name:'Lactose',         cat:'adjunct', lane:'hot', points:12,  cost:2, tags:['sweet','smooth'],                desc:'Raises your roast limit by 2.' },
 
   // Fruit adjuncts
-  { id:'raspberry',  name:'Raspberries',     cat:'adjunct', lane:'both', points:12, cost:2, tags:['sweet','fruity'],       desc:'+2 pts for each other sweet card on your hot side.' },
+  { id:'raspberry',  name:'Raspberries',     cat:'adjunct', lane:'both', points:12, cost:2, tags:['sweet','fruity'],       desc:'+2 pts for each other sour or funky card on your board.' },
   { id:'cherry',     name:'Cherries',        cat:'adjunct', lane:'both', points:12, cost:2, tags:['sweet','fruity'],       desc:'+8 pts while 2+ dark malts are on your hot side.' },
   { id:'mango',      name:'Mango',           cat:'adjunct', lane:'both', points:9,  cost:1, tags:['sweet','tropical','hazy'],desc:'Every hop on the same side gets +3.' },
   { id:'passionfr',  name:'Passion Fruit',   cat:'adjunct', lane:'both', points:12, cost:2, tags:['tropical','fruity'],       desc:'Every hop on your cold side gets +3.' },

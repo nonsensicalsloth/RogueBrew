@@ -739,9 +739,10 @@ function applyCardEffect(card, lane, who) {
       break;
 
     case 'raspberry': {
-      const sweetCount = countOthers('sweet', who, card, 'hot');
-      card.points += sweetCount * 2;
-      addLog(`Raspberries: +${sweetCount * 2} pts (${sweetCount} sweet cards).`, 'player');
+      // Framboise: raspberries are the classic fruit for sour and wild beers
+      const n = allMine.filter(c => c !== card && c.cat !== 'token' && c.tags && (c.tags.includes('sour') || c.tags.includes('funky'))).length;
+      card.points += n * 2;
+      addLog(`Raspberries: +${n * 2} pts (${n} sour or funky cards).`, isPlayer ? 'player' : 'enemy');
       break;
     }
 
