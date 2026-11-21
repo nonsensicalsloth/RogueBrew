@@ -3,37 +3,36 @@
 // They stack with Brewmaster levels and are saved with the run (mapState.mods).
 //   • Each modifier's effect lives where that system lives (map.js, game.js, draft.js);
 //     those spots just ask modOn('id').
-//   • Deep Pockets makes runs easier, so a win with it on doesn't open the next Brewmaster level.
+//   • A run with any modifier on never opens the next Brewmaster level.
 
 const MODS_PICK_KEY = 'wortcraft_mods_pick';   // your last choices, remembered between runs
 
 const DEEP_POCKETS_GOLD = 150;
 const BUMPER_SHOP_MULT  = 1.25;
-const BIG_KETTLE_CAP    = 6;
 const GAUNTLET_BONUS    = 10;    // final-act bosses, who have no harder lineup to borrow from
 const WILD_ROADS_WEIGHTS = { event: 35, battle: 26 };
 
 const MODIFIERS = [
-  { id: 'wildroads', icon: '🗺', name: 'Wild Roads',     kind: 'mixed',
+  { id: 'wildroads', name: 'Wild Roads',     kind: 'mixed',
     desc: 'Far more event stops and fewer battles on every map.' },
-  { id: 'strange',   icon: '🧪', name: 'Strange Brew',   kind: 'mixed',
+  { id: 'strange',   name: 'Strange Brew',   kind: 'mixed',
     desc: 'Every event gets its Wild Cellar option, whatever brewery you are.', not: ['wildcellar'] },
-  { id: 'bumper',    icon: '🌾', name: 'Bumper Crop',    kind: 'mixed',
+  { id: 'bumper',    name: 'Bumper Crop',    kind: 'mixed',
     desc: `Card offers show 1 more card. Shop prices go up ${Math.round((BUMPER_SHOP_MULT - 1) * 100)}%.` },
-  { id: 'bigkettle', icon: '🍲', name: 'Big Kettle',     kind: 'mixed',
-    desc: `Budget grows to ${BIG_KETTLE_CAP} instead of 5, for you and every rival. Bigger beers on both sides.` },
-  { id: 'blind',     icon: '🎲', name: 'Blind Brew',     kind: 'mixed',
+  { id: 'bigkettle', name: 'Big Kettle',     kind: 'mixed',
+    desc: 'Budget keeps growing every turn instead of stopping at 5, so the last turn has 8. Same for every rival.' },
+  { id: 'blind',     name: 'Blind Brew',     kind: 'mixed',
     desc: 'Your starting deck is 15 random cards from your collection instead of the deck you picked.', not: ['garage'] },
-  { id: 'gauntlet',  icon: '👑', name: 'Gauntlet',       kind: 'harder',
+  { id: 'gauntlet',  name: 'Gauntlet',       kind: 'harder',
     desc: `Each boss comes from the next act's lineup. Final bosses get +${GAUNTLET_BONUS} instead.` },
-  { id: 'noshops',   icon: '🏚', name: 'Homebrew Only',  kind: 'harder',
+  { id: 'noshops',   name: 'Homebrew Only',  kind: 'harder',
     desc: 'No shops on the map. Card offers after battles show 1 more card to make up for it.', not: ['taproom'] },
-  { id: 'onestyle',  icon: '🎯', name: 'Single Style',   kind: 'harder',
+  { id: 'onestyle',  name: 'Single Style',   kind: 'harder',
     desc: "Card offers and shops only show cards that share your deck's most common tag." },
-  { id: 'onebatch',  icon: '💀', name: 'One Bad Batch',  kind: 'harder',
+  { id: 'onebatch',  name: 'One Bad Batch',  kind: 'harder',
     desc: 'Lose any battle and the run is over. Reputation only matters for brew day disasters.' },
-  { id: 'deep',      icon: '💰', name: 'Deep Pockets',   kind: 'easier',
-    desc: `Start with ${DEEP_POCKETS_GOLD} extra gold. Wins don't open the next Brewmaster level.` },
+  { id: 'deep',      name: 'Deep Pockets',   kind: 'easier',
+    desc: `Start with ${DEEP_POCKETS_GOLD} extra gold.` },
 ];
 const MOD_KINDS = { easier: 'EASIER', mixed: 'TWIST', harder: 'HARDER' };
 
@@ -81,13 +80,13 @@ function renderModPicker() {
   const el = document.getElementById('mod-picker');
   if (!el) return;
   if (!modsUnlocked()) {
-    el.innerHTML = `<div class="mod-bar mod-locked">🔒 RUN MODIFIERS · win a run to unlock</div>`;
+    el.innerHTML = `<div class="mod-bar mod-locked">RUN MODIFIERS · win a run to unlock</div>`;
     return;
   }
   const picks = loadModPicks();
-  const chips = picks.map(id => getMod(id)).map(m => `<span class="mod-chip mod-${m.kind}">${m.icon} ${m.name}</span>`).join('');
+  const chips = picks.map(id => getMod(id)).map(m => `<span class="mod-chip mod-${m.kind}">${m.name}</span>`).join('');
   const head = `<button class="mod-bar" onclick="toggleModsOpen()" aria-expanded="${modsOpen}">
-      <span class="mod-bar-title">🧩 RUN MODIFIERS</span>
+      <span class="mod-bar-title">RUN MODIFIERS</span>
       <span class="mod-bar-chips">${chips || '<span class="mod-none">None. Tap to add a twist.</span>'}</span>
       <span class="mod-bar-arrow">${modsOpen ? '▲' : '▼'}</span></button>`;
   if (!modsOpen) { el.innerHTML = head; return; }
@@ -95,13 +94,12 @@ function renderModPicker() {
     const on = picks.includes(m.id);
     const not = (m.not || []).map(id => { const b = BREWERIES.find(x => x.id === id); return b ? b.name : id; });
     return `<button class="mod-opt ${on ? 'on' : ''}" onclick="toggleModPick('${m.id}')" aria-pressed="${on}">
-        <span class="mod-icon">${m.icon}</span>
         <span class="mod-body"><span class="mod-name">${m.name} <span class="mod-kind mod-${m.kind}">${MOD_KINDS[m.kind]}</span></span>
         <span class="mod-desc">${m.desc}${not.length ? ` <i>Not with ${not.join(', ')}.</i>` : ''}</span></span>
         <span class="mod-check">${on ? '✓' : ''}</span></button>`;
   }).join('');
   el.innerHTML = head + `<div class="mod-panel">
-      <div class="mod-note">Modifiers stack with your Brewmaster level and stay on for the whole run. Achievements still count.</div>
+      <div class="mod-note">Modifiers stack with your Brewmaster level and stay on for the whole run. Achievements still count, but a run with any modifier on won't unlock the next Brewmaster level.</div>
       <div class="mod-list">${list}</div>
       ${picks.length ? `<div style="text-align:center;margin-top:8px;"><button class="btn btn-primary" onclick="clearModPicks()">CLEAR ALL</button></div>` : ''}
     </div>`;
@@ -143,10 +141,13 @@ function modNodeWeights(w) {
 function modOfferExtra() { return (modOn('bumper') ? 1 : 0) + (modOn('noshops') ? 1 : 0); }
 // Shop prices
 function modShopPrice(p) { return modOn('bumper') ? Math.ceil(p * BUMPER_SHOP_MULT) : p; }
-// Budget cap in battle (run battles only)
+// Budget cap in battle (run battles only): Big Kettle lifts it to the last turn of the round
 function modBudgetCap(cap) {
-  return modOn('bigkettle') && typeof state !== 'undefined' && state && state.currentNode ? BIG_KETTLE_CAP : cap;
+  if (!(modOn('bigkettle') && typeof state !== 'undefined' && state && state.currentNode)) return cap;
+  return Math.max(cap, state.maxTurns || 8);
 }
+// Runs with modifiers never open the next Brewmaster level
+function modsBlockLevels() { return runMods().length > 0; }
 // Gauntlet: which lineup a boss comes from
 function modBossAct(act) { return modOn('gauntlet') ? Math.min(act + 1, BOSSES.length - 1) : act; }
 function modBossBonus(node) {
@@ -173,10 +174,10 @@ function modStyleLean(list, pool) {
 function modsBadgeHtml() {
   const mods = runMods().map(getMod).filter(Boolean);
   if (!mods.length) return '';
-  return `<span class="relic-icon mod-badge" title="Run modifiers\n${mods.map(m => `${m.icon} ${m.name}: ${m.desc}`).join('\n')}">🧩 ${mods.map(m => m.icon).join('')}</span>`;
+  return `<span class="relic-icon mod-badge" title="Run modifiers\n${mods.map(m => `${m.name}: ${m.desc}`).join('\n')}">MODS ${mods.length}</span>`;
 }
 function modsListText(ids) {
-  return (ids || []).map(getMod).filter(Boolean).map(m => `${m.icon} ${m.name}`).join(', ');
+  return (ids || []).map(getMod).filter(Boolean).map(m => m.name).join(', ');
 }
 
 if (typeof window !== 'undefined') {

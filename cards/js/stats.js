@@ -143,7 +143,7 @@ function renderStats() {
     return `<details class="st-run ${h.won ? 'st-won' : ''}"><summary>
         <span class="st-res">${h.won ? '🏆 WON' : 'Act ' + h.act}</span>
         <span>${statsBrewName(h.brewery)}</span><span class="st-dim">BM ${h.level || 0}</span>
-        <span class="st-dim">best ${h.best || 0}</span><span class="st-dim">${statsDate(h.at)}</span>${(h.mods || []).length ? `<span class="st-mods" title="${modsListText(h.mods)}">🧩 ${h.mods.map(id => (getMod(id) || {}).icon || '').join('')}</span>` : ''}</summary>
+        <span class="st-dim">best ${h.best || 0}</span><span class="st-dim">${statsDate(h.at)}</span>${(h.mods || []).length ? `<span class="st-mods" title="${modsListText(h.mods)}">MODS ${h.mods.length}</span>` : ''}</summary>
       ${(h.mods || []).length ? `<div class="st-deck"><b>Modifiers:</b> ${modsListText(h.mods)}</div>` : ''}<div class="st-deck">${deck.length ? `<b>${deck.length} cards:</b> ${deck.join(', ')}` : 'Deck list not recorded for this run.'}</div></details>`;
   }).join('') || '<div class="st-empty">No runs yet. Your last 10 runs will show up here.</div>';
 

@@ -1,6 +1,6 @@
 // Bump this whenever card stats change — the title screen shows it so you can
 // confirm the browser is loading the latest card file.
-const CARDS_VERSION = 'run modifiers (Nov 21)';
+const CARDS_VERSION = 'modifiers: big kettle to 8 (Nov 21)';
 
 // cards.js — card definitions and deck building
 // Add new cards here. Each card needs:

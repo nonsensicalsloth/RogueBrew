@@ -74,8 +74,8 @@ function recordRun(won) {
   if (won) { p.wins++; p.winsBy[brew] = (p.winsBy[brew] || 0) + 1; }
   // a bonus deck slot opens exactly at these win counts
   lastSlotUnlocked = won && BONUS_DECK_SLOTS.includes(p.wins) ? MAX_DECKS + BONUS_DECK_SLOTS.indexOf(p.wins) + 1 : null;
-  // Deep Pockets is an easier run, so it can't open the next Brewmaster level
-  lastLevelUnlocked = won && !(typeof modOn === 'function' && modOn('deep')) ? bmRecordWin(p, brew, bmLevel()) : null;
+  // Runs with modifiers never open the next Brewmaster level
+  lastLevelUnlocked = won && !(typeof modsBlockLevels === 'function' && modsBlockLevels()) ? bmRecordWin(p, brew, bmLevel()) : null;
   p.bossesBeaten += s.bossesBeaten;
   p.history.unshift({ won, brewery: brew, level: bmLevel(), act: mapState.act + 1, deck: draftState.deck.length, best: s.bestScore, at: Date.now(),
                    cards: draftState.deck.map(c => c.id), mods: [...(mapState.mods || [])] });
@@ -100,6 +100,7 @@ function runSummaryHtml(won, reason, newBreweries) {
   return `
     ${newBreweries.length ? newBreweries.map(nb => `<div class="sum-unlock">🎉 NEW BREWERY UNLOCKED: ${nb.icon} ${nb.name}</div>`).join('') : ''}
     ${lastLevelUnlocked && b ? `<div class="sum-unlock">🎖 BREWMASTER ${lastLevelUnlocked} UNLOCKED for ${b.icon} ${b.name}: ${BREWMASTER_LEVELS[lastLevelUnlocked].name}</div>` : ''}
+    ${won && (mapState.mods || []).length ? `<div class="sum-reason">Run modifiers were on, so no Brewmaster level unlocked this time.</div>` : ''}
     ${lastSlotUnlocked ? `<div class="sum-unlock">🗂 NEW DECK SLOT UNLOCKED: slot ${lastSlotUnlocked} is open in Build Deck</div>` : ''}
     ${reason ? `<div class="sum-reason">${reason}</div>` : ''}
     <div class="sum-grid">
