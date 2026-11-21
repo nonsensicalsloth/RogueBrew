@@ -54,6 +54,7 @@ const escAttr = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').re
   if (typeof document === 'undefined') return;
   let tip = null;
   const show = (el, x, y) => {
+    if (document.body.classList.contains('set-no-tips')) return;
     if (!tip) { tip = document.createElement('div'); tip.id = 'kw-tip'; document.body.appendChild(tip); }
     tip.textContent = el.getAttribute('data-tip');
     tip.style.display = 'block';

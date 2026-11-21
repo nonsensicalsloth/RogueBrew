@@ -21,6 +21,7 @@
 
 <!-- ===== TITLE SCREEN ===== -->
 <div id="title-screen" class="screen">
+  <button class="title-gear" onclick="showSettings()" title="Settings" aria-label="Settings">⚙</button>
   <div class="wortcraft-title">WORTCRAFT</div>
   <div class="wortcraft-sub">A Deck Building Brewery Roguelike</div>
   <div class="wortcraft-version" id="version-label">v0.1 prototype</div>
@@ -34,6 +35,14 @@
     <button class="btn btn-primary" onclick="showHowTo(0)">📖 HOW TO PLAY</button>
     <button class="btn btn-primary" onclick="showAchievements()">🏆 ACHIEVEMENTS</button>
   </div>
+</div>
+
+<!-- ===== SETTINGS ===== -->
+<div id="settings-screen" class="screen">
+  <div class="scr-head set-head"><div><h1>⚙ SETTINGS</h1><div class="scr-sub">Saved in this browser.</div></div></div>
+  <div id="settings-body" class="settings-body"></div>
+  <input type="file" id="import-file" accept=".json,application/json" style="display:none" onchange="importSaveFrom(this)">
+  <div class="scr-foot"><button class="btn btn-primary" onclick="showTitleScreen()">← MAIN MENU</button></div>
 </div>
 
 <!-- ===== ACHIEVEMENTS ===== -->
@@ -379,6 +388,7 @@
 
 <!-- Scripts — order matters -->
 <script src="js/art.js"></script>
+<script src="js/settings.js"></script>
 <script src="js/tips.js"></script>
 <script src="js/achievements.js"></script>
 <script src="js/cosmetics.js"></script>

@@ -173,7 +173,7 @@ function executeRivalPlanStepwise(done) {
     if (state !== battle || state.phase !== 'play') return;   // battle ended or left
     const did = rivalPlanStep(ctx);
     if (did) render();
-    if (did && ctx.k < ctx.plan.length) { setTimeout(tick, RIVAL_PLAY_DELAY); return; }
+    if (did && ctx.k < ctx.plan.length) { setTimeout(tick, jMs(RIVAL_PLAY_DELAY)); return; }
     state.rivalPlan = null;
     bankLagering('e', ctx.remaining);
     done(ctx.played);

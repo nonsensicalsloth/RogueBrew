@@ -180,7 +180,7 @@ function endTurn() {
   state.rivalSummary = [];
   state.playerTurn = false;
   render();
-  setTimeout(() => { enemyTurn(); render(); }, 500);
+  setTimeout(() => { enemyTurn(); render(); }, jMs(500));
 }
 
 function enemyPass(reason) {

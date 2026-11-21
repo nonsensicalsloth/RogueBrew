@@ -8,10 +8,12 @@
 // and it switches itself off for players who ask their system for reduced motion.
 
 const JUICE = { on: true };
-const RIVAL_PLAY_DELAY = 550;   // ms between the rival's cards
+const RIVAL_PLAY_DELAY = 550;   // ms between the rival's cards (scaled by game speed)
+const jMs = ms => (typeof speedMs === 'function' ? speedMs(ms) : ms);
 
 function juiceOn() {
   if (!JUICE.on || typeof document === 'undefined') return false;
+  if (typeof SETTINGS !== 'undefined' && !SETTINGS.anim) return false;
   try {
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
   } catch (e) { /* old browsers */ }
@@ -166,6 +168,7 @@ function juiceCount(el, value, fmt = v => String(v)) {
 // A new banner takes over from the one on screen (it slides away quickly)
 function juiceBanner(html, kind = 'gold', ms = 1300) {
   if (!juiceOn()) return;
+  ms = jMs(ms);
   const layer = juiceLayer();
   layer.querySelectorAll('.juice-banner:not(.banner-out)').forEach(old => {
     old.classList.add('banner-out');
@@ -181,6 +184,7 @@ function juiceBanner(html, kind = 'gold', ms = 1300) {
 
 function juiceShake(el) {
   if (!juiceOn() || !el) return;
+  if (typeof SETTINGS !== 'undefined' && !SETTINGS.shake) return;
   el.classList.remove('shake');
   void el.offsetWidth;
   el.classList.add('shake');
@@ -327,9 +331,9 @@ function showRoundTally(done) {
     box.querySelector('.tally-continue').classList.add('shown');
   };
 
-  rows.forEach((r, i) => timers.push(setTimeout(() => reveal('tally-r' + i), 250 + i * 550)));
-  timers.push(setTimeout(() => reveal('tally-rt'), 250 + rows.length * 550));
-  timers.push(setTimeout(finish, 250 + rows.length * 550 + 900));
+  rows.forEach((r, i) => timers.push(setTimeout(() => reveal('tally-r' + i), jMs(250 + i * 550))));
+  timers.push(setTimeout(() => reveal('tally-rt'), jMs(250 + rows.length * 550)));
+  timers.push(setTimeout(finish, jMs(250 + rows.length * 550 + 900)));
 
   // Click anywhere to skip ahead; once everything is shown, Continue closes it
   box.onclick = e => {

@@ -1145,3 +1145,39 @@ body::after {
 .starter-list { display: flex; gap: 6px; flex-wrap: wrap; }
 .starter-btn { font-size: 8px; }
 .starter-locked { opacity: .55; cursor: not-allowed; border-style: dashed !important; }
+
+/* ── Settings ── */
+#title-screen { position: relative; }
+.title-gear { position: absolute; top: 14px; right: 14px; width: 40px; height: 40px; padding: 0;
+  background: var(--bg2); border: 2px solid var(--bg3); color: var(--dim); font-size: 20px; line-height: 1;
+  cursor: pointer; border-radius: 4px; }
+.title-gear:hover, .title-gear:focus-visible { color: var(--gold); border-color: var(--gold); }
+#settings-screen { padding: 24px 16px; }
+.set-head, .settings-body { max-width: 620px; margin: 0 auto; }
+.settings-body { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.set-group { font-size: 8px; color: var(--gold); letter-spacing: 1px; margin: 12px 0 2px; }
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  background: var(--bg2); border: 2px solid var(--bg3); padding: 10px 12px; }
+.set-label { font-size: 9px; color: #e8e8f4; }
+.set-hint { font-family: var(--read-font); font-size: 17px; color: #9aa3b8; line-height: 1.1; margin-top: 4px; }
+.set-opts { display: flex; gap: 6px; flex-shrink: 0; }
+.set-opt { font-family: inherit; font-size: 8px; padding: 8px 10px; min-width: 64px; cursor: pointer;
+  background: var(--bg3); color: var(--dim); border: 2px solid var(--bg3); }
+.set-opt:hover { color: #e8e8f4; border-color: var(--dim); }
+.set-opt.on { color: var(--bg); background: var(--gold); border-color: var(--gold); }
+.set-danger { color: #ff8a80; border-color: #5a2a2a; }
+.set-danger.armed { background: #c62828; color: #fff; border-color: #ff8a80; }
+.set-msg { font-family: var(--read-font); font-size: 18px; color: var(--gold); text-align: center; min-height: 20px; }
+@media (max-width: 560px) {
+  .set-row { flex-direction: column; align-items: stretch; }
+  .set-opts .set-opt { flex: 1; }
+}
+
+/* Setting effects */
+body.set-no-anim *, body.set-no-anim *::before, body.set-no-anim *::after {
+  animation-duration: 0.001ms !important; animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important; }
+body.set-no-shake .shake { animation: none !important; }
+body.set-big-text .card-effect-text { font-size: 17px !important; line-height: 1.05 !important; }
+body.set-big-text .relic-card-desc { font-size: 17px !important; }
+body.set-no-tips .kw-term, body.set-no-tips [data-tip] { cursor: inherit; }
