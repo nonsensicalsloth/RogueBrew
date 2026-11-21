@@ -705,8 +705,8 @@ function applyCardEffect(card, lane, who) {
     case 'belgiangolden': {
       const sugar = allMine.filter(c => c.id === 'candisugarcl').length;
       const cd = allMine.filter(c => c !== card && c.tags && (c.tags.includes('crisp') || c.tags.includes('dry'))).length;
-      card.points += sugar * 4 + cd * 2;
-      addLog(`Belgian Golden Ale: +${sugar * 4 + cd * 2} (${sugar} clear candi, ${cd} crisp or dry).`, isPlayer ? 'player' : 'enemy');
+      card.points += sugar * 5 + cd * 3;
+      addLog(`Belgian Golden Ale: +${sugar * 5 + cd * 3} (${sugar} clear candi, ${cd} crisp or dry).`, isPlayer ? 'player' : 'enemy');
       break;
     }
     case 'trappist': {
@@ -859,11 +859,11 @@ function applyCardEffect(card, lane, who) {
     }
     case 'orangepeel':
       // ongoing: see auraBonus()
-      addLog('Orange Peel: every other citrus and belgian card on your board gets +2, including ones played later.', isPlayer ? 'player' : 'enemy');
+      addLog('Orange Peel: every other citrus and spicy card on your board gets +2, including ones played later.', isPlayer ? 'player' : 'enemy');
       break;
     case 'grainspara': {
-      const belgCount = getAllOnField(who).filter(c => c.tags && c.tags.includes('belgian')).length;
-      if (belgCount >= 3) { card.points += 12; addLog('Grains of Paradise: 3+ belgian cards, +12 pts!', 'player'); }
+      const belgCount = getAllOnField(who).filter(c => c !== card && c.cat !== 'token' && c.tags && (c.tags.includes('belgian') || c.tags.includes('spicy'))).length;
+      if (belgCount >= 3) { card.points += 12; addLog('Grains of Paradise: 3+ spicy or belgian cards, +12 pts!', isPlayer ? 'player' : 'enemy'); }
       break;
     }
     case 'cardamom': {
@@ -1955,7 +1955,7 @@ const PHILLY_MAX = 5;
 const AURAS = {
   vanilla:    { n: 2, tags: ['sweet'] },
   vanillabn:  { n: 3, tags: ['sweet'] },
-  orangepeel: { n: 2, tags: ['citrus', 'belgian'] },
+  orangepeel: { n: 2, tags: ['citrus', 'spicy'] },
   oats:       { n: 2, tags: ['hazy', 'roasty'] },
   yeastnutrient: { n: 2, cat: 'yeast', lane: 'cold' },
 };
