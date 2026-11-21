@@ -91,6 +91,11 @@
     <button class="btn builder-tab"            data-tab="yeast"   onclick="builderSetTab('yeast')">🧫 YEAST</button>
     <button class="btn builder-tab"            data-tab="process" onclick="builderSetTab('process')">⚙️ PROCESS</button>
   </div>
+  <div class="builder-search-row">
+    <input id="builder-search" type="search" placeholder="🔍 Search names, tags or card text..." oninput="builderSearch(this.value)" autocomplete="off">
+    <button class="btn btn-primary" onclick="toggleStyleStarters()">✨ START FROM A STYLE</button>
+  </div>
+  <div id="builder-starters" class="builder-starters" style="display:none;"></div>
   <div id="builder-filters" class="builder-filters"></div>
 
   <div class="builder-body">

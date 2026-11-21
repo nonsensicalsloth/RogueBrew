@@ -1135,3 +1135,13 @@ body::after {
 #ach-toast b { font-size: 9px; color: var(--text); font-weight: normal; }
 .ach-toast-desc { font-family: var(--read-font); font-size: 16px; color: #9aa3b8; }
 .intent-acid { color: #c8e040; margin-left: 6px; }
+
+/* ── Deck builder: search and style starters ── */
+.builder-search-row { display: flex; gap: 8px; align-items: center; margin: 0 0 6px; flex-wrap: wrap; }
+#builder-search { flex: 1; min-width: 200px; background: var(--bg2); border: 2px solid var(--border); color: var(--text); font-family: var(--read-font); font-size: 18px; padding: 5px 10px; }
+#builder-search:focus { outline: none; border-color: #7b7bff; }
+.builder-starters { border: 1px solid var(--gold); background: #12122a; padding: 8px 10px; margin: 0 0 8px; }
+.starter-note { font-family: var(--read-font); font-size: 17px; color: #9aa3b8; margin-bottom: 6px; }
+.starter-list { display: flex; gap: 6px; flex-wrap: wrap; }
+.starter-btn { font-size: 8px; }
+.starter-locked { opacity: .55; cursor: not-allowed; border-style: dashed !important; }

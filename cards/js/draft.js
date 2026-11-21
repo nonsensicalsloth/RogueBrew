@@ -336,12 +336,18 @@ function openBuilder(slotIndex) {
   // Drop any card ids that no longer exist (e.g. after a card pool update)
   builderState.cards = existing ? existing.cards.filter(id => getCardDef(id)) : [];
   builderState.activeTab = 'malt';
+  builderState.search = '';
+  const sb = document.getElementById('builder-search'); if (sb) sb.value = '';
+  const st = document.getElementById('builder-starters'); if (st) st.style.display = 'none';
   setScreen('builder-screen');
   renderBuilder();
 }
 
 function builderSetTab(tab) {
   builderState.activeTab = tab;
+  // Picking a tab ends a search
+  builderState.search = '';
+  const sb = document.getElementById('builder-search'); if (sb) sb.value = '';
   renderBuilderFilters();
   renderBuilderCards();
   // Update tab buttons
@@ -415,12 +421,84 @@ function renderBuilder() {
 // Sorted like Hearthstone: by cost, then rarity, then name
 function builderPool() {
   const f = builderState;
+  const words = (f.search || '').toLowerCase().split(/\s+/).filter(Boolean);
   return CARD_POOL
-    .filter(c => c.cat === f.activeTab)
+    // A search looks across every card type; otherwise the tab picks the type
+    .filter(c => words.length ? words.every(w => builderSearchText(c).includes(w)) : c.cat === f.activeTab)
     .filter(c => f.costFilter === 'all' || (f.costFilter === '4+' ? c.cost >= 4 : c.cost === f.costFilter))
     .filter(c => f.rarityFilter === 'all' || c.rarity === f.rarityFilter)
     .filter(c => f.showLocked || isOwned(c.id))
     .sort((a, b) => a.cost - b.cost || RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity] || a.name.localeCompare(b.name));
+}
+
+// ── Search: names, tags and card text, across every type ──
+function builderSearchText(c) {
+  return `${c.name} ${(c.tags || []).join(' ')} ${c.cat} ${(c.desc || '').replace(/<[^>]*>/g, '')}`.toLowerCase();
+}
+function builderSearch(q) {
+  builderState.search = q || '';
+  document.querySelectorAll('.builder-tab').forEach(t => t.classList.toggle('active-tab', !builderState.search && t.dataset.tab === builderState.activeTab));
+  renderBuilderCards();
+}
+
+// ── Start from a style: lays down a 10-card base, you pick the last 5 ──
+const STARTER_SIZE = 10;
+const STARTER_MIN_OWNED = 3;   // a style needs a few owned cards before it can start a deck
+function styleOwnedCount(s) { return CARD_POOL.filter(c => isOwned(c.id) && c.tags.includes(s.tag)).length; }
+const STYLE_STARTERS = [
+  { id: 'stout',   name: 'Stout',   icon: '☕', tag: 'roasty',  yeasts: ['irishale', 'englishale', 'londonesb'],         hops: ['fuggle', 'ekg'] },
+  { id: 'hazy',    name: 'Hazy IPA', icon: '🥭', tag: 'hazy',   yeasts: ['london3', 'vermont', 'barbarian'],             hops: ['citra', 'mosaic', 'galaxy'] },
+  { id: 'lager',   name: 'Lager',   icon: '🧊', tag: 'crisp',   yeasts: ['w3470', 'czechlager', 'augustiner', 'mexlager', 'kolsch'], hops: ['saaz', 'spalt', 'hallertau'] },
+  { id: 'sour',    name: 'Sour',    icon: '🍋', tag: 'sour',    yeasts: ['lacto', 'sourvisiae', 'phillysour'],           hops: ['saaz', 'cascade'] },
+  { id: 'belgian', name: 'Belgian', icon: '⛪', tag: 'belgian', yeasts: ['abbey', 'saison', 'belgianwit', 'belgiangolden', 'trappist'], hops: ['styrian', 'saaz'] },
+  { id: 'wild',    name: 'Wild',    icon: '🐐', tag: 'funky',   yeasts: ['brett', 'roeselare', 'pedio'],                 hops: ['saaz', 'styrian'] },
+  { id: 'pastry',  name: 'Pastry',  icon: '🧁', tag: 'sweet',   yeasts: ['londonesb', 'englishale'],                     hops: ['ekg', 'fuggle'] },
+];
+function toggleStyleStarters() {
+  const el = document.getElementById('builder-starters');
+  if (el.style.display !== 'none') { el.style.display = 'none'; return; }
+  el.style.display = '';
+  el.innerHTML = `<div class="starter-note">Lays down ${STARTER_SIZE} cards from your collection: a malt, a hop and a yeast for a complete beer, plus cards for the style. You pick the last ${DECK_SIZE - STARTER_SIZE}.${builderState.cards.length ? ' Replaces the cards in this deck.' : ''}</div>
+    <div class="starter-list">${STYLE_STARTERS.map(s => { const n = styleOwnedCount(s);
+      return n >= STARTER_MIN_OWNED
+        ? `<button class="btn btn-primary starter-btn" onclick="applyStyleStarter('${s.id}')">${s.icon} ${s.name.toUpperCase()}</button>`
+        : `<button class="btn btn-primary starter-btn starter-locked" disabled title="You own ${n} ${s.tag} card${n === 1 ? '' : 's'}. Unlock ${STARTER_MIN_OWNED - n} more in shops.">🔒 ${s.name.toUpperCase()} (${n}/${STARTER_MIN_OWNED} ${s.tag})</button>`; }).join('')}</div>`;
+}
+function styleStarterCards(styleId) {
+  const s = STYLE_STARTERS.find(x => x.id === styleId);
+  if (!s) return [];
+  const own = CARD_POOL.filter(c => isOwned(c.id) && c.cat !== 'token');
+  const picked = [];
+  const count = id => picked.filter(x => x === id).length;
+  const yeasts = () => picked.filter(id => getCardDef(id).cat === 'yeast').length;
+  // Sour and funky cards only belong in sour and wild starters
+  const offStyle = c => !['sour', 'wild'].includes(s.id) && (c.tags.includes('sour') || c.tags.includes('funky'));
+  const add = c => {
+    if (!c || offStyle(c) || count(c.id) >= Math.min(2, MAX_COPIES) || picked.length >= STARTER_SIZE) return false;
+    if (c.cat === 'yeast' && yeasts() >= 2) return false;   // two yeasts at most
+    picked.push(c.id); return true;
+  };
+  const has = (c, t) => c.tags.includes(t);
+  const mentions = (c, t) => new RegExp(`\\b${t}\\b`, 'i').test(c.desc || '');
+  const score = c => (has(c, s.tag) ? 3 : 0) + (mentions(c, s.tag) ? 2 : 0) + (c.rarity === 'common' ? 0.3 : 0);
+  // A complete beer first: a yeast and a hop for the style, and a malt
+  add(s.yeasts.map(getCardDef).find(c => c && isOwned(c.id)) || own.filter(c => c.cat === 'yeast').sort((a, b) => score(b) - score(a))[0]);
+  add(s.hops.map(getCardDef).find(c => c && isOwned(c.id)) || own.filter(c => c.cat === 'hop').sort((a, b) => score(b) - score(a) || a.cost - b.cost)[0]);
+  add(own.filter(c => c.cat === 'malt').sort((a, b) => score(b) - score(a) || a.cost - b.cost)[0]);
+  // Then the cards that fit the style best: two copies of the strongest fits
+  const fits = own.filter(c => score(c) >= 2).sort((a, b) => score(b) - score(a) || a.cost - b.cost || a.name.localeCompare(b.name));
+  for (const c of fits) { add(c); if (score(c) >= 5) add(c); if (picked.length >= STARTER_SIZE) break; }
+  // Short on style cards? Top up with cheap malts so the deck can still brew
+  own.filter(c => c.cat === 'malt').sort((a, b) => a.cost - b.cost).forEach(c => add(c));
+  return picked.slice(0, STARTER_SIZE);
+}
+function applyStyleStarter(styleId) {
+  if (builderState.cards.length && typeof confirm === 'function' && !confirm('Replace the cards in this deck with a style starter?')) return;
+  builderState.cards = styleStarterCards(styleId);
+  document.getElementById('builder-starters').style.display = 'none';
+  const s = STYLE_STARTERS.find(x => x.id === styleId);
+  showBuilderMsg(`${s.name} base laid down. Pick ${DECK_SIZE - builderState.cards.length} more!`, 'good');
+  renderBuilderDeck(); renderBuilderCards(); updateBuilderCount();
 }
 
 function builderSetFilter(kind, value) {
