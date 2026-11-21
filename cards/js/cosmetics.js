@@ -86,7 +86,8 @@ function showAchTab(tab) {
   document.querySelectorAll('.ach-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.getElementById('ach-shelf').style.display  = tab === 'trophies' ? '' : 'none';
   document.getElementById('ach-cellar').style.display = tab === 'cellar' ? '' : 'none';
-  if (tab === 'cellar') renderCellar(); else renderAchievements();
+  const st = document.getElementById('ach-stats'); if (st) st.style.display = tab === 'stats' ? '' : 'none';
+  if (tab === 'cellar') renderCellar(); else if (tab === 'stats') renderStats(); else renderAchievements();
 }
 
 function cosPreviewHtml(kind, id) {

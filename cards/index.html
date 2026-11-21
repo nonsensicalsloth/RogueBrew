@@ -49,9 +49,10 @@
 <div id="achievements-screen" class="screen">
   <div class="scr-head ach-head"><div><h1>🏆 ACHIEVEMENTS</h1><div class="scr-sub" id="ach-count"></div></div></div>
   <div id="ach-playtest" class="ach-playtest">Playtest mode is on, so no new achievements can be earned until you turn it off in Build Deck.</div>
-  <div class="ach-tabs"><button class="ach-tab active" data-tab="trophies" onclick="showAchTab('trophies')">🏆 TROPHIES</button><button class="ach-tab" data-tab="cellar" onclick="showAchTab('cellar')">🍾 CELLAR</button></div>
+  <div class="ach-tabs"><button class="ach-tab active" data-tab="trophies" onclick="showAchTab('trophies')">🏆 TROPHIES</button><button class="ach-tab" data-tab="cellar" onclick="showAchTab('cellar')">🍾 CELLAR</button><button class="ach-tab" data-tab="stats" onclick="showAchTab('stats')">📊 STATS</button></div>
   <div id="ach-shelf" class="ach-shelf"></div>
   <div id="ach-cellar" class="ach-shelf" style="display:none"></div>
+  <div id="ach-stats" class="ach-shelf" style="display:none"></div>
   <div class="scr-foot"><button class="btn btn-primary" onclick="showTitleScreen()">← MAIN MENU</button></div>
 </div>
 
@@ -392,6 +393,7 @@
 <script src="js/settings.js"></script>
 <script src="js/tips.js"></script>
 <script src="js/achievements.js"></script>
+<script src="js/stats.js"></script>
 <script src="js/cosmetics.js"></script>
 <script src="js/mobile.js"></script>
 <script src="js/cards.js"></script>

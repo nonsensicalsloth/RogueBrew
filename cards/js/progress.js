@@ -36,12 +36,14 @@ function trackBattleWin(node, gold) {
   if (node.type === 'boss')     s.bossesBeaten++;
   s.goldEarned += gold || 0;
   trackBestScore();
+  if (typeof statsBattleWon === 'function') statsBattleWon();
 }
 
 function trackBattleLoss(fatal) {
   const s = runStats();
   s.battlesLost++;
   trackBestScore();
+  if (typeof statsBattleLost === 'function') statsBattleLost(fatal);
   if (fatal) {
     const sc = (typeof state !== 'undefined' && state && state.lastRoundScore) || { p: 0, e: 0 };
     s.endedBy = { rival: state.rivalName || 'a rival', p: sc.p, e: sc.e, boss: !!state.isBoss };
@@ -74,10 +76,12 @@ function recordRun(won) {
   lastSlotUnlocked = won && BONUS_DECK_SLOTS.includes(p.wins) ? MAX_DECKS + BONUS_DECK_SLOTS.indexOf(p.wins) + 1 : null;
   lastLevelUnlocked = won ? bmRecordWin(p, brew, bmLevel()) : null;
   p.bossesBeaten += s.bossesBeaten;
-  p.history.unshift({ won, brewery: brew, level: bmLevel(), act: mapState.act + 1, deck: draftState.deck.length, best: s.bestScore, at: Date.now() });
+  p.history.unshift({ won, brewery: brew, level: bmLevel(), act: mapState.act + 1, deck: draftState.deck.length, best: s.bestScore, at: Date.now(),
+                   cards: draftState.deck.map(c => c.id) });
   p.history = p.history.slice(0, 10);
   saveProfile(p);
   if (typeof achRunEnd === 'function') achRunEnd(won, p, bmLevel());
+  if (typeof statsRunEnd === 'function') statsRunEnd(won, brew, draftState.deck);
   return BREWERIES.filter(b => isBreweryUnlocked(b) && !before.includes(b.id));
 }
 

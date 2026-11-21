@@ -122,6 +122,7 @@ function resolvePlay(c, lane, who) {
 
 
   const achB = who === 'p' && typeof achBeforePlay === 'function' ? achBeforePlay() : null;
+  if (typeof statsBeforePlay === 'function') statsBeforePlay(who);
   consumeLagering(c, who);
   applyCardEffect(c, lane, who);
   if (c.tags && c.tags.includes('sticky') && lane === 'hot') checkStuckMash(who);
@@ -159,6 +160,7 @@ function resolvePlay(c, lane, who) {
     phillyFollowUp(c, who);
   }
   if (achB) achAfterPlay(c, lane, achB);
+  if (typeof statsCardPlayed === 'function') statsCardPlayed(c, who);
 
   // Tamed Contamination fizzles out instead of taking up space
   if (c.id === 'contam_tamed') LANES.forEach(l => { state.field[l][who] = state.field[l][who].filter(x => x !== c); });
@@ -174,6 +176,7 @@ function endTurn() {
     return;
   }
   selectedCard = null;
+  if (typeof statsTurnEnded === 'function') statsTurnEnded();
   // Whatever budget you didn't spend goes into Lagering for your next crisp card
   if (state.phase === 'play') bankLagering('p', state.budget - state.budgetUsed);
   state.newCards = new Set();

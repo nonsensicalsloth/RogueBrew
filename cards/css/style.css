@@ -1208,3 +1208,33 @@ body.set-no-tips .kw-term, body.set-no-tips [data-tip] { cursor: inherit; }
   .tut-text { font-size: 17px; margin-top: 4px; }
   .tut-next { margin-top: 4px; padding: 6px 10px; }
 }
+
+/* ── Stats tab ── */
+.st-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; margin: 10px 0 8px; }
+.st-records { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+.st-tile { background: #1a1a30; border: 1px solid #2c2c48; padding: 10px 12px; }
+.st-val { font-size: 16px; color: var(--gold); min-height: 4px; }
+.st-records .st-val { font-size: 20px; }
+.st-lab { font-size: 8px; color: #c8cce0; margin-top: 6px; letter-spacing: 1px; }
+.st-sub { font-family: var(--read-font); font-size: 17px; color: #9aa3b8; line-height: 1.1; margin-top: 4px; }
+.st-n, .st-dim { color: #7a8098; }
+.st-none { color: #4a4a68; }
+.st-table { width: 100%; border-collapse: collapse; margin: 10px 0 8px; font-family: var(--read-font); font-size: 18px; color: #e8e8f4; }
+.st-table th { font-family: inherit; font-size: 15px; color: #9aa3b8; text-align: left; font-weight: normal; padding: 4px 8px; border-bottom: 1px solid #2c2c48; }
+.st-table td { padding: 5px 8px; border-bottom: 1px solid #1e1e36; }
+.st-table td:not(:first-child), .st-table th:not(:first-child) { text-align: center; }
+.st-locked td { color: #4a4a68; }
+.st-run { background: #1a1a30; border: 1px solid #2c2c48; margin-top: 6px; font-family: var(--read-font); font-size: 18px; color: #e8e8f4; }
+.st-run summary { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; padding: 7px 10px; cursor: pointer; }
+.st-run.st-won { border-color: #6b5a1a; }
+.st-res { min-width: 64px; color: #c8cce0; }
+.st-won .st-res { color: var(--gold); }
+.st-deck { padding: 4px 10px 10px; color: #c8cce0; line-height: 1.2; }
+.st-deck b { color: var(--gold); font-weight: normal; }
+.st-empty { font-family: var(--read-font); font-size: 18px; color: #7a8098; margin: 10px 0 8px; }
+.st-since { font-family: var(--read-font); font-size: 16px; color: #7a8098; text-align: center; margin-bottom: 8px; }
+@media (max-width: 700px) {
+  .st-grid, .st-records { grid-template-columns: 1fr 1fr; }
+  .st-table { font-size: 16px; }
+  .st-run summary { gap: 8px; }
+}

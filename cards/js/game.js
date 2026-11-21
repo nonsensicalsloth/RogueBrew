@@ -255,6 +255,7 @@ function endRound() {
   state.lastRoundScore = { p: ps, e: es };
   checkGoalAtRoundEnd(ps, es);
   if (typeof achRoundEnd === 'function') achRoundEnd(ps, es);
+  if (typeof statsRoundEnd === 'function') statsRoundEnd(ps, es);
   ['p', 'e'].forEach(w => {
     const b = beerStatus(w);
     if (b.complete) addLog(`🍺 ${w === 'p' ? 'Your' : "Rival's"} ${b.specialty ? 'Specialty' : 'Complete'} Beer: +${b.bonus}`, w === 'p' ? 'player' : 'enemy');
