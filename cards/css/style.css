@@ -1181,3 +1181,30 @@ body.set-no-shake .shake { animation: none !important; }
 body.set-big-text .card-effect-text { font-size: 17px !important; line-height: 1.05 !important; }
 body.set-big-text .relic-card-desc { font-size: 17px !important; }
 body.set-no-tips .kw-term, body.set-no-tips [data-tip] { cursor: inherit; }
+
+/* ── Guided Brew ── */
+.tut-coach { position: fixed; z-index: 900; top: 10px; left: 50%; transform: translateX(-50%);
+  width: min(560px, calc(100vw - 20px)); background: #15152a; border: 2px solid var(--gold);
+  box-shadow: 0 6px 24px rgba(0,0,0,.6), 0 0 14px rgba(255,215,0,.25); padding: 10px 12px; }
+.tut-head { display: flex; justify-content: space-between; align-items: center; font-size: 7px; color: var(--gold); letter-spacing: 1px; }
+.tut-x { font-family: inherit; font-size: 7px; background: none; border: 1px solid var(--bg3); color: var(--dim); padding: 4px 6px; cursor: pointer; }
+.tut-x:hover { color: #e8e8f4; border-color: var(--dim); }
+.tut-text { font-family: var(--read-font); font-size: 20px; line-height: 1.15; color: #e8e8f4; margin-top: 6px; }
+.tut-text b { color: var(--gold); font-weight: normal; }
+.tut-next { margin-top: 8px; float: right; }
+.tut-coach::after { content: ''; display: block; clear: both; }
+.tut-nudge { animation: tutNudge .4s; }
+@keyframes tutNudge { 0%,100% { transform: translateX(-50%); } 25% { transform: translateX(calc(-50% - 6px)); } 75% { transform: translateX(calc(-50% + 6px)); } }
+.tut-glow { outline: 3px solid var(--gold) !important; outline-offset: 2px; box-shadow: 0 0 16px rgba(255,215,0,.65) !important;
+  animation: tutGlow 1.2s ease-in-out infinite; position: relative; z-index: 5; }
+@keyframes tutGlow { 50% { box-shadow: 0 0 4px rgba(255,215,0,.3) !important; outline-color: rgba(255,215,0,.5); } }
+.tut-offer-box { max-width: 420px; }
+.tut-offer-note { font-family: var(--read-font); font-size: 16px; color: var(--dim); margin-top: 10px; }
+.howto-guided { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;
+  font-family: var(--read-font); font-size: 18px; color: #9aa3b8; }
+.tut-offer-box .overlay-sub { font-family: var(--read-font); font-size: 19px; line-height: 1.15; color: #c8cce0; }
+@media (max-width: 700px), (max-height: 500px) and (hover: none) and (pointer: coarse) {
+  .tut-coach { top: 6px; padding: 7px 9px; }
+  .tut-text { font-size: 17px; margin-top: 4px; }
+  .tut-next { margin-top: 4px; padding: 6px 10px; }
+}

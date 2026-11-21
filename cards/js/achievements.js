@@ -54,7 +54,10 @@ function loadAchievements() {
 function hasAch(id) { return !!loadAchievements()[id]; }
 
 // Playtest mode (every card owned) doesn't earn achievements
-function achAllowed() { return !(typeof loadCollection === 'function' && loadCollection().unlockAll); }
+function achAllowed() {
+  if (typeof state !== 'undefined' && state && state.tutorial) return false;   // the guided brew counts for nothing
+  return !(typeof loadCollection === 'function' && loadCollection().unlockAll);
+}
 
 function unlockAch(id) {
   const a = ACHIEVEMENTS.find(x => x.id === id);
