@@ -74,10 +74,11 @@ function recordRun(won) {
   if (won) { p.wins++; p.winsBy[brew] = (p.winsBy[brew] || 0) + 1; }
   // a bonus deck slot opens exactly at these win counts
   lastSlotUnlocked = won && BONUS_DECK_SLOTS.includes(p.wins) ? MAX_DECKS + BONUS_DECK_SLOTS.indexOf(p.wins) + 1 : null;
-  lastLevelUnlocked = won ? bmRecordWin(p, brew, bmLevel()) : null;
+  // Deep Pockets is an easier run, so it can't open the next Brewmaster level
+  lastLevelUnlocked = won && !(typeof modOn === 'function' && modOn('deep')) ? bmRecordWin(p, brew, bmLevel()) : null;
   p.bossesBeaten += s.bossesBeaten;
   p.history.unshift({ won, brewery: brew, level: bmLevel(), act: mapState.act + 1, deck: draftState.deck.length, best: s.bestScore, at: Date.now(),
-                   cards: draftState.deck.map(c => c.id) });
+                   cards: draftState.deck.map(c => c.id), mods: [...(mapState.mods || [])] });
   p.history = p.history.slice(0, 10);
   saveProfile(p);
   if (typeof achRunEnd === 'function') achRunEnd(won, p, bmLevel());
@@ -104,6 +105,7 @@ function runSummaryHtml(won, reason, newBreweries) {
     <div class="sum-grid">
       ${stat('Brewery', b ? `${b.icon} ${b.name}` : '-')}
       ${stat('Brewmaster', bmLevel())}
+      ${(mapState.mods || []).length && typeof modsListText === 'function' ? stat('Modifiers', modsListText(mapState.mods)) : ''}
       ${stat('Deck', s.deckName || '-')}
       ${stat('Reached', won ? 'Champion!' : `Act ${mapState.act + 1}`)}
       ${stat('Rooms visited', mapState.nodeCount || 0)}

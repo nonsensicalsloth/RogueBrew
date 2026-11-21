@@ -10,6 +10,7 @@ const ACH_CATS = [
   { id: 'mechanic',  name: 'Brewing Technique', desc: 'Pull off the tricks each system allows.' },
   { id: 'challenge', name: 'Weird Little Builds', desc: 'Win with odd decks and strange plans.' },
   { id: 'style',     name: 'Style Medals',      desc: 'Win a run with a deck built around one style.' },
+  { id: 'mods',      name: 'Off the Map',       desc: 'Win runs with run modifiers on.' },
 ];
 
 // Style medals: your deck's most common style tag when you win the run
@@ -46,6 +47,10 @@ const ACHIEVEMENTS = [
   { id: 'no_kettle',    cat: 'challenge', icon: '🫙', name: 'No Kettle Needed',  desc: 'Win a round with nothing on your hot side.' },
   // Style medals
   ...ACH_STYLES.map(s => ({ id: s.id, cat: 'style', icon: s.icon, name: s.name, desc: `Win a run with a ${s.style} deck: ${s.tag} cards outnumber every other style.` })),
+  // Run modifiers
+  { id: 'mod_trio',     cat: 'mods',      icon: '🧭', name: 'Off the Beaten Path', desc: 'Win a run with 3 or more run modifiers on.' },
+  { id: 'mod_onebatch', cat: 'mods',      icon: '💀', name: 'Flawless Batch',      desc: 'Win a run with One Bad Batch on.' },
+  { id: 'mod_blind',    cat: 'mods',      icon: '🎲', name: 'Blind Tasting',       desc: 'Win a run with Blind Brew on.' },
 ];
 
 function loadAchievements() {
@@ -147,6 +152,10 @@ function achDeckStyle(deck) {
 function achRunEnd(won, profile, level) {
   if (!won) return;
   unlockAch('first_pour');
+  const mods = (typeof runMods === 'function' ? runMods() : []);
+  if (mods.length >= 3) unlockAch('mod_trio');
+  if (mods.includes('onebatch')) unlockAch('mod_onebatch');
+  if (mods.includes('blind')) unlockAch('mod_blind');
   if (BREWERIES.every(b => (profile.winsBy[b.id] || 0) > 0)) unlockAch('every_tap');
   if (level >= 5)  unlockAch('brewmaster5');
   if (level >= 10) unlockAch('brewmaster10');

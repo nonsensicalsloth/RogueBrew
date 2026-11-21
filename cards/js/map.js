@@ -174,7 +174,7 @@ function nodeWeights() {
   if (runBrewery() === 'taproom')  w.shop   = Math.round(w.shop * 1.6);
   if (bm(7)) w.rest = BM_REST_WEIGHT;                                   // Brewmaster 7: Short Season
   if (runBrewery() === 'contract') w.collab = 8;
-  return w;
+  return typeof modNodeWeights === 'function' ? modNodeWeights(w) : w;
 }
 
 function weightedPick(weights, banned) {
@@ -267,7 +267,7 @@ function renderMap() {
   const bDef = BREWERIES.find(b => b.id === runBrewery());
   const bIcon = bDef ? `<span class="relic-icon" title="${bDef.name} | Passive: ${bDef.passive} | Ability: ${bDef.ability.name}: ${bDef.ability.desc} | Perk: ${bDef.perk}">${bDef.icon}</span>` : '';
   if (extraEl) {
-    extraEl.innerHTML = bIcon + ' ' + bmBadgeHtml() + ' ' + extras.join(' ') + ' ' + relicIconsHtml();
+    extraEl.innerHTML = bIcon + ' ' + bmBadgeHtml() + ' ' + (typeof modsBadgeHtml === 'function' ? modsBadgeHtml() : '') + ' ' + extras.join(' ') + ' ' + relicIconsHtml();
     extraEl.style.display = extraEl.textContent.trim() || extraEl.querySelector('span') ? '' : 'none';
   }
   const noticeEl = document.getElementById('map-notice');
@@ -469,6 +469,8 @@ function startMapBattle(node) {
   if (bm(1)) { rivalBonus += BM_RIVAL_BONUS; rivalBonusName = rivalBonusName || 'Tough Crowd'; }
   if (bm(4)) { rivalBonus += BM_RIVAL_MORE; rivalBonusName = rivalBonusName || 'Sharp Rivals'; }
   if (bm(8) && node.type === 'boss') { rivalBonus += BM_BOSS_BONUS; rivalBonusName = rivalBonusName || 'Headliner'; }
+  const gauntlet = typeof modBossBonus === 'function' ? modBossBonus(node) : 0;   // Gauntlet final bosses
+  if (gauntlet) { rivalBonus += gauntlet; rivalBonusName = rivalBonusName || 'Gauntlet'; }
   initGame({ rivalDeck, node, rival, rivalBonus, rivalBonusName });
   wildPendingContam();
 }
@@ -501,7 +503,8 @@ function generateMapOffer(kind = 'normal') {
   // A supplier contract focuses the next offer on one category, with 4 picks
   const contract = mapState.contract;
   // Hop House run perk: one extra option on every card offer
-  const size = (contract ? 4 : 3) + (runBrewery() === 'hophouse' ? 1 : 0) - (bm(2) ? BM_OFFER_LESS : 0);   // Brewmaster 2
+  const size = (contract ? 4 : 3) + (runBrewery() === 'hophouse' ? 1 : 0) - (bm(2) ? BM_OFFER_LESS : 0)   // Brewmaster 2
+             + (typeof modOfferExtra === 'function' ? modOfferExtra() : 0);   // Bumper Crop, Homebrew Only
   mapState.contract = null;
   const pool = CARD_POOL.filter(c => c.rarity !== 'legendary' &&
     copiesInDeck(c.id) < MAX_COPIES && c.cat !== 'token' && (!contract || c.cat === contract));
@@ -514,6 +517,7 @@ function generateMapOffer(kind = 'normal') {
     offer.push({ ...options[Math.floor(Math.random() * options.length)] });
   }
   offer.splice(0, offer.length, ...scroungeLean(offer, pool));
+  if (typeof modStyleLean === 'function') offer.splice(0, offer.length, ...modStyleLean(offer, pool));   // Single Style
   // Stout House run perk: always at least one roasty card on offer
   if (runBrewery() === 'stouthouse' && offer.length && !offer.some(c => c.tags && c.tags.includes('roasty'))) {
     const roasty = pool.filter(c => c.tags && c.tags.includes('roasty') && !offer.some(o => o.id === c.id));
@@ -626,6 +630,7 @@ function generateShopInventory() {
   let stock = [...pickN('common', 3), ...pickN('uncommon', 2), ...pickN('rare', 1)];
   for (const c of pool) { if (stock.length >= 6) break; if (!stock.includes(c)) stock.push(c); }
   stock = scroungeLean(stock, pool);
+  if (typeof modStyleLean === 'function') stock = modStyleLean(stock, pool);   // Single Style
   return stock.map(c => ({ ...c, price: getCardPrice(c) }));
 }
 
@@ -641,7 +646,8 @@ let shopRemoving    = false;   // is the removal picker open?
 
 function getRemovalPrice() {
   const p = 50 + 25 * (mapState.removals || 0);
-  const base = bm(3) ? Math.ceil(p * BM_SHOP_MULT) : p;   // Brewmaster 3
+  let base = bm(3) ? Math.ceil(p * BM_SHOP_MULT) : p;   // Brewmaster 3
+  if (typeof modShopPrice === 'function') base = modShopPrice(base);   // Bumper Crop
   return taproomHalf(base);
 }
 // Taproom run perk: the first purchase in each shop (a card or a removal) is half price
@@ -679,7 +685,8 @@ function renderMapShop() {
 // Taproom run perk: the first purchase in each shop is half price
 let shopHalfUsed = false;
 function shopPrice(c) {
-  const base = bm(3) ? Math.ceil(c.price * BM_SHOP_MULT) : c.price;   // Brewmaster 3
+  let base = bm(3) ? Math.ceil(c.price * BM_SHOP_MULT) : c.price;   // Brewmaster 3
+  if (typeof modShopPrice === 'function') base = modShopPrice(base);   // Bumper Crop
   return taproomHalf(base);
 }
 
@@ -969,7 +976,7 @@ function renderMapEvent() {
 
 // Wild Cellar run perk: every event gets its own wild option (events.js, WILD_EVENT_OPTIONS)
 function eventOptions() {
-  if (runBrewery() !== 'wildcellar') return currentEvent.options;
+  if (runBrewery() !== 'wildcellar' && !(typeof modOn === 'function' && modOn('strange'))) return currentEvent.options;   // or Strange Brew
   const wild = WILD_EVENT_OPTIONS[splitIcon(currentEvent.title).text];
   return wild ? [...currentEvent.options, wild] : currentEvent.options;
 }
@@ -1153,6 +1160,11 @@ function healRep(amount) {
 
 function onBattleLoss() {
   const node = state.currentNode;
+  if (typeof modOn === 'function' && modOn('onebatch') && node && node.type !== 'boss') {
+    trackBattleLoss(true);
+    showRunLoss(`One Bad Batch: ${state.rivalName} beat you, and one loss ends the run.`);
+    return;
+  }
   if (!node || node.type === 'boss') {
     trackBattleLoss(true);
     showRunLoss('The judges crowned your rival. The boss must be beaten.');

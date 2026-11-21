@@ -142,7 +142,7 @@ const MAX_TURNS = 8;
 // ── Budget ──
 const FERMENTER_TURNS = 3;   // Second Fermenter: +1 budget on each of your first 3 turns
 function getBudget(turn, who = 'p') {
-  const cap = 5;
+  const cap = typeof modBudgetCap === 'function' ? modBudgetCap(5) : 5;   // Big Kettle
   // Speed Brew: a shorter round, but everyone gets +1 budget every turn
   const speed = typeof ruleOn === 'function' && ruleOn('speed') ? SPEED_BUDGET : 0;
   const early = who === 'p' && hasRelic('fermenter') && turn <= FERMENTER_TURNS ? 1 : 0;

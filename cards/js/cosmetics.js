@@ -32,6 +32,9 @@ const COSMETICS = [
   { id: 'whisperer',  kind: 'title', name: 'Yeast Whisperer',  ach: 'repitch' },
   { id: 'biscuit',    kind: 'title', name: 'Biscuit Baron',    ach: 'biscuit_tin' },
   { id: 'coldsider',  kind: 'title', name: 'Cold Sider',       ach: 'no_kettle' },
+  { id: 'trailblazer',kind: 'title', name: 'Trailblazer',      ach: 'mod_trio' },
+  { id: 'flawless',   kind: 'title', name: 'Never Dumped a Batch', ach: 'mod_onebatch' },
+  { id: 'blindtaster',kind: 'title', name: 'Blind Taster',     ach: 'mod_blind' },
 ];
 const COS_KINDS = [
   { kind: 'theme', name: 'Board Theme', none: 'Classic' },

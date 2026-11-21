@@ -630,6 +630,7 @@ function selectBrewery(id) {
   if (!b || !isBreweryUnlocked(b)) return;
   draftState.brewery = b;
   mapState.level = bmChosen(id);   // Brewmaster level for this run
+  if (typeof modsBeginRun === 'function') modsBeginRun(id);   // run modifiers (some change the map)
   mapState.stats = newRunStats(mapState.stats && mapState.stats.deckName);
   // Some breweries change what the map is made of (Taproom, Contract Brewer)
   generateMap();
@@ -649,6 +650,7 @@ function selectBrewery(id) {
   if (id === 'wildcellar') { mapState.rep = WILD_START_REP; mapState.maxRep = WILD_START_REP; }
   // Brewmaster 3: Thin Reputation
   if (bm(3)) mapState.rep = Math.max(1, mapState.rep - BM_REP_LOSS);
+  if (typeof modsAfterSetup === 'function') modsAfterSetup();
   showMapScreen();
 }
 

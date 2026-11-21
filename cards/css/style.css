@@ -1238,3 +1238,39 @@ body.set-no-tips .kw-term, body.set-no-tips [data-tip] { cursor: inherit; }
   .st-table { font-size: 16px; }
   .st-run summary { gap: 8px; }
 }
+
+/* ── Run modifiers (brewery select) ── */
+.mod-picker { width: 100%; max-width: 980px; margin: 0 auto 14px; align-self: center; box-sizing: border-box; }
+.mod-bar { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 14px; cursor: pointer; text-align: left;
+  background: #16162a; border: 2px solid #2c2c48; color: #e8e8f4; font-family: inherit; }
+.mod-bar:hover { border-color: var(--gold); }
+.mod-bar-title { font-size: 9px; color: var(--gold); white-space: nowrap; }
+.mod-bar-chips { flex: 1; display: flex; flex-wrap: wrap; gap: 6px; }
+.mod-bar-arrow { font-size: 9px; color: var(--dim); }
+.mod-none { font-family: var(--read-font); font-size: 17px; color: #7a8098; }
+.mod-locked { cursor: default; font-size: 8px; color: #6a6a88; justify-content: center; }
+.mod-locked:hover { border-color: #2c2c48; }
+.mod-chip { font-family: var(--read-font); font-size: 16px; padding: 1px 8px; border: 1px solid; background: #1e1e36; }
+.mod-chip.mod-easier, .mod-kind.mod-easier { color: #7fd88a; border-color: #2f6a3a; }
+.mod-chip.mod-mixed,  .mod-kind.mod-mixed  { color: #8fb8ff; border-color: #34507a; }
+.mod-chip.mod-harder, .mod-kind.mod-harder { color: #ff9c8a; border-color: #7a3a30; }
+.mod-panel { border: 2px solid #2c2c48; border-top: none; background: #12122a; padding: 10px 12px 12px; }
+.mod-note { font-family: var(--read-font); font-size: 17px; color: #9aa3b8; margin-bottom: 8px; }
+.mod-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 8px; }
+.mod-opt { display: flex; align-items: flex-start; gap: 10px; text-align: left; padding: 9px 10px; cursor: pointer;
+  background: #1a1a30; border: 2px solid #2c2c48; color: #e8e8f4; font-family: inherit; }
+.mod-opt:hover { border-color: var(--dim); }
+.mod-opt.on { border-color: var(--gold); background: #22223a; box-shadow: 0 0 10px rgba(255,215,0,.15); }
+.mod-icon { font-size: 20px; line-height: 1; }
+.mod-body { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.mod-name { font-size: 9px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mod-kind { font-size: 6px; padding: 2px 4px; border: 1px solid; letter-spacing: 1px; }
+.mod-desc { font-family: var(--read-font); font-size: 17px; color: #b8bcd0; line-height: 1.1; }
+.mod-desc i { color: #7a8098; font-style: normal; }
+.mod-check { width: 18px; height: 18px; border: 2px solid #3c3c5c; color: var(--gold); font-size: 12px; line-height: 14px; text-align: center; flex-shrink: 0; }
+.mod-opt.on .mod-check { border-color: var(--gold); }
+.st-mods { color: #8fb8ff; }
+@media (max-width: 700px) {
+  .mod-list { grid-template-columns: 1fr; }
+  .mod-bar { flex-wrap: wrap; }
+}

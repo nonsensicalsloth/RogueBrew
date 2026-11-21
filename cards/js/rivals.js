@@ -95,7 +95,7 @@ function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 // Chooses a rival for a map node when the map is generated
 function assignRival(node) {
-  if (node.type === 'boss')     return pickRandom(BOSSES[node.act]).id;
+  if (node.type === 'boss')     return pickRandom(BOSSES[typeof modBossAct === 'function' ? modBossAct(node.act) : node.act]).id;   // Gauntlet
   if (node.type === 'festival') return pickRandom(CRAFT_RIVALS).id;
   if (node.type === 'battle')   return pickRandom(node.act === 0 ? LOCAL_RIVALS : CRAFT_RIVALS).id;
   return null;
